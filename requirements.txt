@@ -1,0 +1,11 @@
+Django>=1.5.1
+south
+psycopg2==2.4.5
+django-admin-bootstrapped
+django-floppyforms
+django-extra-views
+django-guardian
+
+# Dev
+django-debug-toolbar
+django-rosetta
