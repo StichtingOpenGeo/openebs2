@@ -9,6 +9,7 @@
 from __future__ import unicode_literals
 
 from django.db import models
+from datetime import datetime
 
 DATAOWNERCODE = (
     ('ARR', 'Arriva'),
@@ -204,15 +205,15 @@ class Kv15Log(models.Model):
 
 class Kv15Stopmessage(models.Model):
     id = models.AutoField(primary_key=True)
-    dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
+    dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name="Vervoersbedrijf")
     messagecodedate = models.DateField()
     messagecodenumber = models.DecimalField(max_digits=4, decimal_places=0)
-    messagepriority = models.CharField(max_length=10, choices=MESSAGEPRIORITY, default='PTPROCESS')
-    messagetype = models.CharField(max_length=10, choices=MESSAGETYPE, default='GENERAL')
-    messagedurationtype = models.CharField(max_length=10, choices=MESSAGEDURATIONTYPE, default='ENDTIME')
-    messagestarttime = models.DateTimeField(null=True, blank=True)
+    messagepriority = models.CharField(max_length=10, choices=MESSAGEPRIORITY, default='PTPROCESS', verbose_name="Prioriteit")
+    messagetype = models.CharField(max_length=10, choices=MESSAGETYPE, default='GENERAL', verbose_name="Berichtsoort")
+    messagedurationtype = models.CharField(max_length=10, choices=MESSAGEDURATIONTYPE, default='ENDTIME', verbose_name="Eindtijd")
+    messagestarttime = models.DateTimeField(null=True, blank=True, default=datetime.now)
     messageendtime = models.DateTimeField(null=True, blank=True)
-    messagecontent = models.CharField(max_length=255, blank=True)
+    messagecontent = models.CharField(max_length=255, blank=True, verbose_name="Bericht")
     reasontype = models.SmallIntegerField(null=True, blank=True, choices=REASONTYPE)
     subreasontype = models.CharField(max_length=10, blank=True, choices=SUBREASONTYPE)
     reasoncontent = models.CharField(max_length=255, blank=True)
