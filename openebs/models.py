@@ -8,8 +8,10 @@
 # into your database.
 from __future__ import unicode_literals
 
-from django.db import models
 from datetime import datetime
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
+
 
 DATAOWNERCODE = (
     ('ARR', 'Arriva'),
@@ -205,33 +207,56 @@ class Kv15Log(models.Model):
 
 class Kv15Stopmessage(models.Model):
     id = models.AutoField(primary_key=True)
-    dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name="Vervoersbedrijf")
-    messagecodedate = models.DateField()
-    messagecodenumber = models.DecimalField(max_digits=4, decimal_places=0)
-    messagepriority = models.CharField(max_length=10, choices=MESSAGEPRIORITY, default='PTPROCESS', verbose_name="Prioriteit")
-    messagetype = models.CharField(max_length=10, choices=MESSAGETYPE, default='GENERAL', verbose_name="Berichtsoort")
-    messagedurationtype = models.CharField(max_length=10, choices=MESSAGEDURATIONTYPE, default='ENDTIME', verbose_name="Eindtijd")
-    messagestarttime = models.DateTimeField(null=True, blank=True, default=datetime.now)
-    messageendtime = models.DateTimeField(null=True, blank=True)
+    dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"), editable=False)
+    messagecodedate = models.DateField(verbose_name=_("Datum"))
+    messagecodenumber = models.DecimalField(max_digits=4, decimal_places=0, verbose_name=_("Volgnummer"))
+    messagepriority = models.CharField(max_length=10, choices=MESSAGEPRIORITY, default='PTPROCESS', verbose_name=_("Prioriteit"))
+    messagetype = models.CharField(max_length=10, choices=MESSAGETYPE, default='GENERAL', verbose_name=_("Type bericht"))
+    messagedurationtype = models.CharField(max_length=10, choices=MESSAGEDURATIONTYPE, default='ENDTIME', verbose_name=_("Type tijdsrooster"))
+    messagestarttime = models.DateTimeField(null=True, blank=True, default=datetime.now, verbose_name=_("Begintijd"))
+    messageendtime = models.DateTimeField(null=True, blank=True, verbose_name=_("Eindtijd"))
     messagecontent = models.CharField(max_length=255, blank=True, verbose_name="Bericht")
-    reasontype = models.SmallIntegerField(null=True, blank=True, choices=REASONTYPE)
-    subreasontype = models.CharField(max_length=10, blank=True, choices=SUBREASONTYPE)
-    reasoncontent = models.CharField(max_length=255, blank=True)
-    effecttype = models.SmallIntegerField(null=True, blank=True, choices=EFFECTTYPE)
-    subeffecttype = models.CharField(max_length=10, blank=True, choices=SUBEFFECTTYPE)
-    effectcontent = models.CharField(max_length=255, blank=True)
-    measuretype = models.SmallIntegerField(null=True, blank=True, choices=MEASURETYPE)
-    submeasuretype = models.CharField(max_length=10, blank=True, choices=SUBMEASURETYPE)
-    measurecontent = models.CharField(max_length=255, blank=True)
-    advicetype = models.SmallIntegerField(null=True, blank=True, choices=ADVICETYPE)
-    subadvicetype = models.CharField(max_length=10, blank=True, choices=SUBADVICETYPE)
-    advicecontent = models.CharField(max_length=255, blank=True)
+    reasontype = models.SmallIntegerField(null=True, blank=True, choices=REASONTYPE, verbose_name=_("Type oorzaak"))
+    subreasontype = models.CharField(max_length=10, blank=True, choices=SUBREASONTYPE, verbose_name=_("Oorzaak"))
+    reasoncontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg oorzaak"))
+    effecttype = models.SmallIntegerField(null=True, blank=True, choices=EFFECTTYPE, verbose_name=_("Type gevolg"))
+    subeffecttype = models.CharField(max_length=10, blank=True, choices=SUBEFFECTTYPE, verbose_name=_("Gevolg"))
+    effectcontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg gevolg"))
+    measuretype = models.SmallIntegerField(null=True, blank=True, choices=MEASURETYPE, verbose_name=_("Type aanpassing"))
+    submeasuretype = models.CharField(max_length=10, blank=True, choices=SUBMEASURETYPE, verbose_name=_("Aanpassing"))
+    measurecontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg aanpassing"))
+    advicetype = models.SmallIntegerField(null=True, blank=True, choices=ADVICETYPE, verbose_name=_("Type advies"))
+    subadvicetype = models.CharField(max_length=10, blank=True, choices=SUBADVICETYPE, verbose_name=_("Advies"))
+    advicecontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg advies"))
     messagetimestamp = models.DateTimeField(auto_now_add=True)
-    messagescenario = models.CharField(max_length=255, blank=True)
-    isdeleted = models.BooleanField()
+    isdeleted = models.BooleanField(default=False, verbose_name=_("Verwijderd?"))
 
     class Meta:
         unique_together = ('dataownercode', 'messagecodedate', 'messagecodenumber',)
+
+
+class Kv15Scenario(models.Model):
+    scenario = models.CharField(max_length=255, blank=True, verbose_name=_("Naam scenario"))
+    messagepriority = models.CharField(max_length=10, choices=MESSAGEPRIORITY, default='PTPROCESS', verbose_name=_("Prioriteit"))
+    messagetype = models.CharField(max_length=10, choices=MESSAGETYPE, default='GENERAL', verbose_name=_("Type bericht"))
+    messagedurationtype = models.CharField(max_length=10, choices=MESSAGEDURATIONTYPE, default='ENDTIME', verbose_name=_("Type tijdsrooster"))
+    messagestarttime = models.DateTimeField(null=True, blank=True, default=datetime.now, verbose_name=_("Begintijd"))
+    messageendtime = models.DateTimeField(null=True, blank=True, verbose_name=_("Eindtijd"))
+    messagecontent = models.CharField(max_length=255, blank=True, verbose_name="Bericht")
+    reasontype = models.SmallIntegerField(null=True, blank=True, choices=REASONTYPE, verbose_name=_("Type oorzaak"))
+    subreasontype = models.CharField(max_length=10, blank=True, choices=SUBREASONTYPE, verbose_name=_("Oorzaak"))
+    reasoncontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg oorzaak"))
+    effecttype = models.SmallIntegerField(null=True, blank=True, choices=EFFECTTYPE, verbose_name=_("Type gevolg"))
+    subeffecttype = models.CharField(max_length=10, blank=True, choices=SUBEFFECTTYPE, verbose_name=_("Gevolg"))
+    effectcontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg gevolg"))
+    measuretype = models.SmallIntegerField(null=True, blank=True, choices=MEASURETYPE, verbose_name=_("Type aanpassing"))
+    submeasuretype = models.CharField(max_length=10, blank=True, choices=SUBMEASURETYPE, verbose_name=_("Aanpassing"))
+    measurecontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg aanpassing"))
+    advicetype = models.SmallIntegerField(null=True, blank=True, choices=ADVICETYPE, verbose_name=_("Type advies"))
+    subadvicetype = models.CharField(max_length=10, blank=True, choices=SUBADVICETYPE, verbose_name=_("Advies"))
+    advicecontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg advies"))
+    messagetimestamp = models.DateTimeField(auto_now=True)
+
 
 class Kv15Schedule(models.Model):
     stopmessage = models.ForeignKey(Kv15Stopmessage)

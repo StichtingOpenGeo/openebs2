@@ -20,5 +20,5 @@ class MessageListView(ListView):
 
 class MessageCreateView(CreateView):
     model = Kv15Stopmessage
-    form = Kv15StopMessageForm
+    form_class = Kv15StopMessageForm
     success_url = reverse_lazy('msg_index')
