@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% load floppyforms %}
+{% load floppyforms i18n %}
 
-{% block contents %}
+{% block content %}
 <h1>Nieuw bericht</h1>
 <a class="btn btn-default" href="{% url "msg_index" %}">Back to list</a>
 <form method="post" class="form-horizontal" action="{% url "msg_add" %}">
@@ -9,7 +9,7 @@
     {% form form %}
     <div class="form-group">
         <div class="col-lg-offset-2 col-lg-10">
-            <button type="submit" class="btn btn-default">Add</button>
+            <button type="submit" class="btn btn-primary">{% trans "Toevoegen" %}</button>
         </div>
     </div>
 </form>

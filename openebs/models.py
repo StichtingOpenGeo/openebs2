@@ -10,8 +10,8 @@ from __future__ import unicode_literals
 
 from datetime import datetime
 from django.db import models
+from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
-
 
 DATAOWNERCODE = (
     ('ARR', 'Arriva'),
@@ -196,18 +196,31 @@ SUBREASONTYPE = (
     ('9_2', 'IJzel'),
 )
 
+
+class UserProfile(models.Model):
+    ''' Store additional user data as we don't really want a custom user model perse '''
+    user = models.OneToOneField(User)
+    company = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
+
 class Kv15Log(models.Model):
     timestamp = models.DateTimeField()
     dataownercode = models.CharField(max_length=10)
     messagecodedate = models.DateField()
     messagecodenumber = models.DecimalField(max_digits=4, decimal_places=0)
-    author = models.CharField(max_length=255)
+    user = models.ForeignKey(User)
     message = models.CharField(max_length=255)
     ipaddress = models.CharField(max_length=100)
 
+    class Meta:
+        permissions = (
+            ("view_log", _("Kan logberichten inzien")),
+        )
+
+
 class Kv15Stopmessage(models.Model):
     id = models.AutoField(primary_key=True)
-    dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"), editable=False)
+    user = models.ForeignKey(User)
+    dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
     messagecodedate = models.DateField(verbose_name=_("Datum"))
     messagecodenumber = models.DecimalField(max_digits=4, decimal_places=0, verbose_name=_("Volgnummer"))
     messagepriority = models.CharField(max_length=10, choices=MESSAGEPRIORITY, default='PTPROCESS', verbose_name=_("Prioriteit"))
@@ -233,7 +246,20 @@ class Kv15Stopmessage(models.Model):
 
     class Meta:
         unique_together = ('dataownercode', 'messagecodedate', 'messagecodenumber',)
+        permissions = (
+            ("view_messages", _("Kan alle berichten bekijken")),
+            ("add_messages", _("Kan nieuwe berichten toevoegen, bestaande aanpassen of berichten verwijderen")),
+        )
 
+    def save(self, *args, **kwargs):
+        # Set the messagecodenumber to the latest highest number
+        self.messagecodenumber = self.get_latest_number()
+        super(Kv15Stopmessage, self).save(*args, **kwargs)
+
+    def get_latest_number(self):
+        '''Get the currently highest number and add one if found or start with 1  '''
+        num = Kv15Stopmessage.objects.filter(dataownercode=self.dataownercode, messagecodedate=self.messagecodedate).aggregate(models.Max('messagecodenumber'))
+        return num['messagecodenumber__max'] + 1 if num['messagecodenumber__max'] else 1
 
 class Kv15Scenario(models.Model):
     scenario = models.CharField(max_length=255, blank=True, verbose_name=_("Naam scenario"))
@@ -257,6 +283,11 @@ class Kv15Scenario(models.Model):
     advicecontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg advies"))
     messagetimestamp = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        permissions = (
+            ("view_scenario", _("Kan scenario's bekijken en gebruiken voor nieuwe berichten")),
+            ("add_scenario", _("Kan nieuwe secenario's aanmaken")),
+        )
 
 class Kv15Schedule(models.Model):
     stopmessage = models.ForeignKey(Kv15Stopmessage)
@@ -271,4 +302,3 @@ class Kv15StopmessageLineplanningnumber(models.Model):
 class Kv15StopmessageUserstopcode(models.Model):
     stopmessage = models.ForeignKey(Kv15Stopmessage)
     userstopcode = models.CharField(max_length=10)
-

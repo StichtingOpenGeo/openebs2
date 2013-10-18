@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load floppyforms i18n %}
+
+{% block content %}
+
+{% if form.errors and not form.non_field_errors %}
+<p class="alert alert-warning">
+    {% trans "Je gebruikersnaam of wachtwoord kwamen niet overeen. Probeer het nog eens." %}
+</p>
+{% endif %}
+
+<form method="post" class="form-horizontal" action="{% url 'django.contrib.auth.views.login' %}">
+    {% csrf_token %}
+    {% form form %}
+    <div class="form-group">
+        <div class="col-lg-offset-2 col-lg-10">
+            <button type="submit" class="btn btn-primary">{% trans "Inloggen" %}</button>
+        </div>
+    </div>
+<input type="hidden" name="next" value="{{ next }}" />
+</form>
+
+{% endblock %}

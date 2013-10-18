@@ -5,7 +5,7 @@ from models import Kv15Stopmessage
 class Kv15StopMessageForm(forms.ModelForm):
     class Meta:
         model = Kv15Stopmessage
-        exclude = ['messagecodenumber', 'isdeleted', 'id', 'dataownercode']
+        exclude = ['messagecodenumber', 'isdeleted', 'id', 'dataownercode', 'user']
         widgets = {
             'messagecodedate' : DatePicker,
             'messagecontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),

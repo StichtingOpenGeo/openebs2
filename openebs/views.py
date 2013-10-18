@@ -1,8 +1,10 @@
 # Create your views here.
 from datetime import datetime
+from django.core.urlresolvers import reverse_lazy
 from django.views.generic import ListView
 from django.views.generic.edit import CreateView
-from django.core.urlresolvers import reverse_lazy
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 from openebs.models import Kv15Stopmessage
 from openebs.form import Kv15StopMessageForm
 
@@ -18,7 +20,23 @@ class MessageListView(ListView):
         context['archive_list'] = self.model.objects.all()
         return context
 
+    # Require logged in
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(MessageListView, self).dispatch(*args, **kwargs)
+
 class MessageCreateView(CreateView):
     model = Kv15Stopmessage
     form_class = Kv15StopMessageForm
     success_url = reverse_lazy('msg_index')
+
+    def form_valid(self, form):
+        if self.request.user:
+            form.instance.user = self.request.user
+            form.instance.dataownercode = self.request.user.userprofile.company
+        return super(MessageCreateView, self).form_valid(form)
+
+    # Require logged in
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(MessageCreateView, self).dispatch(*args, **kwargs)
