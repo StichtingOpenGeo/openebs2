@@ -213,7 +213,7 @@ class Kv15Log(models.Model):
 
     class Meta:
         permissions = (
-            ("view_log", _("Kan logberichten inzien")),
+            ("view_log", _("Logberichten inzien")),
         )
 
 
@@ -247,8 +247,8 @@ class Kv15Stopmessage(models.Model):
     class Meta:
         unique_together = ('dataownercode', 'messagecodedate', 'messagecodenumber',)
         permissions = (
-            ("view_messages", _("Kan alle berichten bekijken")),
-            ("add_messages", _("Kan nieuwe berichten toevoegen, bestaande aanpassen of berichten verwijderen")),
+            ("view_messages", _("Berichten bekijken")),
+            ("add_messages", _("Berichten toevoegen, aanpassen of verwijderen")),
         )
 
     def save(self, *args, **kwargs):
@@ -285,8 +285,8 @@ class Kv15Scenario(models.Model):
 
     class Meta:
         permissions = (
-            ("view_scenario", _("Kan scenario's bekijken en gebruiken voor nieuwe berichten")),
-            ("add_scenario", _("Kan nieuwe secenario's aanmaken")),
+            ("view_scenario", _("Scenario's bekijken")),
+            ("add_scenario", _("Scenario's aanmaken")),
         )
 
 class Kv15Schedule(models.Model):

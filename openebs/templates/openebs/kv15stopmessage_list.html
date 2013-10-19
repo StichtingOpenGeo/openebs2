@@ -7,7 +7,7 @@
 
   <h2>Actieve berichten
       <a class="btn btn-success pull-right" href="{% url "msg_add" %}">
-        <span class="glyphicon glyphicon-plus-sign" style="color: white;"></span> {% trans "Nieuw bericht" %}
+        <span class="glyphicon glyphicon-plus-sign"></span> {% trans "Nieuw bericht" %}
       </a>
   </h2>
   <table class="table table-bordered table-condensed">
@@ -16,13 +16,13 @@
         <th class="col-lg-10">Message</th>
         <th class="col-lg-1">&nbsp;</th>
   </tr>
-  {% for msg in msg_list %}
+  {% for msg in active_list %}
     <tr>
         <td>{{ msg.messagecodenumber }}</td>
         <td>{{ msg.messagecontent }}</td>
         <td>
-            <a class="btn btn-link" href="{% url "msg_add" %}">
-                <span class="glyphicon glyphicon-plus-sign"></span> {% trans "Nieuw bericht" %}
+            <a class="btn btn-link pull-right" href="">
+                <span class="glyphicon glyphicon-trash"></span>
             </a>
         </td>
     </tr>

@@ -11,13 +11,13 @@ from openebs.form import Kv15StopMessageForm
 class MessageListView(ListView):
     model = Kv15Stopmessage
     # Get the currently active messages
-    context_object_name = 'current_list'
+    context_object_name = 'active_list'
     queryset = model.objects.filter(messagestarttime__lt=datetime.now, messageendtime__gt=datetime.now)
 
     def get_context_data(self, **kwargs):
         context = super(MessageListView, self).get_context_data(**kwargs)
         # Add the no longer active messages
-        context['archive_list'] = self.model.objects.all()
+        context['archive_list'] = self.model.objects.filter(messageendtime__lt=datetime.now)
         return context
 
     # Require logged in
