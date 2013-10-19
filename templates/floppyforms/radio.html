@@ -1,0 +1,5 @@
+<div class="btn-group" data-toggle="buttons">
+{% for group_name, choices in optgroups %}{% for choice in choices %}
+	<label class-toggle="btn-primary" class="btn btn-default{% if choice.0 in value %} active{% endif %}" for="{{ attrs.id }}_{{ forloop.counter }}"><input type="radio" id="{{ attrs.id }}_{{ forloop.counter }}" value="{{ choice.0 }}" name="{{ name }}"{% if required %} required{% endif %}{% if choice.0 in value %} checked{% endif %}> {{ choice.1 }}</label>
+{% endfor %}{% endfor %}
+</div>

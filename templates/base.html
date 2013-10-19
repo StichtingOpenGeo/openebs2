@@ -41,6 +41,9 @@
                 <b class="caret"></b>
             </a>
             <ul class="dropdown-menu">
+              {% if user.is_staff %}
+                <li><a href="{% url 'admin:index' %}">{% trans "Backoffice" %}</a></li>
+              {% endif %}
               <li><a href="{% url 'app_logout' %}">{% trans "Uitloggen" %}</a></li>
             </ul>
             {% else %}

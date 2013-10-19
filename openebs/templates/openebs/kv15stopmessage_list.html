@@ -1,20 +1,30 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
 
   <h1>Berichten</h1>
-  <a class="btn btn-default" href="{% url "msg_add" %}">Bericht toevoegen</a>
 
-  <h2>Actieve berichten</h2>
+  <h2>Actieve berichten
+      <a class="btn btn-success pull-right" href="{% url "msg_add" %}">
+        <span class="glyphicon glyphicon-plus-sign" style="color: white;"></span> {% trans "Nieuw bericht" %}
+      </a>
+  </h2>
   <table class="table table-bordered table-condensed">
   <tr>
         <th class="col-lg-1">Number</th>
-        <th class="col-lg-11">Message</th>
+        <th class="col-lg-10">Message</th>
+        <th class="col-lg-1">&nbsp;</th>
   </tr>
   {% for msg in msg_list %}
     <tr>
         <td>{{ msg.messagecodenumber }}</td>
         <td>{{ msg.messagecontent }}</td>
+        <td>
+            <a class="btn btn-link" href="{% url "msg_add" %}">
+                <span class="glyphicon glyphicon-plus-sign"></span> {% trans "Nieuw bericht" %}
+            </a>
+        </td>
     </tr>
   {% endfor %}
   </table>
