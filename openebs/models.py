@@ -8,7 +8,7 @@
 # into your database.
 from __future__ import unicode_literals
 
-from datetime import datetime
+from django.utils.timezone import now
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
@@ -226,7 +226,7 @@ class Kv15Stopmessage(models.Model):
     messagepriority = models.CharField(max_length=10, choices=MESSAGEPRIORITY, default='PTPROCESS', verbose_name=_("Prioriteit"))
     messagetype = models.CharField(max_length=10, choices=MESSAGETYPE, default='GENERAL', verbose_name=_("Type bericht"))
     messagedurationtype = models.CharField(max_length=10, choices=MESSAGEDURATIONTYPE, default='ENDTIME', verbose_name=_("Type tijdsrooster"))
-    messagestarttime = models.DateTimeField(null=True, blank=True, default=datetime.now, verbose_name=_("Begintijd"))
+    messagestarttime = models.DateTimeField(null=True, blank=True, default=now, verbose_name=_("Begintijd"))
     messageendtime = models.DateTimeField(null=True, blank=True, verbose_name=_("Eindtijd"))
     messagecontent = models.CharField(max_length=255, blank=True, verbose_name="Bericht")
     reasontype = models.SmallIntegerField(null=True, blank=True, choices=REASONTYPE, verbose_name=_("Type oorzaak"))
@@ -266,7 +266,7 @@ class Kv15Scenario(models.Model):
     messagepriority = models.CharField(max_length=10, choices=MESSAGEPRIORITY, default='PTPROCESS', verbose_name=_("Prioriteit"))
     messagetype = models.CharField(max_length=10, choices=MESSAGETYPE, default='GENERAL', verbose_name=_("Type bericht"))
     messagedurationtype = models.CharField(max_length=10, choices=MESSAGEDURATIONTYPE, default='ENDTIME', verbose_name=_("Type tijdsrooster"))
-    messagestarttime = models.DateTimeField(null=True, blank=True, default=datetime.now, verbose_name=_("Begintijd"))
+    messagestarttime = models.DateTimeField(null=True, blank=True, default=now, verbose_name=_("Begintijd"))
     messageendtime = models.DateTimeField(null=True, blank=True, verbose_name=_("Eindtijd"))
     messagecontent = models.CharField(max_length=255, blank=True, verbose_name="Bericht")
     reasontype = models.SmallIntegerField(null=True, blank=True, choices=REASONTYPE, verbose_name=_("Type oorzaak"))

@@ -1,5 +1,5 @@
 # Create your views here.
-from datetime import datetime
+from django.utils.timezone import now
 from django.core.urlresolvers import reverse_lazy
 from django.views.generic import ListView
 from django.views.generic.edit import CreateView
@@ -12,12 +12,12 @@ class MessageListView(ListView):
     model = Kv15Stopmessage
     # Get the currently active messages
     context_object_name = 'active_list'
-    queryset = model.objects.filter(messagestarttime__lt=datetime.now, messageendtime__gt=datetime.now)
+    queryset = model.objects.filter(messageendtime__gt=now)
 
     def get_context_data(self, **kwargs):
         context = super(MessageListView, self).get_context_data(**kwargs)
         # Add the no longer active messages
-        context['archive_list'] = self.model.objects.filter(messageendtime__lt=datetime.now)
+        context['archive_list'] = self.model.objects.filter(messageendtime__lt=now)
         return context
 
     # Require logged in
