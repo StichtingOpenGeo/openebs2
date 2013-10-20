@@ -8,10 +8,11 @@
 # into your database.
 from __future__ import unicode_literals
 
-from django.utils.timezone import now
-from django.db import models
+from django.db import models, IntegrityError
+from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext, ugettext_lazy as _
+from django.utils.timezone import now
 
 from kv15.enum import *
 
@@ -69,6 +70,11 @@ class Kv15Stopmessage(models.Model):
             ("add_messages", _("Berichten toevoegen, aanpassen of verwijderen")),
         )
 
+    def clean(self):
+        # Validate the object
+        if self.messageendtime < self.messagestarttime:
+            raise ValidationError(_("Eindtijd moet na eindtijd zijn"))
+
     def save(self, *args, **kwargs):
         # Set the messagecodenumber to the latest highest number for new messages
         if not self.messagecodenumber:
@@ -77,12 +83,18 @@ class Kv15Stopmessage(models.Model):
 
     def delete(self):
         self.isdeleted = True
-        # Don't perform the actual delete
-        # super(Kv15Stopmessage, self).delete()
+        self.save()
+        # Warning: Don't perform the actual delete here!
+
+    # This method actually deletes the object - mostly we won't want this however
+    def force_delete(self):
+        super(Kv15Stopmessage, self).delete()
 
     def get_latest_number(self):
         '''Get the currently highest number and add one if found or start with 1  '''
         num = Kv15Stopmessage.objects.filter(dataownercode=self.dataownercode, messagecodedate=self.messagecodedate).aggregate(models.Max('messagecodenumber'))
+        if num['messagecodenumber__max'] == 9999:
+            raise IntegrityError(ugettext("Teveel berichten vestuurd - probeer het morgen weer"))
         return num['messagecodenumber__max'] + 1 if num['messagecodenumber__max'] else 1
 
 class Kv15Scenario(models.Model):
