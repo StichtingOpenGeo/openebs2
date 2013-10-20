@@ -22,7 +22,7 @@ class UserProfile(models.Model):
     company = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
 
 class Kv15Log(models.Model):
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(auto_now=True)
     dataownercode = models.CharField(max_length=10)
     messagecodedate = models.DateField()
     messagecodenumber = models.DecimalField(max_digits=4, decimal_places=0)
@@ -34,6 +34,18 @@ class Kv15Log(models.Model):
         permissions = (
             ("view_log", _("Logberichten inzien")),
         )
+
+    @staticmethod
+    def create_log_entry(stop_message, ipaddress = None):
+        log = Kv15Log()
+        log.dataownercode = stop_message.dataownercode
+        log.messagecodedate = stop_message.messagecodedate
+        log.messagecodenumber = stop_message.messagecodenumber
+        log.user = stop_message.user
+        log.message = stop_message.messagecontent
+        log.ipaddress = ipaddress
+        log.save()
+        return log
 
 
 class Kv15Stopmessage(models.Model):
@@ -72,8 +84,8 @@ class Kv15Stopmessage(models.Model):
 
     def clean(self):
         # Validate the object
-        if self.messageendtime < self.messagestarttime:
-            raise ValidationError(_("Eindtijd moet na eindtijd zijn"))
+        if self.messageendtime is not None and self.messageendtime < self.messagestarttime:
+            raise ValidationError(_("Eindtijd moet na begintijd zijn"))
 
     def save(self, *args, **kwargs):
         # Set the messagecodenumber to the latest highest number for new messages

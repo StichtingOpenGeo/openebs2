@@ -5,7 +5,7 @@ from django.views.generic import ListView
 from django.views.generic.edit import CreateView
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from openebs.models import Kv15Stopmessage
+from openebs.models import Kv15Stopmessage, Kv15Log
 from openebs.form import Kv15StopMessageForm
 
 class MessageListView(ListView):
@@ -34,9 +34,24 @@ class MessageCreateView(CreateView):
         if self.request.user:
             form.instance.user = self.request.user
             form.instance.dataownercode = self.request.user.userprofile.company
-        return super(MessageCreateView, self).form_valid(form)
+
+            # Push and then save
+
+        # Save and then log
+        ret = super(MessageCreateView, self).form_valid(form)
+        Kv15Log.create_log_entry(form.instance, get_client_ip(self.request))
+        return ret
 
     # Require logged in
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
         return super(MessageCreateView, self).dispatch(*args, **kwargs)
+
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip

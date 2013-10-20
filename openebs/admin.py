@@ -4,9 +4,10 @@ from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 
 from django.utils.translation import ugettext_lazy as _
-from openebs.models import Kv15Stopmessage, UserProfile
+from openebs.models import Kv15Stopmessage, Kv15Log, UserProfile
 
 admin.site.register(Kv15Stopmessage)
+admin.site.register(Kv15Log)
 
 class ProfileInline(admin.StackedInline):
     model = UserProfile

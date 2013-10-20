@@ -9,7 +9,7 @@ from django.test import TestCase
 from django.db import IntegrityError
 from django.utils.timezone import now
 from django.contrib.auth.models import User
-from models import Kv15Stopmessage
+from openebs.tests.utils import TestUtils
 
 class TestKv15MessageModel(TestCase):
     user = None
@@ -17,41 +17,33 @@ class TestKv15MessageModel(TestCase):
     def setUp(self):
         self.user = User.objects.create_user("test")
 
-    def create_message_default(self):
-        msg = Kv15Stopmessage()
-        msg.user = self.user
-        msg.messagecodedate = now().date().isoformat()
-        msg.messageendtime = msg.messagestarttime + timedelta(1)
-        msg.measurecontent = "This is a test message"
-        return msg
-
     def test_new_message_twice(self):
-        msg = self.create_message_default()
+        msg = TestUtils.create_message_default(self.user)
         msg.save()
         self.assertEqual(msg.messagecodenumber, 1)
 
-        msg = self.create_message_default()
+        msg = TestUtils.create_message_default(self.user)
         msg.save()
 
         self.assertEqual(msg.messagecodenumber, 2)
 
     def test_new_message_too_many(self):
-        msg = self.create_message_default()
+        msg = TestUtils.create_message_default(self.user)
         msg.messagecodenumber = 9999
         msg.save()
         self.assertEqual(msg.messagecodenumber, 9999)
 
-        msg = self.create_message_default()
+        msg = TestUtils.create_message_default(self.user)
         with self.assertRaises(IntegrityError):
             msg.save()
 
     def test_new_message_per_day(self):
-        msg = self.create_message_default()
+        msg = TestUtils.create_message_default(self.user)
         msg.save()
         self.assertEqual(msg.messagecodenumber, 1)
 
         # Create another message and add a day
-        msg = self.create_message_default()
+        msg = TestUtils.create_message_default(self.user)
         date = now() + timedelta(1)
         msg.messagecodedate = date.date().isoformat()
         msg.save()
@@ -59,7 +51,7 @@ class TestKv15MessageModel(TestCase):
         self.assertEqual(msg.messagecodenumber, 1)
 
     def test_delete(self):
-        msg = self.create_message_default()
+        msg = TestUtils.create_message_default(self.user)
         msg.save()
         self.assertFalse(msg.isdeleted)
         msg_pk = msg.pk
@@ -72,7 +64,7 @@ class TestKv15MessageModel(TestCase):
         self.assertEqual(msg_code, msg.messagecodenumber)
 
     def test_force_delete(self):
-        msg = self.create_message_default()
+        msg = TestUtils.create_message_default(self.user)
         msg.save()
         msg.force_delete()
 
