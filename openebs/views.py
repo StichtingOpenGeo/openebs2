@@ -1,24 +1,25 @@
 # Create your views here.
-from django.utils.timezone import now
 from django.core.urlresolvers import reverse_lazy
+from django.db.models import Q
 from django.views.generic import ListView
-from django.views.generic.edit import CreateView
+from django.views.generic.edit import CreateView, DeleteView
 from django.contrib.auth.decorators import login_required
+from django.utils.timezone import now
 from django.utils.decorators import method_decorator
 from utils.client import get_client_ip
-from openebs.models import Kv15Stopmessage, Kv15Log
+from openebs.models import Kv15Stopmessage, Kv15Log, Kv15Scenario
 from openebs.form import Kv15StopMessageForm
 
 class MessageListView(ListView):
     model = Kv15Stopmessage
     # Get the currently active messages
     context_object_name = 'active_list'
-    queryset = model.objects.filter(messageendtime__gt=now)
+    queryset = model.objects.filter(messageendtime__gt=now, isdeleted=False)
 
     def get_context_data(self, **kwargs):
         context = super(MessageListView, self).get_context_data(**kwargs)
         # Add the no longer active messages
-        context['archive_list'] = self.model.objects.filter(messageendtime__lt=now)
+        context['archive_list'] = self.model.objects.filter(Q(messageendtime__lt=now) | Q(isdeleted=True)).order_by('-messagecodedate', '-messagecodenumber')
         return context
 
     # Require logged in
@@ -47,3 +48,21 @@ class MessageCreateView(CreateView):
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
         return super(MessageCreateView, self).dispatch(*args, **kwargs)
+
+class MessageDeleteView(DeleteView):
+    model = Kv15Stopmessage
+    success_url = reverse_lazy('msg_index')
+
+    # Require logged in
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(MessageDeleteView, self).dispatch(*args, **kwargs)
+
+
+class ScenarioListView(ListView):
+    model = Kv15Scenario
+
+    # Require logged in
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(ScenarioListView, self).dispatch(*args, **kwargs)

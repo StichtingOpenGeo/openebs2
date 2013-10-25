@@ -10,37 +10,49 @@
         <span class="glyphicon glyphicon-plus-sign"></span> {% trans "Nieuw bericht" %}
       </a>
   </h2>
-  <table class="table table-bordered table-condensed">
+  <table class="table table-bordered table-striped table-condensed">
   <tr>
-        <th class="col-lg-1">Number</th>
-        <th class="col-lg-10">Message</th>
+        <th class="col-lg-1">{% trans "Volgnummer"%}</th>
+        <th class="col-lg-8">{% trans "Bericht" %}</th>
+        <th class="col-lg-2">{% trans "Tijden" %}</th>
         <th class="col-lg-1">&nbsp;</th>
   </tr>
   {% for msg in active_list %}
-    <tr>
+      <tr class="{% if msg.is_future %}warning{% endif %}">
         <td>{{ msg.messagecodenumber }}</td>
         <td>{{ msg.messagecontent }}</td>
+        <td>{{ msg.messagestarttime|date:"H:i" }} - {{ msg.messageendtime|date:"H:i" }}</td>
         <td>
-            <a class="btn btn-link pull-right" href="">
-                <span class="glyphicon glyphicon-trash"></span>
-            </a>
+            <form method="post" action="{% url "msg_delete" msg.id %}">
+                {% csrf_token %}
+                <button class="btn btn-link pull-right">
+                    <span class="glyphicon glyphicon-trash"></span>
+                </button>
+            </form>
         </td>
     </tr>
+  {% empty %}
+      <tr><td colspan=4 class="text-center"><em>{% trans "Geen berichten gevonden" %}</em></td></tr>
   {% endfor %}
   </table>
+  <p><small>{% trans "Geel = toekomstig bericht" %}</small></p>
 
   <h2>Verlopen berichten</h2>
   <table class="table table-bordered table-condensed">
   <tr>
-        <th class="col-lg-1">Number</th>
-        <th class="col-lg-11">Message</th>
+      <th class="col-lg-1">{% trans "Volgnummer"%}</th>
+      <th class="col-lg-9">{% trans "Bericht" %}</th>
+      <th class="col-lg-2">{% trans "Tijden" %}</th>
   </tr>
   {% for msg in archive_list %}
-    <tr>
+    <tr class="{% if msg.isdeleted %}danger{% endif %}">
         <td>{{ msg.messagecodenumber }}</td>
         <td>{{ msg.messagecontent }}</td>
+        <td>{{ msg.messagestarttime|date:"H:i" }} - {{ msg.messageendtime|date:"H:i" }}</td>
     </tr>
+  {% empty %}
+      <tr><td colspan=3 class="text-center"><em>{% trans "Geen berichten gevonden" %}</em></td></tr>
   {% endfor %}
   </table>
-
+  <p><small>{% trans "Rood = verwijderd bericht" %}</small></p>
 {% endblock %}

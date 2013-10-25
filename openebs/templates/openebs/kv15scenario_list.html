@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+  <h1>{% trans "Scenarios" %}
+      <a class="btn btn-success pull-right" href="#">
+        <span class="glyphicon glyphicon-plus-sign"></span> {% trans "Nieuw scenario" %}
+      </a>
+  </h1>
+  <table class="table table-bordered table-striped table-condensed">
+  <tr>
+        <th class="col-lg-1">{% trans "Naam"%}</th>
+        <th class="col-lg-8">{% trans "Bericht" %}</th>
+        <th class="col-lg-2">&nbsp;</th>
+  </tr>
+  {% for scenario in object_list %}
+      <tr>
+        <td>{{ scenario.scenario }}</td>
+          <td>{{ scenario.messagecontent|default:"<em><geen></em>" }}&nbsp;</td>
+        <td class="text-right">
+            <a href="#" class="btn btn-primary pull-left">
+                <span class="glyphicon glyphicon-share"></span> {% trans "Toepassen als bericht" %}&nbsp;&nbsp;
+            </a>
+
+            <form method="post" action="">
+                {% csrf_token %}
+                <button class="btn btn-link pull-right">
+                    <span class="glyphicon glyphicon-trash"></span> {% trans "Verwijder" %}
+                </button>
+            </form>
+            <a href="#" class="btn btn-link pull-right">
+                <span class="glyphicon glyphicon-edit"></span> {% trans "Bewerk" %}&nbsp;&nbsp;
+            </a>
+        </td>
+    </tr>
+  {% empty %}
+      <tr><td colspan=4 class="text-center"><em>{% trans "Er zijn nog geen scenarios" %}</em></td></tr>
+  {% endfor %}
+  </table>
+{% endblock %}

@@ -31,6 +31,8 @@ class Kv15Log(models.Model):
     ipaddress = models.CharField(max_length=100)
 
     class Meta:
+        verbose_name = _('Logbericht')
+        verbose_name_plural = _('Logberichten')
         permissions = (
             ("view_log", _("Logberichten inzien")),
         )
@@ -76,11 +78,19 @@ class Kv15Stopmessage(models.Model):
     isdeleted = models.BooleanField(default=False, verbose_name=_("Verwijderd?"))
 
     class Meta:
+        verbose_name = _('KV15 Bericht')
+        verbose_name_plural = _('KV15 Berichten')
         unique_together = ('dataownercode', 'messagecodedate', 'messagecodenumber',)
         permissions = (
             ("view_messages", _("Berichten bekijken")),
             ("add_messages", _("Berichten toevoegen, aanpassen of verwijderen")),
         )
+
+    def __unicode__(self):
+        message = self.messagecontent
+        if message == "":
+            message = _("<geen bericht>")
+        return "%s : %s" % (self.scenario, message)
 
     def clean(self):
         # Validate the object
@@ -89,8 +99,7 @@ class Kv15Stopmessage(models.Model):
 
     def save(self, *args, **kwargs):
         # Set the messagecodenumber to the latest highest number for new messages
-        if not self.messagecodenumber:
-            self.messagecodenumber = self.get_latest_number()
+        self.messagecodenumber = self.get_latest_number()
         super(Kv15Stopmessage, self).save(*args, **kwargs)
 
     def delete(self):
@@ -101,6 +110,9 @@ class Kv15Stopmessage(models.Model):
     # This method actually deletes the object - mostly we won't want this however
     def force_delete(self):
         super(Kv15Stopmessage, self).delete()
+
+    def is_future(self):
+        return self.messagestarttime > now()
 
     def get_latest_number(self):
         '''Get the currently highest number and add one if found or start with 1  '''
@@ -131,7 +143,15 @@ class Kv15Scenario(models.Model):
     advicecontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg advies"))
     messagetimestamp = models.DateTimeField(auto_now=True)
 
+    def __unicode__(self):
+        message = self.messagecontent
+        if message == "":
+            message = _("<geen bericht>")
+        return "%s : %s" % (self.scenario, message)
+
     class Meta:
+        verbose_name = _('Scenario')
+        verbose_name_plural = _('Scenarios')
         permissions = (
             ("view_scenario", _("Scenario's bekijken")),
             ("add_scenario", _("Scenario's aanmaken")),
