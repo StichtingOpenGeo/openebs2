@@ -13,6 +13,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext, ugettext_lazy as _
 from django.utils.timezone import now
+from json_field import JSONField
 
 from kv15.enum import *
 
@@ -21,9 +22,21 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User)
     company = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
 
+class Kv1Line(models.Model):
+    dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
+    lineplanningnumber = models.CharField(max_length=10)
+    publiclinenumber = models.CharField(max_length=10)
+    headsign = models.CharField(max_length=10)
+    stop_map = JSONField()
+
+    class Meta:
+        verbose_name = _("Lijninformatie")
+        verbose_name_plural = _("Lijneninformatie")
+        unique_together = ('dataownercode', 'lineplanningnumber')
+
 class Kv15Log(models.Model):
     timestamp = models.DateTimeField(auto_now=True)
-    dataownercode = models.CharField(max_length=10)
+    dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
     messagecodedate = models.DateField()
     messagecodenumber = models.DecimalField(max_digits=4, decimal_places=0)
     user = models.ForeignKey(User)
@@ -151,7 +164,7 @@ class Kv15Scenario(models.Model):
 
     class Meta:
         verbose_name = _('Scenario')
-        verbose_name_plural = _('Scenarios')
+        verbose_name_plural = _("Scenario's")
         permissions = (
             ("view_scenario", _("Scenario's bekijken")),
             ("add_scenario", _("Scenario's aanmaken")),

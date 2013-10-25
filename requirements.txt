@@ -1,10 +1,10 @@
-Django>=1.5.1
+Django>=1.5.5
 south
 psycopg2==2.4.5
 django-admin-bootstrapped
 django-floppyforms
-django-extra-views
 django-guardian
+django-json-field
 
 # Dev
 django-debug-toolbar

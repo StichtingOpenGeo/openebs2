@@ -134,6 +134,7 @@ INSTALLED_APPS = (
 
     # Libs
     'south',
+    'json_field',
     'floppyforms',
 
     'django_admin_bootstrapped',
