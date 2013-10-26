@@ -11,9 +11,8 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'openebs2',              # Or path to database file if using sqlite3.
-        # The following settings are not used with sqlite3:
+        'ENGINE': 'django.contrib.gis.db.backends.postgis', # GeoDjango
+        'NAME': 'openebs2',
         'USER': '',
         'PASSWORD': '',
         'HOST': '',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
@@ -129,13 +128,17 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.gis',
+
     # Our app
     'openebs',
+    'kv1', # Import stuff
 
     # Libs
     'south',
     'json_field',
     'floppyforms',
+
 
     'django_admin_bootstrapped',
     'django.contrib.admin',
