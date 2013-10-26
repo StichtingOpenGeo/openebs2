@@ -13,7 +13,6 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext, ugettext_lazy as _
 from django.utils.timezone import now
-from json_field import JSONField
 
 from kv15.enum import *
 
@@ -21,18 +20,6 @@ class UserProfile(models.Model):
     ''' Store additional user data as we don't really want a custom user model perse '''
     user = models.OneToOneField(User)
     company = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
-
-class Kv1Line(models.Model):
-    dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
-    lineplanningnumber = models.CharField(max_length=10)
-    publiclinenumber = models.CharField(max_length=10)
-    headsign = models.CharField(max_length=10)
-    stop_map = JSONField()
-
-    class Meta:
-        verbose_name = _("Lijninformatie")
-        verbose_name_plural = _("Lijneninformatie")
-        unique_together = ('dataownercode', 'lineplanningnumber')
 
 class Kv15Log(models.Model):
     timestamp = models.DateTimeField(auto_now=True)
