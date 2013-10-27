@@ -3,15 +3,109 @@
 
 {% block content %}
 <h1>Nieuw bericht</h1>
-<a class="btn btn-default" href="{% url "msg_index" %}">Back to list</a>
-<form method="post" class="form-horizontal" action="{% url "msg_add" %}">
-    {% csrf_token %}
-    {% form form %}
-    <div class="form-group">
-        <div class="col-lg-offset-2 col-lg-10">
-            <button type="submit" class="btn btn-primary">{% trans "Toevoegen" %}</button>
-        </div>
+<div class="row">
+    <div class="col-lg-3">
+        <h2>Lijnen</h2>
+        <div class="input-group">
+            <span class="input-group-addon"><span class="glyphicon glyphicon-search"></span></span>
+            <input type="text" class="form-control" id="line_search" placeholder="{% trans 'Lijnnummer of eindbestemming' %}">
+        </div><br />
+        <table class="table table-condensed table-hover">
+            <thead>
+                <tr>
+                    <th>{% trans "Lijn" %}</th>
+                    <th>{% trans "Eindbestemming" %}</th>
+                </tr>
+            </thead>
+            <tbody id="rows">
+                <tr>
+                    <td>1</td>
+                    <td>Velp - Oosterbeek</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>Geitenkamp</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
-</form>
+    <div class="col-lg-5">
+        <h2>Haltes</h2>
+        <table class="table table-hover" id="stops">
 
+        </table>
+    </div>
+    <div class="col-lg-4">
+        <h2>Bericht</h2>
+        <a class="btn btn-default" href="{% url "msg_index" %}">Back to list</a>
+        <form method="post" class="form-horizontal" action="{% url "msg_add" %}">
+            {% csrf_token %}
+            {% form form %}
+            <div class="form-group">
+                <div class="col-lg-offset-2 col-lg-10">
+                    <button type="submit" class="btn btn-primary">{% trans "Toevoegen" %}</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block js_init %}
+        $('#line_search').on('keyup', changeSearch);
+        $( "body" ).on('click', ".line", showStops);
+{% endblock %}
+
+{% block js %}
+    function changeSearch(event) {
+        if ($("#line_search").val().length > 2) {
+            $.ajax('/line/'+$("#line_search").val(), {
+                success : writeList
+            })
+        }
+    }
+
+    function writeList(data, status) {
+        validIds = []
+        /* Add them all, as neccesary */
+        for (key in data.object_list) {
+            line = data.object_list[key]
+            validIds.push('l'+line.pk)
+            if (!$('#l'+line.pk).length) {
+                row = '<tr class="line" id="l'+line.pk+'"><td>'+line.lineplanningnumber+ '</td>'
+                row += '<td>'+line.headsign+'</td></tr>'
+                $(row).hide().appendTo("#rows").fadeIn(999)
+            }
+        }
+        /* Cleanup */
+        $("#rows tr").each(function(index) {
+            if ($.inArray($(this).attr('id'), validIds) == -1) {
+                $(this).fadeOut(999).remove()
+            }
+        });
+    }
+
+    function showStops(event) {
+        $(this).addClass('active')
+        $.ajax('/line/'+$(this).attr('id').substring(1)+'/stops', {
+                success : writeLine
+        })
+    }
+
+    function writeLine(data, status) {
+        $('#stops').fadeOut().empty()
+        for (key in data.object.stop_map) {
+            row = data.object.stop_map[key]
+            console.log(row)
+            if (row.left != null && row.right != null) {
+                $('#stops').append('<tr><td><small>'+row.left.name+'</small></td><td><small>'+row.right.name+'</small></td></tr>');
+            } else if (row.left != null) {
+                $('#stops').append('<tr><td><small>'+row.left.name+'</small></td><td>&nbsp;</td></tr>');
+            } else if (row.right != null) {
+                $('#stops').append('<tr><td>&nbsp;</td><td><small>'+row.right.name+'</small></td></tr>');
+            }
+        }
+        $('#stops').fadeIn(999)
+    }
 {% endblock %}

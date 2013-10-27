@@ -16,8 +16,15 @@
       <script src="../../assets/js/html5shiv.js"></script>
       <script src="../../assets/js/respond.min.js"></script>
     <![endif]-->
+    <script type="text/javascript">
+        {% block js %} {% endblock %}
+
+        function ebs_init() {
+            {% block js_init %} {% endblock %}
+        }
+    </script>
 </head>
-<body>
+<body onLoad="ebs_init()">
     <nav class="navbar navbar-default" role="navigation">
       <!-- Brand and toggle get grouped for better mobile display -->
       <div class="navbar-header">
@@ -71,5 +78,6 @@
     </div>
     <script src="{% static 'js/jquery-1.10.2.min.js' %}"></script>
     <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    {% block extra_js %} {% endblock %}
 </body>
 </html>

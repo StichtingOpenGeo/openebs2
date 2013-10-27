@@ -9,5 +9,6 @@ django-json-field
 # Dev
 django-debug-toolbar
 django-rosetta
+django-braces
 
 transitfeed # Read Write GTFS

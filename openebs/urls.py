@@ -3,7 +3,7 @@ from openebs.views import MessageListView, MessageCreateView, MessageDeleteView,
 
 urlpatterns = patterns('',
     # Berichten views
-    url(r'^bericht$', MessageListView.as_view(), name="msg_index"),
+    url(r'^$', MessageListView.as_view(), name="msg_index"),
     url(r'^bericht/nieuw$', MessageCreateView.as_view(), name="msg_add"),
     url(r'^bericht/verwijderen/(?P<pk>\d+)$', MessageDeleteView.as_view(), name="msg_delete"),
 

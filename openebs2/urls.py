@@ -4,6 +4,7 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     url(r'^', include('openebs.urls')),
+    url(r'^', include('kv1.urls')),
     url(r'^inloggen/$', 'django.contrib.auth.views.login', {'template_name': 'users/login.html'}, name="app_login"),
     url(r'^uitloggen/$', 'django.contrib.auth.views.logout_then_login', name="app_logout"),
     # Uncomment the admin/doc line below to enable admin documentation:
