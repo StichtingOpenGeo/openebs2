@@ -4,3 +4,15 @@
 img.user-icon {
     width: 36px;
 }
+
+table.openebs-stops tbody tr td{
+    font-size: 85%;
+    padding: 0;
+    vertical-align: middle;
+}
+table.openebs-stops td.img{
+    border: 0px;
+}
+table.openebs-stops tr:hover td.img{
+    border: 0px;
+}

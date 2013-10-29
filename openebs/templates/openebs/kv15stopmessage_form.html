@@ -2,10 +2,9 @@
 {% load floppyforms i18n %}
 
 {% block content %}
-<h1>Nieuw bericht</h1>
 <div class="row">
     <div class="col-lg-3">
-        <h2>Lijnen</h2>
+        <h2>Lijn</h2>
         <div class="input-group">
             <span class="input-group-addon"><span class="glyphicon glyphicon-search"></span></span>
             <input type="text" class="form-control" id="line_search" placeholder="{% trans 'Lijnnummer of eindbestemming' %}">
@@ -19,25 +18,19 @@
             </thead>
             <tbody id="rows">
                 <tr>
-                    <td>1</td>
-                    <td>Velp - Oosterbeek</td>
-                </tr>
-                <tr>
-                    <td>3</td>
-                    <td>Geitenkamp</td>
+                    <td colspan="2"><em>{% trans "Typ een eindbestemming in om te zoeken" %}</em></td>
                 </tr>
             </tbody>
         </table>
     </div>
     <div class="col-lg-5">
         <h2>Haltes</h2>
-        <table class="table table-hover" id="stops">
+        <table class="table openebs-stops table-hover" id="stops">
 
         </table>
     </div>
     <div class="col-lg-4">
         <h2>Bericht</h2>
-        <a class="btn btn-default" href="{% url "msg_index" %}">Back to list</a>
         <form method="post" class="form-horizontal" action="{% url "msg_add" %}">
             {% csrf_token %}
             {% form form %}
@@ -87,7 +80,10 @@
     }
 
     function showStops(event) {
-        $(this).addClass('active')
+        $("#rows tr.success").removeClass('success');
+        $(".suc-icon").remove();
+        $(this).addClass('success');
+        $(this).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
         $.ajax('/line/'+$(this).attr('id').substring(1)+'/stops', {
                 success : writeLine
         })
@@ -97,13 +93,12 @@
         $('#stops').fadeOut().empty()
         for (key in data.object.stop_map) {
             row = data.object.stop_map[key]
-            console.log(row)
             if (row.left != null && row.right != null) {
-                $('#stops').append('<tr><td><small>'+row.left.name+'</small></td><td><small>'+row.right.name+'</small></td></tr>');
+                $('#stops').append('<tr><td>'+row.left.name+'</td><td class="img"><img src="/static/img/stop-both.png"></td><td>'+row.right.name+'</td></tr>');
             } else if (row.left != null) {
-                $('#stops').append('<tr><td><small>'+row.left.name+'</small></td><td>&nbsp;</td></tr>');
+                $('#stops').append('<tr><td>'+row.left.name+'</td><td class="img"><img src="/static/img/stop-left.png"></td><td>&nbsp;</td></tr>');
             } else if (row.right != null) {
-                $('#stops').append('<tr><td>&nbsp;</td><td><small>'+row.right.name+'</small></td></tr>');
+                $('#stops').append('<tr><td>&nbsp;</td><td class="img"><img src="/static/img/stop-right.png"></td><td>'+row.right.name+'</td></tr>');
             }
         }
         $('#stops').fadeIn(999)
