@@ -31,9 +31,9 @@
     </div>
     <div class="col-lg-4">
         <h2>Bericht</h2>
-        <form method="post" class="form-horizontal" action="{% url "msg_add" %}">
+        <form method="post" class="form" action="{% url "msg_add" %}">
             {% csrf_token %}
-            {% form form %}
+            {% form form using "floppyforms/layouts/bootstrap_vertical.html" %}
             <div class="form-group">
                 <div class="col-lg-offset-2 col-lg-10">
                     <button type="submit" class="btn btn-primary">{% trans "Toevoegen" %}</button>
