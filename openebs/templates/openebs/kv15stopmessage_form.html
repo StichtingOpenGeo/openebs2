@@ -54,6 +54,7 @@
         $('#line_search').on('keyup', changeSearch);
         $( "body" ).on('click', ".line", showStops);
         $( "body" ).on('click', ".stop", selectStop);
+        $( "body" ).on('click', ".stop-remove", removeStop);
 {% endblock %}
 
 {% block js %}
@@ -98,14 +99,26 @@
     }
 
     function selectStop(event) {
-        console.log($(this).attr('id')+'-'+$(this).text());
-        if ($(this).hasClass('stop-left')) {
-           direction = "heen";
-        } else {
-           direction = "trg";
+        if ($.inArray($(this).attr('id'), selectedStops) == -1) {
+            console.log($(this).attr('id')+'-'+$(this).text());
+            selectedStops.push($(this).attr('id'));
+            if ($(this).hasClass('stop-left')) {
+                direction = "heen";
+            } else {
+                direction = "trg";
+            }
+            delLink = '<span class="stop-remove glyphicons glyphicon glyphicon-remove"></span>';
+            $("#halte-list").append('<span class="label label-primary" id="s'+$(this).attr('id')+'">'+$(this).text()+' ('+direction+') '+delLink+ '</span>&nbsp;')
         }
-        delLink = '<span class="stop-remove glyphicons glyphicon glyphicon-remove"></span>';
-        $("#halte-list").append('<span class="label label-primary">'+$(this).text()+' ('+direction+') '+delLink+ '</span>&nbsp;')
+    }
+
+    function removeStop(event) {
+        $id = $(this).parent().attr('id').substring(1);
+        var i = selectedStops.indexOf($id);
+        if (i != -1) {
+            selectedStops.splice(i, 1);
+            $(this).parent().remove();
+        }
     }
 
     function writeLine(data, status) {
