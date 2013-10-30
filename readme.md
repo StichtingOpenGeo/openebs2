@@ -17,3 +17,7 @@ Tool for posting KV15 messages
 1. Run ```python manage.py syncdb```
 
 1. Run ```python manage.py migrate```
+
+1. Run ```python manage.py import_html lines/``` where lines is a folder containing HTML-based line data from OpenEBS1
+
+1. Run ```python manage.py import_gtfs gtfs-nl.zip/``` where gtfs-nl.zip is the latest GTFS from OVApi
