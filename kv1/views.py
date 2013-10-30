@@ -28,7 +28,7 @@ class LineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
     def get_queryset(self):
         qry = super(LineSearchView, self).get_queryset()
         qry = qry.filter(dataownercode=self.request.user.userprofile.company) \
-            .exclude(headsign__exact='') \
+            .order_by('lineplanningnumber') \
             .values('pk', 'dataownercode', 'headsign', 'lineplanningnumber')
         if self.kwargs['search']:
             pass

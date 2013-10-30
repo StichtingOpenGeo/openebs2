@@ -6,7 +6,6 @@ class DatePicker(forms.DateInput):
 
     class Media:
         js = (
-            'js/jquery.min.js',
             'js/jquery-ui.min.js',
         )
         css = {
