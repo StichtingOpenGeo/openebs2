@@ -1,10 +1,14 @@
 from braces.views import JSONResponseMixin, LoginRequiredMixin
+from django.db.models import Q
 from django.db.models.query import QuerySet
 from django.shortcuts import get_object_or_404
 from django.views.generic import ListView, DetailView
 from kv1.models import Kv1Line
 
 # TODO Refactor this to be an proper view based off some other model class
+from openebs.models import Kv15StopmessageLineplanningnumber
+
+
 class JSONListResponseMixin(JSONResponseMixin):
     render_object = None #Name of thing to get from context object
 
@@ -23,11 +27,12 @@ class LineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
 
     def get_queryset(self):
         qry = super(LineSearchView, self).get_queryset()
-        qry = qry.filter(dataownercode=self.request.user.userprofile.company)\
-                  .exclude(headsign__exact='')\
-                  .values('pk', 'dataownercode', 'headsign', 'lineplanningnumber')
+        qry = qry.filter(dataownercode=self.request.user.userprofile.company) \
+            .exclude(headsign__exact='') \
+            .values('pk', 'dataownercode', 'headsign', 'lineplanningnumber')
         if self.kwargs['search']:
-            qry = qry.filter(headsign__icontains=self.kwargs['search'])
+            pass
+        qry = qry.filter(Q(headsign__icontains=self.kwargs['search']) | Q(lineplanningnumber__startswith=self.kwargs['search']))
         return qry
 
 class LineShowView(LoginRequiredMixin, JSONListResponseMixin, DetailView):

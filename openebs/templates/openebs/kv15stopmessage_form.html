@@ -52,7 +52,7 @@
 
 {% block js %}
     function changeSearch(event) {
-        if ($("#line_search").val().length > 2) {
+        if ($("#line_search").val().length > 0) {
             $.ajax('/line/'+$("#line_search").val(), {
                 success : writeList
             })
