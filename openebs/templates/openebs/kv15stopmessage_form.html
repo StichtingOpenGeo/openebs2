@@ -32,6 +32,11 @@
     <div class="col-lg-4">
         <h2>Bericht</h2>
         <form method="post" class="form" action="{% url "msg_add" %}">
+            <div class="control-group">
+                <label>{% trans "Haltes" %}</label>
+                <p class="form-control-static" id="halte-list">&nbsp;</p><br />
+                <input type="hidden" id="haltes" name="haltes">
+            </div>
             {% csrf_token %}
             {% form form using "floppyforms/layouts/bootstrap_vertical.html" %}
             <div class="form-group">
@@ -48,9 +53,12 @@
 {% block js_init %}
         $('#line_search').on('keyup', changeSearch);
         $( "body" ).on('click', ".line", showStops);
+        $( "body" ).on('click', ".stop", selectStop);
 {% endblock %}
 
 {% block js %}
+    var selectedStops = []
+
     function changeSearch(event) {
         if ($("#line_search").val().length > 0) {
             $.ajax('/line/'+$("#line_search").val(), {
@@ -89,18 +97,47 @@
         })
     }
 
+    function selectStop(event) {
+        console.log($(this).attr('id')+'-'+$(this).text());
+        if ($(this).hasClass('stop-left')) {
+           direction = "heen";
+        } else {
+           direction = "trg";
+        }
+        delLink = '<span class="stop-remove glyphicons glyphicon glyphicon-remove"></span>';
+        $("#halte-list").append('<span class="label label-primary">'+$(this).text()+' ('+direction+') '+delLink+ '</span>&nbsp;')
+    }
+
     function writeLine(data, status) {
         $('#stops').fadeOut(200).empty();
+        out = ""
         for (key in data.object.stop_map) {
-            row = data.object.stop_map[key]
-            if (row.left != null && row.right != null) {
-                $('#stops').append('<tr><td>'+row.left.name+'</td><td class="img"><img src="/static/img/stop-both.png"></td><td>'+row.right.name+'</td></tr>');
-            } else if (row.left != null) {
-                $('#stops').append('<tr><td>'+row.left.name+'</td><td class="img"><img src="/static/img/stop-left.png"></td><td>&nbsp;</td></tr>');
-            } else if (row.right != null) {
-                $('#stops').append('<tr><td>&nbsp;</td><td class="img"><img src="/static/img/stop-right.png"></td><td>'+row.right.name+'</td></tr>');
-            }
+            out += renderRow(data.object.stop_map[key])
         }
+        $('#stops').append(out)
         $('#stops').fadeIn(200);
+    }
+
+    function renderRow(row) {
+        out = '<tr>';
+        if (row.left != null) {
+            out += '<td class="stop stop-left" id="s'+row.left.id+'">'+row.left.name+'</td>';
+        } else {
+            out += '<td>&nbsp;</td>';
+        }
+        if (row.left != null && row.right != null) {
+            out += '<td class="img"><img src="/static/img/stop-both.png"></td>'
+        } else if (row.left != null) {
+            out += '<td class="img"><img src="/static/img/stop-left.png"></td>'
+        } else if (row.right != null) {
+            out += '<td class="img"><img src="/static/img/stop-right.png"></td>'
+        }
+        if (row.right != null) {
+            out += '<td class="stop stop-right" id="s'+row.right.id+'">'+row.right.name+'</td>';
+        } else {
+            out += '<td>&nbsp;</td>';
+        }
+        out += '</tr>';
+        return out
     }
 {% endblock %}
