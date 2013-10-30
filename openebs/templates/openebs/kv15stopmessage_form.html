@@ -90,7 +90,7 @@
     }
 
     function writeLine(data, status) {
-        $('#stops').fadeOut().empty()
+        $('#stops').fadeOut(200).empty();
         for (key in data.object.stop_map) {
             row = data.object.stop_map[key]
             if (row.left != null && row.right != null) {
@@ -101,6 +101,6 @@
                 $('#stops').append('<tr><td>&nbsp;</td><td class="img"><img src="/static/img/stop-right.png"></td><td>'+row.right.name+'</td></tr>');
             }
         }
-        $('#stops').fadeIn(999)
+        $('#stops').fadeIn(200);
     }
 {% endblock %}
