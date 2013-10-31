@@ -20,7 +20,7 @@
             </thead>
             <tbody id="rows">
                 <tr>
-                    <td colspan="2" class="text-center"><em>{% trans "Typ een eindbestemming in om te zoeken" %}</em></td>
+                    <td colspan="2" class="text-center"><em>{% trans "Typ een eindbestemming of lijnnummer om een lijn te zoeken" %}</em></td>
                 </tr>
             </tbody>
         </table>
@@ -28,7 +28,7 @@
     <div class="col-lg-5">
         <h2>Haltes</h2>
         <table class="table openebs-stops" id="stops">
-
+            <tr class="help text-center"><td><em>Klik een lijn om haltes hier te zien</em></td></tr>
         </table>
     </div>
     <div class="col-lg-4">
@@ -36,7 +36,7 @@
         <form method="post" class="form" action="{% url "msg_add" %}">
             <div class="control-group">
                 <label>{% trans "Haltes" %}</label>
-                <p class="form-control-static" id="halte-list">&nbsp;</p><br />
+                <p class="form-control-static" id="halte-list"><em class="help">{% trans "Klik haltenamen om een selectie te maken" %}</em></p><br />
                 <input type="hidden" id="haltes" name="haltes">
             </div>
             <div class="clearfix"></div>
@@ -104,9 +104,10 @@
     }
 
     function selectStop(event) {
+        $('#halte-list .help').remove()
         if ($.inArray($(this).attr('id'), selectedStops) == -1) {
             $(this).addClass('success')
-            $(this).append('&nbsp;<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;')
+            $(this).append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;')
             selectedStops.push($(this).attr('id'));
             if ($(this).hasClass('stop-left')) {
                 direction = "heen";
@@ -114,7 +115,7 @@
                 direction = "trg";
             }
             delLink = '<span class="stop-remove glyphicon glyphicon-remove"></span>';
-            $("#halte-list").append('<span class="stop-selection pull-left label label-primary" id="s'+$(this).attr('id')+'">'+$(this).text()+' ('+direction+') '+delLink+ '</span>')
+            $("#halte-list").append('<span class="stop-selection pull-left label label-primary" id="s'+$(this).attr('id')+'">'+$(this).text()+'('+direction+') '+delLink+ '</span>')
         }
     }
 
@@ -156,11 +157,11 @@
             out += '<td>&nbsp;</td>';
         }
         if (row.left != null && row.right != null) {
-            out += '<td class="img text-center"><img src="/static/img/stop-both.png"></td>'
+            out += '<td class="img text-center"><img class="stop-img" src="/static/img/stop-both.png"></td>'
         } else if (row.left != null) {
-            out += '<td class="img text-center"><img src="/static/img/stop-left.png"></td>'
+            out += '<td class="img text-center"><img class="stop-img" src="/static/img/stop-left.png"></td>'
         } else if (row.right != null) {
-            out += '<td class="img text-center"><img src="/static/img/stop-right.png"></td>'
+            out += '<td class="img text-center"><img class="stop-img" src="/static/img/stop-right.png"></td>'
         }
         if (row.right != null) {
             out += '<td class="stop stop-right" id="s'+row.right.id+'">'+row.right.name+'</td>';
