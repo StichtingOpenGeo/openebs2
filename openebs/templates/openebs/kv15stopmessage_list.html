@@ -1,11 +1,13 @@
 {% extends "base.html" %}
 {% load i18n %}
 
+{% block title %}Berichten{% endblock %}
+
 {% block content %}
 
-  <h1>Berichten</h1>
+  <h1>{% trans "Berichten" %}</h1>
 
-  <h2>Actieve berichten
+  <h2>{% trans "Actieve berichten" %}
       <a class="btn btn-success pull-right" href="{% url "msg_add" %}">
         <span class="glyphicon glyphicon-plus-sign"></span> {% trans "Nieuw bericht" %}
       </a>

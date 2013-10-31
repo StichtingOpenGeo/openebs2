@@ -57,8 +57,6 @@ class MessageCreateView(CreateView):
                     stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
                     if stop:
                         msg.kv15stopmessageuserstopcode_set.create(stopmessage=msg, stop=stop)
-        print msg.kv15stopmessageuserstopcode_set
-
 
     # Require logged in
     @method_decorator(login_required)
