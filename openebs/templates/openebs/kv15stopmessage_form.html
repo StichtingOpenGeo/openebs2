@@ -37,6 +37,7 @@
                 <p class="form-control-static" id="halte-list">&nbsp;</p><br />
                 <input type="hidden" id="haltes" name="haltes">
             </div>
+            <div class="clearfix"></div>
             {% csrf_token %}
             {% form form using "floppyforms/layouts/bootstrap_vertical.html" %}
             <div class="form-group">
@@ -108,7 +109,7 @@
                 direction = "trg";
             }
             delLink = '<span class="stop-remove glyphicons glyphicon glyphicon-remove"></span>';
-            $("#halte-list").append('<span class="label label-primary" id="s'+$(this).attr('id')+'">'+$(this).text()+' ('+direction+') '+delLink+ '</span>&nbsp;')
+            $("#halte-list").append('<span class="stop-selection pull-left label label-primary" id="s'+$(this).attr('id')+'">'+$(this).text()+' ('+direction+') '+delLink+ '</span>')
         }
     }
 

@@ -16,3 +16,6 @@ table.openebs-stops td.img{
 table.openebs-stops tr:hover td.img{
     border: 0px;
 }
+span.stop-selection{
+    margin: 0.1em;
+}
