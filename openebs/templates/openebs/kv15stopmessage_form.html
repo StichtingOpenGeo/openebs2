@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% load floppyforms i18n %}
 
+ {% block title %}{% trans "Nieuw bericht" %}{% endblock %}
+
 {% block content %}
 <div class="row">
     <div class="col-lg-3">
@@ -18,14 +20,14 @@
             </thead>
             <tbody id="rows">
                 <tr>
-                    <td colspan="2"><em>{% trans "Typ een eindbestemming in om te zoeken" %}</em></td>
+                    <td colspan="2" class="text-center"><em>{% trans "Typ een eindbestemming in om te zoeken" %}</em></td>
                 </tr>
             </tbody>
         </table>
     </div>
     <div class="col-lg-5">
         <h2>Haltes</h2>
-        <table class="table openebs-stops table-hover" id="stops">
+        <table class="table openebs-stops" id="stops">
 
         </table>
     </div>
@@ -55,7 +57,8 @@
         $('#line_search').on('keyup', changeSearch);
         $( "body" ).on('click', ".line", showStops);
         $( "body" ).on('click', ".stop", selectStop);
-        $( "body" ).on('click', ".stop-remove", removeStop);
+        $( "body" ).on('click', ".stop-remove", selectionRemoveStop);
+        $( "body" ).on('click', ".stop.success", lineRemoveStop);
 {% endblock %}
 
 {% block js %}
@@ -97,28 +100,41 @@
         $.ajax('/line/'+$(this).attr('id').substring(1)+'/stops', {
                 success : writeLine
         })
+        $(this).addClass('success')
     }
 
     function selectStop(event) {
         if ($.inArray($(this).attr('id'), selectedStops) == -1) {
-            console.log($(this).attr('id')+'-'+$(this).text());
+            $(this).addClass('success')
+            $(this).append('&nbsp;<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;')
             selectedStops.push($(this).attr('id'));
             if ($(this).hasClass('stop-left')) {
                 direction = "heen";
             } else {
                 direction = "trg";
             }
-            delLink = '<span class="stop-remove glyphicons glyphicon glyphicon-remove"></span>';
+            delLink = '<span class="stop-remove glyphicon glyphicon-remove"></span>';
             $("#halte-list").append('<span class="stop-selection pull-left label label-primary" id="s'+$(this).attr('id')+'">'+$(this).text()+' ('+direction+') '+delLink+ '</span>')
         }
     }
 
-    function removeStop(event) {
-        $id = $(this).parent().attr('id').substring(1);
-        var i = selectedStops.indexOf($id);
+    /* Wrapper functions to get the id */
+    function selectionRemoveStop(event) {
+        removeStop($(this).parent().attr('id').substring(1))
+    }
+
+    function lineRemoveStop(event) {
+        removeStop($(this).attr('id'))
+    }
+
+    /* Do the actual work here */
+    function removeStop(id) {
+        var i = selectedStops.indexOf(id);
         if (i != -1) {
             selectedStops.splice(i, 1);
-            $(this).parent().remove();
+            $("#s"+id).remove();
+            $("#"+id).removeClass('success')
+            $("#"+id+" .stop-check").remove()
         }
     }
 
@@ -140,11 +156,11 @@
             out += '<td>&nbsp;</td>';
         }
         if (row.left != null && row.right != null) {
-            out += '<td class="img"><img src="/static/img/stop-both.png"></td>'
+            out += '<td class="img text-center"><img src="/static/img/stop-both.png"></td>'
         } else if (row.left != null) {
-            out += '<td class="img"><img src="/static/img/stop-left.png"></td>'
+            out += '<td class="img text-center"><img src="/static/img/stop-left.png"></td>'
         } else if (row.right != null) {
-            out += '<td class="img"><img src="/static/img/stop-right.png"></td>'
+            out += '<td class="img text-center"><img src="/static/img/stop-right.png"></td>'
         }
         if (row.right != null) {
             out += '<td class="stop stop-right" id="s'+row.right.id+'">'+row.right.name+'</td>';
