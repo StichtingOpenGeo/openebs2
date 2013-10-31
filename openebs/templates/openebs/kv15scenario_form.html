@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load floppyforms i18n %}
+
+{% block title %}Nieuw Scenario{% endblock %}
+
+{% block content %}
+
+  <h1>{% trans "Nieuw Scenario's" %} </h1>
+  <form method="post" class="form" action="{% url "msg_add" %}">
+    {% csrf_token %}
+    {% form form %}
+    <div class="form-group">
+        <div class="col-lg-offset-2 col-lg-10">
+            <button type="submit" class="btn btn-primary">{% trans "Toevoegen" %}</button>
+        </div>
+    </div>
+  </form>
+
+ {% endblock %}

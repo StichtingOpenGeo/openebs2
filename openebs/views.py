@@ -9,7 +9,8 @@ from django.utils.decorators import method_decorator
 from kv1.models import Kv1Stop
 from utils.client import get_client_ip
 from openebs.models import Kv15Stopmessage, Kv15Log, Kv15Scenario, Kv15StopmessageUserstopcode
-from openebs.form import Kv15StopMessageForm
+from openebs.form import Kv15StopMessageForm, Kv15ScenarioForm
+
 
 class MessageListView(ListView):
     model = Kv15Stopmessage
@@ -80,3 +81,8 @@ class ScenarioListView(ListView):
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
         return super(ScenarioListView, self).dispatch(*args, **kwargs)
+
+class ScenarioCreateView(CreateView):
+    model = Kv15Scenario
+    form_class = Kv15ScenarioForm
+    success_url = reverse_lazy('scenario_index')
