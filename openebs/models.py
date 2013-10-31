@@ -13,6 +13,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext, ugettext_lazy as _
 from django.utils.timezone import now
+from kv1.models import Kv1Stop, Kv1Line
 
 from kv15.enum import *
 
@@ -90,7 +91,7 @@ class Kv15Stopmessage(models.Model):
         message = self.messagecontent
         if message == "":
             message = _("<geen bericht>")
-        return "%s : %s" % (self.scenario, message)
+        return "%s#%s : %s" % (self.messagecodedate, self.messagecodenumber, message)
 
     def clean(self):
         # Validate the object
@@ -165,8 +166,8 @@ class Kv15Schedule(models.Model):
 
 class Kv15StopmessageLineplanningnumber(models.Model):
     stopmessage = models.ForeignKey(Kv15Stopmessage)
-    lineplanningnumber = models.CharField(max_length=10)
+    line = models.ForeignKey(Kv1Line)
 
 class Kv15StopmessageUserstopcode(models.Model):
     stopmessage = models.ForeignKey(Kv15Stopmessage)
-    userstopcode = models.CharField(max_length=10)
+    stop = models.ForeignKey(Kv1Stop)

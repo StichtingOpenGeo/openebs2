@@ -14,6 +14,7 @@
   <tr>
         <th class="col-lg-1">{% trans "Volgnummer"%}</th>
         <th class="col-lg-8">{% trans "Bericht" %}</th>
+        <th class="col-lg-1">{% trans "Haltes" %}</th>
         <th class="col-lg-2">{% trans "Tijden" %}</th>
         <th class="col-lg-1">&nbsp;</th>
   </tr>
@@ -21,6 +22,14 @@
       <tr class="{% if msg.is_future %}warning{% endif %}">
         <td>{{ msg.messagecodenumber }}</td>
         <td>{{ msg.messagecontent }}</td>
+        <td class="text-center">
+            {% if msg.kv15stopmessageuserstopcode_set.count > 0 %}
+            <a class="halte-count btn btn-link" data-title="{% trans 'Haltes bij bericht' %}" data-html="true" data-content="{% include 'openebs/snippet_halte-list.html' %}">
+                {{ msg.kv15stopmessageuserstopcode_set.count }}</a>
+            {% else %}
+                0
+            {% endif %}
+        </td>
         <td>{{ msg.messagestarttime|date:"H:i" }} - {{ msg.messageendtime|date:"H:i" }}</td>
         <td>
             <form method="post" action="{% url "msg_delete" msg.id %}">
@@ -41,18 +50,29 @@
   <table class="table table-bordered table-condensed">
   <tr>
       <th class="col-lg-1">{% trans "Volgnummer"%}</th>
-      <th class="col-lg-9">{% trans "Bericht" %}</th>
+      <th class="col-lg-8">{% trans "Bericht" %}</th>
+      <th class="col-lg-1">{% trans "Haltes" %}</th>
       <th class="col-lg-2">{% trans "Tijden" %}</th>
+      <th class="col-lg-1">&nbsp;</th>
   </tr>
   {% for msg in archive_list %}
     <tr class="{% if msg.isdeleted %}danger{% endif %}">
         <td>{{ msg.messagecodenumber }}</td>
         <td>{{ msg.messagecontent }}</td>
+        <td class="text-center">{{ msg.kv15stopmessageuserstopcode_set.count }}</td>
         <td>{{ msg.messagestarttime|date:"H:i" }} - {{ msg.messageendtime|date:"H:i" }}</td>
+        <td>&nbsp;</td>
     </tr>
   {% empty %}
       <tr><td colspan=3 class="text-center"><em>{% trans "Geen berichten gevonden" %}</em></td></tr>
   {% endfor %}
   </table>
   <p><small>{% trans "Rood = verwijderd bericht" %}</small></p>
+{% endblock %}
+
+{% block js_init %}
+    $('.halte-count').popover();
+    $('.halte-count').click(function () {
+        $('.halte-count').not(this).popover('hide');
+    });
 {% endblock %}

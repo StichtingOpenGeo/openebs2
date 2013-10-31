@@ -6,8 +6,9 @@ from django.views.generic.edit import CreateView, DeleteView
 from django.contrib.auth.decorators import login_required
 from django.utils.timezone import now
 from django.utils.decorators import method_decorator
+from kv1.models import Kv1Stop
 from utils.client import get_client_ip
-from openebs.models import Kv15Stopmessage, Kv15Log, Kv15Scenario
+from openebs.models import Kv15Stopmessage, Kv15Log, Kv15Scenario, Kv15StopmessageUserstopcode
 from openebs.form import Kv15StopMessageForm
 
 class MessageListView(ListView):
@@ -37,12 +38,27 @@ class MessageCreateView(CreateView):
             form.instance.user = self.request.user
             form.instance.dataownercode = self.request.user.userprofile.company
 
-            # Push and then save
-
         # Save and then log
         ret = super(MessageCreateView, self).form_valid(form)
         Kv15Log.create_log_entry(form.instance, get_client_ip(self.request))
+
+        haltes = self.request.POST.get('haltes', None)
+        if haltes:
+            self.handle_haltes(form.instance, haltes)
+
+        # Push to GOVI
+
         return ret
+
+    def handle_haltes(self, msg, haltes):
+        for halte in haltes.split(','):
+                halte_split = halte.split('_')
+                if len(halte_split) == 2:
+                    stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
+                    if stop:
+                        msg.kv15stopmessageuserstopcode_set.create(stopmessage=msg, stop=stop)
+        print msg.kv15stopmessageuserstopcode_set
+
 
     # Require logged in
     @method_decorator(login_required)

@@ -116,7 +116,16 @@
             }
             delLink = '<span class="stop-remove glyphicon glyphicon-remove"></span>';
             $("#halte-list").append('<span class="stop-selection pull-left label label-primary" id="s'+$(this).attr('id')+'">'+$(this).text()+'('+direction+') '+delLink+ '</span>')
+            writeHaltesField();
         }
+    }
+
+    function writeHaltesField() {
+        out = ""
+        for (item in selectedStops) {
+            out += selectedStops[item].substring(1)+","
+        }
+        $("#haltes").val(out)
     }
 
     /* Wrapper functions to get the id */
@@ -136,6 +145,7 @@
             $("#s"+id).remove();
             $("#"+id).removeClass('success')
             $("#"+id+" .stop-check").remove()
+            writeHaltesField()
         }
     }
 

@@ -16,7 +16,7 @@ class Kv1Line(models.Model):
         unique_together = ('dataownercode', 'lineplanningnumber')
 
     def __unicode__(self):
-        return u"%s - %s" % (self.dataownercode, self.headsign)
+        return "%s - %s" % (self.dataownercode, self.headsign)
 
 class Kv1Stop(models.Model):
     userstopcode = models.CharField(max_length=10, unique=True) # TPC
@@ -32,6 +32,12 @@ class Kv1Stop(models.Model):
         verbose_name_plural = _("Halteinformatie")
 
     def __unicode__(self):
-        return u"%s - %s" % (self.dataownercode, self.name)
+        return "%s - %s" % (self.dataownercode, self.name)
+
+    @staticmethod
+    def find_stop(dataowner, stopcode):
+        result = Kv1Stop.objects.filter(dataownercode=dataowner, userstopcode=stopcode)
+        if result.count() == 1:
+            return result[0]
 
 
