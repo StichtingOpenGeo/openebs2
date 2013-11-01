@@ -1,4 +1,5 @@
 # Create your views here.
+from braces.views import LoginRequiredMixin
 from django.core.urlresolvers import reverse_lazy
 from django.db.models import Q
 from django.views.generic import ListView, UpdateView
@@ -74,33 +75,32 @@ class MessageDeleteView(DeleteView):
         return super(MessageDeleteView, self).dispatch(*args, **kwargs)
 
 
-class ScenarioListView(ListView):
+class ScenarioListView(LoginRequiredMixin, ListView):
     model = Kv15Scenario
 
-    # Require logged in
-    @method_decorator(login_required)
-    def dispatch(self, *args, **kwargs):
-        return super(ScenarioListView, self).dispatch(*args, **kwargs)
-
-class ScenarioCreateView(CreateView):
+class ScenarioCreateView(LoginRequiredMixin, CreateView):
     model = Kv15Scenario
     form_class = Kv15ScenarioForm
     success_url = reverse_lazy('scenario_index')
 
-class ScenarioUpdateView(UpdateView):
+class ScenarioUpdateView(LoginRequiredMixin, UpdateView):
     model = Kv15Scenario
     form_class = Kv15ScenarioForm
     template_name_suffix = '_update'
     success_url = reverse_lazy('scenario_index')
 
-class ScenarioCreateMessageView(MessageCreateView):
+class ScenarioDeleteView(LoginRequiredMixin, DeleteView):
+    model = Kv15Scenario
+    success_url = reverse_lazy('scenario_index')
+
+class ScenarioMessageCreateView(LoginRequiredMixin, MessageCreateView):
     model = Kv15ScenarioMessage
     form_class = Kv15ScenarioMessageForm
     success_url = reverse_lazy('scenario_index')
 
     def get_context_data(self, **kwargs):
         """ Add data about the scenario we're adding to """
-        data = super(ScenarioCreateMessageView, self).get_context_data(**kwargs)
+        data = super(ScenarioMessageCreateView, self).get_context_data(**kwargs)
         if self.kwargs.get('pk', None):
             data['scenario'] = Kv15Scenario.objects.get(pk=self.kwargs.get('pk', None))
         return data
@@ -128,3 +128,7 @@ class ScenarioCreateMessageView(MessageCreateView):
                     stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
                     if stop:
                         msg.kv15scenariostop_set.create(message=msg, stop=stop)
+
+class ScenarioMessageDeleteView(LoginRequiredMixin, DeleteView):
+    model = Kv15ScenarioMessage
+    success_url = reverse_lazy('scenario_index')

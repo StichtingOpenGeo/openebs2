@@ -39,7 +39,7 @@
             {% endif %}
         </td>
         <td>
-            <form method="post" action="{% url "msg_delete" msg.id %}">
+            <form method="post" action="{% url 'scenario_msg_delete' msg.scenario.pk msg.pk %}">
                 {% csrf_token %}
                 <button class="btn btn-link pull-right">
                     <span class="glyphicon glyphicon-trash"></span>
