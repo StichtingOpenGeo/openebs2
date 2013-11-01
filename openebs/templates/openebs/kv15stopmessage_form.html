@@ -139,7 +139,7 @@
 
     /* Do the actual work here */
     function removeStop(id) {
-        var i = selectedStops.indexOf(id);
+        var i = $.inArray(id, selectedStops);
         if (i != -1) {
             selectedStops.splice(i, 1);
             $("#s"+id).remove();
@@ -162,7 +162,12 @@
     function renderRow(row) {
         out = '<tr>';
         if (row.left != null) {
-            out += '<td class="stop stop-left" id="s'+row.left.id+'">'+row.left.name+'</td>';
+            var id = 's'+row.left.id;
+            if ($.inArray(id, selectedStops) != -1) {
+                out += '<td class="stop stop-left success" id="'+id+'">'+row.left.name+'<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;</td>';
+            } else {
+                out += '<td class="stop stop-left" id="'+id+'">'+row.left.name+'</td>';
+            }
         } else {
             out += '<td>&nbsp;</td>';
         }
@@ -174,7 +179,12 @@
             out += '<td class="img text-center"><img class="stop-img" src="/static/img/stop-right.png"></td>'
         }
         if (row.right != null) {
-            out += '<td class="stop stop-right" id="s'+row.right.id+'">'+row.right.name+'</td>';
+            var id = 's'+row.right.id;
+            if ($.inArray(id, selectedStops) != -1) {
+                out += '<td class="stop stop-right success" id="'+id+'">'+row.right.name+'<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;</td>';
+            } else {
+                out += '<td class="stop stop-right" id="'+id+'">'+row.right.name+'</td>';
+            }
         } else {
             out += '<td>&nbsp;</td>';
         }
