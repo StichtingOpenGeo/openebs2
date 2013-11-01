@@ -1,19 +1,20 @@
 # Create your views here.
-from braces.views import LoginRequiredMixin
+from braces.views import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.urlresolvers import reverse_lazy
 from django.db.models import Q
 from django.views.generic import ListView, UpdateView
 from django.views.generic.edit import CreateView, DeleteView
-from django.contrib.auth.decorators import login_required
 from django.utils.timezone import now
-from django.utils.decorators import method_decorator
 from kv1.models import Kv1Stop
 from utils.client import get_client_ip
-from openebs.models import Kv15Stopmessage, Kv15Log, Kv15Scenario, Kv15MessageStop, Kv15ScenarioMessage
+from openebs.models import Kv15Stopmessage, Kv15Log, Kv15Scenario, Kv15ScenarioMessage
 from openebs.form import Kv15StopMessageForm, Kv15ScenarioForm, Kv15ScenarioMessageForm
 
+class OpenEbsUserMixin(LoginRequiredMixin, PermissionRequiredMixin):
+    raise_exception = True
 
-class MessageListView(ListView):
+class MessageListView(OpenEbsUserMixin, ListView):
+    permission_required = 'openebs.view_messages'
     model = Kv15Stopmessage
     # Get the currently active messages
     context_object_name = 'active_list'
@@ -25,12 +26,8 @@ class MessageListView(ListView):
         context['archive_list'] = self.model.objects.filter(Q(messageendtime__lt=now) | Q(isdeleted=True)).order_by('-messagecodedate', '-messagecodenumber')
         return context
 
-    # Require logged in
-    @method_decorator(login_required)
-    def dispatch(self, *args, **kwargs):
-        return super(MessageListView, self).dispatch(*args, **kwargs)
-
-class MessageCreateView(CreateView):
+class MessageCreateView(OpenEbsUserMixin, CreateView):
+    permission_required = 'openebs.add_messages'
     model = Kv15Stopmessage
     form_class = Kv15StopMessageForm
     success_url = reverse_lazy('msg_index')
@@ -60,40 +57,35 @@ class MessageCreateView(CreateView):
                 if stop:
                     msg.kv15messagestop_set.create(stopmessage=msg, stop=stop)
 
-    # Require logged in
-    @method_decorator(login_required)
-    def dispatch(self, *args, **kwargs):
-        return super(MessageCreateView, self).dispatch(*args, **kwargs)
-
-class MessageDeleteView(DeleteView):
+class MessageDeleteView(OpenEbsUserMixin, DeleteView):
+    permission_required = 'openebs.add_messages'
     model = Kv15Stopmessage
     success_url = reverse_lazy('msg_index')
 
-    # Require logged in
-    @method_decorator(login_required)
-    def dispatch(self, *args, **kwargs):
-        return super(MessageDeleteView, self).dispatch(*args, **kwargs)
-
-
-class ScenarioListView(LoginRequiredMixin, ListView):
+class ScenarioListView(OpenEbsUserMixin, ListView):
+    permission_required = 'openebs.view_scenario'
     model = Kv15Scenario
 
-class ScenarioCreateView(LoginRequiredMixin, CreateView):
+class ScenarioCreateView(OpenEbsUserMixin, CreateView):
+    permission_required = 'openebs.add_scenario'
     model = Kv15Scenario
     form_class = Kv15ScenarioForm
     success_url = reverse_lazy('scenario_index')
 
-class ScenarioUpdateView(LoginRequiredMixin, UpdateView):
+class ScenarioUpdateView(OpenEbsUserMixin, UpdateView):
+    permission_required = 'openebs.add_scenario'
     model = Kv15Scenario
     form_class = Kv15ScenarioForm
     template_name_suffix = '_update'
     success_url = reverse_lazy('scenario_index')
 
-class ScenarioDeleteView(LoginRequiredMixin, DeleteView):
+class ScenarioDeleteView(OpenEbsUserMixin, DeleteView):
+    permission_required = 'openebs.add_scenario'
     model = Kv15Scenario
     success_url = reverse_lazy('scenario_index')
 
-class ScenarioMessageCreateView(LoginRequiredMixin, MessageCreateView):
+class ScenarioMessageCreateView(OpenEbsUserMixin, CreateView):
+    permission_required = 'openebs.add_scenario'
     model = Kv15ScenarioMessage
     form_class = Kv15ScenarioMessageForm
     success_url = reverse_lazy('scenario_index')
@@ -129,6 +121,7 @@ class ScenarioMessageCreateView(LoginRequiredMixin, MessageCreateView):
                     if stop:
                         msg.kv15scenariostop_set.create(message=msg, stop=stop)
 
-class ScenarioMessageDeleteView(LoginRequiredMixin, DeleteView):
+class ScenarioMessageDeleteView(OpenEbsUserMixin, DeleteView):
+    permission_required = 'openebs.add_scenario'
     model = Kv15ScenarioMessage
     success_url = reverse_lazy('scenario_index')
