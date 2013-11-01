@@ -46,7 +46,7 @@ class MessageCreateView(CreateView):
 
         haltes = self.request.POST.get('haltes', None)
         if haltes:
-            self.handle_haltes(form.instance, form.instance.kv15messagestop_set, haltes)
+            self.handle_haltes(form.instance, haltes)
 
         # TODO Push to GOVI
 
