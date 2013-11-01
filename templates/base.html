@@ -20,6 +20,7 @@
         {% block js %} {% endblock %}
 
         function ebs_init() {
+            $('.navbar-nav a[href*="'+location.pathname+'"').first().parent().addClass('active')
             {% block js_init %} {% endblock %}
         }
     </script>
@@ -36,7 +37,7 @@
 
     <div class="collapse navbar-collapse navbar-ex1-collapse">
         <ul class="nav navbar-nav">
-          <li class="active"><a href="{% url "msg_index" %}">
+          <li class=""><a href="{% url "msg_index" %}">
                   <span class="glyphicon glyphicon-inbox"></span> {% trans "Berichten" %}
               </a></li>
           <li><a href="{% url "scenario_index" %}">
