@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load floppyforms i18n %}
+
+{% block title %}{% trans "Bewerk scenario" %}{% endblock %}
+
+{% block content %}
+
+  <h1>{% trans "Bewerk scenario" %} </h1>
+  <form method="post" class="form form-horizontal" action="{% url 'scenario_edit' object.pk %}">
+    {% csrf_token %}
+    {% form form %}
+    <div class="form-group">
+        <div class="col-lg-offset-2 col-lg-10">
+            <button type="submit" class="btn btn-primary">{% trans "Opslaan" %}</button>
+        </div>
+    </div>
+  </form>
+
+  <h2>{% trans "Berichten" %}
+      <a class="btn btn-success pull-right" href="{% url "scenario_msg_add" object.pk %}">
+        <span class="glyphicon glyphicon-plus-sign"></span> {% trans "Nieuw bericht" %}
+      </a>
+  </h2>
+  <table class="table table-bordered table-striped table-condensed">
+  <tr>
+        <th class="col-lg-7">{% trans "Bericht" %}</th>
+        <th class="col-lg-1">{% trans "Haltes" %}</th>
+        <th class="col-lg-3">&nbsp;</th>
+  </tr>
+  {% for msg in object.kv15scenariomessage_set.all %}
+      <tr>
+        <td>{{ msg.messagecontent }}</td>
+        <td class="text-center">
+            {% if msg.kv15scenariostop_set.count > 0 %}
+            <a class="halte-count btn btn-link" data-title="{% trans 'Haltes bij bericht' %}" data-html="true" data-content="{% include 'openebs/snippet_scenario-halte-list.html' %}">
+                {{ msg.kv15scenariostop_set.count }}</a>
+            {% else %}
+                0
+            {% endif %}
+        </td>
+        <td>
+            <form method="post" action="{% url "msg_delete" msg.id %}">
+                {% csrf_token %}
+                <button class="btn btn-link pull-right">
+                    <span class="glyphicon glyphicon-trash"></span>
+                </button>
+            </form>
+        </td>
+    </tr>
+  {% empty %}
+      <tr><td colspan="5" class="text-center"><em>{% trans "Geen berichten gevonden" %}</em></td></tr>
+  {% endfor %}
+  </table>
+
+ {% endblock %}
+
+ {% block js_init %}
+    $('.halte-count').popover();
+    $('.halte-count').click(function () {
+        $('.halte-count').not(this).popover('hide');
+    });
+{% endblock %}

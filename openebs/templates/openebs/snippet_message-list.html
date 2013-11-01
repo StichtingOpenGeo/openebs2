@@ -1,0 +1,3 @@
+<ul>{% for msg in scenario.kv15scenariomessage_set.all %}
+  <li>{{ msg.messagecontent }} ({{ msg.kv15scenariostop_set.count }} haltes)</li>
+{% endfor %}</ul>

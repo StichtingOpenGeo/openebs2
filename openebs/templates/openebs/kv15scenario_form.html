@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% load floppyforms i18n %}
 
-{% block title %}Nieuw Scenario{% endblock %}
+{% block title %}{% trans "Nieuw scenario" %}{% endblock %}
 
 {% block content %}
 
-  <h1>{% trans "Nieuw Scenario" %} </h1>
+  <h1>{% trans "Nieuw scenario" %} </h1>
   <form method="post" class="form form-horizontal" action="{% url "scenario_add" %}">
     {% csrf_token %}
     {% form form %}

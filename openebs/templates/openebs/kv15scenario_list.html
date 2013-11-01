@@ -19,9 +19,16 @@
   </tr>
   {% for scenario in object_list %}
       <tr>
-        <td>{{ scenario.name }}</td>
+        <td><a href="{% url 'scenario_edit' scenario.pk %}">{{ scenario.name }}<a/></td>
         <td>{{ scenario.description|default:"<em><geen></em>" }}&nbsp;</td>
-        <td class="text-center">{{ scenario.kv15scenariomessage_set.count }}&nbsp;</td>
+        <td class="text-center">
+            {% if scenario.kv15scenariomessage_set.count > 0 %}
+            <a class="msg-count btn btn-link" data-title="{% trans 'Berichten bij scenario' %}" data-html="true" data-content="{% include 'openebs/snippet_message-list.html' %}">
+                {{ scenario.kv15scenariomessage_set.count }}</a>
+            {% else %}
+                0
+            {% endif %}
+        </td>
         <td class="text-right">
             <form method="post" action="">
                 {% csrf_token %}
@@ -29,7 +36,7 @@
                     <span class="glyphicon glyphicon-trash"></span> {% trans "Verwijder" %}
                 </button>
             </form>
-            <a href="#" class="btn btn-link pull-right">
+            <a href="{% url 'scenario_edit' scenario.pk %}" class="btn btn-link pull-right">
                 <span class="glyphicon glyphicon-edit"></span> {% trans "Bewerk" %}&nbsp;&nbsp;
             </a>
             <a href="{% url 'scenario_msg_add' scenario.pk %}" class="btn btn-link pull-right">
@@ -41,4 +48,11 @@
       <tr><td colspan=4 class="text-center"><em>{% trans "Er zijn nog geen scenario's" %}</em></td></tr>
   {% endfor %}
   </table>
+{% endblock %}
+
+{% block js_init %}
+    $('.msg-count').popover();
+    $('.msg-count').click(function () {
+        $('.halte-count').not(this).popover('hide');
+    });
 {% endblock %}

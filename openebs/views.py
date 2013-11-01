@@ -1,7 +1,7 @@
 # Create your views here.
 from django.core.urlresolvers import reverse_lazy
 from django.db.models import Q
-from django.views.generic import ListView
+from django.views.generic import ListView, UpdateView
 from django.views.generic.edit import CreateView, DeleteView
 from django.contrib.auth.decorators import login_required
 from django.utils.timezone import now
@@ -85,6 +85,12 @@ class ScenarioListView(ListView):
 class ScenarioCreateView(CreateView):
     model = Kv15Scenario
     form_class = Kv15ScenarioForm
+    success_url = reverse_lazy('scenario_index')
+
+class ScenarioUpdateView(UpdateView):
+    model = Kv15Scenario
+    form_class = Kv15ScenarioForm
+    template_name_suffix = '_update'
     success_url = reverse_lazy('scenario_index')
 
 class ScenarioCreateMessageView(MessageCreateView):
