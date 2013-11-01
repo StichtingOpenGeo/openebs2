@@ -5,8 +5,8 @@
 
 {% block content %}
 
-  <h1>{% trans "Nieuw Scenario's" %} </h1>
-  <form method="post" class="form" action="{% url "msg_add" %}">
+  <h1>{% trans "Nieuw Scenario" %} </h1>
+  <form method="post" class="form form-horizontal" action="{% url "scenario_add" %}">
     {% csrf_token %}
     {% form form %}
     <div class="form-group">

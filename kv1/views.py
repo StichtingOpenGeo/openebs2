@@ -6,9 +6,6 @@ from django.views.generic import ListView, DetailView
 from kv1.models import Kv1Line
 
 # TODO Refactor this to be an proper view based off some other model class
-from openebs.models import Kv15StopmessageLineplanningnumber
-
-
 class JSONListResponseMixin(JSONResponseMixin):
     render_object = None #Name of thing to get from context object
 

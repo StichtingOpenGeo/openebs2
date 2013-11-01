@@ -1,5 +1,5 @@
 from django.conf.urls import patterns, url
-from openebs.views import MessageListView, MessageCreateView, MessageDeleteView, ScenarioListView, ScenarioCreateView
+from openebs.views import MessageListView, MessageCreateView, MessageDeleteView, ScenarioListView, ScenarioCreateView, ScenarioCreateMessageView
 
 urlpatterns = patterns('',
     # Berichten views
@@ -10,5 +10,6 @@ urlpatterns = patterns('',
     # Scenario views
     url(r'^scenario$', ScenarioListView.as_view(), name="scenario_index"),
     url(r'^scenario/nieuw$', ScenarioCreateView.as_view(), name="scenario_add"),
+    url(r'^scenario/bericht/nieuw$', ScenarioCreateMessageView.as_view(), name="scenario_msg_add"),
 
 )

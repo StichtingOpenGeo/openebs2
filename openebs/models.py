@@ -122,13 +122,40 @@ class Kv15Stopmessage(models.Model):
             raise IntegrityError(ugettext("Teveel berichten vestuurd - probeer het morgen weer"))
         return num['messagecodenumber__max'] + 1 if num['messagecodenumber__max'] else 1
 
+class Kv15Schedule(models.Model):
+    stopmessage = models.ForeignKey(Kv15Stopmessage)
+    messagestarttime = models.DateTimeField(null=True, blank=True)
+    messageendtime = models.DateTimeField(null=True, blank=True)
+    weekdays = models.SmallIntegerField(null=True, blank=True)
+
+class Kv15MessageLine(models.Model):
+    stopmessage = models.ForeignKey(Kv15Stopmessage)
+    line = models.ForeignKey(Kv1Line)
+
+class Kv15MessageStop(models.Model):
+    stopmessage = models.ForeignKey(Kv15Stopmessage)
+    stop = models.ForeignKey(Kv1Stop)
+
 class Kv15Scenario(models.Model):
-    scenario = models.CharField(max_length=255, blank=True, verbose_name=_("Naam scenario"))
+    name = models.CharField(max_length=50, blank=True, verbose_name=_("Naam scenario"))
+    description = models.CharField(max_length=255, blank=True, verbose_name=_("Omschrijving scenario"))
+
+    def __unicode__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = _('Scenario')
+        verbose_name_plural = _("Scenario's")
+        permissions = (
+            ("view_scenario", _("Scenario's bekijken")),
+            ("add_scenario", _("Scenario's aanmaken")),
+        )
+
+class Kv15ScenarioMessage(models.Model):
+    scenario = models.ForeignKey(Kv15Scenario)
     messagepriority = models.CharField(max_length=10, choices=MESSAGEPRIORITY, default='PTPROCESS', verbose_name=_("Prioriteit"))
     messagetype = models.CharField(max_length=10, choices=MESSAGETYPE, default='GENERAL', verbose_name=_("Type bericht"))
     messagedurationtype = models.CharField(max_length=10, choices=MESSAGEDURATIONTYPE, default='ENDTIME', verbose_name=_("Type tijdsrooster"))
-    messagestarttime = models.DateTimeField(null=True, blank=True, default=now, verbose_name=_("Begintijd"))
-    messageendtime = models.DateTimeField(null=True, blank=True, verbose_name=_("Eindtijd"))
     messagecontent = models.CharField(max_length=255, blank=True, verbose_name="Bericht")
     reasontype = models.SmallIntegerField(null=True, blank=True, choices=REASONTYPE, verbose_name=_("Type oorzaak"))
     subreasontype = models.CharField(max_length=10, blank=True, choices=SUBREASONTYPE, verbose_name=_("Oorzaak"))
@@ -142,7 +169,7 @@ class Kv15Scenario(models.Model):
     advicetype = models.SmallIntegerField(null=True, blank=True, choices=ADVICETYPE, verbose_name=_("Type advies"))
     subadvicetype = models.CharField(max_length=10, blank=True, choices=SUBADVICETYPE, verbose_name=_("Advies"))
     advicecontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg advies"))
-    messagetimestamp = models.DateTimeField(auto_now=True)
+    updated = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
         message = self.messagecontent
@@ -151,23 +178,9 @@ class Kv15Scenario(models.Model):
         return "%s : %s" % (self.scenario, message)
 
     class Meta:
-        verbose_name = _('Scenario')
-        verbose_name_plural = _("Scenario's")
-        permissions = (
-            ("view_scenario", _("Scenario's bekijken")),
-            ("add_scenario", _("Scenario's aanmaken")),
-        )
+        verbose_name = _('Scenario bericht')
+        verbose_name_plural = _("Scenario berichten")
 
-class Kv15Schedule(models.Model):
-    stopmessage = models.ForeignKey(Kv15Stopmessage)
-    messagestarttime = models.DateTimeField(null=True, blank=True)
-    messageendtime = models.DateTimeField(null=True, blank=True)
-    weekdays = models.SmallIntegerField(null=True, blank=True)
-
-class Kv15StopmessageLineplanningnumber(models.Model):
-    stopmessage = models.ForeignKey(Kv15Stopmessage)
-    line = models.ForeignKey(Kv1Line)
-
-class Kv15StopmessageUserstopcode(models.Model):
-    stopmessage = models.ForeignKey(Kv15Stopmessage)
+class Kv15ScenarioStop(models.Model):
+    message = models.ForeignKey(Kv15ScenarioMessage)
     stop = models.ForeignKey(Kv1Stop)

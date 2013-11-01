@@ -1,6 +1,6 @@
 import floppyforms as forms
 from utils.widgets import DatePicker
-from models import Kv15Stopmessage, Kv15Scenario
+from models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage
 
 
 class Kv15StopMessageForm(forms.ModelForm):
@@ -36,6 +36,14 @@ class Kv15ScenarioForm(forms.ModelForm):
     class Meta:
         model = Kv15Scenario
         widgets = {
+            'description': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
+        }
+
+class Kv15ScenarioMessageForm(forms.ModelForm):
+    class Meta:
+        model = Kv15ScenarioMessage
+        exclude = ['scenario']
+        widgets = {
             'messagecontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
             'reasoncontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
             'effectcontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
@@ -55,6 +63,5 @@ class Kv15ScenarioForm(forms.ModelForm):
             'measuretype' : forms.RadioSelect,
             'submeasuretype' : forms.Select,
             'advicetype' : forms.RadioSelect,
-            'subadvicetype' : forms.Select,
-            'messagetimestamp' : forms.DateTimeInput
+            'subadvicetype' : forms.Select
         }

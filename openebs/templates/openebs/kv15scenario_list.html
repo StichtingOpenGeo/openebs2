@@ -13,18 +13,16 @@
   <table class="table table-bordered table-striped table-condensed">
   <tr>
         <th class="col-lg-1">{% trans "Naam"%}</th>
-        <th class="col-lg-8">{% trans "Bericht" %}</th>
-        <th class="col-lg-2">&nbsp;</th>
+        <th class="col-lg-6">{% trans "Omschrijving" %}</th>
+        <th class="col-lg-1">{% trans "Berichten" %}</th>
+        <th class="col-lg-4">&nbsp;</th>
   </tr>
   {% for scenario in object_list %}
       <tr>
-        <td>{{ scenario.scenario }}</td>
-          <td>{{ scenario.messagecontent|default:"<em><geen></em>" }}&nbsp;</td>
+        <td>{{ scenario.name }}</td>
+        <td>{{ scenario.description|default:"<em><geen></em>" }}&nbsp;</td>
+        <td class="text-center">{{ scenario.kv15scenariomessage_set.count }}&nbsp;</td>
         <td class="text-right">
-            <a href="#" class="btn btn-primary pull-left">
-                <span class="glyphicon glyphicon-share"></span> {% trans "Toepassen als bericht" %}&nbsp;&nbsp;
-            </a>
-
             <form method="post" action="">
                 {% csrf_token %}
                 <button class="btn btn-link pull-right">
@@ -33,6 +31,9 @@
             </form>
             <a href="#" class="btn btn-link pull-right">
                 <span class="glyphicon glyphicon-edit"></span> {% trans "Bewerk" %}&nbsp;&nbsp;
+            </a>
+            <a href="{% url 'scenario_msg_add' %}" class="btn btn-link pull-right">
+                <span class="glyphicon glyphicon-plus"></span> {% trans "Bericht toevoegen" %}&nbsp;&nbsp;
             </a>
         </td>
     </tr>

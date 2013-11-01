@@ -8,8 +8,8 @@ from django.utils.timezone import now
 from django.utils.decorators import method_decorator
 from kv1.models import Kv1Stop
 from utils.client import get_client_ip
-from openebs.models import Kv15Stopmessage, Kv15Log, Kv15Scenario, Kv15StopmessageUserstopcode
-from openebs.form import Kv15StopMessageForm, Kv15ScenarioForm
+from openebs.models import Kv15Stopmessage, Kv15Log, Kv15Scenario, Kv15MessageStop, Kv15ScenarioMessage
+from openebs.form import Kv15StopMessageForm, Kv15ScenarioForm, Kv15ScenarioMessageForm
 
 
 class MessageListView(ListView):
@@ -47,7 +47,7 @@ class MessageCreateView(CreateView):
         if haltes:
             self.handle_haltes(form.instance, haltes)
 
-        # Push to GOVI
+        # TODO Push to GOVI
 
         return ret
 
@@ -57,7 +57,9 @@ class MessageCreateView(CreateView):
                 if len(halte_split) == 2:
                     stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
                     if stop:
-                        msg.kv15stopmessageuserstopcode_set.create(stopmessage=msg, stop=stop)
+                        msg.kv15messagestop_set.create(stopmessage=msg, stop=stop)
+                    else:
+                        print "Couldn't find %s" % halte_split
 
     # Require logged in
     @method_decorator(login_required)
@@ -85,4 +87,9 @@ class ScenarioListView(ListView):
 class ScenarioCreateView(CreateView):
     model = Kv15Scenario
     form_class = Kv15ScenarioForm
+    success_url = reverse_lazy('scenario_index')
+
+class ScenarioCreateMessageView(MessageCreateView):
+    model = Kv15ScenarioMessage
+    form_class = Kv15ScenarioMessageForm
     success_url = reverse_lazy('scenario_index')

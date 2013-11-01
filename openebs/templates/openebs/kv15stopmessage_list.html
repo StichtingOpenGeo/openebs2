@@ -25,9 +25,9 @@
         <td>{{ msg.messagecodenumber }}</td>
         <td>{{ msg.messagecontent }}</td>
         <td class="text-center">
-            {% if msg.kv15stopmessageuserstopcode_set.count > 0 %}
+            {% if msg.kv15messagestop_set.count > 0 %}
             <a class="halte-count btn btn-link" data-title="{% trans 'Haltes bij bericht' %}" data-html="true" data-content="{% include 'openebs/snippet_halte-list.html' %}">
-                {{ msg.kv15stopmessageuserstopcode_set.count }}</a>
+                {{ msg.kv15messagestop_set.count }}</a>
             {% else %}
                 0
             {% endif %}
@@ -61,7 +61,7 @@
     <tr class="{% if msg.isdeleted %}danger{% endif %}">
         <td>{{ msg.messagecodenumber }}</td>
         <td>{{ msg.messagecontent }}</td>
-        <td class="text-center">{{ msg.kv15stopmessageuserstopcode_set.count }}</td>
+        <td class="text-center">{{ msg.kv15messagestop_set.count }}</td>
         <td>{{ msg.messagestarttime|date:"H:i" }} - {{ msg.messageendtime|date:"H:i" }}</td>
         <td>&nbsp;</td>
     </tr>
