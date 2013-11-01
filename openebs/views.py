@@ -57,6 +57,12 @@ class MessageCreateView(OpenEbsUserMixin, CreateView):
                 if stop:
                     msg.kv15messagestop_set.create(stopmessage=msg, stop=stop)
 
+class MessageUpdateView(OpenEbsUserMixin, UpdateView):
+    permission_required = 'openebs.add_messages'
+    model = Kv15Stopmessage
+    form_class = Kv15StopMessageForm
+    success_url = reverse_lazy('msg_index')
+
 class MessageDeleteView(OpenEbsUserMixin, DeleteView):
     permission_required = 'openebs.add_messages'
     model = Kv15Stopmessage

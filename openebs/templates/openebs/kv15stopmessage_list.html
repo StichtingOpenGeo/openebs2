@@ -15,10 +15,10 @@
   <table class="table table-bordered table-striped table-condensed">
   <tr>
         <th class="col-lg-1">{% trans "Volgnummer"%}</th>
-        <th class="col-lg-8">{% trans "Bericht" %}</th>
+        <th class="col-lg-7">{% trans "Bericht" %}</th>
         <th class="col-lg-1">{% trans "Haltes" %}</th>
-        <th class="col-lg-2">{% trans "Tijden" %}</th>
-        <th class="col-lg-1">&nbsp;</th>
+        <th class="col-lg-1">{% trans "Tijden" %}</th>
+        <th class="col-lg-3">&nbsp;</th>
   </tr>
   {% for msg in active_list %}
       <tr class="{% if msg.is_future %}warning{% endif %}">
@@ -40,6 +40,9 @@
                     <span class="glyphicon glyphicon-trash"></span>
                 </button>
             </form>
+            <a href="{% url 'msg_edit' msg.pk %}" class="btn btn-link pull-right">
+                <span class="glyphicon glyphicon-edit"></span> {% trans "Bewerk" %}&nbsp;
+            </a>&nbsp;
         </td>
     </tr>
   {% empty %}
@@ -52,10 +55,10 @@
   <table class="table table-bordered table-condensed">
   <tr>
       <th class="col-lg-1">{% trans "Volgnummer"%}</th>
-      <th class="col-lg-8">{% trans "Bericht" %}</th>
+      <th class="col-lg-7">{% trans "Bericht" %}</th>
       <th class="col-lg-1">{% trans "Haltes" %}</th>
-      <th class="col-lg-2">{% trans "Tijden" %}</th>
-      <th class="col-lg-1">&nbsp;</th>
+      <th class="col-lg-1">{% trans "Tijden" %}</th>
+      <th class="col-lg-3">&nbsp;</th>
   </tr>
   {% for msg in archive_list %}
     <tr class="{% if msg.isdeleted %}danger{% endif %}">

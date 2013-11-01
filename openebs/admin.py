@@ -59,7 +59,5 @@ admin.site.register(Group, MyGroupAdmin)
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
 
-
-
 # Remove this
 admin.site.unregister(Site)

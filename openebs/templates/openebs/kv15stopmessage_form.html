@@ -37,7 +37,8 @@
             <div class="control-group">
                 <label>{% trans "Haltes" %}</label>
                 <p class="form-control-static" id="halte-list"><em class="help">{% trans "Klik haltenamen om een selectie te maken" %}</em></p><br />
-                <input type="hidden" id="haltes" name="haltes">
+                <input type="hidden" id="haltes" name="haltes"
+                       value="{% for halte in object.kv15messagestop_set.all %}{{ halte.stop.dataownercode }}_{{ halte.stop.userstopcode }},{% endfor %}" />
             </div>
             <div class="clearfix"></div>
             {% csrf_token %}
