@@ -10,6 +10,6 @@ urlpatterns = patterns('',
     # Scenario views
     url(r'^scenario$', ScenarioListView.as_view(), name="scenario_index"),
     url(r'^scenario/nieuw$', ScenarioCreateView.as_view(), name="scenario_add"),
-    url(r'^scenario/bericht/nieuw$', ScenarioCreateMessageView.as_view(), name="scenario_msg_add"),
+    url(r'^scenario/(?P<pk>\d+)/bericht/nieuw$', ScenarioCreateMessageView.as_view(), name="scenario_msg_add"),
 
 )

@@ -42,7 +42,7 @@ class Kv15ScenarioForm(forms.ModelForm):
 class Kv15ScenarioMessageForm(forms.ModelForm):
     class Meta:
         model = Kv15ScenarioMessage
-        exclude = ['scenario']
+        exclude = ['scenario', 'dataownercode']
         widgets = {
             'messagecontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
             'reasoncontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),

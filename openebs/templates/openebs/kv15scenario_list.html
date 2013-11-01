@@ -32,7 +32,7 @@
             <a href="#" class="btn btn-link pull-right">
                 <span class="glyphicon glyphicon-edit"></span> {% trans "Bewerk" %}&nbsp;&nbsp;
             </a>
-            <a href="{% url 'scenario_msg_add' %}" class="btn btn-link pull-right">
+            <a href="{% url 'scenario_msg_add' scenario.pk %}" class="btn btn-link pull-right">
                 <span class="glyphicon glyphicon-plus"></span> {% trans "Bericht toevoegen" %}&nbsp;&nbsp;
             </a>
         </td>

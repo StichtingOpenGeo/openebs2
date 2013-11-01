@@ -45,7 +45,7 @@ class MessageCreateView(CreateView):
 
         haltes = self.request.POST.get('haltes', None)
         if haltes:
-            self.handle_haltes(form.instance, haltes)
+            self.handle_haltes(form.instance, form.instance.kv15messagestop_set, haltes)
 
         # TODO Push to GOVI
 
@@ -57,9 +57,7 @@ class MessageCreateView(CreateView):
                 if len(halte_split) == 2:
                     stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
                     if stop:
-                        msg.kv15messagestop_set.create(stopmessage=msg, stop=stop)
-                    else:
-                        print "Couldn't find %s" % halte_split
+                        msg.kv15messagestop.create(stopmessage=msg, stop=stop)
 
     # Require logged in
     @method_decorator(login_required)
@@ -93,3 +91,34 @@ class ScenarioCreateMessageView(MessageCreateView):
     model = Kv15ScenarioMessage
     form_class = Kv15ScenarioMessageForm
     success_url = reverse_lazy('scenario_index')
+
+    def get_context_data(self, **kwargs):
+        """ Add data about the scenario we're adding to """
+        data = super(ScenarioCreateMessageView, self).get_context_data(**kwargs)
+        if self.kwargs.get('pk', None):
+            data['scenario'] = Kv15Scenario.objects.get(pk=self.kwargs.get('pk', None))
+        return data
+
+    def form_valid(self, form):
+        if self.request.user:
+            form.instance.dataownercode = self.request.user.userprofile.company
+
+        if self.kwargs.get('pk', None): # This ensures the scenario can never be spoofed
+            form.instance.scenario = Kv15Scenario.objects.get(pk=self.kwargs.get('pk', None))
+
+        ret = super(CreateView, self).form_valid(form)
+
+        # After saving, set the haltes and save them
+        haltes = self.request.POST.get('haltes', None)
+        if haltes:
+            self.handle_haltes(form.instance, haltes)
+
+        return ret
+
+    def handle_haltes(self, msg, haltes):
+        for halte in haltes.split(','):
+                halte_split = halte.split('_')
+                if len(halte_split) == 2:
+                    stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
+                    if stop:
+                        msg.kv15scenariostop_set.create(message=msg, stop=stop)

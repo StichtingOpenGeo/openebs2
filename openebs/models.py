@@ -152,7 +152,9 @@ class Kv15Scenario(models.Model):
         )
 
 class Kv15ScenarioMessage(models.Model):
+    """ This stores a 'template' to be used for easily constructing normal KV15 messages """
     scenario = models.ForeignKey(Kv15Scenario)
+    dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
     messagepriority = models.CharField(max_length=10, choices=MESSAGEPRIORITY, default='PTPROCESS', verbose_name=_("Prioriteit"))
     messagetype = models.CharField(max_length=10, choices=MESSAGETYPE, default='GENERAL', verbose_name=_("Type bericht"))
     messagedurationtype = models.CharField(max_length=10, choices=MESSAGEDURATIONTYPE, default='ENDTIME', verbose_name=_("Type tijdsrooster"))
@@ -175,12 +177,13 @@ class Kv15ScenarioMessage(models.Model):
         message = self.messagecontent
         if message == "":
             message = _("<geen bericht>")
-        return "%s : %s" % (self.scenario, message)
+        return "%s : %s" % (self.scenario.name, message)
 
     class Meta:
         verbose_name = _('Scenario bericht')
         verbose_name_plural = _("Scenario berichten")
 
 class Kv15ScenarioStop(models.Model):
+    """ For the template, this links a stop """
     message = models.ForeignKey(Kv15ScenarioMessage)
     stop = models.ForeignKey(Kv1Stop)
