@@ -54,11 +54,11 @@ class MessageCreateView(CreateView):
 
     def handle_haltes(self, msg, haltes):
         for halte in haltes.split(','):
-                halte_split = halte.split('_')
-                if len(halte_split) == 2:
-                    stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
-                    if stop:
-                        msg.kv15messagestop.create(stopmessage=msg, stop=stop)
+            halte_split = halte.split('_')
+            if len(halte_split) == 2:
+                stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
+                if stop:
+                    msg.kv15messagestop_set.create(stopmessage=msg, stop=stop)
 
     # Require logged in
     @method_decorator(login_required)
