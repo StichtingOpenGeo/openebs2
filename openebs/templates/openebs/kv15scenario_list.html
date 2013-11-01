@@ -30,7 +30,7 @@
             {% endif %}
         </td>
         <td class="text-right">
-            <form method="post" action="{% url 'scenario_delete' scenario.pk %}">
+            <form method="get" action="{% url 'scenario_delete' scenario.pk %}">
                 {% csrf_token %}
                 <button class="btn btn-link pull-right">
                     <span class="glyphicon glyphicon-trash"></span> {% trans "Verwijder" %}
