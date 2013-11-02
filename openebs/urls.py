@@ -1,9 +1,13 @@
 from django.conf.urls import patterns, url
+from django.views.generic import RedirectView
 from openebs.views import MessageListView, MessageCreateView, MessageDeleteView, ScenarioListView, ScenarioCreateView, ScenarioMessageCreateView, ScenarioUpdateView, ScenarioMessageDeleteView, ScenarioDeleteView, MessageUpdateView
 
 urlpatterns = patterns('',
+    # Onze Index
+    url(r'^$', RedirectView.as_view(url='/bericht')),
+
     # Berichten views
-    url(r'^$', MessageListView.as_view(), name="msg_index"),
+    url(r'^bericht$', MessageListView.as_view(), name="msg_index"),
     url(r'^bericht/nieuw$', MessageCreateView.as_view(), name="msg_add"),
     url(r'^bericht/(?P<pk>\d+)/bewerken$', MessageUpdateView.as_view(), name="msg_edit"),
     url(r'^bericht/(?P<pk>\d+)/verwijderen$', MessageDeleteView.as_view(), name="msg_delete"),

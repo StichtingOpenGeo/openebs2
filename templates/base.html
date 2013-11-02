@@ -20,7 +20,7 @@
         {% block js %} {% endblock %}
 
         function ebs_init() {
-            $('.navbar-nav a[href*="'+location.pathname+'"').first().parent().addClass('active')
+            $('.navbar-nav a[href*="'+location.pathname.split("/")[1]+'"').first().parent().addClass('active')
             {% block js_init %} {% endblock %}
         }
     </script>
