@@ -29,15 +29,4 @@
 {% endblock %}
 
 {% block extra_js %}<script src="{% static 'js/add_msg.js' %}"></script>{% endblock %}
-
-{% block js_init %}
-        loadStopsFromField()
-        $('#line_search').on('keyup', changeSearch);
-        $( "body" ).on('click', ".line", showStops);
-        $( "body" ).on('click', ".stop", selectStop);
-        $( "body" ).on('click', ".stop-remove", selectionRemoveStop);
-        $( "body" ).on('click', ".stop.success", lineRemoveStop);
-        $( "body" ).on('click', ".stop-both", selectStopBoth);
-        $( "body" ).on('click', ".stop-left", selectStopLeft);
-        $( "body" ).on('click', ".stop-right", selectStopRight);
-{% endblock %}
+{% block js_init %}{% include "openebs/snippet_halte-picker-js.html" %}{% endblock %}
