@@ -10,10 +10,10 @@
   <div>
       <form method="post" action="{% url 'scenario_delete' object.pk %}">
           {% csrf_token %}
-          <button class="btn btn-link pull-right">
+          <button class="btn btn-danger pull-right">
               <span class="glyphicon glyphicon-trash"></span> {% trans "Ja, verwijder het" %}
           </button>
       </form>
-      <a href="{% url 'scenario_index' %}">{% trans "Nee, terug" %}</a>
+      <a href="{% url 'scenario_index' %}" class="btn btn-default">{% trans "Nee, terug" %}</a>
   </div>
 {% endblock %}

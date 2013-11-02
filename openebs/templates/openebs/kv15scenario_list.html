@@ -51,8 +51,5 @@
 {% endblock %}
 
 {% block js_init %}
-    $('.msg-count').popover();
-    $('.msg-count').click(function () {
-        $('.halte-count').not(this).popover('hide');
-    });
+    $('.msg-count').popover({ trigger: 'hover' });
 {% endblock %}

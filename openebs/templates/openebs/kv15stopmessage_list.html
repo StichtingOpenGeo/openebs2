@@ -34,9 +34,9 @@
         </td>
         <td>{{ msg.messagestarttime|date:"H:i" }} - {{ msg.messageendtime|date:"H:i" }}</td>
         <td>
-            <form method="post" action="{% url "msg_delete" msg.id %}">
+            <form method="post" action="{% url 'msg_delete' msg.id %}">
                 {% csrf_token %}
-                <button class="btn btn-link pull-right">
+                <button class="btn btn-danger pull-right">
                     <span class="glyphicon glyphicon-trash"></span>
                 </button>
             </form>
@@ -76,8 +76,5 @@
 {% endblock %}
 
 {% block js_init %}
-    $('.halte-count').popover();
-    $('.halte-count').click(function () {
-        $('.halte-count').not(this).popover('hide');
-    });
+    $('.halte-count').popover({trigger : 'hover'});
 {% endblock %}

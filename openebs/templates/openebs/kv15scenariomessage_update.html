@@ -1,21 +1,21 @@
 {% extends "base.html" %}
 {% load static floppyforms i18n %}
 
- {% block title %}{% trans "Nieuw scenariobericht" %}{% endblock %}
+ {% block title %}{% trans "Bewerk bericht" %}{% endblock %}
 
 {% block content %}
 {{ form.scenario }}
-<h3>Bericht voor scenario <em>{{ scenario.name }}</em></h3>
+<h3>Bewerk bericht voor scenario <em>{{ scenario.name }}</em></h3>
 <div class="row">
     {% include "openebs/snippet_halte-picker.html" %}
     <div class="col-lg-4">
         <h2>Bericht</h2>
-        <form method="post" class="form" action="{% url 'scenario_msg_add' scenario.pk %}">
+        <form method="post" class="form" action="{% url 'scenario_msg_edit' scenario.pk object.pk %}">
             <div class="control-group">
                 <label>{% trans "Haltes" %}</label>
                 <p class="form-control-static" id="halte-list">
-                    {% if object.kv15messagestop_set.count > 0 %}
-                        {% for halte in object.kv15messagestop_set.all %}
+                    {% if object.kv15scenariostop_set.count > 0 %}
+                        {% for halte in object.kv15scenariostop_set.all %}
                             <span class="stop-selection pull-left label label-primary" id="ss{{ halte.stop.dataownercode }}_{{ halte.stop.userstopcode }}">{{ halte.stop.name }} (?)<span class="stop-remove glyphicon glyphicon-remove"></span></span>
                         {% endfor %}
                     {% else %}
@@ -23,13 +23,13 @@
                     {% endif %}
                 </p><br />
                 <input type="hidden" id="haltes" name="haltes"
-                       value="{% for halte in object.kv15messagestop_set.all %}{{ halte.stop.dataownercode }}_{{ halte.stop.userstopcode }},{% endfor %}" />
+                       value="{% for halte in object.kv15scenariostop_set.all %}{{ halte.stop.dataownercode }}_{{ halte.stop.userstopcode }},{% endfor %}" />
             </div>
             <div class="clearfix"></div>
             {% csrf_token %}
             {% form form using "floppyforms/layouts/bootstrap_vertical.html" %}
             <div class="form-group">
-                    <button type="submit" class="btn btn-primary">{% trans "Toevoegen" %}</button>
+                    <button type="submit" class="btn btn-primary">{% trans "Opslaan" %}</button>
             </div>
         </form>
     </div>

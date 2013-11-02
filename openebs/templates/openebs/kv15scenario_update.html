@@ -41,10 +41,13 @@
         <td>
             <form method="post" action="{% url 'scenario_msg_delete' msg.scenario.pk msg.pk %}">
                 {% csrf_token %}
-                <button class="btn btn-link pull-right">
+                <button class="btn btn-danger pull-right">
                     <span class="glyphicon glyphicon-trash"></span>
                 </button>
             </form>
+            <a href="{% url 'scenario_msg_edit' object.id msg.id %}" class="btn btn-link pull-right">
+                <span class="glyphicon glyphicon-edit"></span> {% trans "Bewerk" %}&nbsp;
+            </a>
         </td>
     </tr>
   {% empty %}
@@ -55,8 +58,5 @@
  {% endblock %}
 
  {% block js_init %}
-    $('.halte-count').popover();
-    $('.halte-count').click(function () {
-        $('.halte-count').not(this).popover('hide');
-    });
+    $('.halte-count').popover({ trigger: 'hover' });
 {% endblock %}
