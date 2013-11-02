@@ -13,11 +13,6 @@
 
 {% block js %}
     function main_map_init (map, options) {
-        map.on('viewreset', function() {
-            // TODO: based on user preference!
-            map.setView(new L.LatLng(52.05, 4.32), 12);
-        }, this);
-
         map.setView(new L.LatLng(52.05, 4.32), 12);
 
         var dataurl = "%url 'msg_geojson'%";
