@@ -59,7 +59,7 @@ class MessageUpdateView(OpenEbsUserMixin, UpdateView):
 
     def form_valid(self, form):
         # Save and then log
-        ret = super(MessageCreateView, self).form_valid(form)
+        ret = super(MessageUpdateView, self).form_valid(form)
         # TODO figure out edit logs
         # Kv15Log.create_log_entry(form.instance, get_client_ip(self.request))
 
