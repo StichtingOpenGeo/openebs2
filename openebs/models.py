@@ -132,9 +132,15 @@ class Kv15MessageLine(models.Model):
     stopmessage = models.ForeignKey(Kv15Stopmessage)
     line = models.ForeignKey(Kv1Line)
 
+    class Meta:
+        unique_together = ['stopmessage', 'line']
+
 class Kv15MessageStop(models.Model):
     stopmessage = models.ForeignKey(Kv15Stopmessage)
     stop = models.ForeignKey(Kv1Stop, related_name="messages") # Stop to messages relation = messages
+
+    class Meta:
+        unique_together = ['stopmessage', 'stop']
 
 class Kv15Scenario(models.Model):
     name = models.CharField(max_length=50, blank=True, verbose_name=_("Naam scenario"))

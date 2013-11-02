@@ -65,12 +65,20 @@ class MessageUpdateView(OpenEbsUserMixin, UpdateView):
 
         haltes = self.request.POST.get('haltes', None)
         if haltes:
-            for stop in Kv1Stop.find_stops_from_haltes(haltes):
-                form.instance.kv15messagestop_set.create(stopmessage=form.instance, stop=stop)
+            self.process_new_old_haltes(form, haltes)
 
         # TODO Push to GOVI
 
         return ret
+
+    def process_new_old_haltes(self, form, haltes):
+        new_stops = Kv1Stop.find_stops_from_haltes(haltes)
+        for stop in new_stops:
+            if form.instance.kv15messagestop_set.filter(stop=stop).count() == 0: # New stop, add it
+                form.instance.kv15messagestop_set.create(stopmessage=form.instance, stop=stop)
+        for old_msg_stop in form.instance.kv15messagestop_set.all():
+            if old_msg_stop.stop not in new_stops: # Removed stop, delete it
+                old_msg_stop.delete()
 
 
 class MessageDeleteView(OpenEbsUserMixin, DeleteView):
