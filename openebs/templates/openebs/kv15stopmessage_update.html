@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% load static floppyforms i18n %}
 
- {% block title %}{% trans "Nieuw bericht" %}{% endblock %}
+ {% block title %}{% trans "Bewerk bericht" %}{% endblock %}
 
 {% block content %}
 <div class="row">
-    {% include "snippet_halte-picker.html" %}
+    {% include "openebs/snippet_halte-picker.html" %}
     <div class="col-lg-4">
-        <h2>{% trans "Bericht" %}</h2>
-        <form method="post" class="form" action="{% url 'msg_add' %}">
+        <h2>{% trans "Bewerk bericht" %}</h2>
+        <form method="post" class="form" action="{% url 'msg_edit' object.pk %}">
             <div class="control-group">
                 <label>{% trans "Haltes" %}</label>
                 <p class="form-control-static" id="halte-list">
@@ -27,7 +27,7 @@
             {% csrf_token %}
             {% form form using "floppyforms/layouts/bootstrap_vertical.html" %}
             <div class="form-group">
-                    <button type="submit" class="btn btn-primary">{% trans "Toevoegen" %}</button>
+                <button type="submit" class="btn btn-primary">{% trans "Opslaan" %}</button>
             </div>
         </form>
     </div>

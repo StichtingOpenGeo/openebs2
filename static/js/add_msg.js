@@ -119,6 +119,7 @@ function selectStopInner(obj) {
     return false;
 }
 
+/* Write data to the form field */
 function writeHaltesField() {
     out = ""
     for (item in selectedStops) {
@@ -127,6 +128,16 @@ function writeHaltesField() {
         }
     }
     $("#haltes").val(out)
+}
+
+/* Do the inverse in case we're editing or something */
+function readHaltesField() {
+    initialHaltes = $("#haltes").val().split(',');
+    for (halte in initialHaltes) {
+        if(initialHaltes[halte] != "") {
+            selectedStops.push('s'+initialHaltes[halte])
+        }
+    }
 }
 
 /* Wrapper functions to get the id */

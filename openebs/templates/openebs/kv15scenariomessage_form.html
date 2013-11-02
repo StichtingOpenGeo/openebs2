@@ -7,32 +7,7 @@
 {{ form.scenario }}
 <h3>Bericht voor scenario <em>{{ scenario.name }}</em></h3>
 <div class="row">
-    <div class="col-lg-4">
-        <h2>Lijn</h2>
-        <div class="input-group">
-            <span class="input-group-addon"><span class="glyphicon glyphicon-search"></span></span>
-            <input type="text" class="form-control" id="line_search" placeholder="{% trans 'Lijnnummer of eindbestemming' %}">
-        </div><br />
-        <table class="table table-condensed table-hover">
-            <thead>
-                <tr>
-                    <th>{% trans "Lijn" %}</th>
-                    <th>{% trans "Eindbestemming" %}</th>
-                </tr>
-            </thead>
-            <tbody id="rows">
-                <tr>
-                    <td colspan="2" class="text-center"><em>{% trans "Typ een eindbestemming of lijnnummer om een lijn te zoeken" %}</em></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    <div class="col-lg-4">
-        <h2>Haltes</h2>
-        <table class="table openebs-stops" id="stops">
-            <tr class="help text-center"><td><em>Klik een lijn om haltes hier te zien</em></td></tr>
-        </table>
-    </div>
+    {% include "openebs/snippet_halte-picker.html" %}
     <div class="col-lg-4">
         <h2>Bericht</h2>
         <form method="post" class="form" action="{% url "scenario_msg_add" scenario.pk %}">
@@ -56,6 +31,7 @@
 {% block extra_js %}<script src="{% static 'js/add_msg.js' %}"></script>{% endblock %}
 
 {% block js_init %}
+        loadStopsFromField()
         $('#line_search').on('keyup', changeSearch);
         $( "body" ).on('click', ".line", showStops);
         $( "body" ).on('click', ".stop", selectStop);

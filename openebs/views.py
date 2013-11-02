@@ -61,6 +61,7 @@ class MessageUpdateView(OpenEbsUserMixin, UpdateView):
     permission_required = 'openebs.add_messages'
     model = Kv15Stopmessage
     form_class = Kv15StopMessageForm
+    template_name_suffix = '_update'
     success_url = reverse_lazy('msg_index')
 
 class MessageDeleteView(OpenEbsUserMixin, DeleteView):
