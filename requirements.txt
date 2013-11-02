@@ -5,6 +5,7 @@ django-admin-bootstrapped
 django-floppyforms
 django-guardian
 django-json-field
+django-leaflet
 
 # Dev
 django-debug-toolbar

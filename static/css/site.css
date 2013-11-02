@@ -26,3 +26,11 @@ span.stop-selection{
     color: green;
 }
 
+#map {
+    height: 600px;
+}
+
+.container {
+    max-width: none;
+    min-width: none;
+}

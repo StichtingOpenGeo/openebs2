@@ -138,6 +138,7 @@ INSTALLED_APPS = (
     'south',
     'json_field',
     'floppyforms',
+    'leaflet',
 
 
     'django_admin_bootstrapped',
