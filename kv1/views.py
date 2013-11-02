@@ -2,8 +2,10 @@ from braces.views import JSONResponseMixin, LoginRequiredMixin
 from django.db.models import Q
 from django.db.models.query import QuerySet
 from django.shortcuts import get_object_or_404
+from django.utils.timezone import now
 from django.views.generic import ListView, DetailView
-from kv1.models import Kv1Line
+from djgeojson.views import GeoJSONLayerView
+from kv1.models import Kv1Line, Kv1Stop
 
 # TODO Refactor this to be an proper view based off some other model class
 class JSONListResponseMixin(JSONResponseMixin):
@@ -44,3 +46,18 @@ class LineShowView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
         if obj:
             return { 'stop_map' : obj.stop_map }
         return obj
+
+class ActiveStopListView(GeoJSONLayerView):
+    model = Kv1Stop
+    geometry_field = 'location'
+    properties = ['name', 'userstopcode', 'dataownercode', 'messages']
+    # Filter by active
+    # queryset = model.objects.filter(messages__stopmessage__messagestarttime__lt=now,
+    #                                 messages__stopmessage__messageendtime__gt=now)
+
+    def get_queryset(self):
+        qry = super(ActiveStopListView, self).get_queryset()
+        qry = qry.filter(dataownercode=self.request.user.userprofile.company)
+        return qry
+
+

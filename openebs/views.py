@@ -43,19 +43,12 @@ class MessageCreateView(OpenEbsUserMixin, CreateView):
 
         haltes = self.request.POST.get('haltes', None)
         if haltes:
-            self.handle_haltes(form.instance, haltes)
+            for stop in Kv1Stop.find_stops_from_haltes(haltes):
+                form.instance.kv15messagestop_set.create(stopmessage=form.instance, stop=stop)
 
         # TODO Push to GOVI
 
         return ret
-
-    def handle_haltes(self, msg, haltes):
-        for halte in haltes.split(','):
-            halte_split = halte.split('_')
-            if len(halte_split) == 2:
-                stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
-                if stop:
-                    msg.kv15messagestop_set.create(stopmessage=msg, stop=stop)
 
 class MessageUpdateView(OpenEbsUserMixin, UpdateView):
     permission_required = 'openebs.add_messages'
@@ -63,6 +56,22 @@ class MessageUpdateView(OpenEbsUserMixin, UpdateView):
     form_class = Kv15StopMessageForm
     template_name_suffix = '_update'
     success_url = reverse_lazy('msg_index')
+
+    def form_valid(self, form):
+        # Save and then log
+        ret = super(MessageCreateView, self).form_valid(form)
+        # TODO figure out edit logs
+        # Kv15Log.create_log_entry(form.instance, get_client_ip(self.request))
+
+        haltes = self.request.POST.get('haltes', None)
+        if haltes:
+            for stop in Kv1Stop.find_stops_from_haltes(haltes):
+                form.instance.kv15messagestop_set.create(stopmessage=form.instance, stop=stop)
+
+        # TODO Push to GOVI
+
+        return ret
+
 
 class MessageDeleteView(OpenEbsUserMixin, DeleteView):
     permission_required = 'openebs.add_messages'

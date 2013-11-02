@@ -1,6 +1,7 @@
 from django.conf.urls import patterns, url
 from django.views.generic import RedirectView, TemplateView
 # from djgeojson.views import GeoJSONLayerView
+from djgeojson.views import GeoJSONLayerView
 from openebs.views import MessageListView, MessageCreateView, MessageDeleteView, ScenarioListView, ScenarioCreateView, ScenarioMessageCreateView, ScenarioUpdateView, ScenarioMessageDeleteView, ScenarioDeleteView, MessageUpdateView
 
 urlpatterns = patterns('',
@@ -9,7 +10,6 @@ urlpatterns = patterns('',
 
     # Kaart views
     url(r'^kaart$', TemplateView.as_view(template_name='openebs/kv15stopmessage_map.html'), name="msg_map"),
-    # url(r'^berichten.geojson$', GeoJSONLayerView.as_view(model=KV15GeoJSON), name="msg_geojson"),
 
     # Berichten views
     url(r'^bericht$', MessageListView.as_view(), name="msg_index"),

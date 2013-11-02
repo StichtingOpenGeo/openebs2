@@ -40,4 +40,13 @@ class Kv1Stop(models.Model):
         if result.count() == 1:
             return result[0]
 
-
+    @staticmethod
+    def find_stops_from_haltes(halte_string):
+        out = []
+        for halte in halte_string.split(','):
+            halte_split = halte.split('_')
+            if len(halte_split) == 2:
+                stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
+                if stop:
+                    out.append(stop)
+        return out

@@ -6,6 +6,7 @@ django-floppyforms
 django-guardian
 django-json-field
 django-leaflet
+django-geojson
 
 # Dev
 django-debug-toolbar
