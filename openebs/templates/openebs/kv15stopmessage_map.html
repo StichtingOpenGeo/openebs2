@@ -15,7 +15,7 @@
     function main_map_init (map, options) {
         map.setView(new L.LatLng(52.05, 4.32), 12);
 
-        var dataurl = "{%url 'msg_geojson'%}";
+        var dataurl = "{% url 'msg_geojson' %}";
         // Download GeoJSON via Ajax
         $.getJSON(dataurl, function (data) {
             // Add GeoJSON layer

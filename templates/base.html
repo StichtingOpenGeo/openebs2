@@ -38,10 +38,13 @@
 
     <div class="collapse navbar-collapse navbar-ex1-collapse">
         <ul class="nav navbar-nav">
-          <li class=""><a href="{% url "msg_index" %}">
+          <li><a href="{% url 'msg_index' %}">
                   <span class="glyphicon glyphicon-inbox"></span> {% trans "Berichten" %}
               </a></li>
-          <li><a href="{% url "scenario_index" %}">
+          <li><a href="{% url 'msg_map' %}">
+                  <span class="glyphicon glyphicon-map-marker"></span>&nbsp;{% trans "Kaart" %}
+              </a></li>
+          <li><a href="{% url 'scenario_index' %}">
                   <span class="glyphicon glyphicon-bookmark"></span>&nbsp;{% trans "Scenario's" %}
               </a></li>
         </ul>
