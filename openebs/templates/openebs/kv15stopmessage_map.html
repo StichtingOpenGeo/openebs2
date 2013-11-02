@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load i18n leaflet_tags %}
+
+{% block title %}Berichten{% endblock %}
+
+{% block extra_css %}
+    {% leaflet_css %}
+{% endblock %}
+
+{% block extra_js %}
+    {% leaflet_js %}
+{% endblock %}
+
+{% block js %}
+    function main_map_init (map, options) {
+        map.on('viewreset', function() {
+            // TODO: based on user preference!
+            map.setView(new L.LatLng(52.05, 4.32), 12);
+        }, this);
+
+        map.setView(new L.LatLng(52.05, 4.32), 12);
+
+        var dataurl = "%url 'msg_geojson'%";
+        // Download GeoJSON via Ajax
+        $.getJSON(dataurl, function (data) {
+            // Add GeoJSON layer
+            L.geoJson(data).addTo(map);
+        });
+    }
+{% endblock %}
+
+{% block js_init %}
+    $("#map").height($(window).height() - 90).width($(window).width() - 30);
+    $( window ).resize(function() {
+        $("#map").height($(window).height() - 90).width($(window).width() - 30);
+    });
+{% endblock %}
+
+{% block content %}
+  {% leaflet_map "map" callback="main_map_init" %}
+{% endblock %}
