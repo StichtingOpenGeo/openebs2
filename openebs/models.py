@@ -7,10 +7,11 @@
 # Also note: You'll have to insert the output of 'django-admin.py sqlcustom [appname]'
 # into your database.
 from __future__ import unicode_literals
-
+import os
 from django.db import models, IntegrityError
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
+from django.template.loader import render_to_string
 from django.utils.translation import ugettext, ugettext_lazy as _
 from django.utils.timezone import now
 from kv1.models import Kv1Stop, Kv1Line
@@ -121,6 +122,9 @@ class Kv15Stopmessage(models.Model):
         if num['messagecodenumber__max'] == 9999:
             raise IntegrityError(ugettext("Teveel berichten vestuurd - probeer het morgen weer"))
         return num['messagecodenumber__max'] + 1 if num['messagecodenumber__max'] else 1
+
+    def to_xml(self):
+        return render_to_string('xml/kv15stopmessage.xml', {'object' : self}).rstrip(os.linesep)
 
 class Kv15Schedule(models.Model):
     stopmessage = models.ForeignKey(Kv15Stopmessage)

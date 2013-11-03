@@ -2,14 +2,19 @@
 from braces.views import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.db.models import Q
+from django.conf import settings
 from django.views.generic import ListView, UpdateView
-from django.views.generic.detail import SingleObjectTemplateResponseMixin, SingleObjectMixin
 from django.views.generic.edit import CreateView, DeleteView, BaseFormView
 from django.utils.timezone import now
 from kv1.models import Kv1Stop
 from utils.client import get_client_ip
 from openebs.models import Kv15Stopmessage, Kv15Log, Kv15Scenario, Kv15ScenarioMessage
 from openebs.form import Kv15StopMessageForm, Kv15ScenarioForm, Kv15ScenarioMessageForm
+
+import logging
+from utils.push import Push
+
+log = logging.getLogger(__name__)
 
 class OpenEbsUserMixin(LoginRequiredMixin, PermissionRequiredMixin):
     raise_exception = True
@@ -50,6 +55,9 @@ class MessageCreateView(OpenEbsUserMixin, CreateView):
                 form.instance.kv15messagestop_set.create(stopmessage=form.instance, stop=stop)
 
         # TODO Push to GOVI
+        msg = form.instance.to_xml()
+        Push(settings.GOVI_SUBSCRIBER, settings.GOVI_DOSSIER, msg, settings.GOVI_NAMESPACE).push(settings.GOVI_HOST, settings.GOVI_PATH)
+        log.error(msg)
 
         return ret
 
@@ -140,11 +148,18 @@ class ScenarioMessageCreateView(OpenEbsUserMixin, ScenarioMessageContentMixin, C
     model = Kv15ScenarioMessage
     form_class = Kv15ScenarioMessageForm
 
+    def get_initial(self):
+        init = super(ScenarioMessageCreateView, self).get_initial()
+        if self.kwargs.get('scenario', None): # This ensures the scenario can never be spoofed
+            init['scenario'] = self.kwargs.get('scenario', None)
+        return init
+
     def form_valid(self, form):
         if self.request.user:
             form.instance.dataownercode = self.request.user.userprofile.company
 
         if self.kwargs.get('scenario', None): # This ensures the scenario can never be spoofed
+            # TODO Register difference between this and the scenario we've validated on
             form.instance.scenario = Kv15Scenario.objects.get(pk=self.kwargs.get('scenario', None))
 
         ret = super(CreateView, self).form_valid(form)

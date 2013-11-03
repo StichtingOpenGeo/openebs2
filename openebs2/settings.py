@@ -140,20 +140,22 @@ INSTALLED_APPS = (
     'floppyforms',
     'leaflet',
 
-
+    # Admin & tools
     'django_admin_bootstrapped',
     'django.contrib.admin',
     'debug_toolbar'
 )
 
-# A sample logging configuration. The only tangible logging
-# performed by this configuration is to send an email to
-# the site admins on every HTTP 500 error when DEBUG=False.
-# See http://docs.djangoproject.com/en/dev/topics/logging for
-# more details on how to customize your logging configuration.
+# Logging so far
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {
+            'format' : "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+            'datefmt' : "%d/%b/%Y %H:%M:%S"
+        },
+    },
     'filters': {
         'require_debug_false': {
             '()': 'django.utils.log.RequireDebugFalse'
@@ -164,13 +166,25 @@ LOGGING = {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler'
-        }
+        },
+        'logfile': {
+            'level':'DEBUG',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename': "/tmp/openebs",
+            'maxBytes': 50000,
+            'backupCount': 2,
+            'formatter': 'standard',
+        },
     },
     'loggers': {
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': True,
+        },
+        '': {
+            'handlers': ['logfile'],
+            'level': 'DEBUG',
         },
     }
 }
@@ -180,6 +194,16 @@ INTERNAL_IPS = ('127.0.0.1',)
 DEBUG_TOOLBAR_CONFIG = {
     'INTERCEPT_REDIRECTS': False
 }
+
+# ssh joel@openebs.nl -L 8000:91.240.240.195:80 -g #
+GOVI_HOST = '192.168.33.1:8000' #'drisacc.transmodel.nl'
+GOVI_PATH = '/TMI_Post/KV15'
+GOVI_SUBSCRIBER = 'openOV'
+GOVI_NAMESPACE = 'http://bison.connekt.nl/tmi8/kv15/msg'
+GOVI_DOSSIER = 'KV15messages'
+
+GOVI_PUSH_DEBUG = DEBUG
+GOVI_PUSH_SEND = True
 
 try:
     from local_settings import *

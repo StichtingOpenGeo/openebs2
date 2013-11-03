@@ -1,0 +1,26 @@
+<STOPMESSAGE>
+    <dataownercode>{{ object.dataownercode }}</dataownercode>
+    <messagecodedate>{{ object.messagecodedate|date:"Y-m-d" }}</messagecodedate>
+    <messagecodenumber>{{ object.messagecodenumber }}</messagecodenumber>
+    <userstopcodes>
+        {% for messagestop in object.kv15messagestop_set.all %}<userstopcode>{{ messagestop.stop.userstopcode }}</userstopcode>{% endfor %}</userstopcodes>
+    <messagepriority>{{ object.messagepriority }}</messagepriority>
+    <messagetype>{{ object.messagetype }}</messagetype>
+    <messagedurationtype>{{ object.messagedurationtype }}</messagedurationtype>
+    <messagestarttime>{{ object.messagestarttime|date:"Y-m-d\TH:i:sO" }}</messagestarttime>
+    <messageendtime>{{ object.messageendtime|date:"Y-m-d\TH:i:sO" }}</messageendtime>
+    <messagecontent>{{ object.messagecontent }}</messagecontent>
+    {% if object.reasontype != "ONGEDEFINIEERD" and object.reasontype != None %}<reasontype>{{ object.reasontype }}</reasontype>
+        <subreasontype>{{ object.subreasontype }}</subreasontype>
+        <reasoncontent>{{ object.reasoncontent }}</reasoncontent>{% endif %}
+    {% if object.effecttype != "ONGEDEFINIEERD" and object.effecttype != None %}<effecttype>{{ object.effecttype }}</effecttype>
+        <subeffecttype>{{ object.subeffecttype }}</subeffecttype>
+        <effectcontent>{{ object.effectcontent }}</effectcontent>{% endif %}
+    {% if object.measuretype != "ONGEDEFINIEERD" and object.measuretype != None %}<measuretype>{{ object.measuretype }}</measuretype>
+        <submeasuretype>{{ object.submeasuretype }}</submeasuretype>
+        <measurecontent>{{ object.measurecontent }}</measurecontent>{% endif %}
+    {% if object.advicetype != "ONGEDEFINIEERD" and object.advicetype != None %}<advicetype>{{ object.advicetype }}</advicetype>
+        <subadvicetype>{{ object.subadvicetype }}</subadvicetype>
+        <advicecontent>{{ object.advicecontent }}</advicecontent>{% endif %}
+    <messagetimestamp>{{ object.messagetimestamp|date:"Y-m-d\TH:i:sO" }}</messagetimestamp>
+</STOPMESSAGE>
