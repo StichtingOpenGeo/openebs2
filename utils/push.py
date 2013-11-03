@@ -2,13 +2,12 @@ import logging
 from django.utils.timezone import now
 from django.conf import settings
 from httplib import HTTPConnection
-import pytz
 
 class Push:
     def __init__(self, subscriberid = 'openOV', dossiername = None, content = None, namespace = None):
         self.log = logging.getLogger(__name__)
         self.subscriberid = subscriberid
-        self.timestamp = now(pytz.timezone('Europe/Amsterdam'))
+        self.timestamp = now()
 
         self.dossiername = dossiername
         self.content = content
@@ -18,7 +17,7 @@ class Push:
         data = {'namespace': self.namespace,
                 'subscriberid': self.subscriberid,
                 'dossiername': self.dossiername,
-                'timestamp':self.timestamp.isoformat('T'), #Iso with timezone and microseconds
+                'timestamp':self.timestamp.isoformat('T'),
                 'content': str(self.content) }
 
         xml = """<VV_TM_PUSH xmlns="%(namespace)s">

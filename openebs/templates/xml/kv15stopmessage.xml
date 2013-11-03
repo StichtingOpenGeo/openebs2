@@ -7,8 +7,8 @@
     <messagepriority>{{ object.messagepriority }}</messagepriority>
     <messagetype>{{ object.messagetype }}</messagetype>
     <messagedurationtype>{{ object.messagedurationtype }}</messagedurationtype>
-    <messagestarttime>{{ object.messagestarttime|date:"Y-m-d\TH:i:sO" }}</messagestarttime>
-    <messageendtime>{{ object.messageendtime|date:"Y-m-d\TH:i:sO" }}</messageendtime>
+    <messagestarttime>{{ object.messagestarttime|date:"c" }}</messagestarttime>
+    <messageendtime>{{ object.messageendtime|date:"c" }}</messageendtime>
     <messagecontent>{{ object.messagecontent }}</messagecontent>
     {% if object.reasontype != "ONGEDEFINIEERD" and object.reasontype != None %}<reasontype>{{ object.reasontype }}</reasontype>
         <subreasontype>{{ object.subreasontype }}</subreasontype>
@@ -22,5 +22,5 @@
     {% if object.advicetype != "ONGEDEFINIEERD" and object.advicetype != None %}<advicetype>{{ object.advicetype }}</advicetype>
         <subadvicetype>{{ object.subadvicetype }}</subadvicetype>
         <advicecontent>{{ object.advicecontent }}</advicecontent>{% endif %}
-    <messagetimestamp>{{ object.messagetimestamp|date:"Y-m-d\TH:i:sO" }}</messagetimestamp>
+    <messagetimestamp>{{ object.messagetimestamp|date:"c" }}</messagetimestamp>
 </STOPMESSAGE>
