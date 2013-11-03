@@ -26,7 +26,9 @@ class Push:
 <Version>BISON 8.1.0.0</Version>
 <DossierName>%(dossiername)s</DossierName>
 <Timestamp>%(timestamp)s</Timestamp>
+<KV15messages>
 %(content)s
+</KV15messages>
 </VV_TM_PUSH>""" % data
 
         return xml
