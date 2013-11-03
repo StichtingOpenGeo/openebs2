@@ -18,7 +18,7 @@ class Push:
         data = {'namespace': self.namespace,
                 'subscriberid': self.subscriberid,
                 'dossiername': self.dossiername,
-                'timestamp':self.timestamp.isoformat('T'), #Iso without microseconds
+                'timestamp':self.timestamp.isoformat('T'), #Iso with timezone and microseconds
                 'content': str(self.content) }
 
         xml = """<VV_TM_PUSH xmlns="%(namespace)s">
