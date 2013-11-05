@@ -56,7 +56,7 @@ class Kv15Stopmessage(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User)
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
-    messagecodedate = models.DateField(verbose_name=_("Datum"))
+    messagecodedate = models.DateField(verbose_name=_("Datum"), default=now)
     messagecodenumber = models.DecimalField(max_digits=4, decimal_places=0, verbose_name=_("Volgnummer"))
     messagepriority = models.CharField(max_length=10, choices=MESSAGEPRIORITY, default='PTPROCESS', verbose_name=_("Prioriteit"))
     messagetype = models.CharField(max_length=10, choices=MESSAGETYPE, default='GENERAL', verbose_name=_("Type bericht"))
@@ -78,6 +78,7 @@ class Kv15Stopmessage(models.Model):
     advicecontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg advies"))
     messagetimestamp = models.DateTimeField(auto_now_add=True)
     isdeleted = models.BooleanField(default=False, verbose_name=_("Verwijderd?"))
+    stops = models.ManyToManyField(Kv1Stop, through='Kv15MessageStop')
 
     class Meta:
         verbose_name = _('KV15 Bericht')
@@ -123,8 +124,11 @@ class Kv15Stopmessage(models.Model):
             raise IntegrityError(ugettext("Teveel berichten vestuurd - probeer het morgen weer"))
         return num['messagecodenumber__max'] + 1 if num['messagecodenumber__max'] else 1
 
+    def to_xml_before_save(self, stops):
+        return render_to_string('xml/kv15stopmessage.xml', {'object': self }).strip(os.linesep)
+
     def to_xml(self):
-        return render_to_string('xml/kv15stopmessage.xml', {'object' : self}).rstrip(os.linesep)
+        return self.to_xml_before_save([])
 
 class Kv15Schedule(models.Model):
     stopmessage = models.ForeignKey(Kv15Stopmessage)

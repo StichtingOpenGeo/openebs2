@@ -56,8 +56,8 @@ class MessageCreateView(OpenEbsUserMixin, CreateView):
 
         # TODO Push to GOVI
         msg = form.instance.to_xml()
-        Push(settings.GOVI_SUBSCRIBER, settings.GOVI_DOSSIER, msg, settings.GOVI_NAMESPACE).push(settings.GOVI_HOST, settings.GOVI_PATH)
-        log.error(msg)
+        code, content = Push(settings.GOVI_SUBSCRIBER, settings.GOVI_DOSSIER, msg, settings.GOVI_NAMESPACE).push(settings.GOVI_HOST, settings.GOVI_PATH)
+        log.error("Received response code %s with content: %s " % (code, content))
 
         return ret
 

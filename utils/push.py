@@ -1,7 +1,7 @@
-import logging
+import logging, socket
 from django.utils.timezone import now
 from django.conf import settings
-from httplib import HTTPConnection
+import httplib
 
 class Push:
     def __init__(self, subscriberid = 'openOV', dossiername = None, content = None, namespace = None):
@@ -39,14 +39,22 @@ class Push:
 
         response_code = -1
         response_content = None
+        error = False
         if settings.GOVI_PUSH_SEND:
-            conn = HTTPConnection(remote)
-            conn.request("POST", path, content, {"Content-type": "application/xml"})
-            response = conn.getresponse()
-            response_code = response.status
-            response_content = response.read()
-            conn.close()
+            try:
+                conn = httplib.HTTPConnection(remote)
+                conn.request("POST", path, content, {"Content-type": "application/xml"})
+            except (httplib.HTTPException, socket.error) as ex:
+                error = True
+                self.log.error("Got exception while connecting: %s" % ex)
+
+            if not error:
+                response = conn.getresponse()
+                response_code = response.status
+                response_content = response.read()
+                conn.close()
+
             if settings.GOVI_PUSH_DEBUG:
-                self.log.debug(response_content)
+                self.log.debug("Got response code %s and content: %s" % (response_code, response_content))
 
         return (response_code,response_content)
