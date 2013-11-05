@@ -124,11 +124,11 @@ class Kv15Stopmessage(models.Model):
             raise IntegrityError(ugettext("Teveel berichten vestuurd - probeer het morgen weer"))
         return num['messagecodenumber__max'] + 1 if num['messagecodenumber__max'] else 1
 
-    def to_xml_before_save(self, stops):
+    def to_xml_with_stops(self, stops):
         return render_to_string('xml/kv15stopmessage.xml', {'object': self }).strip(os.linesep)
 
     def to_xml(self):
-        return self.to_xml_before_save([])
+        return self.to_xml_with_stops([])
 
 class Kv15Schedule(models.Model):
     stopmessage = models.ForeignKey(Kv15Stopmessage)

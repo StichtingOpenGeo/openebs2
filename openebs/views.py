@@ -45,19 +45,21 @@ class MessageCreateView(OpenEbsUserMixin, CreateView):
             form.instance.user = self.request.user
             form.instance.dataownercode = self.request.user.userprofile.company
 
+        haltes = self.request.POST.get('haltes', None)
+        stops = []
+        if haltes:
+            stops = Kv1Stop.find_stops_from_haltes(haltes)
+
+        # TODO Push to GOVI (see if we can without saving)
+        msg = form.instance.to_xml_with_stops(stops)
+        code, content = Push(settings.GOVI_SUBSCRIBER, settings.GOVI_DOSSIER, msg, settings.GOVI_NAMESPACE).push(settings.GOVI_HOST, settings.GOVI_PATH)
+
         # Save and then log
         ret = super(MessageCreateView, self).form_valid(form)
         Kv15Log.create_log_entry(form.instance, get_client_ip(self.request))
 
-        haltes = self.request.POST.get('haltes', None)
-        if haltes:
-            for stop in Kv1Stop.find_stops_from_haltes(haltes):
-                form.instance.kv15messagestop_set.create(stopmessage=form.instance, stop=stop)
-
-        # TODO Push to GOVI
-        msg = form.instance.to_xml()
-        code, content = Push(settings.GOVI_SUBSCRIBER, settings.GOVI_DOSSIER, msg, settings.GOVI_NAMESPACE).push(settings.GOVI_HOST, settings.GOVI_PATH)
-        log.error("Received response code %s with content: %s " % (code, content))
+        for stop in stops:
+            form.instance.kv15messagestop_set.create(stopmessage=form.instance, stop=stop)
 
         return ret
 
@@ -79,6 +81,7 @@ class MessageUpdateView(OpenEbsUserMixin, UpdateView):
         self.process_new_old_haltes(form.instance, form.instance.kv15messagestop_set, haltes if haltes else "")
 
         # TODO Push to GOVI
+        # Push a delete, then a create, but we can use the same message id
 
         return ret
 

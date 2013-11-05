@@ -104,7 +104,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    #'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
@@ -138,6 +138,7 @@ INSTALLED_APPS = (
     'south',
     'json_field',
     'floppyforms',
+    'crispy_forms',
     'leaflet',
 
     # Admin & tools
@@ -194,6 +195,8 @@ INTERNAL_IPS = ('127.0.0.1',)
 DEBUG_TOOLBAR_CONFIG = {
     'INTERCEPT_REDIRECTS': False
 }
+
+CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 # ssh joel@openebs.nl -L 8000:91.240.240.195:80 -g #
 GOVI_HOST = '192.168.33.1:8000' #'drisacc.transmodel.nl'

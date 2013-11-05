@@ -3,6 +3,7 @@ south
 psycopg2==2.4.5
 django-admin-bootstrapped
 django-floppyforms
+django-crispy-forms
 django-guardian
 django-json-field
 django-leaflet

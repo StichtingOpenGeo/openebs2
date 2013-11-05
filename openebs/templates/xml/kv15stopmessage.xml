@@ -3,7 +3,13 @@
     <messagecodedate>{{ object.messagecodedate|date:"Y-m-d" }}</messagecodedate>
     <messagecodenumber>{{ object.messagecodenumber }}</messagecodenumber>
     <userstopcodes>
-        {% for messagestop in object.kv15messagestop_set.all %}<userstopcode>{{ messagestop.stop.userstopcode }}</userstopcode>{% endfor %}</userstopcodes>
+        {% for messagestop in object.kv15messagestop_set.all %}
+            <userstopcode>{{ messagestop.stop.userstopcode }}</userstopcode>
+        {% endfor %}
+        {% for stop in stops %}
+            <userstopcode>{{ stop.userstopcode }}</userstopcode>
+        {% endfor %}
+    </userstopcodes>
     <messagepriority>{{ object.messagepriority }}</messagepriority>
     <messagetype>{{ object.messagetype }}</messagetype>
     <messagedurationtype>{{ object.messagedurationtype }}</messagedurationtype>
