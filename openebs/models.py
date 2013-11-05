@@ -12,11 +12,18 @@ from django.db import models, IntegrityError
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.template.loader import render_to_string
+from datetime import timedelta
 from django.utils.translation import ugettext, ugettext_lazy as _
 from django.utils.timezone import now
 from kv1.models import Kv1Stop, Kv1Line
 
 from kv15.enum import *
+
+
+# TODO Move this
+def get_end_service():
+    # Hmm, this is GMT
+    return (now()+timedelta(days=1)).replace(hour=2, minute=0, second=0, microsecond=0)
 
 class UserProfile(models.Model):
     ''' Store additional user data as we don't really want a custom user model perse '''
@@ -62,7 +69,7 @@ class Kv15Stopmessage(models.Model):
     messagetype = models.CharField(max_length=10, choices=MESSAGETYPE, default='GENERAL', verbose_name=_("Type bericht"))
     messagedurationtype = models.CharField(max_length=10, choices=MESSAGEDURATIONTYPE, default='ENDTIME', verbose_name=_("Type tijdsrooster"))
     messagestarttime = models.DateTimeField(null=True, blank=True, default=now, verbose_name=_("Begintijd"))
-    messageendtime = models.DateTimeField(null=True, blank=True, verbose_name=_("Eindtijd"))
+    messageendtime = models.DateTimeField(null=True, blank=True, default=get_end_service, verbose_name=_("Eindtijd"))
     messagecontent = models.CharField(max_length=255, blank=True, verbose_name="Bericht")
     reasontype = models.SmallIntegerField(null=True, blank=True, choices=REASONTYPE, verbose_name=_("Type oorzaak"))
     subreasontype = models.CharField(max_length=10, blank=True, choices=SUBREASONTYPE, verbose_name=_("Oorzaak"))

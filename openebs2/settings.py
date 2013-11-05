@@ -198,6 +198,8 @@ DEBUG_TOOLBAR_CONFIG = {
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
+CRISPY_FAIL_SILENTLY = not DEBUG
+
 # ssh joel@openebs.nl -L 8000:91.240.240.195:80 -g #
 GOVI_HOST = '192.168.33.1:8000' #'drisacc.transmodel.nl'
 GOVI_PATH = '/TMI_Post/KV15'

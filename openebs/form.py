@@ -1,15 +1,17 @@
 from crispy_forms.bootstrap import AccordionGroup, Accordion
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit, Layout, Field
+from crispy_forms.layout import Submit, Layout, Field, HTML
 import floppyforms as forms
-from utils.widgets import DatePicker
+from django.core.exceptions import ValidationError
+from django.utils.translation import ugettext_lazy as _
+from kv1.models import Kv1Stop
 from models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage
 
 
 class Kv15StopMessageForm(forms.ModelForm):
     class Meta:
         model = Kv15Stopmessage
-        exclude = ['messagecodenumber', 'stops', 'messagedurationtype', 'messagecodedate', 'isdeleted', 'id', 'dataownercode', 'user']
+        exclude = ['messagecodenumber', 'stops', 'messagecodedate', 'isdeleted', 'id', 'dataownercode', 'user']
         widgets = {
             'messagecontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
             'reasoncontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
@@ -19,6 +21,7 @@ class Kv15StopMessageForm(forms.ModelForm):
 
             # This is awful, but is neccesary because otherwise we don't get nice bootstrappy widgets
             'messagepriority' : forms.RadioSelect,
+            'messagedurationtype' : forms.RadioSelect,
             'messagetype' : forms.RadioSelect,
             'messagestarttime' : forms.DateTimeInput,
             'messageendtime' : forms.DateTimeInput,
@@ -37,39 +40,39 @@ class Kv15StopMessageForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(Kv15StopMessageForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
-        #self.helper.form_class = 'form'
-        #self.helper.form_method = 'post'
-        #self.helper.form_action = 'msg_add'
+        self.helper.form_tag = False
         self.helper.layout = Layout(
-            Field('haltes'),
             'messagecontent',
             'messagestarttime',
             'messageendtime',
             Accordion(
-                AccordionGroup('Oorzaak',
+                AccordionGroup(_('Bericht instellingen'),
+                    'messagepriority',
+                    'messagetype',
+                    'messagedurationtype'
+                ),
+                AccordionGroup(_('Oorzaak'),
                    'reasontype',
                    'subreasontype',
                    'reasoncontent'
                 ),
-                AccordionGroup('Effect',
+                AccordionGroup(_('Effect'),
                    'effecttype',
                    'subeffecttype',
                    'effectcontent'
                 ),
-                AccordionGroup('Gevolg',
+                AccordionGroup(_('Gevolg'),
                    'measuretype',
                    'submeasuretype',
                    'measurecontent'
                 ),
-                AccordionGroup('Advies',
+                AccordionGroup(_('Advies'),
                    'advicetype',
                    'subadvicetype',
                    'advicecontent'
                 )
             )
         )
-
-        #self.helper.add_input(Submit('submit', 'Toevoegen'))
 
 class Kv15ScenarioForm(forms.ModelForm):
     class Meta:
@@ -79,10 +82,30 @@ class Kv15ScenarioForm(forms.ModelForm):
         }
 
 class Kv15ScenarioMessageForm(forms.ModelForm):
+
+    def clean(self):
+        # TODO Move _all_ halte parsing here!
+        ids = []
+        for halte in self.data['haltes'].split(','):
+            halte_split = halte.split('_')
+            if len(halte_split) == 2:
+                stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
+                if stop:
+                    ids.append(stop.pk)
+        qry = Kv1Stop.objects.filter(kv15scenariostop__message__scenario=self.data['scenario'], pk__in=ids)
+        if qry.count() > 0:
+            out = ""
+            for stop in qry:
+                out += "%s, " % stop.name
+            raise ValidationError(_("Halte(s) ' %s ' bestaan al voor dit scenario") % out)
+        else:
+            return self.cleaned_data
+
     class Meta:
         model = Kv15ScenarioMessage
-        exclude = ['scenario', 'dataownercode']
+        exclude = ['dataownercode']
         widgets = {
+            'scenario': forms.HiddenInput,
             'messagecontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
             'reasoncontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
             'effectcontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
@@ -104,3 +127,39 @@ class Kv15ScenarioMessageForm(forms.ModelForm):
             'advicetype' : forms.RadioSelect,
             'subadvicetype' : forms.Select
         }
+
+    def __init__(self, *args, **kwargs):
+        super(Kv15ScenarioMessageForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            'scenario',
+            'messagecontent',
+            Accordion(
+                AccordionGroup(_('Bericht instellingen'),
+                    'messagepriority',
+                    'messagetype',
+                    'messagedurationtype'
+                ),
+                AccordionGroup(_('Oorzaak'),
+                   'reasontype',
+                   'subreasontype',
+                   'reasoncontent'
+                ),
+                AccordionGroup(_('Effect'),
+                   'effecttype',
+                   'subeffecttype',
+                   'effectcontent'
+                ),
+                AccordionGroup(_('Gevolg'),
+                   'measuretype',
+                   'submeasuretype',
+                   'measurecontent'
+                ),
+                AccordionGroup(_('Advies'),
+                   'advicetype',
+                   'subadvicetype',
+                   'advicecontent'
+                )
+            )
+        )
