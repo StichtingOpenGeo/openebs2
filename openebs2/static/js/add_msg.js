@@ -106,8 +106,8 @@ function selectStopInner(obj) {
     console.log("Went from "+$(obj).attr('id')+" to "+id);
     index = $.inArray(id, selectedStops)
     if (index == -1) {
-        $(obj).addClass('success')
-        $(obj).append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;')
+        $("#"+id+"l, #"+id+"r").addClass('success')
+        $("#"+id+"l, #"+id+"r").append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;')
         selectedStops.push(id);
         if ($(obj).hasClass('stop-left')) {
             direction = "heen";
@@ -155,12 +155,13 @@ function lineRemoveStop(event) {
 
 /* Do the actual work here */
 function removeStop(id) {
+    console.log("Removing "+ id);
     var i = $.inArray(id, selectedStops);
     if (i != -1) {
         selectedStops.splice(i, 1);
-        $("#s"+id+"l, #s"+id+"r").remove();
-        $("#"+id).removeClass('success')
-        $("#"+id+" .stop-check").remove()
+        $("#s"+id).remove();
+        $("#"+id+"l, #"+id+"r").removeClass('success')
+        $("#"+id+"l .stop-check, #"+id+"r .stop-check").remove()
         writeHaltesField()
     }
 }
