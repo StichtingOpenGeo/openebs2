@@ -41,56 +41,31 @@ function showStops(event) {
 
 function selectStop(event, ui) {
     $('#halte-list .help').remove()
-    if($(ui.selected).hasClass('img')) {
-        if ($(":first-child", ui.selected).hasClass('stop-left')) {
-            selectStopRight($(":first-child", ui.selected))
-        } else if ($(":first-child", ui.selected).hasClass('stop-right')) {
-            selectStopLeft($(":first-child", ui.selected))
-        } else if ($(":first-child", ui.selected).hasClass('stop-both')) {
-            selectStopBoth($(":first-child", ui.selected))
-        }
-    } else {
-        id = $(ui.selected).attr('id').slice(0, -1)
-        if ($.inArray(id, selectedStops) == -1) { /* Select me*/
-            if (doSelectStop(ui.selected)) {
-                writeHaltesField();
-            }
-        } else { /* Deselect me */
-            removeStop(id);
-        }
-    }
-}
 
-function selectStopBoth(obj) {
-    $('#halte-list .help').remove()
-
-    var result = false;
-    result |= doSelectStop($(obj).parent().prev(".stop-left"));
-    result |= doSelectStop($(obj).parent().next(".stop-right"));
-
-    if (result) {
-        writeHaltesField();
-    }
-}
-
-function selectStopLeft(obj) {
-    $('#halte-list .help').remove()
-    if (doSelectStop($(obj).parent().prev(".stop-left"))) {
+    if (doSelectStop(ui.selected)) {
         writeHaltesField();
     }
 }
 
 
-function selectStopRight(obj) {
+function selectStopFromBall(obj) {
     $('#halte-list .help').remove()
-    if (doSelectStop($(obj).parent().find(".stop-right"))) {
+    did = false
+    if ($(this).parent().parent().find(".stop-right").length) {
+        doSelectStop($(this).parent().parent().find(".stop.stop-right"));
+        did = true;
+    }
+    if ($(this).parent().parent().find(".stop-left").length) {
+        doSelectStop($(this).parent().parent().find(".stop.stop-left"));
+        did = true;
+    }
+    if (did) {
         writeHaltesField();
     }
 }
 
 function doSelectStop(obj) {
     /* Make sure to strip the 'l' or 'r' */
-    console.log("Got doSelect")
     id = $(obj).attr('id').slice(0, -1)
     index = $.inArray(id, selectedStops)
     if (index == -1) {
@@ -106,6 +81,8 @@ function doSelectStop(obj) {
         $("#halte-list").append('<span class="stop-selection pull-left label label-primary" id="s'+id+'">'+$(obj).text()+'('+direction+') '+delLink+ '</span>');
 
         return true;
+    } else {
+        removeStop(id);
     }
 
     return false;

@@ -1,11 +1,15 @@
 {% comment %} These listeners are required for the linepicker {% endcomment %}
-readHaltesField(); /* Restore our selection */
+readHaltesField() /* Restore our selection */
+$("#stops").selectable({
+  filter:'td.stop',
+  selected: selectStop,
+  cancel: 'img'
+});
 $('#line_search').on('keyup', changeSearch);
+
 $( "body" ).on('click', ".line", showStops);
 $( "body" ).on('click', ".stop-remove", selectionRemoveStop);
 $( "body" ).on('click', ".stop.success", lineRemoveStop);
-
-$("#stops").selectable({
-  filter:'td.stop',
-  selected: selectStop
-});
+$( "body" ).on('click', ".stop-img.stop-both", selectStopFromBall);
+$( "body" ).on('click', ".stop-img.stop-left", selectStopFromBall);
+$( "body" ).on('click', ".stop-img.stop-right", selectStopFromBall);
