@@ -13,7 +13,7 @@ class Kv15StopMessageForm(forms.ModelForm):
         model = Kv15Stopmessage
         exclude = ['messagecodenumber', 'stops', 'messagecodedate', 'isdeleted', 'id', 'dataownercode', 'user']
         widgets = {
-            'messagecontent': forms.Textarea(attrs={'cols' : 50, 'rows' : 4, 'class' : 'col-lg-6', 'maxlength':255 }),
+            'messagecontent': forms.Textarea(attrs={'cols' : 50, 'rows' : 6, 'class' : 'col-lg-6', 'maxlength':255 }),
             'reasoncontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
             'effectcontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
             'measurecontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
