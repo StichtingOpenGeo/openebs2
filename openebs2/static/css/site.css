@@ -19,6 +19,8 @@ table.openebs-stops tr:hover td.img{
 span.stop-selection{
     margin: 0.1em;
 }
+#stops .ui-selecting { background: #fcf8e3; }
+#stops .ui-selecting.success { background: #f2dede; }
 .stop:hover{
     background-color: #f5f5f5
 }

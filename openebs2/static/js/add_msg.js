@@ -39,71 +39,59 @@ function showStops(event) {
     $(this).addClass('success')
 }
 
-function selectStop(event) {
+function selectStop(event, ui) {
     $('#halte-list .help').remove()
-    /* DISABLED till we figure out stop selections
-    if (event.ctrlKey) {
-        if ($(this).hasClass('stop-left')) {
-            selectStopLeftEnd(this);
-        } else if ($(this).hasClass('stop-right')) {
-            selectStopRightEnd(this);
+    if($(ui.selected).hasClass('img')) {
+        if ($(":first-child", ui.selected).hasClass('stop-left')) {
+            selectStopRight($(":first-child", ui.selected))
+        } else if ($(":first-child", ui.selected).hasClass('stop-right')) {
+            selectStopLeft($(":first-child", ui.selected))
+        } else if ($(":first-child", ui.selected).hasClass('stop-both')) {
+            selectStopBoth($(":first-child", ui.selected))
         }
-    } else {*/
-    if (selectStopInner(this)) {
-        writeHaltesField();
+    } else {
+        id = $(ui.selected).attr('id').slice(0, -1)
+        if ($.inArray(id, selectedStops) == -1) { /* Select me*/
+            if (doSelectStop(ui.selected)) {
+                writeHaltesField();
+            }
+        } else { /* Deselect me */
+            removeStop(id);
+        }
     }
 }
 
-function selectStopBoth(event) {
+function selectStopBoth(obj) {
     $('#halte-list .help').remove()
 
     var result = false;
-    result |= selectStopInner($(this).parent().prev(".stop-left"));
-    result |= selectStopInner($(this).parent().next(".stop-right"));
+    result |= doSelectStop($(obj).parent().prev(".stop-left"));
+    result |= doSelectStop($(obj).parent().next(".stop-right"));
 
     if (result) {
         writeHaltesField();
     }
 }
 
-function selectStopLeft(event) {
+function selectStopLeft(obj) {
     $('#halte-list .help').remove()
-    if (selectStopInner($(this).parent().prev(".stop-left"))) {
+    if (doSelectStop($(obj).parent().prev(".stop-left"))) {
         writeHaltesField();
     }
 }
 
-/* TODO: deze twee functies werken niet, omdat ik jQuery nog niet helemaal snap. */
 
-function selectStopRight(event) {
+function selectStopRight(obj) {
     $('#halte-list .help').remove()
-    if (selectStopInner($(this).parent().next(".stop-right"))) {
+    if (doSelectStop($(obj).parent().find(".stop-right"))) {
         writeHaltesField();
     }
 }
 
-function selectStopLeftEnd(start) {
-    var result = false;
-    for (obj in $(start).parent().parent().prevAll(".stop-left")) {
-            result |= selectStopInner(obj);
-    }
-
-    return result;
-}
-
-function selectStopRightEnd(start) {
-    var result = false;
-    for (obj in $(start).parent().parent().nextAll(".stop-right")) {
-        result |= selectStopInner(obj);
-    }
-
-    return result;
-}
-
-function selectStopInner(obj) {
-    /* Strip the 'l' or 'r' */
+function doSelectStop(obj) {
+    /* Make sure to strip the 'l' or 'r' */
+    console.log("Got doSelect")
     id = $(obj).attr('id').slice(0, -1)
-    console.log("Went from "+$(obj).attr('id')+" to "+id);
     index = $.inArray(id, selectedStops)
     if (index == -1) {
         $("#"+id+"l, #"+id+"r").addClass('success')
@@ -146,7 +134,7 @@ function readHaltesField() {
 
 /* Wrapper functions to get the id */
 function selectionRemoveStop(event) {
-    removeStop($(this).parent().attr('id').slice(1, -1))
+    removeStop($(this).parent().attr('id').substring(1))
 }
 
 function lineRemoveStop(event) {
@@ -155,7 +143,6 @@ function lineRemoveStop(event) {
 
 /* Do the actual work here */
 function removeStop(id) {
-    console.log("Removing "+ id);
     var i = $.inArray(id, selectedStops);
     if (i != -1) {
         selectedStops.splice(i, 1);

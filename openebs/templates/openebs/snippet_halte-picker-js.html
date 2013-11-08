@@ -2,9 +2,10 @@
 readHaltesField(); /* Restore our selection */
 $('#line_search').on('keyup', changeSearch);
 $( "body" ).on('click', ".line", showStops);
-$( "body" ).on('click', ".stop", selectStop);
 $( "body" ).on('click', ".stop-remove", selectionRemoveStop);
 $( "body" ).on('click', ".stop.success", lineRemoveStop);
-$( "body" ).on('click', ".stop-img.stop-both", selectStopBoth);
-$( "body" ).on('click', ".stop-img.stop-left", selectStopLeft);
-$( "body" ).on('click', ".stop-img.stop-right", selectStopRight);
+
+$("#stops").selectable({
+  filter:'td.stop',
+  selected: selectStop
+});
