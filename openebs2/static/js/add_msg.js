@@ -10,28 +10,28 @@ function changeSearch(event) {
 
 function writeList(data, status) {
     validIds = []
-        /* Add them all, as neccesary */
-        for (key in data.object_list) {
-            line = data.object_list[key]
-                validIds.push('l'+line.pk)
-                if (!$('#l'+line.pk).length) {
-                    row = '<tr class="line" id="l'+line.pk+'"><td>'+line.lineplanningnumber+ '</td>'
-                        row += '<td>'+line.headsign+'</td></tr>'
-                        $(row).hide().appendTo("#rows").fadeIn(999)
-                }
-        }
+    /* Add them all, as neccesary */
+    for (key in data.object_list) {
+        line = data.object_list[key]
+            validIds.push('l'+line.pk)
+            if (!$('#l'+line.pk).length) {
+                row = '<tr class="line" id="l'+line.pk+'"><td>'+line.lineplanningnumber+ '</td>'
+                    row += '<td>'+line.headsign+'</td></tr>'
+                    $(row).hide().appendTo("#rows").fadeIn(999)
+            }
+    }
+
     /* Cleanup */
     $("#rows tr").each(function(index) {
-            if ($.inArray($(this).attr('id'), validIds) == -1) {
+        if ($.inArray($(this).attr('id'), validIds) == -1) {
             $(this).fadeOut(999).remove()
-            }
-            });
+        }
+    });
 }
 
 function showStops(event) {
     $("#rows tr.success").removeClass('success');
     $(".suc-icon").remove();
-    $(this).addClass('success');
     $(this).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
     $.ajax('/line/'+$(this).attr('id').substring(1)+'/stops', {
         success : writeLine
@@ -41,16 +41,16 @@ function showStops(event) {
 
 function selectStop(event) {
     $('#halte-list .help').remove()
+    /* DISABLED till we figure out stop selections
     if (event.ctrlKey) {
         if ($(this).hasClass('stop-left')) {
             selectStopLeftEnd(this);
         } else if ($(this).hasClass('stop-right')) {
             selectStopRightEnd(this);
         }
-    } else {
-        if (selectStopInner(this)) {
-            writeHaltesField();
-        }
+    } else {*/
+    if (selectStopInner(this)) {
+        writeHaltesField();
     }
 }
 
@@ -101,17 +101,21 @@ function selectStopRightEnd(start) {
 }
 
 function selectStopInner(obj) {
-    if ($.inArray($(obj).attr('id'), selectedStops) == -1) {
+    /* Strip the 'l' or 'r' */
+    id = $(obj).attr('id').slice(0, -1)
+    console.log("Went from "+$(obj).attr('id')+" to "+id);
+    index = $.inArray(id, selectedStops)
+    if (index == -1) {
         $(obj).addClass('success')
         $(obj).append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;')
-        selectedStops.push($(obj).attr('id'));
+        selectedStops.push(id);
         if ($(obj).hasClass('stop-left')) {
             direction = "heen";
         } else {
             direction = "trg";
         }
         delLink = '<span class="stop-remove glyphicon glyphicon-remove"></span>';
-        $("#halte-list").append('<span class="stop-selection pull-left label label-primary" id="s'+$(obj).attr('id')+'">'+$(obj).text()+'('+direction+') '+delLink+ '</span>');
+        $("#halte-list").append('<span class="stop-selection pull-left label label-primary" id="s'+id+'">'+$(obj).text()+'('+direction+') '+delLink+ '</span>');
 
         return true;
     }
@@ -142,11 +146,11 @@ function readHaltesField() {
 
 /* Wrapper functions to get the id */
 function selectionRemoveStop(event) {
-    removeStop($(this).parent().attr('id').substring(1))
+    removeStop($(this).parent().attr('id').slice(1, -1))
 }
 
 function lineRemoveStop(event) {
-    removeStop($(this).attr('id'))
+    removeStop($(this).attr('id').slice(0, -1))
 }
 
 /* Do the actual work here */
@@ -154,7 +158,7 @@ function removeStop(id) {
     var i = $.inArray(id, selectedStops);
     if (i != -1) {
         selectedStops.splice(i, 1);
-        $("#s"+id).remove();
+        $("#s"+id+"l, #s"+id+"r").remove();
         $("#"+id).removeClass('success')
         $("#"+id+" .stop-check").remove()
         writeHaltesField()
@@ -174,7 +178,7 @@ function writeLine(data, status) {
 function renderRow(row) {
     out = '<tr>';
     if (row.left != null) {
-        var id = 's'+row.left.id;
+        var id = 's'+row.left.id+'l';
         if ($.inArray(id, selectedStops) != -1) {
             out += '<td class="stop stop-left success" id="'+id+'">'+row.left.name+'<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;</td>';
         } else {
@@ -191,7 +195,7 @@ function renderRow(row) {
         out += '<td class="img text-center"><img class="stop-img stop-right" src="/static/img/stop-right.png"></td>'
     }
     if (row.right != null) {
-        var id = 's'+row.right.id;
+        var id = 's'+row.right.id+'r';
         if ($.inArray(id, selectedStops) != -1) {
             out += '<td class="stop stop-right success" id="'+id+'">'+row.right.name+'<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;</td>';
         } else {
