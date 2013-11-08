@@ -9,15 +9,16 @@ function changeSearch(event) {
 }
 
 function changeCount(event) {
-    console.log("Count");
     len = $(this).val().length
-    addon = $(this).parent().find('.input-group-addon')[0]
-    $(addon).text(len+" tekens");
-    $(addon).parent().removeClass('has-warning has-error')
-    if (len > 150 && len < 250) {
-       $(addon).parent().addClass('has-warning')
+    addon = $(this).parents('.countwrapper').find('.charcount')[0]
+    $(addon).text(len);
+    $(addon).removeClass('badge-success badge-warning badge-danger')
+    if (len < 178) {
+       $(addon).addClass('badge-success')
+    } else if (len > 177 && len < 250) {
+       $(addon).addClass('badge-warning')
     } else if (len > 249) {
-       $(addon).parent().addClass('has-error')
+       $(addon).addClass('badge-danger')
     }
 }
 
