@@ -8,6 +8,19 @@ function changeSearch(event) {
     }
 }
 
+function changeCount(event) {
+    console.log("Count");
+    len = $(this).val().length
+    addon = $(this).parent().find('.input-group-addon')[0]
+    $(addon).text(len+" tekens");
+    $(addon).parent().removeClass('has-warning has-error')
+    if (len > 150 && len < 250) {
+       $(addon).parent().addClass('has-warning')
+    } else if (len > 249) {
+       $(addon).parent().addClass('has-error')
+    }
+}
+
 function writeList(data, status) {
     validIds = []
     /* Add them all, as neccesary */

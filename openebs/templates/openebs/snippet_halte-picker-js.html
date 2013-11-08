@@ -6,10 +6,11 @@ $("#stops").selectable({
   cancel: 'img'
 });
 $('#line_search').on('keyup', changeSearch);
-
+$('#id_messagecontent').on('keyup', changeCount);
+$("#id_messagecontent").trigger( "keyup" );
 $( "body" ).on('click', ".line", showStops);
 $( "body" ).on('click', ".stop-remove", selectionRemoveStop);
 $( "body" ).on('click', ".stop.success", lineRemoveStop);
-$( "body" ).on('click', ".stop-img.stop-both", selectStopFromBall);
-$( "body" ).on('click', ".stop-img.stop-left", selectStopFromBall);
-$( "body" ).on('click', ".stop-img.stop-right", selectStopFromBall);
+$( "#stops" ).on('click', ".stop-img.stop-both", selectStopFromBall);
+$( "#stops" ).on('click', ".stop-img.stop-left", selectStopFromBall);
+$( "#stops" ).on('click', ".stop-img.stop-right", selectStopFromBall);

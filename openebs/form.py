@@ -1,4 +1,4 @@
-from crispy_forms.bootstrap import AccordionGroup, Accordion
+from crispy_forms.bootstrap import AccordionGroup, Accordion, AppendedText
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, Field, HTML
 import floppyforms as forms
@@ -13,7 +13,7 @@ class Kv15StopMessageForm(forms.ModelForm):
         model = Kv15Stopmessage
         exclude = ['messagecodenumber', 'stops', 'messagecodedate', 'isdeleted', 'id', 'dataownercode', 'user']
         widgets = {
-            'messagecontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
+            'messagecontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6', 'maxlength':255 }),
             'reasoncontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
             'effectcontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
             'measurecontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
@@ -42,7 +42,7 @@ class Kv15StopMessageForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
-            'messagecontent',
+            AppendedText('messagecontent', '0 tekens'),
             'messagestarttime',
             'messageendtime',
             Accordion(
