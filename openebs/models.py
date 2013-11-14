@@ -8,7 +8,7 @@
 # into your database.
 from __future__ import unicode_literals
 import os
-from django.db import models, IntegrityError
+from django.db import models, IntegrityError, transaction
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.template.loader import render_to_string
@@ -171,6 +171,37 @@ class Kv15Scenario(models.Model):
             ("view_scenario", _("Scenario's bekijken")),
             ("add_scenario", _("Scenario's aanmaken")),
         )
+
+    @transaction.commit_on_success()
+    def plan_messages(self, user, start, end):
+        for msg in self.kv15scenariomessage_set.all():
+            a = Kv15Stopmessage(dataownercode=msg.dataownercode)
+            a.user = user
+            a.messagestarttime = start
+            a.messageendtime = end
+            a.messagepriority = msg.messagepriority
+            a.dataownercode = msg.dataownercode
+            a.messagepriority = msg.messagepriority
+            a.messagetype = msg.messagetype
+            a.messagedurationtype = msg.messagedurationtype
+            a.messagecontent = msg.messagecontent
+            a.reasontype = msg.reasontype
+            a.subreasontype = msg.subreasontype
+            a.reasoncontent = msg.reasoncontent
+            a.effecttype = msg.effecttype
+            a.subeffecttype = msg.subeffecttype
+            a.effectcontent = msg.effectcontent
+            a.measuretype = msg.measuretype
+            a.submeasuretype = msg.submeasuretype
+            a.measurecontent = msg.measurecontent
+            a.advicetype = msg.advicetype
+            a.subadvicetype = msg.subadvicetype
+            a.advicecontent = msg.advicecontent
+            a.save()
+
+            # Now add the stops
+            for msg_stop in msg.kv15scenariostop_set.all():
+                Kv15MessageStop(stopmessage=a, stop=msg_stop.stop).save()
 
 class Kv15ScenarioMessage(models.Model):
     """ This stores a 'template' to be used for easily constructing normal KV15 messages """

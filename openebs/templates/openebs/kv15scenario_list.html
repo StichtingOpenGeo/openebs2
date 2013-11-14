@@ -42,6 +42,9 @@
             <a href="{% url 'scenario_msg_add' scenario.pk %}" class="btn btn-link pull-right">
                 <span class="glyphicon glyphicon-plus"></span> {% trans "Bericht toevoegen" %}&nbsp;&nbsp;
             </a>
+            <a href="{% url 'scenario_plan' scenario.pk %}" class="btn btn-link pull-right">
+                <span class="glyphicon glyphicon-plus"></span> {% trans "Inplannen" %}&nbsp;&nbsp;
+            </a>
         </td>
     </tr>
   {% empty %}

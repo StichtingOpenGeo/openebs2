@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load static crispy_forms_tags leaflet_tags i18n %}
+
+ {% block title %}{% trans "Scenario toepassen" %}{% endblock %}
+
+{% block content %}
+    <h2>{% trans "Scenario toepassen" %}</h2>
+    <div class="row">
+        <div class="col-sm-6 col-lg-6">
+            {% trans "Je gaat de volgende berichten inplannen:" %}
+            <ul>
+            {% for message in scenario.kv15scenariomessage_set.all %}
+                <li>{{ message.messagecontent }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+        <div class="col-sm-6 col-lg-6">
+            {% leaflet_map "scenario_map" callback="main_map_init" %}
+        </div>
+    </div>
+    <form method="post" class="form" action="{% url 'scenario_plan' scenario.id %}">
+        {% crispy form form.helper %}
+    </form>
+
+{% endblock %}
+
+{% block extra_css %}
+    {% leaflet_css %}
+{% endblock %}
+
+{% block extra_js %}
+    {% leaflet_js %}
+{% endblock %}

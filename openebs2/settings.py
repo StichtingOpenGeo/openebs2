@@ -110,9 +110,11 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.gis',
 
-    # Our app
+    # Our apps
+    # Order matters for testing: openebs depends on kv1 not viceversa
+    'kv1', # Static data stuff
     'openebs',
-    'kv1', # Import stuff
+
 
     # Libs
     'south',

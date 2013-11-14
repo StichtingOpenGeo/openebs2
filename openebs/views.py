@@ -3,13 +3,13 @@ from braces.views import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.db.models import Q
 from django.conf import settings
-from django.views.generic import ListView, UpdateView
+from django.views.generic import ListView, UpdateView, FormView
 from django.views.generic.edit import CreateView, DeleteView, BaseFormView
 from django.utils.timezone import now
 from kv1.models import Kv1Stop
 from utils.client import get_client_ip
 from openebs.models import Kv15Stopmessage, Kv15Log, Kv15Scenario, Kv15ScenarioMessage
-from openebs.form import Kv15StopMessageForm, Kv15ScenarioForm, Kv15ScenarioMessageForm
+from openebs.form import Kv15StopMessageForm, Kv15ScenarioForm, Kv15ScenarioMessageForm, PlanScenarioForm
 
 import logging
 from utils.push import Push
@@ -104,6 +104,27 @@ class MessageDeleteView(OpenEbsUserMixin, DeleteView):
 
 
 # SCENARIO VIEWS
+class PlanScenarioView(OpenEbsUserMixin, FormView):
+    permission_required = 'openebs.view_scenario' # TODO Also add message!
+    form_class = PlanScenarioForm
+    template_name = 'openebs/kv15scenario_plan.html'
+    success_url = reverse_lazy('scenario_index')
+
+    def get_context_data(self, **kwargs):
+        """ Add data about the scenario we're adding to """
+        data = super(PlanScenarioView, self).get_context_data(**kwargs)
+        if self.kwargs.get('scenario', None):
+            data['scenario'] = Kv15Scenario.objects.get(pk=self.kwargs.get('scenario', None))
+        return data
+
+    def form_valid(self, form):
+        ret = super(PlanScenarioView, self).form_valid(form)
+        if self.kwargs.get('scenario', None):
+            scenario = Kv15Scenario.objects.get(pk=self.kwargs.get('scenario', None))
+            scenario.plan_messages(self.request.user, form.cleaned_data['messagestarttime'],
+                                   form.cleaned_data['messageendtime'])
+        return ret
+
 
 class ScenarioListView(OpenEbsUserMixin, ListView):
     permission_required = 'openebs.view_scenario'
@@ -131,11 +152,11 @@ class ScenarioDeleteView(OpenEbsUserMixin, DeleteView):
 
 # SCENARIO MESSAGE VIEWS
 
-class ScenarioMessageContentMixin(BaseFormView):
+class ScenarioContentMixin(BaseFormView):
     """  Overide a few defaults used by scenario messages  """
     def get_context_data(self, **kwargs):
         """ Add data about the scenario we're adding to """
-        data = super(ScenarioMessageContentMixin, self).get_context_data(**kwargs)
+        data = super(ScenarioContentMixin, self).get_context_data(**kwargs)
         if self.kwargs.get('scenario', None):
             data['scenario'] = Kv15Scenario.objects.get(pk=self.kwargs.get('scenario', None))
         return data
@@ -146,7 +167,7 @@ class ScenarioMessageContentMixin(BaseFormView):
         else:
             return reverse_lazy('scenario_index')
 
-class ScenarioMessageCreateView(OpenEbsUserMixin, ScenarioMessageContentMixin, CreateView):
+class ScenarioMessageCreateView(OpenEbsUserMixin, ScenarioContentMixin, CreateView):
     permission_required = 'openebs.add_scenario'
     model = Kv15ScenarioMessage
     form_class = Kv15ScenarioMessageForm
@@ -176,7 +197,7 @@ class ScenarioMessageCreateView(OpenEbsUserMixin, ScenarioMessageContentMixin, C
         return ret
 
 
-class ScenarioMessageUpdateView(OpenEbsUserMixin, ScenarioMessageContentMixin, UpdateView):
+class ScenarioMessageUpdateView(OpenEbsUserMixin, ScenarioContentMixin, UpdateView):
     permission_required = 'openebs.add_scenario'
     model = Kv15ScenarioMessage
     form_class = Kv15ScenarioMessageForm
@@ -201,6 +222,6 @@ class ScenarioMessageUpdateView(OpenEbsUserMixin, ScenarioMessageContentMixin, U
             if old_msg_stop.stop not in new_stops: # Removed stop, delete it
                 old_msg_stop.delete()
 
-class ScenarioMessageDeleteView(OpenEbsUserMixin, ScenarioMessageContentMixin, DeleteView):
+class ScenarioMessageDeleteView(OpenEbsUserMixin, ScenarioContentMixin, DeleteView):
     permission_required = 'openebs.add_scenario'
     model = Kv15ScenarioMessage

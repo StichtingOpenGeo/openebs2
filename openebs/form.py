@@ -1,11 +1,13 @@
 from crispy_forms.bootstrap import AccordionGroup, Accordion, AppendedText
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, Field, HTML, Div
+from datetime import datetime
+from django.utils.timezone import now
 import floppyforms as forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from kv1.models import Kv1Stop
-from models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage
+from models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, get_end_service
 
 
 class Kv15StopMessageForm(forms.ModelForm):
@@ -43,10 +45,9 @@ class Kv15StopMessageForm(forms.ModelForm):
         self.helper.form_tag = False
         self.helper.layout = Layout(
             Div(HTML('<span class="charcount badge badge-success pull-right">0</span>'),
-                Field('messagecontent'),
-                css_class='countwrapper'),
-            'messagestarttime',
-            'messageendtime',
+                Field('messagecontent'),  css_class='countwrapper'),
+                'messagestarttime',
+                'messageendtime',
             Accordion(
                 AccordionGroup(_('Bericht instellingen'),
                     'messagepriority',
@@ -164,4 +165,26 @@ class Kv15ScenarioMessageForm(forms.ModelForm):
                    'advicecontent'
                 )
             )
+        )
+
+class PlanScenarioForm(forms.Form):
+    messagestarttime = forms.DateTimeField(label=_("Begin"), initial=now) #forms.DateTimeInput()
+    messageendtime = forms.DateTimeField(label=_("Einde"), initial=get_end_service()) #forms.DateTimeInput()
+
+    def clean(self):
+        data = self.cleaned_data
+        if self.data['messageendtime'] <= self.data['messagestarttime']:
+            raise ValidationError(_("Einde moet na begin zijn"))
+        return data
+
+    def __init__(self, *args, **kwargs):
+        super(PlanScenarioForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = 'scenario_plan'
+        self.helper.layout = Layout(
+            # Put in two columns
+            Div(Div(Field('messagestarttime'), css_class="col-sm-6 col-lg-6"),
+                Div(Field('messageendtime'), css_class="col-sm-6 col-lg-6"),
+                css_class="row"),
+            Submit('submit', _("Plan alle berichten in"))
         )

@@ -29,9 +29,9 @@ class TestKv15MessageModel(TestCase):
 
     def test_new_message_too_many(self):
         msg = TestUtils.create_message_default(self.user)
-        msg.messagecodenumber = 9999
+        msg.messagecodenumber = 9998
         msg.save()
-        self.assertEqual(msg.messagecodenumber, 9999)
+        self.assertEqual(msg.messagecodenumber, 9998)
 
         msg = TestUtils.create_message_default(self.user)
         with self.assertRaises(IntegrityError):
