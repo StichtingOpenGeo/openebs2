@@ -1,8 +1,11 @@
 # Create your views here.
-from braces.views import LoginRequiredMixin, PermissionRequiredMixin
+from braces.views import AccessMixin
+from django.contrib.auth.views import redirect_to_login
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.db.models import Q
 from django.conf import settings
+from django.shortcuts import redirect
 from django.views.generic import ListView, UpdateView, FormView
 from django.views.generic.edit import CreateView, DeleteView, BaseFormView
 from django.utils.timezone import now
@@ -16,8 +19,34 @@ from utils.push import Push
 
 log = logging.getLogger(__name__)
 
-class OpenEbsUserMixin(LoginRequiredMixin, PermissionRequiredMixin):
-    raise_exception = True
+class OpenEbsUserMixin(AccessMixin):
+    """
+    This is based on the braces LoginRequiredMixin and PermissionRequiredMixin but will only raise the exception
+    if the user is logged in
+    """
+    permission_required = None  # Default required perms to none
+
+    def dispatch(self, request, *args, **kwargs):
+        # Make sure that the permission_required attribute is set on the
+        # view, or raise a configuration error.
+        if self.permission_required is None:
+            raise ImproperlyConfigured(
+                "'PermissionRequiredMixin' requires "
+                "'permission_required' attribute to be set.")
+
+        # Check to see if the request's user has the required permission.
+        has_permission = request.user.has_perm(self.permission_required)
+
+        if request.user.is_authenticated():
+            if not has_permission:  # If the user lacks the permission
+                return redirect(reverse('app_nopermission'))
+        else:
+            return redirect_to_login(request.get_full_path(),
+                                     self.get_login_url(),
+                                     self.get_redirect_field_name())
+
+        return super(OpenEbsUserMixin, self).dispatch(
+            request, *args, **kwargs)
 
 # MESSAGE VIEWS
 
