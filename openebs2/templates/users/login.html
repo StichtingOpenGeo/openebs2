@@ -8,6 +8,7 @@
             <h3 class="panel-title">{% trans "Inloggen" %}</h3>
         </div>
         <div class="panel-body">
+            <p>{% trans "Voor deze applicatie is een account nodig. Neem contact op met een beheerder voor meer informatie." %}</p>
             {% if form.errors and not form.non_field_errors %}
                 <p class="alert alert-warning">
                     {% trans "Je gebruikersnaam of wachtwoord kwamen niet overeen. Probeer het nog eens." %}
