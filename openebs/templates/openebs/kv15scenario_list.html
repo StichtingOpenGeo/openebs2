@@ -13,9 +13,9 @@
   <table class="table table-bordered table-striped table-condensed">
   <tr>
         <th class="col-lg-1">{% trans "Naam"%}</th>
-        <th class="col-lg-6">{% trans "Omschrijving" %}</th>
+        <th class="col-lg-4">{% trans "Omschrijving" %}</th>
         <th class="col-lg-1">{% trans "Berichten" %}</th>
-        <th class="col-lg-4">&nbsp;</th>
+        <th class="col-lg-6">&nbsp;</th>
   </tr>
   {% for scenario in object_list %}
       <tr>
@@ -37,13 +37,13 @@
                 </button>
             </form>
             <a href="{% url 'scenario_edit' scenario.pk %}" class="btn btn-link pull-right">
-                <span class="glyphicon glyphicon-edit"></span> {% trans "Bewerk" %}&nbsp;&nbsp;
+                <span class="glyphicon glyphicon-edit"></span> {% trans "Bewerk" %}&nbsp;
             </a>
             <a href="{% url 'scenario_msg_add' scenario.pk %}" class="btn btn-link pull-right">
-                <span class="glyphicon glyphicon-plus"></span> {% trans "Bericht toevoegen" %}&nbsp;&nbsp;
+                <span class="glyphicon glyphicon-plus"></span> {% trans "Bericht toevoegen" %}&nbsp;
             </a>
             <a href="{% url 'scenario_plan' scenario.pk %}" class="btn btn-link pull-right">
-                <span class="glyphicon glyphicon-plus"></span> {% trans "Inplannen" %}&nbsp;&nbsp;
+                <span class="glyphicon glyphicon-play"></span> {% trans "Inplannen" %}&nbsp;
             </a>
         </td>
     </tr>

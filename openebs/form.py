@@ -84,6 +84,15 @@ class Kv15ScenarioForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super(Kv15ScenarioForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.form_class = 'form_horizontal'
+        self.helper.label_class = 'col-lg-2'
+        self.helper.field_class = 'col-lg-10'
+
+
 class Kv15ScenarioMessageForm(forms.ModelForm):
 
     def clean(self):

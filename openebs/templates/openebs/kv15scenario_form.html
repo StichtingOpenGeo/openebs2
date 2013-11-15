@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load floppyforms i18n %}
+{% load crispy_forms_tags i18n %}
 
 {% block title %}{% trans "Nieuw scenario" %}{% endblock %}
 
@@ -8,7 +8,7 @@
   <h1>{% trans "Nieuw scenario" %} </h1>
   <form method="post" class="form form-horizontal" action="{% url 'scenario_add' %}">
     {% csrf_token %}
-    {% form form %}
+    {% crispy form %}
     <div class="form-group">
         <div class="col-lg-offset-2 col-lg-10">
             <button type="submit" class="btn btn-primary">{% trans "Toevoegen" %}</button>

@@ -18,6 +18,7 @@
             {% leaflet_map "scenario_map" callback="main_map_init" %}
         </div>
     </div>
+    <br />
     <form method="post" class="form" action="{% url 'scenario_plan' scenario.id %}">
         {% crispy form form.helper %}
     </form>
@@ -30,4 +31,17 @@
 
 {% block extra_js %}
     {% leaflet_js %}
+{% endblock %}
+
+{% block js %}
+    function main_map_init (map, options) {
+        map.setView(new L.LatLng(52.05, 4.32), 12);
+        var dataurl = "{% url 'scenario_stops_ajax' scenario.id %}";
+        $.getJSON(dataurl, function (data) {
+            group = L.geoJson(data);
+            group.addTo(map);
+            map.fitBounds(group.getBounds());
+        });
+
+    }
 {% endblock %}

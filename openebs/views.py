@@ -1,14 +1,15 @@
 # Create your views here.
-from braces.views import AccessMixin
+from braces.views import AccessMixin, LoginRequiredMixin
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.db.models import Q
 from django.conf import settings
-from django.shortcuts import redirect
-from django.views.generic import ListView, UpdateView, FormView
+from django.shortcuts import redirect, get_object_or_404
+from django.views.generic import ListView, UpdateView, FormView, DetailView
 from django.views.generic.edit import CreateView, DeleteView, BaseFormView
 from django.utils.timezone import now
+from djgeojson.views import GeoJSONLayerView
 from kv1.models import Kv1Stop
 from utils.client import get_client_ip
 from openebs.models import Kv15Stopmessage, Kv15Log, Kv15Scenario, Kv15ScenarioMessage
@@ -16,6 +17,7 @@ from openebs.form import Kv15StopMessageForm, Kv15ScenarioForm, Kv15ScenarioMess
 
 import logging
 from utils.push import Push
+from utils.views import JSONListResponseMixin
 
 log = logging.getLogger(__name__)
 
@@ -254,3 +256,15 @@ class ScenarioMessageUpdateView(OpenEbsUserMixin, ScenarioContentMixin, UpdateVi
 class ScenarioMessageDeleteView(OpenEbsUserMixin, ScenarioContentMixin, DeleteView):
     permission_required = 'openebs.add_scenario'
     model = Kv15ScenarioMessage
+
+# AJAX Views
+
+class ScenarioStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
+    model = Kv1Stop
+    geometry_field = 'location'
+    properties = ['name', 'userstopcode', 'dataownercode', 'messages']
+
+    def get_queryset(self):
+        qry = super(ScenarioStopsAjaxView, self).get_queryset()
+        qry = qry.filter(kv15scenariostop__message__scenario=self.kwargs.get('scenario', None))
+        return qry
