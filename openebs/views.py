@@ -134,16 +134,12 @@ class MessageUpdateView(OpenEbsUserMixin, GoviPushEnabled, UpdateView):
         self.process_new_old_haltes(form.instance, form.instance.kv15messagestop_set, haltes if haltes else "")
 
         # Push a delete, then a create, but we can use the same message id
-        if self.push_govi(form.instance.to_xml_delete()):
-            if self.push_govi(form.instance.to_xml()):
-                form.instance.set_status(MessageStatus.SENT)
-                log.info("Sent message to GOVI: %s" % (form.instance))
-            else:
-                form.instance.set_status(MessageStatus.ERROR_SEND)
-                log.error("Failed to send updated message to GOVI: %s" % (form.instance))
+        if self.push_govi(form.instance.to_xml_delete()+form.instance.to_xml()):
+            form.instance.set_status(MessageStatus.SENT)
+            log.info("Sent message to GOVI: %s" % (form.instance))
         else:
-            form.instance.set_status(MessageStatus.ERROR_DELETE)
-            log.error("Failed to delete message for update to GOVI: %s" % (form.instance))
+            form.instance.set_status(MessageStatus.ERROR_SEND)
+            log.error("Failed to send updated message to GOVI: %s" % (form.instance))
 
         return ret
 
