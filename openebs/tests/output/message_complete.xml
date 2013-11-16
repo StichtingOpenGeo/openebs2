@@ -1,0 +1,27 @@
+<STOPMESSAGE>
+    <dataownercode>HTM</dataownercode>
+    <messagecodedate>2013-11-16</messagecodedate>
+    <messagecodenumber>10</messagecodenumber>
+    <userstopcodes>
+            <userstopcode>100</userstopcode>
+    </userstopcodes>
+    <messagepriority>PTPROCESS</messagepriority>
+    <messagetype>ADDITIONAL</messagetype>
+    <messagedurationtype>FIRSTVEJO</messagedurationtype>
+    <messagestarttime>2013-11-16T14:09:35.161617+01:00</messagestarttime>
+    <messageendtime>2013-11-17T03:00:00+01:00</messageendtime>
+    <messagecontent>Bla!</messagecontent>
+    <reasontype>1</reasontype>
+    <subreasontype>11</subreasontype>
+    <reasoncontent>Uitleg oorzaak</reasoncontent>
+    <effecttype>1</effecttype>
+    <subeffecttype>11</subeffecttype>
+    <effectcontent>Uitleg gevolg</effectcontent>
+    <measuretype>1</measuretype>
+    <submeasuretype>1</submeasuretype>
+    <measurecontent>Uitleg aanpassing</measurecontent>
+    <advicetype>1</advicetype>
+    <subadvicetype>1</subadvicetype>
+    <advicecontent>Uitleg advies</advicecontent>
+    <messagetimestamp>...</messagetimestamp>
+</STOPMESSAGE>

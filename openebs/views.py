@@ -12,14 +12,14 @@ from django.utils.timezone import now
 from djgeojson.views import GeoJSONLayerView
 from kv1.models import Kv1Stop
 from utils.client import get_client_ip
-from openebs.models import Kv15Stopmessage, Kv15Log, Kv15Scenario, Kv15ScenarioMessage
+from openebs.models import Kv15Stopmessage, Kv15Log, Kv15Scenario, Kv15ScenarioMessage, MessageStatus
 from openebs.form import Kv15StopMessageForm, Kv15ScenarioForm, Kv15ScenarioMessageForm, PlanScenarioForm
 
 import logging
 from utils.push import Push
 from utils.views import JSONListResponseMixin
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('openebs.views')
 
 class OpenEbsUserMixin(AccessMixin):
     """
@@ -41,6 +41,7 @@ class OpenEbsUserMixin(AccessMixin):
 
         if request.user.is_authenticated():
             if not has_permission:  # If the user lacks the permission
+                log.info("User %s requested %s but doesn't have permission" % (self.request.user, request.get_full_path()))
                 return redirect(reverse('app_nopermission'))
         else:
             return redirect_to_login(request.get_full_path(),
@@ -50,6 +51,21 @@ class OpenEbsUserMixin(AccessMixin):
         return super(OpenEbsUserMixin, self).dispatch(
             request, *args, **kwargs)
 
+class GoviPushEnabled(object):
+    pusher = Push(settings.GOVI_SUBSCRIBER, settings.GOVI_DOSSIER, settings.GOVI_NAMESPACE)
+
+    def push_govi(self, msg):
+        """
+        Push message _msg_ to GOVI, and return if it was succesfull
+        """
+        success = False
+        code, content = self.pusher.push(settings.GOVI_HOST, settings.GOVI_PATH, msg)
+        if code == 200:
+            success = True
+        else:
+            log.error("Push to GOVI failed with code %s: %s" %(code, content))
+        return success
+
 # MESSAGE VIEWS
 
 class MessageListView(OpenEbsUserMixin, ListView):
@@ -57,16 +73,16 @@ class MessageListView(OpenEbsUserMixin, ListView):
     model = Kv15Stopmessage
     # Get the currently active messages
     context_object_name = 'active_list'
-    queryset = model.objects.filter(messageendtime__gt=now, isdeleted=False)
+    queryset = model.objects.filter(messageendtime__gt=now, isdeleted=False).order_by('-messagecodedate', '-messagecodenumber')
 
     def get_context_data(self, **kwargs):
         context = super(MessageListView, self).get_context_data(**kwargs)
         # Add the no longer active messages
         context['archive_list'] = self.model.objects.filter(Q(messageendtime__lt=now) | Q(isdeleted=True))
-        context['archive_list'] = context['archive_list'].order_by('-messagecodedate', '-messagecodenumber', 'messagestarttime')
+        context['archive_list'] = context['archive_list'].order_by('-messagecodedate', '-messagecodenumber')
         return context
 
-class MessageCreateView(OpenEbsUserMixin, CreateView):
+class MessageCreateView(OpenEbsUserMixin, GoviPushEnabled, CreateView):
     permission_required = 'openebs.add_messages'
     model = Kv15Stopmessage
     form_class = Kv15StopMessageForm
@@ -82,20 +98,25 @@ class MessageCreateView(OpenEbsUserMixin, CreateView):
         if haltes:
             stops = Kv1Stop.find_stops_from_haltes(haltes)
 
-        # TODO Push to GOVI (see if we can without saving)
-        msg = form.instance.to_xml_with_stops(stops)
-        code, content = Push(settings.GOVI_SUBSCRIBER, settings.GOVI_DOSSIER, msg, settings.GOVI_NAMESPACE).push(settings.GOVI_HOST, settings.GOVI_PATH)
-
         # Save and then log
         ret = super(MessageCreateView, self).form_valid(form)
-        Kv15Log.create_log_entry(form.instance, get_client_ip(self.request))
 
+        # Add stop data
         for stop in stops:
             form.instance.kv15messagestop_set.create(stopmessage=form.instance, stop=stop)
+        Kv15Log.create_log_entry(form.instance, get_client_ip(self.request))
+
+        # Send to GOVI
+        if self.push_govi(form.instance.to_xml):
+            form.instance.set_status(MessageStatus.SENT)
+            log.info("Sent message to GOVI: %s" % (form.instance))
+        else:
+            form.instance.set_status(MessageStatus.ERROR_SEND)
+            log.error("Failed to send message to GOVI: %s" % (form.instance))
 
         return ret
 
-class MessageUpdateView(OpenEbsUserMixin, UpdateView):
+class MessageUpdateView(OpenEbsUserMixin, GoviPushEnabled, UpdateView):
     permission_required = 'openebs.add_messages'
     model = Kv15Stopmessage
     form_class = Kv15StopMessageForm
@@ -112,8 +133,17 @@ class MessageUpdateView(OpenEbsUserMixin, UpdateView):
         haltes = self.request.POST.get('haltes', None)
         self.process_new_old_haltes(form.instance, form.instance.kv15messagestop_set, haltes if haltes else "")
 
-        # TODO Push to GOVI
         # Push a delete, then a create, but we can use the same message id
+        if self.push_govi(form.instance.to_xml_delete()):
+            if self.push_govi(form.instance.to_xml()):
+                form.instance.set_status(MessageStatus.SENT)
+                log.info("Sent message to GOVI: %s" % (form.instance))
+            else:
+                form.instance.set_status(MessageStatus.ERROR_SEND)
+                log.error("Failed to send updated message to GOVI: %s" % (form.instance))
+        else:
+            form.instance.set_status(MessageStatus.ERROR_DELETE)
+            log.error("Failed to delete message for update to GOVI: %s" % (form.instance))
 
         return ret
 
@@ -129,14 +159,24 @@ class MessageUpdateView(OpenEbsUserMixin, UpdateView):
                 old_msg_stop.delete()
 
 
-class MessageDeleteView(OpenEbsUserMixin, DeleteView):
+class MessageDeleteView(OpenEbsUserMixin, GoviPushEnabled, DeleteView):
     permission_required = 'openebs.add_messages'
     model = Kv15Stopmessage
     success_url = reverse_lazy('msg_index')
 
+    def delete(self, request, *args, **kwargs):
+        ret = super(MessageDeleteView, self).delete(request, *args, **kwargs)
+        obj = self.get_object()
+        if self.push_govi(obj.to_xml_delete()):
+            obj.set_status(MessageStatus.DELETED)
+            log.error("Deleted message succesfully communicated to GOVI: %s" % obj)
+        else:
+            obj.set_status(MessageStatus.ERROR_SEND_DELETE)
+            log.error("Failed to send delete request to GOVI: %s" % obj)
+        return ret
 
 # SCENARIO VIEWS
-class PlanScenarioView(OpenEbsUserMixin, FormView):
+class PlanScenarioView(OpenEbsUserMixin, GoviPushEnabled, FormView):
     permission_required = 'openebs.view_scenario' # TODO Also add message!
     form_class = PlanScenarioForm
     template_name = 'openebs/kv15scenario_plan.html'
@@ -153,8 +193,17 @@ class PlanScenarioView(OpenEbsUserMixin, FormView):
         ret = super(PlanScenarioView, self).form_valid(form)
         if self.kwargs.get('scenario', None):
             scenario = Kv15Scenario.objects.get(pk=self.kwargs.get('scenario', None))
-            scenario.plan_messages(self.request.user, form.cleaned_data['messagestarttime'],
+            saved = scenario.plan_messages(self.request.user, form.cleaned_data['messagestarttime'],
                                    form.cleaned_data['messageendtime'])
+            message_string = "".join([msg.to_xml() for msg in saved])
+            if self.push_govi(message_string):
+                for msg in saved:
+                    msg.set_status(MessageStatus.SENT)
+                log.error("Planned messages sent to GOVI: %s" % ",".join([str(msg.messagecodenumber) for msg in saved]))
+            else:
+                for msg in saved:
+                    msg.set_status(MessageStatus.ERROR_SEND)
+                log.error("Failed to communicate planned messages to GOVI: %s" % ",".join([str(msg.messagecodenumber) for msg in saved]))
         return ret
 
 

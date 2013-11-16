@@ -165,7 +165,7 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': True,
         },
-        '': {
+        'openebs': {
             'handlers': ['logfile'],
             'level': 'DEBUG',
         },

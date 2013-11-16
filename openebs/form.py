@@ -13,7 +13,7 @@ from models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, get_end_s
 class Kv15StopMessageForm(forms.ModelForm):
     class Meta:
         model = Kv15Stopmessage
-        exclude = ['messagecodenumber', 'stops', 'messagecodedate', 'isdeleted', 'id', 'dataownercode', 'user']
+        exclude = ['messagecodenumber', 'status', 'stops', 'messagecodedate', 'isdeleted', 'id', 'dataownercode', 'user']
         widgets = {
             'messagecontent': forms.Textarea(attrs={'cols' : 50, 'rows' : 6, 'class' : 'col-lg-6', 'maxlength':255 }),
             'reasoncontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),

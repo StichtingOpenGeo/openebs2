@@ -7,6 +7,7 @@
 # Also note: You'll have to insert the output of 'django-admin.py sqlcustom [appname]'
 # into your database.
 from __future__ import unicode_literals
+from Tix import CObjView
 import os
 from django.db import models, IntegrityError, transaction
 from django.core.exceptions import ValidationError
@@ -58,6 +59,25 @@ class Kv15Log(models.Model):
         log.save()
         return log
 
+class MessageStatus(object):
+    # Status values
+    SAVED = 0
+    SENT = 1
+    CONFIRMED = 2
+    DELETED = 5
+    DELETE_SENT = 6
+    ERROR_SEND = 11
+    ERROR_SEND_DELETE = 12
+
+    STATUSES = ((SAVED, _("Opgeslagen")), # In our database
+                (SENT, _("Verstuurd")), # Pushed to GOVI
+                (CONFIRMED, _("Teruggemeld")), # Received confirmation
+                (DELETED, _("Verwijderd")), # Received confirmation
+                (DELETE_SENT, _("Verwijdering verstuurd ")), # Verweijderen succesvol
+                (ERROR_SEND, _("Fout bij versturen")), # Failed to push
+                (ERROR_SEND_DELETE, _("Fout bij versturen verwijdering")),
+                )
+
 
 class Kv15Stopmessage(models.Model):
     id = models.AutoField(primary_key=True)
@@ -85,6 +105,7 @@ class Kv15Stopmessage(models.Model):
     advicecontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg advies"))
     messagetimestamp = models.DateTimeField(auto_now_add=True)
     isdeleted = models.BooleanField(default=False, verbose_name=_("Verwijderd?"))
+    status = models.SmallIntegerField(choices=MessageStatus.STATUSES, default=0, verbose_name=_("Status"))
     stops = models.ManyToManyField(Kv1Stop, through='Kv15MessageStop')
 
     class Meta:
@@ -100,7 +121,7 @@ class Kv15Stopmessage(models.Model):
         message = self.messagecontent
         if message == "":
             message = _("<geen bericht>")
-        return "%s#%s : %s" % (self.messagecodedate, self.messagecodenumber, message)
+        return "%s|%s#%s : %s" % (self.dataownercode, self.messagecodedate, self.messagecodenumber, message)
 
     def clean(self):
         # Validate the object
@@ -133,11 +154,20 @@ class Kv15Stopmessage(models.Model):
             raise IntegrityError(ugettext("Teveel berichten vestuurd - probeer het morgen weer"))
         return num['messagecodenumber__max'] + 1 if num['messagecodenumber__max'] else 1
 
-    def to_xml_with_stops(self, stops):
+    def to_xml(self):
         return render_to_string('xml/kv15stopmessage.xml', {'object': self }).strip(os.linesep)
 
-    def to_xml(self):
-        return self.to_xml_with_stops([])
+    def to_xml_delete(self):
+        """
+        This is slightly weird - the logic for keeping the status in sync can't be in the model unfortunately.
+        (because we can't push without stops, and stops are a submodel, requiring the main object to be saved)
+        Idealy you would only allow this to be called on update (which is delete+add) or if object is deleted
+        """
+        return render_to_string('xml/kv15deletemessage.xml', {'object': self }).strip(os.linesep)
+
+    def set_status(self, status):
+        self.status = status
+        self.save()
 
 class Kv15Schedule(models.Model):
     stopmessage = models.ForeignKey(Kv15Stopmessage)
@@ -175,7 +205,8 @@ class Kv15Scenario(models.Model):
         )
 
     def plan_messages(self, user, start, end):
-        for msg in self.kv15scenariomessage_set.all():
+        saved_messages = []
+        for msg in self.kv15scenariomessage_set.all().order_by('updated'):
             a = Kv15Stopmessage(dataownercode=msg.dataownercode)
             a.user = user
             a.messagecodedate = now()
@@ -202,6 +233,10 @@ class Kv15Scenario(models.Model):
             # Now add the stops
             for msg_stop in msg.kv15scenariostop_set.all():
                 Kv15MessageStop(stopmessage=a, stop=msg_stop.stop).save()
+
+            saved_messages.append(a)
+
+        return saved_messages
 
 class Kv15ScenarioMessage(models.Model):
     """ This stores a 'template' to be used for easily constructing normal KV15 messages """

@@ -4,13 +4,12 @@ from django.conf import settings
 import httplib
 
 class Push:
-    def __init__(self, subscriberid = 'openOV', dossiername = None, content = None, namespace = None):
-        self.log = logging.getLogger(__name__)
+    def __init__(self, subscriberid = 'openOV', dossiername = None, namespace = None):
+        self.log = logging.getLogger("openebs.push")
         self.subscriberid = subscriberid
         self.timestamp = now()
 
         self.dossiername = dossiername
-        self.content = content
         self.namespace = namespace
 
     def __str__(self):
@@ -32,7 +31,10 @@ class Push:
 
         return xml
 
-    def push(self, remote, path):
+    def push(self, remote, path, content):
+        # Add content
+        self.content = content
+        # Calculate XML with wrapper/header
         content = str(self)
         if settings.GOVI_PUSH_DEBUG:
             self.log.debug(content)

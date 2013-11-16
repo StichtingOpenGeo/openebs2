@@ -23,7 +23,7 @@
   {% for msg in active_list %}
       <tr class="{% if msg.is_future %}warning{% endif %}">
         <td>{{ msg.messagecodenumber }}</td>
-        <td>{{ msg.messagecontent }}</td>
+        <td>{{ msg.messagecontent }} {% include "openebs/snippet_status.html" with status=msg.status only %}</td>
         <td class="text-center">
             {% if msg.kv15messagestop_set.count > 0 %}
             <a class="halte-count btn btn-link" data-title="{% trans 'Haltes bij bericht' %}" data-html="true" data-content="{% include 'openebs/snippet_halte-list.html' %}">
@@ -63,7 +63,7 @@
   {% for msg in archive_list %}
     <tr class="{% if msg.isdeleted %}danger{% endif %}">
         <td>{{ msg.messagecodenumber }}</td>
-        <td>{{ msg.messagecontent }}</td>
+        <td>{{ msg.messagecontent }} {% include "openebs/snippet_status.html" with status=msg.status only %}</td>
         <td class="text-center">{{ msg.kv15messagestop_set.count }}</td>
         <td>{{ msg.messagestarttime|date:"H:i" }} - {{ msg.messageendtime|date:"H:i" }}</td>
         <td>&nbsp;</td>

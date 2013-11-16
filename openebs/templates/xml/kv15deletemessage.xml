@@ -1,0 +1,5 @@
+<DELETEMESSAGE>
+    <dataownercode>{{ object.dataownercode }}</dataownercode>
+    <messagecodedate>{{ object.messagecodedate|date:"Y-m-d" }}</messagecodedate>
+    <messagecodenumber>{{ object.messagecodenumber }}</messagecodenumber>
+</DELETEMESSAGE>
