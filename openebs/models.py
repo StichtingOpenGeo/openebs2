@@ -109,7 +109,9 @@ class Kv15Stopmessage(models.Model):
 
     def save(self, *args, **kwargs):
         # Set the messagecodenumber to the latest highest number for new messages
-        self.messagecodenumber = self.get_latest_number()
+        # But don't get the latest number if already set/updating
+        if self.messagecodenumber is None:
+            self.messagecodenumber = self.get_latest_number()
         super(Kv15Stopmessage, self).save(*args, **kwargs)
 
     def delete(self):
@@ -172,15 +174,13 @@ class Kv15Scenario(models.Model):
             ("add_scenario", _("Scenario's aanmaken")),
         )
 
-    @transaction.commit_on_success()
     def plan_messages(self, user, start, end):
         for msg in self.kv15scenariomessage_set.all():
             a = Kv15Stopmessage(dataownercode=msg.dataownercode)
             a.user = user
+            a.messagecodedate = now()
             a.messagestarttime = start
             a.messageendtime = end
-            a.messagepriority = msg.messagepriority
-            a.dataownercode = msg.dataownercode
             a.messagepriority = msg.messagepriority
             a.messagetype = msg.messagetype
             a.messagedurationtype = msg.messagedurationtype

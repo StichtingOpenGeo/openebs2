@@ -62,7 +62,8 @@ class MessageListView(OpenEbsUserMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super(MessageListView, self).get_context_data(**kwargs)
         # Add the no longer active messages
-        context['archive_list'] = self.model.objects.filter(Q(messageendtime__lt=now) | Q(isdeleted=True)).order_by('-messagecodedate', '-messagecodenumber')
+        context['archive_list'] = self.model.objects.filter(Q(messageendtime__lt=now) | Q(isdeleted=True))
+        context['archive_list'] = context['archive_list'].order_by('-messagecodedate', '-messagecodenumber', 'messagestarttime')
         return context
 
 class MessageCreateView(OpenEbsUserMixin, CreateView):
@@ -139,7 +140,7 @@ class PlanScenarioView(OpenEbsUserMixin, FormView):
     permission_required = 'openebs.view_scenario' # TODO Also add message!
     form_class = PlanScenarioForm
     template_name = 'openebs/kv15scenario_plan.html'
-    success_url = reverse_lazy('scenario_index')
+    success_url = reverse_lazy('msg_index')
 
     def get_context_data(self, **kwargs):
         """ Add data about the scenario we're adding to """

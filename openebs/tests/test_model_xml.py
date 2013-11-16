@@ -20,5 +20,5 @@ class TestKv15MessageXmlModel(TestCase):
         Kv15MessageStop(stopmessage=m1, stop=halte_a).save()
         Kv15MessageStop(stopmessage=m1, stop=halte_b).save()
 
-        print m1.to_xml()
+        # print m1.to_xml()
 

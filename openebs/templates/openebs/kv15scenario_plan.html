@@ -1,27 +1,31 @@
 {% extends "base.html" %}
 {% load static crispy_forms_tags leaflet_tags i18n %}
 
- {% block title %}{% trans "Scenario toepassen" %}{% endblock %}
+ {% block title %}{% trans "Scenario inplannen" %}{% endblock %}
 
 {% block content %}
-    <h2>{% trans "Scenario toepassen" %}</h2>
+    <h2>{% trans "Scenario" %} <em>{{scenario.name}}</em> {% trans " inplannen" %}</h2>
     <div class="row">
         <div class="col-sm-6 col-lg-6">
-            {% trans "Je gaat de volgende berichten inplannen:" %}
+            <p><strong>{% trans "Je gaat de volgende berichten inplannen:" %}</strong><p>
             <ul>
-            {% for message in scenario.kv15scenariomessage_set.all %}
-                <li>{{ message.messagecontent }}</li>
+            {% for msg in scenario.kv15scenariomessage_set.all %}
+                <li>{{ msg.messagecontent }} <a class="halte-count" data-title="{% trans 'Haltes bij bericht' %}" data-html="true" data-content="{% include 'openebs/snippet_scenario-halte-list.html' %}">
+                    ({{ msg.kv15scenariostop_set.count }} haltes)</a></li>
             {% endfor %}
             </ul>
+            <br />
+            <p>{% trans "Kies de begin- en eindtijd:" %}</p>
+            <form method="post" class="form" action="{% url 'scenario_plan' scenario.id %}">
+                {% crispy form form.helper %}
+            </form>
         </div>
         <div class="col-sm-6 col-lg-6">
             {% leaflet_map "scenario_map" callback="main_map_init" %}
         </div>
     </div>
     <br />
-    <form method="post" class="form" action="{% url 'scenario_plan' scenario.id %}">
-        {% crispy form form.helper %}
-    </form>
+
 
 {% endblock %}
 
@@ -32,6 +36,8 @@
 {% block extra_js %}
     {% leaflet_js %}
 {% endblock %}
+
+{% block js_init %}$('.halte-count').popover({ trigger: 'hover' });{% endblock %}
 
 {% block js %}
     function main_map_init (map, options) {
