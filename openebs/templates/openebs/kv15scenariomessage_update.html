@@ -1,10 +1,9 @@
 {% extends "base.html" %}
-{% load static floppyforms i18n %}
+{% load static crispy_forms_tags i18n %}
 
  {% block title %}{% trans "Bewerk bericht" %}{% endblock %}
 
 {% block content %}
-{{ form.scenario }}
 <h3>Bewerk bericht voor scenario <em>{{ scenario.name }}</em></h3>
 <div class="row">
     {% include "openebs/snippet_halte-picker.html" %}
@@ -27,7 +26,8 @@
             </div>
             <div class="clearfix"></div>
             {% csrf_token %}
-            {% form form using "floppyforms/layouts/bootstrap_vertical.html" %}
+            {% crispy form form.helper %}
+            <br />
             <div class="form-group">
                     <button type="submit" class="btn btn-primary">{% trans "Opslaan" %}</button>
             </div>

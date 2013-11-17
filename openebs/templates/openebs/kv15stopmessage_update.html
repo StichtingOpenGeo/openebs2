@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static floppyforms i18n %}
+{% load static crispy_forms_tags i18n %}
 
  {% block title %}{% trans "Bewerk bericht" %}{% endblock %}
 
@@ -25,7 +25,8 @@
             </div>
             <div class="clearfix"></div>
             {% csrf_token %}
-            {% form form using "floppyforms/layouts/bootstrap_vertical.html" %}
+            {% crispy form form.helper %}
+            <br />
             <div class="form-group">
                 <button type="submit" class="btn btn-primary">{% trans "Opslaan" %}</button>
             </div>
