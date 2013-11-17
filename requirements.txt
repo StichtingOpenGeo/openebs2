@@ -8,6 +8,7 @@ django-guardian
 django-json-field
 django-leaflet
 django-geojson
+pyzmq # Verification feed
 
 # Dev
 django-debug-toolbar

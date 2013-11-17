@@ -66,6 +66,7 @@ class MessageStatus(object):
     CONFIRMED = 2
     DELETED = 5
     DELETE_SENT = 6
+    DELETE_CONFIRMED = 7
     ERROR_SEND = 11
     ERROR_SEND_DELETE = 12
 
@@ -73,7 +74,8 @@ class MessageStatus(object):
                 (SENT, _("Verstuurd")), # Pushed to GOVI
                 (CONFIRMED, _("Teruggemeld")), # Received confirmation
                 (DELETED, _("Verwijderd")), # Received confirmation
-                (DELETE_SENT, _("Verwijdering verstuurd ")), # Verweijderen succesvol
+                (DELETE_SENT, _("Verwijdering verstuurd")), # Verwijderen succesvol
+                (DELETE_CONFIRMED, _("Verwijdering teruggemeld")), # Verwijderen teruggemeld
                 (ERROR_SEND, _("Fout bij versturen")), # Failed to push
                 (ERROR_SEND_DELETE, _("Fout bij versturen verwijdering")),
                 )

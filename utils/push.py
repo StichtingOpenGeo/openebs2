@@ -44,8 +44,11 @@ class Push:
         error = False
         if settings.GOVI_PUSH_SEND:
             try:
-                conn = httplib.HTTPConnection(remote)
+                conn = httplib.HTTPConnection(remote, timeout=settings.GOVI_PUSH_TIMEOUT)
                 conn.request("POST", path, content, {"Content-type": "application/xml"})
+            except socket.timeout:
+                error = True
+                self.log.error("Got timeout while connecting")
             except (httplib.HTTPException, socket.error) as ex:
                 error = True
                 self.log.error("Got exception while connecting: %s" % ex)

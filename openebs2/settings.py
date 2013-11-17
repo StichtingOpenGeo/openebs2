@@ -182,15 +182,18 @@ DEBUG_TOOLBAR_CONFIG = {
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 CRISPY_FAIL_SILENTLY = not DEBUG
 
-# ssh joel@openebs.nl -L 8000:91.240.240.195:80 -g #
 GOVI_HOST = '192.168.33.1:8000' #'drisacc.transmodel.nl'
 GOVI_PATH = '/TMI_Post/KV15'
 GOVI_SUBSCRIBER = 'openOV'
 GOVI_NAMESPACE = 'http://bison.connekt.nl/tmi8/kv15/msg'
 GOVI_DOSSIER = 'KV15messages'
 
+GOVI_PUSH_TIMEOUT = 10
 GOVI_PUSH_DEBUG = DEBUG
 GOVI_PUSH_SEND = True
+
+GOVI_VERIFY_FEED = 'tcp://192.168.33.1:8001' #'tcp://node02.kv7.openov.nl:7817'
+GOVI_VERIFY_SUB =  "/InTraffic/KV8genmsg"
 
 try:
     from local_settings import *
