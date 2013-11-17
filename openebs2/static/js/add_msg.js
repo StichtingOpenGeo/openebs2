@@ -1,5 +1,7 @@
 var selectedStops = []
 var scenarioStops = []
+var blockedStops = [] /* Already have messages set */
+
 
 function changeSearch(event) {
     if ($("#line_search").val().length > 0) {
@@ -162,10 +164,14 @@ function renderRow(row) {
             out += '<td class="warning">'+row.left.name+' <span class="glyphicon glyphicon-warning-sign pull-right" title="Al in scenario opgenomen"></span></td>'
         } else {
             var id = 's'+row.left.id+'l';
-            if ($.inArray(id, selectedStops) != -1) {
-                out += '<td class="stop stop-left success" id="'+id+'">'+row.left.name+'<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;</td>';
+            if ($.inArray('s'+row.left.id, selectedStops) != -1) {
+                out += '<td class="stop stop-left success" id="'+id+'">'+row.left.name+'<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;'
             } else {
-                out += '<td class="stop stop-left" id="'+id+'">'+row.left.name+'</td>';
+                out += '<td class="stop stop-left" id="'+id+'">'+row.left.name;
+                if ($.inArray(row.left.id, blockedStops) != -1) {
+                    out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al bericht"></span>'
+                }
+                out += '</td>';
             }
         }
     } else {
@@ -183,10 +189,14 @@ function renderRow(row) {
             out += '<td class="warning">'+row.right.name+' <span class="glyphicon glyphicon-warning-sign pull-right" title="Al in scenario opgenomen"></span></td>'
         } else {
             var id = 's'+row.right.id+'r';
-            if ($.inArray(id, selectedStops) != -1) {
+            if ($.inArray('s'+row.right.id, selectedStops) != -1) {
                 out += '<td class="stop stop-right success" id="'+id+'">'+row.right.name+'<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;</td>';
             } else {
-                out += '<td class="stop stop-right" id="'+id+'">'+row.right.name+'</td>';
+                out += '<td class="stop stop-right" id="'+id+'">'+row.right.name;
+                if ($.inArray(row.right.id, blockedStops) != -1) {
+                    out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al bericht"></span>'
+                }
+                out += '</td>';
             }
         }
     } else {
@@ -197,7 +207,7 @@ function renderRow(row) {
 }
 
 function getScenarioStops(scenario) {
-     $.ajax('/scenario/'+scenario+'/haltes.json', {
+     $.ajax('/scenario/'+scenario+'/haltes.geojson', {
             success : writeScenarioStops
      })
 }
@@ -206,5 +216,18 @@ function writeScenarioStops(data, status) {
     for (key in data.features) {
         stop = data.features[key]['properties']['dataownercode']+ '_' + data.features[key]['properties']['userstopcode']
         scenarioStops.push(stop)
+    }
+}
+
+function getHaltesWithMessages() {
+    $.ajax('/bericht/haltes.json', {
+            success : writeHaltesWithMessages
+     })
+}
+
+function writeHaltesWithMessages(data, status) {
+    for (key in data.object) {
+        stop = data.object[key]['dataownercode']+ '_' + data.object[key]['userstopcode']
+        blockedStops.push(stop)
     }
 }

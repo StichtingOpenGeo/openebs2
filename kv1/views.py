@@ -39,12 +39,11 @@ class ActiveStopListView(LoginRequiredMixin, GeoJSONLayerView):
     geometry_field = 'location'
     properties = ['name', 'userstopcode', 'dataownercode', 'messages']
     # Filter by active
-    queryset = model.objects.filter(messages__stopmessage__messagestarttime__lt=now,
-                                    messages__stopmessage__messageendtime__gt=now)
+    queryset = model.objects.filter(messages__stopmessage__messagestarttime__lte=now(),
+                                    messages__stopmessage__messageendtime__gte=now())
 
     def get_queryset(self):
         qry = super(ActiveStopListView, self).get_queryset()
-        qry = qry.filter(dataownercode=self.request.user.userprofile.company)
-        return qry
+        return qry.filter(dataownercode=self.request.user.userprofile.company)
 
 

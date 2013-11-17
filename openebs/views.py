@@ -320,3 +320,14 @@ class ScenarioStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
         qry = super(ScenarioStopsAjaxView, self).get_queryset()
         qry = qry.filter(kv15scenariostop__message__scenario=self.kwargs.get('scenario', None))
         return qry
+
+class ActiveStopsAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+    model = Kv1Stop
+    render_object = 'object'
+
+    def get_object(self):
+        # Note, can't set this on the view, because it triggers the queryset cache
+        queryset = self.model.objects.filter(messages__stopmessage__messagestarttime__lte=now(),
+                                    messages__stopmessage__messageendtime__gte=now(),
+                                    dataownercode=self.request.user.userprofile.company)
+        return list(queryset.values('dataownercode', 'userstopcode'))
