@@ -12,6 +12,7 @@ from openebs.models import Kv15Stopmessage, MessageStatus
 __author__ = 'joel'
 
 
+
 class Command(BaseCommand):
     log = logging.getLogger('openebs.kv8verify')
 
@@ -73,18 +74,18 @@ class Command(BaseCommand):
             msg.messagetimestamp = row['MessageTimeStamp']
             msg.messagetype = row['MessageType']
             msg.messagedurationtype = row['MessageDurationType']
-            msg.reasontype = row['ReasonType']
-            msg.subreasontype = row['SubReasonType']
-            msg.reasoncontent = row['ReasonContent']
-            msg.effecttype = row['EffectType']
-            msg.subeffecttype = row['SubEffectType']
-            msg.effectcontent = row['EffectContent']
-            msg.measuretype = row['MeasureType']
-            msg.submeasuretype = row['SubMeasureType']
-            msg.measurecontent = row['MeasureContent']
-            msg.advicetype = row['AdviceType']
-            msg.subadvicetype = row['SubAdviceType']
-            msg.advicecontent = row['AdviceContent']
+            self.set_if_filled(msg, 'reasontype', row['ReasonType'])
+            self.set_if_filled(msg, 'subreasontype', row['SubReasonType'])
+            self.set_if_filled(msg, 'reasoncontent', row['ReasonContent'])
+            self.set_if_filled(msg, 'effecttype', row['EffectType'])
+            self.set_if_filled(msg, 'subeffecttype', row['SubEffectType'])
+            self.set_if_filled(msg, 'effectcontent', row['EffectContent'])
+            self.set_if_filled(msg, 'measuretype', row['MeasureType'])
+            self.set_if_filled(msg, 'submeasuretype', row['SubMeasureType'])
+            self.set_if_filled(msg, 'measurecontent', row['MeasureContent'])
+            self.set_if_filled(msg, 'advicetype', row['AdviceType'])
+            self.set_if_filled(msg, 'subadvicetype', row['SubAdviceType'])
+            self.set_if_filled(msg, 'advicecontent', row['AdviceContent'])
         msg.save()
 
         # TODO Handle stops here and log which ones we're processing
@@ -106,4 +107,9 @@ class Command(BaseCommand):
     def get_user(self):
         return User.objects.get_or_create(username="kv8update")[0]
 
+    def check_filled(self, val):
+        return True if val is not None or val != '' else False
 
+    def set_if_filled(self, instance, field, value):
+        if value is not None and value != '':
+            setattr(instance, field, value)

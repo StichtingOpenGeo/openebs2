@@ -17,7 +17,7 @@ class TestKv8Verify(TestCase):
         """
         Test whether updating an existing message from KV8 works - the status must be updated
         """
-        a = Kv15Stopmessage(dataownercode='HTM', user=self.user, messagecodedate=datetime(2013, 11, 17), messagecodenumber=24 )
+        a = Kv15Stopmessage(dataownercode='HTM', user=self.user, messagecodedate=now().date(), messagecodenumber=24 )
         a.save()
         self.assertEqual(a.status, MessageStatus.SAVED)
 
@@ -25,7 +25,9 @@ class TestKv8Verify(TestCase):
 
         row = {
             'DataOwnerCode' : 'HTM',
-            'MessageCodeDate' : '2013-11-17',
+            'MessageCodeDate' : now().date().isoformat(),
+            'MessageStartTime' : now(),
+            'MessageEndTime' : now()+timedelta(hours=2),
             'MessageCodeNumber' : '24'
         }
 
@@ -72,6 +74,61 @@ class TestKv8Verify(TestCase):
 
         self.assertEqual(Kv15Stopmessage.objects.count(), count+1)
         msg = Kv15Stopmessage.objects.get(dataownercode='HTM', messagecodedate=now().date(), messagecodenumber=25)
+        self.assertEqual(msg.messagecontent, row['MessageContent'])
+        self.assertEqual(msg.messagestarttime, row['MessageStartTime'])
+        self.assertEqual(msg.messageendtime, row['MessageEndTime'])
+        self.assertEqual(msg.messagetimestamp, row['MessageTimeStamp'])
+        self.assertEqual(msg.messagetype, row['MessageType'])
+        self.assertEqual(msg.messagedurationtype, row['MessageDurationType'])
+        self.assertEqual(msg.reasontype, row['ReasonType'])
+        self.assertEqual(msg.subreasontype, row['SubReasonType'])
+        self.assertEqual(msg.reasoncontent, row['ReasonContent'])
+        self.assertEqual(msg.effecttype, row['EffectType'])
+        self.assertEqual(msg.subeffecttype, row['SubEffectType'])
+        self.assertEqual(msg.effectcontent, row['EffectContent'])
+        self.assertEqual(msg.measuretype, row['MeasureType'])
+        self.assertEqual(msg.submeasuretype, row['SubMeasureType'])
+        self.assertEqual(msg.measurecontent, row['MeasureContent'])
+        self.assertEqual(msg.advicetype, row['AdviceType'])
+        self.assertEqual(msg.subadvicetype, row['SubAdviceType'])
+        self.assertEqual(msg.advicecontent, row['AdviceContent'])
+        self.assertEqual(msg.status, MessageStatus.CONFIRMED)
+        self.assertEqual(msg.user.username, 'kv8update')
+
+    def test_message_add_some_missing(self):
+        """
+        Test whether adding a message from KV8 works - all the fields must be transferred across but some are empty
+        """
+        count = Kv15Stopmessage.objects.count()
+        row = {
+            'DataOwnerCode': 'HTM',
+            'MessageCodeDate': now().date().isoformat(),
+            'MessageCodeNumber': '26',
+            'MessageContent': "Test content",
+            'MessageStartTime': now(),
+            'MessageEndTime': now()+timedelta(hours=2),
+            'MessageTimeStamp': now(),
+            'MessageType': 'GENERAL',
+            'MessageDurationType': 'ENDTIME',
+            'ReasonType': None,
+            'SubReasonType': '',
+            'ReasonContent': '',
+            'EffectType': 1,
+            'SubEffectType': '',
+            'EffectContent': '',
+            'MeasureType': 1,
+            'SubMeasureType': '1',
+            'MeasureContent': '',
+            'AdviceType': 1,
+            'SubAdviceType': '1',
+            'AdviceContent': "uitleg afvies"
+        }
+
+        # Method under test
+        self.testClass.processMessage(row)
+
+        self.assertEqual(Kv15Stopmessage.objects.count(), count+1)
+        msg = Kv15Stopmessage.objects.get(dataownercode='HTM', messagecodedate=now().date(), messagecodenumber=26)
         self.assertEqual(msg.messagecontent, row['MessageContent'])
         self.assertEqual(msg.messagestarttime, row['MessageStartTime'])
         self.assertEqual(msg.messageendtime, row['MessageEndTime'])
@@ -146,5 +203,35 @@ class TestKv8Verify(TestCase):
 
     def test_message_update(self):
         """
-        TODO Make a test which does an update: delete + add
+        When we update a message, it sends a delete followed by an update - check that works
         """
+        a = Kv15Stopmessage(dataownercode='HTM', user=self.user, messagecodedate=datetime(2013, 11, 17), messagecodenumber=32)
+        a.messagecontent = "Bla!"
+        a.status = MessageStatus.CONFIRMED
+        a.save()
+
+        # Update it!
+        a.messagecontent = "Bla!"
+        a.save()
+
+        delete_row = {
+            'DataOwnerCode' : 'HTM',
+            'MessageCodeDate' : '2013-11-17',
+            'MessageCodeNumber' : '32'
+        }
+        add_row = {
+            'DataOwnerCode' : 'HTM',
+            'MessageCodeDate' : now().date().isoformat(),
+            'MessageStartTime' : now(),
+            'MessageEndTime' : now()+timedelta(hours=2),
+            'MessageCodeNumber' : '32'
+        }
+        # Method under test
+        self.testClass.processDelMessage(delete_row)
+        self.testClass.processMessage(add_row)
+
+        a = Kv15Stopmessage.objects.get(pk=a.pk) # Get latest from db
+        self.assertEqual(a.status, MessageStatus.CONFIRMED)
+        self.assertEqual(a.isdeleted, False)
+        self.assertEqual(a.messagestarttime, add_row['MessageStartTime'])
+        self.assertEqual(a.messageendtime, add_row['MessageEndTime'])
