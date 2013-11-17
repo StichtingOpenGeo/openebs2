@@ -1,4 +1,5 @@
 # Create your views here.
+import re
 from braces.views import AccessMixin, LoginRequiredMixin
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
@@ -60,11 +61,16 @@ class GoviPushEnabled(object):
         """
         success = False
         code, content = self.pusher.push(settings.GOVI_HOST, settings.GOVI_PATH, msg)
-        if code == 200:
+        if code == 200 and '>OK</' in content:
             success = True
         else:
-            log.error("Push to GOVI failed with code %s: %s" %(code, content))
+            log.error("Push to GOVI failed with code %s: %s" %(code, self.parse_error(content)))
         return success
+
+    def parse_error(self, content):
+        regex = re.compile("<tmi8:ResponseError>(.*)</tmi8:ResponseError>",re.MULTILINE|re.LOCALE|re.DOTALL)
+        r = regex.search(content)
+        return r.groups()[0]
 
 # MESSAGE VIEWS
 
@@ -107,7 +113,7 @@ class MessageCreateView(OpenEbsUserMixin, GoviPushEnabled, CreateView):
         Kv15Log.create_log_entry(form.instance, get_client_ip(self.request))
 
         # Send to GOVI
-        if self.push_govi(form.instance.to_xml):
+        if self.push_govi(form.instance.to_xml()):
             form.instance.set_status(MessageStatus.SENT)
             log.info("Sent message to GOVI: %s" % (form.instance))
         else:

@@ -142,3 +142,9 @@ class TestKv8Verify(TestCase):
         self.assertEqual(a.status, MessageStatus.DELETE_CONFIRMED)
         self.assertEqual(a.isdeleted, True)
         self.assertLess((now() - a.messageendtime), timedelta(seconds=30), "Time wasn't set right")
+
+
+    def test_message_update(self):
+        """
+        TODO Make a test which does an update: delete + add
+        """

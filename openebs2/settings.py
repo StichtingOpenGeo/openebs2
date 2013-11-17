@@ -193,7 +193,7 @@ GOVI_PUSH_DEBUG = DEBUG
 GOVI_PUSH_SEND = True
 
 GOVI_VERIFY_FEED = 'tcp://192.168.33.1:8001' #'tcp://node02.kv7.openov.nl:7817'
-GOVI_VERIFY_SUB =  "/InTraffic/KV8genmsg"
+GOVI_VERIFY_SUB =  "/InTraffic/KV8gen"
 
 try:
     from local_settings import *

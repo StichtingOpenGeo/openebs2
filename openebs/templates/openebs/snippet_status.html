@@ -16,6 +16,10 @@
         </span>
     {% elif status == 6 %}
         <span class="label label-success" title="{% trans 'Verwijderd' %}">
+            <span class="glyphicon glyphicon-trash"></span>
+        </span>
+    {% elif status == 7 %}
+        <span class="label label-success" title="{% trans 'Verwijderd en teruggemeld' %}">
             <span class="glyphicon glyphicon-trash"></span>&nbsp;<span class="glyphicon glyphicon-ok"></span>
         </span>
     {% elif status == 11 %}

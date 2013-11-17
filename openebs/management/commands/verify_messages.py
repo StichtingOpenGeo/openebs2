@@ -21,7 +21,7 @@ class Command(BaseCommand):
         sub = context.socket(zmq.SUB)
         sub.connect(settings.GOVI_VERIFY_FEED)
         sub.setsockopt(zmq.SUBSCRIBE, settings.GOVI_VERIFY_SUB)
-
+        print "Further messages are in your logfile"
         while True:
             multipart = sub.recv_multipart()
             try:
@@ -31,7 +31,6 @@ class Command(BaseCommand):
             self.recvPackage(content)
 
     def recvPackage(self, content):
-        print "Got content"
         for line in content.split('\r\n')[:-1]:
             if line[0] == '\\':
                     # control characters
@@ -64,11 +63,13 @@ class Command(BaseCommand):
                                        messagecodenumber=row['MessageCodeNumber'], defaults={ 'user' : self.get_user()})
         self.log.info("Setting status confirmed for message:  %s" % msg)
         msg.status = MessageStatus.CONFIRMED
+        # In case this is an update, set these fields to properly restore our message:
+        msg.messagestarttime = row['MessageStartTime']
+        msg.messageendtime = row['MessageEndTime']
+        msg.isdeleted = False
         if created:
             self.log.info("Creating new message which wasn't in DB: %s" % msg)
             msg.messagecontent = row['MessageContent']
-            msg.messagestarttime = row['MessageStartTime']
-            msg.messageendtime = row['MessageEndTime']
             msg.messagetimestamp = row['MessageTimeStamp']
             msg.messagetype = row['MessageType']
             msg.messagedurationtype = row['MessageDurationType']
@@ -86,6 +87,8 @@ class Command(BaseCommand):
             msg.advicecontent = row['AdviceContent']
         msg.save()
 
+        # TODO Handle stops here and log which ones we're processing
+
     @transaction.commit_on_success
     def processDelMessage(self, row):
         try:
@@ -96,6 +99,7 @@ class Command(BaseCommand):
             msg.messageendtime = now()
             msg.save()
             self.log.error("Confirmed deletion of message: %s" % msg)
+            # TODO Handle stops here and log which ones we're processing
         except Kv15Stopmessage.DoesNotExist:
             self.log.error("Tried to delete message that doesn't exist: %s" % row)
 
