@@ -37,5 +37,11 @@
 
 {% endblock %}
 
-{% block extra_js %}<script src="{% static 'js/add_msg.js' %}"></script>{% endblock %}
-{% block js_init %}{% include "openebs/snippet_halte-picker-js.html" %}{% endblock %}
+{% block extra_js %}
+    <script src="{% static 'js/add_msg.js' %}"></script>
+    <script src="{% static 'js/jquery-ui-1.10.3.selectable.min.js' %}"></script>
+{% endblock %}
+{% block js_init %}
+    {% include "openebs/snippet_halte-picker-js.html" %}
+    getScenarioStops('{{ scenario.id }}');
+{% endblock %}

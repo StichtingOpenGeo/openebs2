@@ -1,4 +1,5 @@
 var selectedStops = []
+var scenarioStops = []
 
 function changeSearch(event) {
     if ($("#line_search").val().length > 0) {
@@ -157,11 +158,15 @@ function writeLine(data, status) {
 function renderRow(row) {
     out = '<tr>';
     if (row.left != null) {
-        var id = 's'+row.left.id+'l';
-        if ($.inArray(id, selectedStops) != -1) {
-            out += '<td class="stop stop-left success" id="'+id+'">'+row.left.name+'<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;</td>';
+        if ($.inArray(row.left.id, scenarioStops) != -1) {
+            out += '<td class="warning">'+row.left.name+' <span class="glyphicon glyphicon-warning-sign pull-right" title="Al in scenario opgenomen"></span></td>'
         } else {
-            out += '<td class="stop stop-left" id="'+id+'">'+row.left.name+'</td>';
+            var id = 's'+row.left.id+'l';
+            if ($.inArray(id, selectedStops) != -1) {
+                out += '<td class="stop stop-left success" id="'+id+'">'+row.left.name+'<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;</td>';
+            } else {
+                out += '<td class="stop stop-left" id="'+id+'">'+row.left.name+'</td>';
+            }
         }
     } else {
         out += '<td>&nbsp;</td>';
@@ -174,15 +179,32 @@ function renderRow(row) {
         out += '<td class="img text-center"><img class="stop-img stop-right" src="/static/img/stop-right.png"></td>'
     }
     if (row.right != null) {
-        var id = 's'+row.right.id+'r';
-        if ($.inArray(id, selectedStops) != -1) {
-            out += '<td class="stop stop-right success" id="'+id+'">'+row.right.name+'<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;</td>';
+        if ($.inArray(row.right.id, scenarioStops) != -1) {
+            out += '<td class="warning">'+row.right.name+' <span class="glyphicon glyphicon-warning-sign pull-right" title="Al in scenario opgenomen"></span></td>'
         } else {
-            out += '<td class="stop stop-right" id="'+id+'">'+row.right.name+'</td>';
+            var id = 's'+row.right.id+'r';
+            if ($.inArray(id, selectedStops) != -1) {
+                out += '<td class="stop stop-right success" id="'+id+'">'+row.right.name+'<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;</td>';
+            } else {
+                out += '<td class="stop stop-right" id="'+id+'">'+row.right.name+'</td>';
+            }
         }
     } else {
         out += '<td>&nbsp;</td>';
     }
     out += '</tr>';
     return out
+}
+
+function getScenarioStops(scenario) {
+     $.ajax('/scenario/'+scenario+'/haltes.json', {
+            success : writeScenarioStops
+     })
+}
+
+function writeScenarioStops(data, status) {
+    for (key in data.features) {
+        stop = data.features[key]['properties']['dataownercode']+ '_' + data.features[key]['properties']['userstopcode']
+        scenarioStops.push(stop)
+    }
 }
