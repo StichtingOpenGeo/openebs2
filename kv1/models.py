@@ -30,6 +30,7 @@ class Kv1Stop(models.Model):
     class Meta:
         verbose_name = _("Halteinformatie")
         verbose_name_plural = _("Halteinformatie")
+        unique_together = ('dataownercode', 'userstopcode')
 
     def __unicode__(self):
         return "%s - %s" % (self.dataownercode, self.name)
