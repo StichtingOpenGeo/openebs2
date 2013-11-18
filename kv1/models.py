@@ -19,7 +19,7 @@ class Kv1Line(models.Model):
         return "%s - %s" % (self.dataownercode, self.headsign)
 
 class Kv1Stop(models.Model):
-    userstopcode = models.CharField(max_length=10, unique=True) # TPC
+    userstopcode = models.CharField(max_length=10)
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
     name = models.CharField(max_length=50)
     location = models.PointField()
