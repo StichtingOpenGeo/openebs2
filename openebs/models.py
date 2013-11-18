@@ -7,7 +7,6 @@
 # Also note: You'll have to insert the output of 'django-admin.py sqlcustom [appname]'
 # into your database.
 from __future__ import unicode_literals
-from Tix import CObjView
 import os
 from django.db import models, IntegrityError, transaction
 from django.core.exceptions import ValidationError
