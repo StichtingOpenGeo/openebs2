@@ -77,14 +77,18 @@ class GoviPushEnabled(object):
 class MessageListView(OpenEbsUserMixin, ListView):
     permission_required = 'openebs.view_messages'
     model = Kv15Stopmessage
-    # Get the currently active messages
-    context_object_name = 'active_list'
-    queryset = model.objects.filter(messageendtime__gt=now, isdeleted=False).order_by('-messagecodedate', '-messagecodenumber')
 
     def get_context_data(self, **kwargs):
         context = super(MessageListView, self).get_context_data(**kwargs)
+
+        # Get the currently active messages
+        context['active_list'] = self.model.objects.filter(messageendtime__gt=now,
+                                                           isdeleted=False,
+                                                           dataownercode=self.request.user.userprofile.company)
+        context['active_list'] = context['active_list'].order_by('-messagecodedate', '-messagecodenumber')
+
         # Add the no longer active messages
-        context['archive_list'] = self.model.objects.filter(Q(messageendtime__lt=now) | Q(isdeleted=True))
+        context['archive_list'] = self.model.objects.filter(Q(messageendtime__lt=now) | Q(isdeleted=True), dataownercode=self.request.user.userprofile.company)
         context['archive_list'] = context['archive_list'].order_by('-messagecodedate', '-messagecodenumber')
         return context
 
@@ -213,10 +217,24 @@ class ScenarioListView(OpenEbsUserMixin, ListView):
     permission_required = 'openebs.view_scenario'
     model = Kv15Scenario
 
+    def get_context_data(self, **kwargs):
+        context = super(ScenarioListView, self).get_context_data(**kwargs)
+        context['object_list'] = self.model.objects.filter(dataownercode=self.request.user.userprofile.company)
+        return context
+
+
 class ScenarioCreateView(OpenEbsUserMixin, CreateView):
     permission_required = 'openebs.add_scenario'
     model = Kv15Scenario
     form_class = Kv15ScenarioForm
+
+    def form_valid(self, form):
+        if self.request.user:
+            form.instance.dataownercode = self.request.user.userprofile.company
+
+        ret = super(CreateView, self).form_valid(form)
+
+        return ret
 
     def get_success_url(self):
         return reverse_lazy('scenario_edit', args=[self.object.id])

@@ -32,7 +32,7 @@ class UserProfile(models.Model):
 
 class Kv15Log(models.Model):
     timestamp = models.DateTimeField(auto_now=True)
-    dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
+    dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
     messagecodedate = models.DateField()
     messagecodenumber = models.DecimalField(max_digits=4, decimal_places=0)
     user = models.ForeignKey(User)
@@ -192,6 +192,7 @@ class Kv15MessageStop(models.Model):
 
 class Kv15Scenario(models.Model):
     name = models.CharField(max_length=50, blank=True, verbose_name=_("Naam scenario"))
+    dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
     description = models.CharField(max_length=255, blank=True, verbose_name=_("Omschrijving scenario"))
 
     def __unicode__(self):

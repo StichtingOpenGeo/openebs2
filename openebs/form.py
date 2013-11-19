@@ -80,6 +80,7 @@ class Kv15StopMessageForm(forms.ModelForm):
 class Kv15ScenarioForm(forms.ModelForm):
     class Meta:
         model = Kv15Scenario
+        exclude = ['dataownercode']
         widgets = {
             'description': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
         }
