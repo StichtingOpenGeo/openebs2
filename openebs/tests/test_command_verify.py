@@ -24,11 +24,11 @@ class TestKv8Verify(TestCase):
         count = Kv15Stopmessage.objects.count()
 
         row = {
-            'DataOwnerCode' : 'HTM',
-            'MessageCodeDate' : now().date().isoformat(),
-            'MessageStartTime' : now(),
-            'MessageEndTime' : now()+timedelta(hours=2),
-            'MessageCodeNumber' : '24'
+            'DataOwnerCode': 'HTM',
+            'MessageCodeDate': now().date().isoformat(),
+            'MessageStartTime': now(),
+            'MessageEndTime': now()+timedelta(hours=2),
+            'MessageCodeNumber': '24'
         }
 
         # Method under test
@@ -48,25 +48,25 @@ class TestKv8Verify(TestCase):
         row = {
             'DataOwnerCode' : 'HTM',
             'MessageCodeDate' : now().date().isoformat(),
-            'MessageCodeNumber' : '25',
-            'MessageContent' : "Test content",
-            'MessageStartTime' : now(),
-            'MessageEndTime' : now()+timedelta(hours=2),
-            'MessageTimeStamp' : now(),
-            'MessageType' : 'GENERAL',
-            'MessageDurationType' : 'ENDTIME',
-            'ReasonType' : 1,
+            'MessageCodeNumber': '25',
+            'MessageContent': "Test content",
+            'MessageStartTime': now(),
+            'MessageEndTime': now()+timedelta(hours=2),
+            'MessageTimeStamp': now(),
+            'MessageType': 'GENERAL',
+            'MessageDurationType': 'ENDTIME',
+            'ReasonType': 1,
             'SubReasonType': '11',
-            'ReasonContent' : "uitleg reden",
-            'EffectType' : 1,
+            'ReasonContent': "uitleg reden",
+            'EffectType': 1,
             'SubEffectType': '11',
-            'EffectContent' : "uitleg effect",
-            'MeasureType' : 1,
-            'SubMeasureType' : '1',
-            'MeasureContent' : "uitleg maatregel",
-            'AdviceType' : 1,
-            'SubAdviceType' : '1',
-            'AdviceContent' : "uitleg afvies"
+            'EffectContent': "uitleg effect",
+            'MeasureType': 1,
+            'SubMeasureType': '1',
+            'MeasureContent': "uitleg maatregel",
+            'AdviceType': 1,
+            'SubAdviceType': '1',
+            'AdviceContent': "uitleg afvies"
         }
 
         # Method under test
@@ -121,7 +121,7 @@ class TestKv8Verify(TestCase):
             'MeasureContent': '',
             'AdviceType': 1,
             'SubAdviceType': '1',
-            'AdviceContent': "uitleg afvies"
+            'AdviceContent': "uitleg advies"
         }
 
         # Method under test
@@ -165,9 +165,9 @@ class TestKv8Verify(TestCase):
         count = Kv15Stopmessage.objects.count()
 
         row = {
-            'DataOwnerCode' : 'HTM',
-            'MessageCodeDate' : '2013-11-17',
-            'MessageCodeNumber' : '30'
+            'DataOwnerCode': 'HTM',
+            'MessageCodeDate': '2013-11-17',
+            'MessageCodeNumber': '30'
         }
         # Method under test
         self.testClass.processDelMessage(row)
@@ -188,9 +188,9 @@ class TestKv8Verify(TestCase):
         count = Kv15Stopmessage.objects.count()
 
         row = {
-            'DataOwnerCode' : 'HTM',
-            'MessageCodeDate' : '2013-11-17',
-            'MessageCodeNumber' : '31'
+            'DataOwnerCode': 'HTM',
+            'MessageCodeDate': '2013-11-17',
+            'MessageCodeNumber': '31'
         }
         # Method under test
         self.testClass.processDelMessage(row)
@@ -205,7 +205,7 @@ class TestKv8Verify(TestCase):
         """
         When we update a message, it sends a delete followed by an update - check that works
         """
-        a = Kv15Stopmessage(dataownercode='HTM', user=self.user, messagecodedate=datetime(2013, 11, 17), messagecodenumber=32)
+        a = Kv15Stopmessage(dataownercode='HTM', user=self.user, messagecodedate=now().date(), messagecodenumber=32)
         a.messagecontent = "Bla!"
         a.status = MessageStatus.CONFIRMED
         a.save()
@@ -215,16 +215,16 @@ class TestKv8Verify(TestCase):
         a.save()
 
         delete_row = {
-            'DataOwnerCode' : 'HTM',
-            'MessageCodeDate' : '2013-11-17',
-            'MessageCodeNumber' : '32'
+            'DataOwnerCode': 'HTM',
+            'MessageCodeDate': now().date().isoformat(),
+            'MessageCodeNumber': '32'
         }
         add_row = {
-            'DataOwnerCode' : 'HTM',
-            'MessageCodeDate' : now().date().isoformat(),
-            'MessageStartTime' : now(),
-            'MessageEndTime' : now()+timedelta(hours=2),
-            'MessageCodeNumber' : '32'
+            'DataOwnerCode': 'HTM',
+            'MessageCodeDate': now().date().isoformat(),
+            'MessageStartTime': now(),
+            'MessageEndTime': now()+timedelta(hours=2),
+            'MessageCodeNumber': '32'
         }
         # Method under test
         self.testClass.processDelMessage(delete_row)

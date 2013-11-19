@@ -9,10 +9,12 @@ django-json-field
 django-leaflet
 django-geojson
 pyzmq # Verification feed
+django-braces
+transitfeed # Read Write GTFS
 
 # Dev
 django-debug-toolbar
 django-rosetta
-django-braces
+lxml # Tests - needs libxml2-dev libxslt-dev packages
 
-transitfeed # Read Write GTFS
+
