@@ -4,6 +4,11 @@ from django.views.generic import TemplateView
 
 admin.autodiscover()
 
+# Custom error handlers
+handler403 = TemplateView.as_view(template_name="openebs/nopermission.html")
+handler404 = TemplateView.as_view(template_name="openebs/notfound.html")
+handler500 = TemplateView.as_view(template_name="openebs/servererror.html")
+
 urlpatterns = patterns('',
     url(r'^', include('openebs.urls')),
     url(r'^', include('kv1.urls')),

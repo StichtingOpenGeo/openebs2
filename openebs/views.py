@@ -2,13 +2,15 @@
 import logging
 from braces.views import AccessMixin, LoginRequiredMixin
 from django.contrib.auth.views import redirect_to_login
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.db.models import Q
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from django.views.generic import ListView, UpdateView, FormView, DetailView
+from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import CreateView, DeleteView, BaseFormView
 from django.utils.timezone import now
+from django.views.generic.list import MultipleObjectMixin
 from djgeojson.views import GeoJSONLayerView
 from kv1.models import Kv1Stop
 from utils.client import get_client_ip
@@ -48,6 +50,22 @@ class OpenEbsUserMixin(AccessMixin):
         return super(OpenEbsUserMixin, self).dispatch(
             request, *args, **kwargs)
 
+class FilterDataownerMixin(SingleObjectMixin):
+
+    def get_queryset(self):
+        company = self.request.user.userprofile.company
+        if company is None:
+            raise PermissionDenied("Je account is nog niet gelinkt aan een vervoerder")
+        return super(FilterDataownerMixin, self).get_queryset().filter(dataownercode=company)
+
+class FilterDataownerListMixin(MultipleObjectMixin):
+
+    def get_queryset(self):
+        company = self.request.user.userprofile.company
+        if company is None:
+            raise PermissionDenied("Je account is nog niet gelinkt aan een vervoerder")
+        return super(FilterDataownerListMixin, self).get_queryset().filter(dataownercode=company)
+
 # MESSAGE VIEWS
 
 class MessageListView(OpenEbsUserMixin, ListView):
@@ -58,13 +76,13 @@ class MessageListView(OpenEbsUserMixin, ListView):
         context = super(MessageListView, self).get_context_data(**kwargs)
 
         # Get the currently active messages
-        context['active_list'] = self.model.objects.filter(messageendtime__gt=now,
-                                                           isdeleted=False,
+        context['active_list'] = self.model.objects.filter(messageendtime__gt=now, isdeleted=False,
                                                            dataownercode=self.request.user.userprofile.company)
         context['active_list'] = context['active_list'].order_by('-messagecodedate', '-messagecodenumber')
 
         # Add the no longer active messages
-        context['archive_list'] = self.model.objects.filter(Q(messageendtime__lt=now) | Q(isdeleted=True), dataownercode=self.request.user.userprofile.company)
+        context['archive_list'] = self.model.objects.filter(Q(messageendtime__lt=now) | Q(isdeleted=True),
+                                                            dataownercode=self.request.user.userprofile.company)
         context['archive_list'] = context['archive_list'].order_by('-messagecodedate', '-messagecodenumber')
         return context
 
@@ -104,7 +122,7 @@ class MessageCreateView(OpenEbsUserMixin, GoviPushMixin, CreateView):
         return ret
 
 
-class MessageUpdateView(OpenEbsUserMixin, GoviPushMixin, UpdateView):
+class MessageUpdateView(OpenEbsUserMixin, GoviPushMixin, FilterDataownerMixin, UpdateView):
     permission_required = 'openebs.add_messages'
     model = Kv15Stopmessage
     form_class = Kv15StopMessageForm
@@ -144,7 +162,7 @@ class MessageUpdateView(OpenEbsUserMixin, GoviPushMixin, UpdateView):
                 old_msg_stop.delete()
 
 
-class MessageDeleteView(OpenEbsUserMixin, GoviPushMixin, DeleteView):
+class MessageDeleteView(OpenEbsUserMixin, GoviPushMixin, FilterDataownerMixin, DeleteView):
     permission_required = 'openebs.add_messages'
     model = Kv15Stopmessage
     success_url = reverse_lazy('msg_index')
@@ -172,15 +190,20 @@ class PlanScenarioView(OpenEbsUserMixin, GoviPushMixin, FormView):
         """ Add data about the scenario we're adding to """
         data = super(PlanScenarioView, self).get_context_data(**kwargs)
         if self.kwargs.get('scenario', None):
-            data['scenario'] = Kv15Scenario.objects.get(pk=self.kwargs.get('scenario', None))
+            data['scenario'] = get_object_or_404(Kv15Scenario, pk=self.kwargs.get('scenario', None),
+                                                        dataownercode=self.request.user.userprofile.company)
         return data
 
     def form_valid(self, form):
         ret = super(PlanScenarioView, self).form_valid(form)
         if self.kwargs.get('scenario', None):
-            scenario = Kv15Scenario.objects.get(pk=self.kwargs.get('scenario', None))
+            # Find our scenario
+            scenario = get_object_or_404(Kv15Scenario, pk=self.kwargs.get('scenario', None),
+                                         dataownercode=self.request.user.userprofile.company)
+            # Plan messages
             saved = scenario.plan_messages(self.request.user, form.cleaned_data['messagestarttime'],
                                            form.cleaned_data['messageendtime'])
+            # Concatenate XML for a single request
             message_string = "".join([msg.to_xml() for msg in saved])
             if self.push_govi(message_string):
                 for msg in saved:
@@ -194,15 +217,9 @@ class PlanScenarioView(OpenEbsUserMixin, GoviPushMixin, FormView):
         return ret
 
 
-class ScenarioListView(OpenEbsUserMixin, ListView):
+class ScenarioListView(OpenEbsUserMixin, FilterDataownerListMixin, ListView):
     permission_required = 'openebs.view_scenario'
     model = Kv15Scenario
-
-    def get_context_data(self, **kwargs):
-        # TODO Move to get_queryset
-        context = super(ScenarioListView, self).get_context_data(**kwargs)
-        context['object_list'] = self.model.objects.filter(dataownercode=self.request.user.userprofile.company)
-        return context
 
 class ScenarioCreateView(OpenEbsUserMixin, CreateView):
     permission_required = 'openebs.add_scenario'
@@ -210,18 +227,16 @@ class ScenarioCreateView(OpenEbsUserMixin, CreateView):
     form_class = Kv15ScenarioForm
 
     def form_valid(self, form):
-        if self.request.user:
+        if self.request.user: # TODO Improve this construct
             form.instance.dataownercode = self.request.user.userprofile.company
 
-        ret = super(CreateView, self).form_valid(form)
-
-        return ret
+        return super(CreateView, self).form_valid(form)
 
     def get_success_url(self):
         return reverse_lazy('scenario_edit', args=[self.object.id])
 
 
-class ScenarioUpdateView(OpenEbsUserMixin, UpdateView):
+class ScenarioUpdateView(OpenEbsUserMixin, FilterDataownerMixin, UpdateView):
     permission_required = 'openebs.add_scenario'
     model = Kv15Scenario
     form_class = Kv15ScenarioForm
@@ -229,7 +244,7 @@ class ScenarioUpdateView(OpenEbsUserMixin, UpdateView):
     success_url = reverse_lazy('scenario_index')
 
 
-class ScenarioDeleteView(OpenEbsUserMixin, DeleteView):
+class ScenarioDeleteView(OpenEbsUserMixin, FilterDataownerMixin, DeleteView):
     permission_required = 'openebs.add_scenario'
     model = Kv15Scenario
     success_url = reverse_lazy('scenario_index')
@@ -242,7 +257,8 @@ class ScenarioContentMixin(BaseFormView):
         """ Add data about the scenario we're adding to """
         data = super(ScenarioContentMixin, self).get_context_data(**kwargs)
         if self.kwargs.get('scenario', None):
-            data['scenario'] = Kv15Scenario.objects.get(pk=self.kwargs.get('scenario', None))
+            data['scenario'] = get_object_or_404(Kv15Scenario, pk=self.kwargs.get('scenario', None),
+                                                        dataownercode=self.request.user.userprofile.company)
         return data
 
     def get_success_url(self):
@@ -269,7 +285,8 @@ class ScenarioMessageCreateView(OpenEbsUserMixin, ScenarioContentMixin, CreateVi
 
         if self.kwargs.get('scenario', None):  # This ensures the scenario can never be spoofed
             # TODO Register difference between this and the scenario we've validated on
-            form.instance.scenario = Kv15Scenario.objects.get(pk=self.kwargs.get('scenario', None))
+            form.instance.scenario = get_object_or_404(Kv15Scenario, pk=self.kwargs.get('scenario', None),
+                                                              dataownercode=self.request.user.userprofile.company)
 
         ret = super(CreateView, self).form_valid(form)
 
@@ -282,7 +299,7 @@ class ScenarioMessageCreateView(OpenEbsUserMixin, ScenarioContentMixin, CreateVi
         return ret
 
 
-class ScenarioMessageUpdateView(OpenEbsUserMixin, ScenarioContentMixin, UpdateView):
+class ScenarioMessageUpdateView(OpenEbsUserMixin, FilterDataownerMixin, ScenarioContentMixin, UpdateView):
     permission_required = 'openebs.add_scenario'
     model = Kv15ScenarioMessage
     form_class = Kv15ScenarioMessageForm
@@ -322,7 +339,8 @@ class ScenarioStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
 
     def get_queryset(self):
         qry = super(ScenarioStopsAjaxView, self).get_queryset()
-        qry = qry.filter(kv15scenariostop__message__scenario=self.kwargs.get('scenario', None))
+        qry = qry.filter(kv15scenariostop__message__scenario=self.kwargs.get('scenario', None),
+                         kv15scenariostop__message__scenario__dataownercode=self.request.user.userprofile.company)
         return qry
 
 
@@ -335,5 +353,7 @@ class ActiveStopsAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView)
         queryset = self.model.objects.filter(messages__stopmessage__messagestarttime__lte=now(),
                                              messages__stopmessage__messageendtime__gte=now(),
                                              messages__stopmessage__isdeleted=False,
+                                             # These two are double, but just in case
+                                             messages__stopmessage__dataownercode=self.request.user.userprofile.company,
                                              dataownercode=self.request.user.userprofile.company)
         return list(queryset.values('dataownercode', 'userstopcode'))
