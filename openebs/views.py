@@ -334,5 +334,6 @@ class ActiveStopsAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView)
         # Note, can't set this on the view, because it triggers the queryset cache
         queryset = self.model.objects.filter(messages__stopmessage__messagestarttime__lte=now(),
                                              messages__stopmessage__messageendtime__gte=now(),
+                                             messages__stopmessage__isdeleted=False,
                                              dataownercode=self.request.user.userprofile.company)
         return list(queryset.values('dataownercode', 'userstopcode'))
