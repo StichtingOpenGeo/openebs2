@@ -1,24 +1,20 @@
 # Create your views here.
-import re
+import logging
 from braces.views import AccessMixin, LoginRequiredMixin
 from django.contrib.auth.views import redirect_to_login
-from django.core.exceptions import ImproperlyConfigured, PermissionDenied
+from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.db.models import Q
-from django.conf import settings
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect
 from django.views.generic import ListView, UpdateView, FormView, DetailView
 from django.views.generic.edit import CreateView, DeleteView, BaseFormView
 from django.utils.timezone import now
 from djgeojson.views import GeoJSONLayerView
 from kv1.models import Kv1Stop
 from utils.client import get_client_ip
+from utils.views import GoviPushMixin, JSONListResponseMixin
 from openebs.models import Kv15Stopmessage, Kv15Log, Kv15Scenario, Kv15ScenarioMessage, MessageStatus
 from openebs.form import Kv15StopMessageForm, Kv15ScenarioForm, Kv15ScenarioMessageForm, PlanScenarioForm
-
-import logging
-from utils.push import Push
-from utils.views import JSONListResponseMixin
 
 log = logging.getLogger('openebs.views')
 
@@ -52,26 +48,6 @@ class OpenEbsUserMixin(AccessMixin):
         return super(OpenEbsUserMixin, self).dispatch(
             request, *args, **kwargs)
 
-class GoviPushEnabled(object):
-    pusher = Push(settings.GOVI_SUBSCRIBER, settings.GOVI_DOSSIER, settings.GOVI_NAMESPACE)
-
-    def push_govi(self, msg):
-        """
-        Push message _msg_ to GOVI, and return if it was succesfull
-        """
-        success = False
-        code, content = self.pusher.push(settings.GOVI_HOST, settings.GOVI_PATH, msg)
-        if code == 200 and '>OK</' in content:
-            success = True
-        else:
-            log.error("Push to GOVI failed with code %s: %s" %(code, self.parse_error(content)))
-        return success
-
-    def parse_error(self, content):
-        regex = re.compile("<tmi8:ResponseError>(.*)</tmi8:ResponseError>",re.MULTILINE|re.LOCALE|re.DOTALL)
-        r = regex.search(content)
-        return r.groups()[0]
-
 # MESSAGE VIEWS
 
 class MessageListView(OpenEbsUserMixin, ListView):
@@ -92,7 +68,8 @@ class MessageListView(OpenEbsUserMixin, ListView):
         context['archive_list'] = context['archive_list'].order_by('-messagecodedate', '-messagecodenumber')
         return context
 
-class MessageCreateView(OpenEbsUserMixin, GoviPushEnabled, CreateView):
+
+class MessageCreateView(OpenEbsUserMixin, GoviPushMixin, CreateView):
     permission_required = 'openebs.add_messages'
     model = Kv15Stopmessage
     form_class = Kv15StopMessageForm
@@ -126,7 +103,8 @@ class MessageCreateView(OpenEbsUserMixin, GoviPushEnabled, CreateView):
 
         return ret
 
-class MessageUpdateView(OpenEbsUserMixin, GoviPushEnabled, UpdateView):
+
+class MessageUpdateView(OpenEbsUserMixin, GoviPushMixin, UpdateView):
     permission_required = 'openebs.add_messages'
     model = Kv15Stopmessage
     form_class = Kv15StopMessageForm
@@ -153,19 +131,20 @@ class MessageUpdateView(OpenEbsUserMixin, GoviPushEnabled, UpdateView):
 
         return ret
 
-    def process_new_old_haltes(self, msg, set, haltes):
+    @staticmethod
+    def process_new_old_haltes(msg, stop_set, haltes):
         """ Add new stops to the set, and then check if we've deleted any stops from the old list """
         new_stops = Kv1Stop.find_stops_from_haltes(haltes)
         for stop in new_stops:
             # TODO Improve this to not be n-queries
-            if set.filter(stop=stop).count() == 0: # New stop, add it
-                set.create(stopmessage=msg, stop=stop)
-        for old_msg_stop in set.all():
+            if stop_set.filter(stop=stop).count() == 0: # New stop, add it
+                stop_set.create(stopmessage=msg, stop=stop)
+        for old_msg_stop in stop_set.all():
             if old_msg_stop.stop not in new_stops: # Removed stop, delete it
                 old_msg_stop.delete()
 
 
-class MessageDeleteView(OpenEbsUserMixin, GoviPushEnabled, DeleteView):
+class MessageDeleteView(OpenEbsUserMixin, GoviPushMixin, DeleteView):
     permission_required = 'openebs.add_messages'
     model = Kv15Stopmessage
     success_url = reverse_lazy('msg_index')
@@ -181,9 +160,10 @@ class MessageDeleteView(OpenEbsUserMixin, GoviPushEnabled, DeleteView):
             log.error("Failed to send delete request to GOVI: %s" % obj)
         return ret
 
+
 # SCENARIO VIEWS
-class PlanScenarioView(OpenEbsUserMixin, GoviPushEnabled, FormView):
-    permission_required = 'openebs.view_scenario' # TODO Also add message!
+class PlanScenarioView(OpenEbsUserMixin, GoviPushMixin, FormView):
+    permission_required = 'openebs.view_scenario'  # TODO Also add message!
     form_class = PlanScenarioForm
     template_name = 'openebs/kv15scenario_plan.html'
     success_url = reverse_lazy('msg_index')
@@ -200,7 +180,7 @@ class PlanScenarioView(OpenEbsUserMixin, GoviPushEnabled, FormView):
         if self.kwargs.get('scenario', None):
             scenario = Kv15Scenario.objects.get(pk=self.kwargs.get('scenario', None))
             saved = scenario.plan_messages(self.request.user, form.cleaned_data['messagestarttime'],
-                                   form.cleaned_data['messageendtime'])
+                                           form.cleaned_data['messageendtime'])
             message_string = "".join([msg.to_xml() for msg in saved])
             if self.push_govi(message_string):
                 for msg in saved:
@@ -209,7 +189,8 @@ class PlanScenarioView(OpenEbsUserMixin, GoviPushEnabled, FormView):
             else:
                 for msg in saved:
                     msg.set_status(MessageStatus.ERROR_SEND)
-                log.error("Failed to communicate planned messages to GOVI: %s" % ",".join([str(msg.messagecodenumber) for msg in saved]))
+                ids = ",".join([str(msg.messagecodenumber) for msg in saved])
+                log.error("Failed to communicate planned messages to GOVI: %s" % ids)
         return ret
 
 
@@ -218,10 +199,10 @@ class ScenarioListView(OpenEbsUserMixin, ListView):
     model = Kv15Scenario
 
     def get_context_data(self, **kwargs):
+        # TODO Move to get_queryset
         context = super(ScenarioListView, self).get_context_data(**kwargs)
         context['object_list'] = self.model.objects.filter(dataownercode=self.request.user.userprofile.company)
         return context
-
 
 class ScenarioCreateView(OpenEbsUserMixin, CreateView):
     permission_required = 'openebs.add_scenario'
@@ -239,6 +220,7 @@ class ScenarioCreateView(OpenEbsUserMixin, CreateView):
     def get_success_url(self):
         return reverse_lazy('scenario_edit', args=[self.object.id])
 
+
 class ScenarioUpdateView(OpenEbsUserMixin, UpdateView):
     permission_required = 'openebs.add_scenario'
     model = Kv15Scenario
@@ -246,13 +228,14 @@ class ScenarioUpdateView(OpenEbsUserMixin, UpdateView):
     template_name_suffix = '_update'
     success_url = reverse_lazy('scenario_index')
 
+
 class ScenarioDeleteView(OpenEbsUserMixin, DeleteView):
     permission_required = 'openebs.add_scenario'
     model = Kv15Scenario
     success_url = reverse_lazy('scenario_index')
 
-# SCENARIO MESSAGE VIEWS
 
+# SCENARIO MESSAGE VIEWS
 class ScenarioContentMixin(BaseFormView):
     """  Overide a few defaults used by scenario messages  """
     def get_context_data(self, **kwargs):
@@ -267,6 +250,7 @@ class ScenarioContentMixin(BaseFormView):
             return reverse_lazy('scenario_edit', args=[self.kwargs.get('scenario')])
         else:
             return reverse_lazy('scenario_index')
+
 
 class ScenarioMessageCreateView(OpenEbsUserMixin, ScenarioContentMixin, CreateView):
     permission_required = 'openebs.add_scenario'
@@ -283,7 +267,7 @@ class ScenarioMessageCreateView(OpenEbsUserMixin, ScenarioContentMixin, CreateVi
         if self.request.user:
             form.instance.dataownercode = self.request.user.userprofile.company
 
-        if self.kwargs.get('scenario', None): # This ensures the scenario can never be spoofed
+        if self.kwargs.get('scenario', None):  # This ensures the scenario can never be spoofed
             # TODO Register difference between this and the scenario we've validated on
             form.instance.scenario = Kv15Scenario.objects.get(pk=self.kwargs.get('scenario', None))
 
@@ -312,23 +296,25 @@ class ScenarioMessageUpdateView(OpenEbsUserMixin, ScenarioContentMixin, UpdateVi
 
         return ret
 
-    def process_new_old_haltes(self, msg, set, haltes):
+    @staticmethod
+    def process_new_old_haltes(msg, stop_set, haltes):
         """ Add new stops to the set, and then check if we've deleted any stops from the old list """
         new_stops = Kv1Stop.find_stops_from_haltes(haltes)
         for stop in new_stops:
             # TODO Improve this to not be n-queries
-            if set.filter(stop=stop).count() == 0: # New stop, add it
-                set.create(message=msg, stop=stop)
-        for old_msg_stop in set.all():
-            if old_msg_stop.stop not in new_stops: # Removed stop, delete it
+            if stop_set.filter(stop=stop).count() == 0:  # New stop, add it
+                stop_set.create(message=msg, stop=stop)
+        for old_msg_stop in stop_set.all():
+            if old_msg_stop.stop not in new_stops:  # Removed stop, delete it
                 old_msg_stop.delete()
+
 
 class ScenarioMessageDeleteView(OpenEbsUserMixin, ScenarioContentMixin, DeleteView):
     permission_required = 'openebs.add_scenario'
     model = Kv15ScenarioMessage
 
-# AJAX Views
 
+# AJAX Views
 class ScenarioStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
     model = Kv1Stop
     geometry_field = 'location'
@@ -339,6 +325,7 @@ class ScenarioStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
         qry = qry.filter(kv15scenariostop__message__scenario=self.kwargs.get('scenario', None))
         return qry
 
+
 class ActiveStopsAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
     model = Kv1Stop
     render_object = 'object'
@@ -346,6 +333,6 @@ class ActiveStopsAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView)
     def get_object(self):
         # Note, can't set this on the view, because it triggers the queryset cache
         queryset = self.model.objects.filter(messages__stopmessage__messagestarttime__lte=now(),
-                                    messages__stopmessage__messageendtime__gte=now(),
-                                    dataownercode=self.request.user.userprofile.company)
+                                             messages__stopmessage__messageendtime__gte=now(),
+                                             dataownercode=self.request.user.userprofile.company)
         return list(queryset.values('dataownercode', 'userstopcode'))

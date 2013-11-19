@@ -7,21 +7,51 @@
     <h2>{% trans "Scenario" %} <em>{{scenario.name}}</em> {% trans " inplannen" %}</h2>
     <div class="row">
         <div class="col-sm-6 col-lg-6">
-            <p><strong>{% trans "Je gaat de volgende berichten inplannen:" %}</strong><p>
-            <ul>
-            {% for msg in scenario.kv15scenariomessage_set.all %}
-                <li>{{ msg.messagecontent }} <a class="halte-count" data-title="{% trans 'Haltes bij bericht' %}" data-html="true" data-content="{% include 'openebs/snippet_scenario-halte-list.html' %}">
-                    ({{ msg.kv15scenariostop_set.count }} haltes)</a></li>
-            {% endfor %}
-            </ul>
-            <br />
-            <p>{% trans "Kies de begin- en eindtijd:" %}</p>
-            <form method="post" class="form" action="{% url 'scenario_plan' scenario.id %}">
-                {% crispy form form.helper %}
-            </form>
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">{% trans "Nieuwe berichten" %}</h3>
+                </div>
+                <div class="panel-body">
+                    <p><strong>{% trans "Je gaat de volgende berichten inplannen:" %}</strong><p>
+                    <ul>
+                    {% for msg in scenario.kv15scenariomessage_set.all %}
+                        <li>{{ msg.messagecontent }} <a class="halte-count" data-title="{% trans 'Haltes bij bericht' %}" data-html="true" data-content="{% include 'openebs/snippet_scenario-halte-list.html' %}">
+                            ({{ msg.kv15scenariostop_set.count }} haltes)</a></li>
+                    {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">{% trans "Begin- en eindtijd" %}</h3>
+                </div>
+                <div class="panel-body">
+                    <p></p>
+                    <form method="post" class="form" action="{% url 'scenario_plan' scenario.id %}">
+                        {% crispy form form.helper %}
+                    </form>
+                </div>
+            </div>
+            {% comment %} TODO Finish this!
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">{% trans "Te verwijderen berichten" %}</h3>
+                </div>
+                <div class="panel-body">
+                    <p><strong>{% trans "Op basis van de geselecteerde tijden, worden de volgende berichten eerst verwijderd:" %}</strong><p>
+                    <button class="btn btn-danger">{% trans "Berichten verwijderen en scenario inplannen" %}</button>
+                </div>
+            </div>{% endcomment %}
         </div>
         <div class="col-sm-6 col-lg-6">
-            {% leaflet_map "scenario_map" callback="main_map_init" %}
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">{% trans "Haltes" %}</h3>
+                </div>
+                <div class="panel-body">
+                    {% leaflet_map "scenario_map" callback="main_map_init" %}
+                </div>
+            </div>
         </div>
     </div>
     <br />
