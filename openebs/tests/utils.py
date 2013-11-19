@@ -10,7 +10,9 @@ class TestUtils:
     def create_message_default(user):
         msg = Kv15Stopmessage()
         msg.user = user
+        msg.dataownercode = 'HTM'
         msg.messagecodedate = now().date().isoformat()
-        msg.messageendtime = msg.messagestarttime + timedelta(1)
+        msg.messagestarttime = now()
+        msg.messageendtime = now() + timedelta(hours=3)
         msg.measurecontent = "This is a test message"
         return msg
