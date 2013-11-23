@@ -180,3 +180,10 @@ SUBREASONTYPE = (
     ('9_2', 'IJsgang'),
     ('9_2', 'IJzel'),
 )
+
+# KV17
+STOPTYPES = (
+    ('FIRST', "Beginhalte"),
+    ('INTERMEDIATE', "Tussenhalte"),
+    ('LAST', "Eindhalte")
+)

@@ -15,7 +15,7 @@ from django.template.loader import render_to_string
 from datetime import timedelta
 from django.utils.translation import ugettext, ugettext_lazy as _
 from django.utils.timezone import now
-from kv1.models import Kv1Stop, Kv1Line
+from kv1.models import Kv1Stop, Kv1Line, Kv1Journey
 
 from kv15.enum import *
 
@@ -276,3 +276,68 @@ class Kv15ScenarioStop(models.Model):
     """ For the template, this links a stop """
     message = models.ForeignKey(Kv15ScenarioMessage)
     stop = models.ForeignKey(Kv1Stop)
+
+
+class Kv17Change(models.Model):
+    """
+    Container for a kv17 change for a particular journey
+    """
+    dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
+    operatingday = models.DateField(auto_now=True)
+    line = models.ForeignKey(Kv1Line)
+    journey = models.ForeignKey(Kv1Journey)
+    reinforcement = models.IntegerField(default=0)  # Never fill this for now
+
+
+class Kv17JourneyChange(models.Model):
+    """
+    Store cancel and recover for a complete trip
+    If is_recovered = False is a cancel, else it's no longer
+    """
+    change = models.ForeignKey(Kv17Change)
+    is_recovered = models.BooleanField(default=False)
+    reasontype = models.SmallIntegerField(null=True, blank=True, choices=REASONTYPE, verbose_name=_("Type oorzaak"))
+    subreasontype = models.CharField(max_length=10, blank=True, choices=SUBREASONTYPE, verbose_name=_("Oorzaak"))
+    reasoncontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg oorzaak"))
+    advicetype = models.SmallIntegerField(null=True, blank=True, choices=ADVICETYPE, verbose_name=_("Type advies"))
+    subadvicetype = models.CharField(max_length=10, blank=True, choices=SUBADVICETYPE, verbose_name=_("Advies"))
+    advicecontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg advies"))
+    updated = models.DateTimeField(auto_now=True)
+
+
+class Kv17StopChange(models.Model):
+    """
+    Store one of the five change types for an individual stop
+    """
+    STOP_CHANGE_TYPES = ((1, "SHORTEN"),
+                         (2, "LAG"),
+                         (3, "CHANGEPASSTIMES"),
+                         (4, "CHANGEDESTINATION"),
+                         (5, "MUTATIONMESSAGE")
+                        )
+
+    change = models.ForeignKey(Kv17Change)
+    type = models.PositiveSmallIntegerField(null=False, choices=STOP_CHANGE_TYPES)
+    # All messages
+    stop = models.ForeignKey(Kv1Stop)
+    stoporder = models.IntegerField(null=False) # This is duplicate/can be easily derived
+    updated = models.DateTimeField(auto_now=True)
+    # Lag
+    lag = models.IntegerField()  # In seconds
+    # ChangePassTimes
+    targetarrival = models.DateTimeField()
+    targetdeparture = models.DateTimeField()
+    stoptype = models.CharField(choices=STOPTYPES, default="INTERMEDIATE", max_length=12)
+    # ChangeDestination
+    destinationcode = models.CharField(max_length=10, blank=True)
+    destinationname50 = models.CharField(max_length=50, blank=True)
+    destinationname16 = models.CharField(max_length=16, blank=True)
+    destinationdetail16 = models.CharField(max_length=16, blank=True)
+    destinationdisplay16 = models.CharField(max_length=16, blank=True)
+    # MutationMessage
+    reasontype = models.SmallIntegerField(null=True, blank=True, choices=REASONTYPE, verbose_name=_("Type oorzaak"))
+    subreasontype = models.CharField(max_length=10, blank=True, choices=SUBREASONTYPE, verbose_name=_("Oorzaak"))
+    reasoncontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg oorzaak"))
+    advicetype = models.SmallIntegerField(null=True, blank=True, choices=ADVICETYPE, verbose_name=_("Type advies"))
+    subadvicetype = models.CharField(max_length=10, blank=True, choices=SUBADVICETYPE, verbose_name=_("Advies"))
+    advicecontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg advies"))

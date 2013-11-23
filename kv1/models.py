@@ -1,7 +1,8 @@
 from django.contrib.gis.db import models
 from json_field import JSONField
-from kv15.enum import DATAOWNERCODE
+from kv15.enum import DATAOWNERCODE, STOPTYPES
 from django.utils.translation import ugettext_lazy as _
+
 
 class Kv1Line(models.Model):
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
@@ -11,12 +12,13 @@ class Kv1Line(models.Model):
     stop_map = JSONField()
 
     class Meta:
-        verbose_name = _("Lijninformatie")
+        verbose_name = _("Lijn")
         verbose_name_plural = _("Lijninformatie")
         unique_together = ('dataownercode', 'lineplanningnumber')
 
     def __unicode__(self):
         return "%s - %s" % (self.dataownercode, self.headsign)
+
 
 class Kv1Stop(models.Model):
     userstopcode = models.CharField(max_length=10)
@@ -28,7 +30,7 @@ class Kv1Stop(models.Model):
     objects = models.GeoManager()
 
     class Meta:
-        verbose_name = _("Halteinformatie")
+        verbose_name = _("Halte")
         verbose_name_plural = _("Halteinformatie")
         unique_together = ('dataownercode', 'userstopcode')
 
@@ -51,3 +53,36 @@ class Kv1Stop(models.Model):
                 if stop:
                     out.append(stop)
         return out
+
+class Kv1Journey(models.Model):
+    dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
+    line = models.ForeignKey(Kv1Line)  # Represent lineplanningnumber
+    journeynumber = models.PositiveIntegerField(max_length=6)  # 0 - 999999
+    date_start = models.DateField()
+    date_end = models.DateField()
+    day_monday = models.BooleanField(default=False)
+    day_tuesday = models.BooleanField(default=False)
+    day_wednesday = models.BooleanField(default=False)
+    day_thursday = models.BooleanField(default=False)
+    day_friday = models.BooleanField(default=False)
+    day_saturday = models.BooleanField(default=False)
+    day_sunday = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = _("Rit")
+        verbose_name_plural = _("Ritinformatie")
+        unique_together = ('dataownercode', 'journeynumber')
+
+
+class Kv1JourneyStop(models.Model):
+    journey = models.ForeignKey(Kv1Journey)
+    stop = models.ForeignKey(Kv1Stop)
+    stoporder = models.SmallIntegerField()
+    stoptype = models.CharField(choices=STOPTYPES, default="INTERMEDIATE", max_length=12)
+    scheduledarrival = models.TimeField()
+    scheduleddeparture = models.TimeField()
+
+    class Meta:
+        verbose_name = _("Rithalte")
+        verbose_name_plural = _("Rithaltes")
+        unique_together = (('journey', 'stop'), ('journey', 'stoporder'))
