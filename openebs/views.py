@@ -355,5 +355,6 @@ class ActiveStopsAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView)
                                              messages__stopmessage__isdeleted=False,
                                              # These two are double, but just in case
                                              messages__stopmessage__dataownercode=self.request.user.userprofile.company,
-                                             dataownercode=self.request.user.userprofile.company)
+                                             dataownercode=self.request.user.userprofile.company).distinct()
+        print queryset.count()
         return list(queryset.values('dataownercode', 'userstopcode'))
