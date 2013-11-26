@@ -1,8 +1,9 @@
 from django.conf.urls import patterns, url
 from django.views.generic import RedirectView, TemplateView
-# from djgeojson.views import GeoJSONLayerView
-from djgeojson.views import GeoJSONLayerView
-from openebs.views import MessageListView, MessageCreateView, MessageDeleteView, ScenarioListView, ScenarioCreateView, ScenarioMessageCreateView, ScenarioUpdateView, ScenarioMessageDeleteView, ScenarioDeleteView, MessageUpdateView, ScenarioMessageUpdateView, PlanScenarioView, ScenarioStopsAjaxView, ActiveStopsAjaxView
+from openebs.views import MessageListView, MessageCreateView, MessageDeleteView, MessageUpdateView, ActiveStopsAjaxView
+from openebs.views_lines import ChangeListView
+from openebs.views_scenario import ScenarioListView, ScenarioCreateView, ScenarioUpdateView, ScenarioDeleteView, PlanScenarioView, ScenarioStopsAjaxView
+from openebs.views_scenario_msg import ScenarioMessageCreateView, ScenarioMessageUpdateView, ScenarioMessageDeleteView
 
 urlpatterns = patterns('',
     # Onze Index
@@ -29,4 +30,6 @@ urlpatterns = patterns('',
     url(r'^scenario/(?P<scenario>\d+)/bericht/(?P<pk>\d+)/verwijderen', ScenarioMessageDeleteView.as_view(), name="scenario_msg_delete"),
     url(r'^scenario/(?P<scenario>\d+)/haltes.geojson', ScenarioStopsAjaxView.as_view(), name="scenario_stops_ajax"),
 
+    # Scenario views
+    url(r'^rit', ChangeListView.as_view(), name="journey_index"),
 )

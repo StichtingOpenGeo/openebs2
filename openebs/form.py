@@ -201,3 +201,6 @@ class PlanScenarioForm(forms.Form):
                 css_class="row"),
             Submit('submit', _("Plan alle berichten in"))
         )
+
+class CancelLinesForm(forms.Form):
+    pass
