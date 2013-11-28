@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}Ritaanpassingen{% endblock %}
+
+{% block content %}
+
+  <h1>{% trans "Ritaanpassingen" %}</h1>
+
+  <h2>{% trans "Actieve aanpassingen" %}
+      <a class="btn btn-danger pull-right" href="{% url 'journey_redbutton' %}">
+        <span class="glyphicon glyphicon-trash"></span> {% trans "Alle ritten opheffen" %}
+      </a>
+  </h2>
+  <table class="table table-bordered table-striped table-condensed">
+  <tr>
+        <th class="col-lg-1">{% trans "Volgnummer"%}</th>
+        <th class="col-lg-7">{% trans "Bericht" %}</th>
+        <th class="col-lg-1">{% trans "Haltes" %}</th>
+        <th class="col-lg-1">{% trans "Tijden" %}</th>
+        <th class="col-lg-3">&nbsp;</th>
+  </tr>
+  {% for msg in active_list %}
+      <tr class="{% if msg.is_future %}warning{% endif %}">
+        <td>{{ msg.messagecodenumber }}</td>
+        <td>|{{ msg.messagecontent }} {% include "openebs/snippet_status.html" with status=msg.status only %}</td>
+        <td class="text-center">
+
+        </td>
+        <td>{{ msg.messagestarttime|date:"H:i" }} - {{ msg.messageendtime|date:"H:i" }}</td>
+        <td>
+            <form method="post" action="{% url 'msg_delete' msg.id %}">
+                {% csrf_token %}
+                <button class="btn btn-danger pull-right">
+                    <span class="glyphicon glyphicon-trash"></span>
+                </button>
+            </form>
+            <a href="{% url 'msg_edit' msg.pk %}" class="btn btn-link pull-right">
+                <span class="glyphicon glyphicon-edit"></span> {% trans "Bewerk" %}&nbsp;
+            </a>&nbsp;
+        </td>
+    </tr>
+  {% empty %}
+      <tr><td colspan="5" class="text-center"><em>{% trans "Geen aanpassingen gevonden" %}</em></td></tr>
+  {% endfor %}
+  </table>
+
+  <h2>Verlopen Aanpassingen</h2>
+  <table class="table table-bordered table-condensed">
+  <tr>
+      <th class="col-lg-1">{% trans "Volgnummer"%}</th>
+      <th class="col-lg-7">{% trans "Bericht" %}</th>
+      <th class="col-lg-1">{% trans "Haltes" %}</th>
+      <th class="col-lg-1">{% trans "Tijden" %}</th>
+      <th class="col-lg-3">&nbsp;</th>
+  </tr>
+  {% for msg in archive_list %}
+    <tr class="{% if msg.isdeleted %}danger{% endif %}">
+        <td>{{ msg.messagecodenumber }}</td>
+        <td>{{ msg.messagecontent }} {% include "openebs/snippet_status.html" with status=msg.status only %}</td>
+        <td class="text-center">{{ msg.kv15messagestop_set.count }}</td>
+        <td>{{ msg.messagestarttime|date:"H:i" }} - {{ msg.messageendtime|date:"H:i" }}</td>
+        <td>&nbsp;</td>
+    </tr>
+  {% empty %}
+      <tr><td colspan="5" class="text-center"><em>{% trans "Geen berichten gevonden" %}</em></td></tr>
+  {% endfor %}
+  </table>
+  <p><small>{% trans "Rood = verwijderd bericht" %}</small></p>
+{% endblock %}
+
+{% block js_init %}
+    $('.halte-count').popover({trigger : 'hover'});
+{% endblock %}

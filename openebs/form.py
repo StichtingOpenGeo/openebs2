@@ -1,7 +1,6 @@
 from crispy_forms.bootstrap import AccordionGroup, Accordion, AppendedText
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit, Layout, Field, HTML, Div
-from datetime import datetime
+from crispy_forms.layout import Submit, Layout, Field, HTML, Div, Hidden
 from django.utils.timezone import now
 import floppyforms as forms
 from django.core.exceptions import ValidationError
@@ -203,4 +202,17 @@ class PlanScenarioForm(forms.Form):
         )
 
 class CancelLinesForm(forms.Form):
-    pass
+    verify_ok = forms.BooleanField(initial=True, widget=forms.HiddenInput)
+
+    def clean_verify_ok(self):
+        if self.cleaned_data.get('verify_ok') is not True:
+            raise ValidationError(_("Je moet goedkeuring geven om alle lijnen op te heffen"))
+
+    def __init__(self, *args, **kwargs):
+        super(CancelLinesForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = 'journey_redbutton'
+        self.helper.layout = Layout(
+            Hidden('verify_ok', 'true'),
+            Submit('submit', _("Hef alle ritten op"), css_class="text-center btn-danger btn-tall col-sm-3 pull-right")
+        )

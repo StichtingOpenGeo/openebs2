@@ -287,7 +287,8 @@ class Kv17Change(models.Model):
     line = models.ForeignKey(Kv1Line)
     journey = models.ForeignKey(Kv1Journey)
     reinforcement = models.IntegerField(default=0)  # Never fill this for now
-
+    is_recovered = models.BooleanField(default=False)
+    updated = models.DateTimeField(auto_now=True)
 
 class Kv17JourneyChange(models.Model):
     """
@@ -295,14 +296,12 @@ class Kv17JourneyChange(models.Model):
     If is_recovered = False is a cancel, else it's no longer
     """
     change = models.ForeignKey(Kv17Change)
-    is_recovered = models.BooleanField(default=False)
     reasontype = models.SmallIntegerField(null=True, blank=True, choices=REASONTYPE, verbose_name=_("Type oorzaak"))
     subreasontype = models.CharField(max_length=10, blank=True, choices=SUBREASONTYPE, verbose_name=_("Oorzaak"))
     reasoncontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg oorzaak"))
     advicetype = models.SmallIntegerField(null=True, blank=True, choices=ADVICETYPE, verbose_name=_("Type advies"))
     subadvicetype = models.CharField(max_length=10, blank=True, choices=SUBADVICETYPE, verbose_name=_("Advies"))
     advicecontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg advies"))
-    updated = models.DateTimeField(auto_now=True)
 
 
 class Kv17StopChange(models.Model):
@@ -321,7 +320,6 @@ class Kv17StopChange(models.Model):
     # All messages
     stop = models.ForeignKey(Kv1Stop)
     stoporder = models.IntegerField(null=False) # This is duplicate/can be easily derived
-    updated = models.DateTimeField(auto_now=True)
     # Lag
     lag = models.IntegerField()  # In seconds
     # ChangePassTimes

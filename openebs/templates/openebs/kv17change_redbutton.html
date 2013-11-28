@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load i18n crispy_forms_tags %}
+
+{% block title %}Ritten opheffen{% endblock %}
+
+{% block content %}
+
+  <h1>{% trans "Ritten opheffen" %}</h1>
+  <p>{% blocktrans with trips=lines.count %}Met onderstaande knop kan je alle {{ ritten|default:"0" }} ritten die vandaag rijden opheffen.{% endblocktrans %}</p>
+  <br />
+  <div class="row">
+    {% crispy form %}
+    <br /><br />
+    <a href="{% url 'journey_index' %}" class="btn btn-success pull-left">{% trans "Terug" %}</a>
+  </div>
+{% endblock %}

@@ -39,3 +39,6 @@ span.stop-selection{
 .badge-success { background-color: #5cb85c; }
 .badge-warning { background-color: #f0ad4e; }
 .badge-danger { background-color: #d9534f }
+.btn-tall {
+    height: 150px;
+}
