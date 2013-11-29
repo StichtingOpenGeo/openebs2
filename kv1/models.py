@@ -58,15 +58,6 @@ class Kv1Journey(models.Model):
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
     line = models.ForeignKey(Kv1Line)  # Represent lineplanningnumber
     journeynumber = models.PositiveIntegerField(max_length=6)  # 0 - 999999
-    date_start = models.DateField()
-    date_end = models.DateField()
-    day_monday = models.BooleanField(default=False)
-    day_tuesday = models.BooleanField(default=False)
-    day_wednesday = models.BooleanField(default=False)
-    day_thursday = models.BooleanField(default=False)
-    day_friday = models.BooleanField(default=False)
-    day_saturday = models.BooleanField(default=False)
-    day_sunday = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = _("Rit")
@@ -79,10 +70,21 @@ class Kv1JourneyStop(models.Model):
     stop = models.ForeignKey(Kv1Stop)
     stoporder = models.SmallIntegerField()
     stoptype = models.CharField(choices=STOPTYPES, default="INTERMEDIATE", max_length=12)
-    scheduledarrival = models.TimeField()
-    scheduleddeparture = models.TimeField()
+    targetarrival = models.TimeField()
+    targetdeparture = models.TimeField()
 
     class Meta:
         verbose_name = _("Rithalte")
         verbose_name_plural = _("Rithaltes")
         unique_together = (('journey', 'stop'), ('journey', 'stoporder'))
+
+
+class Kv1JourneyDate(models.Model):
+    journey = models.ForeignKey(Kv1Journey)
+    date = models.DateField()
+
+    class Meta:
+        verbose_name = _("Ritdag")
+        verbose_name_plural = _("Ritdag")
+        unique_together = (('journey', 'date'))
+
