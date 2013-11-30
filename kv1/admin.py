@@ -20,9 +20,11 @@ class StopAdmin(OSMGeoAdmin):
 admin.site.register(Kv1Stop, StopAdmin)
 
 
-class JourneyStopInline(admin.TabularInline):
+class JourneyStopInline(admin.StackedInline):
     model = Kv1JourneyStop
 
+class JourneyDatesInline(admin.TabularInline):
+    model = Kv1JourneyDate
 
 class JourneyAdmin(admin.ModelAdmin):
     model = Kv1Journey

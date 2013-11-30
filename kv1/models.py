@@ -58,6 +58,7 @@ class Kv1Journey(models.Model):
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
     line = models.ForeignKey(Kv1Line)  # Represent lineplanningnumber
     journeynumber = models.PositiveIntegerField(max_length=6)  # 0 - 999999
+    stops = models.ManyToManyField(Kv1Stop, through='Kv1JourneyStop')
 
     class Meta:
         verbose_name = _("Rit")
@@ -80,7 +81,7 @@ class Kv1JourneyStop(models.Model):
 
 
 class Kv1JourneyDate(models.Model):
-    journey = models.ForeignKey(Kv1Journey)
+    journey = models.ForeignKey(Kv1Journey, related_name='dates')  # A journey has dates
     date = models.DateField()
 
     class Meta:
