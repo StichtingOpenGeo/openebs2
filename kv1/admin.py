@@ -20,13 +20,17 @@ class StopAdmin(OSMGeoAdmin):
 admin.site.register(Kv1Stop, StopAdmin)
 
 
-class JourneyStopInline(admin.StackedInline):
-    model = Kv1JourneyStop
+class JourneyStopInline(admin.TabularInline):
+    model = Kv1Journey.journeystops.through
 
 class JourneyDatesInline(admin.TabularInline):
     model = Kv1JourneyDate
+    extra = 1
 
 class JourneyAdmin(admin.ModelAdmin):
     model = Kv1Journey
-    inlines = [JourneyStopInline]
+    list_display = ('dataownercode', 'line', 'journeynumber', )
+    list_filter = ('dataownercode', )
+    inlines = [JourneyDatesInline]
+    #exclude = ('journeystops', )
 admin.site.register(Kv1Journey, JourneyAdmin)
