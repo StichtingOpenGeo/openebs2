@@ -58,7 +58,6 @@ class Kv1Journey(models.Model):
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
     line = models.ForeignKey(Kv1Line, related_name="journeys")  # Represent lineplanningnumber
     journeynumber = models.PositiveIntegerField(max_length=6)  # 0 - 999999
-    stops = models.ManyToManyField(Kv1Stop, through='Kv1JourneyStop')
 
     def __unicode__(self):
         return "%s%s - %s" % (self.dataownercode, self.line.publiclinenumber, self.journeynumber)
@@ -66,11 +65,11 @@ class Kv1Journey(models.Model):
     class Meta:
         verbose_name = _("Rit")
         verbose_name_plural = _("Ritinformatie")
-        unique_together = ('dataownercode', 'journeynumber')
+        unique_together = ('dataownercode', 'line', 'journeynumber')
 
 
 class Kv1JourneyStop(models.Model):
-    journey = models.ForeignKey(Kv1Journey)
+    journey = models.ForeignKey(Kv1Journey, related_name="stops")
     stop = models.ForeignKey(Kv1Stop)
     stoporder = models.SmallIntegerField()
     stoptype = models.CharField(choices=STOPTYPES, default="INTERMEDIATE", max_length=12)

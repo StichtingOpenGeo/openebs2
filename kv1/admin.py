@@ -18,8 +18,7 @@ class StopAdmin(OSMGeoAdmin):
     default_zoom = 30
 
 admin.site.register(Kv1Stop, StopAdmin)
-
-
+k
 class JourneyStopInline(admin.StackedInline):
     model = Kv1JourneyStop
     raw_id_fields = ('stop',)
@@ -32,4 +31,9 @@ class JourneyDatesInline(admin.TabularInline):
 class JourneyAdmin(admin.ModelAdmin):
     model = Kv1Journey
     inlines = [JourneyStopInline, JourneyDatesInline]
+    list_display = ('dataownercode', 'line', 'journeynumber', )
+    list_filter = ('dataownercode', )
+    inlines = [JourneyDatesInline]
+    #exclude = ('journeystops', )
+
 admin.site.register(Kv1Journey, JourneyAdmin)
