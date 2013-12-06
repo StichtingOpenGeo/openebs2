@@ -21,7 +21,7 @@ class LineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
         qry = qry.filter(Q(headsign__icontains=self.kwargs['search']) | Q(lineplanningnumber__startswith=self.kwargs['search']))
         return qry
 
-class LineShowView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+class LineStopView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
     model = Kv1Line
     render_object = 'object'
 
@@ -32,6 +32,20 @@ class LineShowView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
         obj = get_object_or_404(self.model, pk=self.kwargs.get('pk', None))
         if obj:
             return { 'stop_map' : obj.stop_map }
+        return obj
+
+class LineTripView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+    model = Kv1Line
+    render_object = 'object'
+
+    def get_object(self, queryset=None):
+        '''
+        This is a bit of a hack, but forces our JSON we get out of the db out as JSON again
+        '''
+        obj = get_object_or_404(self.model, pk=self.kwargs.get('pk', None))
+        if obj:
+            # Note, the list() is required to serialize correctly
+            return { 'trips' : list(obj.journeys.values('journeynumber')) }
         return obj
 
 class ActiveStopListView(LoginRequiredMixin, GeoJSONLayerView):

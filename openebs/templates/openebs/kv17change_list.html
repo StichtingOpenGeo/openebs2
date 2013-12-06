@@ -5,11 +5,14 @@
 
 {% block content %}
 
-  <h1>{% trans "Ritaanpassingen" %}</h1>
-
-  <h2>{% trans "Actieve aanpassingen" %}
+  <h1>{% trans "Ritaanpassingen" %}
       <a class="btn btn-danger pull-right" href="{% url 'journey_redbutton' %}">
         <span class="glyphicon glyphicon-trash"></span> {% trans "Alle ritten opheffen" %}
+      </a>&nbsp;</h1>
+
+  <h2>{% trans "Actieve aanpassingen" %}
+      <a class="btn btn-success pull-right" href="{% url 'journey_add' %}">
+        <span class="glyphicon glyphicon-plus"></span> {% trans "Nieuwe aanpassing" %}
       </a>
   </h2>
   <table class="table table-bordered table-striped table-condensed">

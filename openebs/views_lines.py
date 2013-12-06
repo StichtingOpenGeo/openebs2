@@ -2,12 +2,12 @@ import logging
 from django.core.urlresolvers import reverse_lazy
 from django.db.models import Q
 from django.utils.timezone import now
-from django.views.generic import ListView, FormView
-from openebs.form import CancelLinesForm
+from django.views.generic import ListView, FormView, CreateView
+from openebs.form import CancelLinesForm, Kv17ChangeForm
 from openebs.models import Kv17Change
 from utils.views import AccessMixin, GoviPushMixin
 
-log = logging.getLogger('openebs.views.lines')
+log = logging.getLogger('openebs.views.changes')
 
 
 class ChangeListView(AccessMixin, ListView):
@@ -27,6 +27,12 @@ class ChangeListView(AccessMixin, ListView):
                                                             dataownercode=self.request.user.userprofile.company)
         context['archive_list'] = context['archive_list'].order_by('-updated')
         return context
+
+
+class ChangeCreateView(AccessMixin, CreateView):
+    permission_required = 'openebs.view_changes'
+    model = Kv17Change
+    form_class = Kv17ChangeForm
 
 
 class CancelLinesView(AccessMixin, GoviPushMixin, FormView):

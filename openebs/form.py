@@ -6,7 +6,7 @@ import floppyforms as forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from kv1.models import Kv1Stop
-from models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, get_end_service
+from models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, get_end_service, Kv17Change
 
 
 class Kv15StopMessageForm(forms.ModelForm):
@@ -178,6 +178,17 @@ class Kv15ScenarioMessageForm(forms.ModelForm):
                 )
             )
         )
+
+class Kv17ChangeForm(forms.ModelForm):
+
+    class Meta:
+        model = Kv17Change
+        exclude = ['dataownercode', 'is_recovered', 'reinforcementnumber']
+
+    def __init__(self, *args, **kwargs):
+        super(Kv17ChangeForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+
 
 class PlanScenarioForm(forms.Form):
     messagestarttime = forms.DateTimeField(label=_("Begin"), initial=now) #forms.DateTimeInput()

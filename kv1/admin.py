@@ -22,11 +22,14 @@ admin.site.register(Kv1Stop, StopAdmin)
 
 class JourneyStopInline(admin.StackedInline):
     model = Kv1JourneyStop
+    raw_id_fields = ('stop',)
+    extra = 1
 
 class JourneyDatesInline(admin.TabularInline):
     model = Kv1JourneyDate
+    extra = 1
 
 class JourneyAdmin(admin.ModelAdmin):
     model = Kv1Journey
-    inlines = [JourneyStopInline]
+    inlines = [JourneyStopInline, JourneyDatesInline]
 admin.site.register(Kv1Journey, JourneyAdmin)

@@ -56,6 +56,17 @@ function showStops(event) {
     $(this).addClass('success')
 }
 
+function showTrips(event) {
+    $("#rows tr.success").removeClass('success');
+    $(".suc-icon").remove();
+    $(this).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
+    $.ajax('/line/'+$(this).attr('id').substring(1)+'/ritten', {
+        success : writeTrips
+    })
+    $(this).addClass('success')
+}
+
+
 function selectStop(event, ui) {
     $('#halte-list .help').remove()
 
@@ -155,6 +166,10 @@ function writeLine(data, status) {
     }
     $('#stops').append(out)
     $('#stops').fadeIn(200);
+}
+
+function writeTrips(data, status) {
+    $('#line_cancel_box').show();
 }
 
 function renderRow(row) {
