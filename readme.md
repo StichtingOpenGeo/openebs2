@@ -20,4 +20,8 @@ Tool for posting KV15 messages
 
 1. Run ```python manage.py import_html lines/``` where lines is a folder containing HTML-based line data from OpenEBS1
 
-1. Run ```python manage.py import_gtfs gtfs-nl.zip/``` where gtfs-nl.zip is the latest GTFS from OVApi
+1. Run ```python manage.py import_rid path_to_export/``` where path_to_export/ contains the CSV files exported from RID with the file kv1\export_rid.sql
+
+
+*Upgrade*
+Tip: to upgrade permissions do ./manage.py syncdb --all
