@@ -6,6 +6,7 @@ import floppyforms as forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from kv1.models import Kv1Stop
+from kv15.enum import REASONTYPE, SUBREASONTYPE, ADVICETYPE, SUBADVICETYPE
 from models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, get_end_service, Kv17Change
 
 
@@ -180,14 +181,43 @@ class Kv15ScenarioMessageForm(forms.ModelForm):
         )
 
 class Kv17ChangeForm(forms.ModelForm):
+    # This is duplication, but should work
+    reasontype = forms.ChoiceField(choices=REASONTYPE, label=_("Type oorzaak"))
+    subreasontype = forms.ChoiceField(choices=SUBREASONTYPE, label=_("Oorzaak"))
+    reasoncontent = forms.CharField(max_length=255, label=_("Uitleg oorzaak"),
+                                    widget=forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}))
+    advicetype = forms.ChoiceField(choices=ADVICETYPE, label=_("Type advies"))
+    subadvicetype = forms.ChoiceField(choices=SUBADVICETYPE, label=_("Advies"))
+    advicecontent = forms.CharField(max_length=255, label=_("Uitleg advies"),
+                                    widget=forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}))
 
     class Meta:
         model = Kv17Change
-        exclude = ['dataownercode', 'is_recovered', 'reinforcementnumber']
+        exclude = [ 'dataownercode', 'is_recovered', 'reinforcement']
+        widgets = {
+            'line': forms.HiddenInput(),
+            'journey': forms.HiddenInput()
+        }
 
     def __init__(self, *args, **kwargs):
         super(Kv17ChangeForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Field('line', id='line'),
+            Field('journey', id='journey'),
+            Accordion(
+                AccordionGroup(_('Oorzaak'),
+                       'reasontype',
+                       'subreasontype',
+                       'reasoncontent'
+                ),
+                AccordionGroup(_('Advies'),
+                       'advicetype',
+                       'subadvicetype',
+                       'advicecontent'
+                )
+            )
+        )
 
 
 class PlanScenarioForm(forms.Form):

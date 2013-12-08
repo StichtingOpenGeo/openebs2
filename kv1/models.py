@@ -58,6 +58,8 @@ class Kv1Journey(models.Model):
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
     line = models.ForeignKey(Kv1Line, related_name="journeys")  # Represent lineplanningnumber
     journeynumber = models.PositiveIntegerField(max_length=6)  # 0 - 999999
+    departuretime = models.TimeField()
+    direction = models.PositiveSmallIntegerField()
 
     def __unicode__(self):
         return "%s%s - %s" % (self.dataownercode, self.line.publiclinenumber, self.journeynumber)
@@ -90,7 +92,7 @@ class Kv1JourneyDate(models.Model):
     date = models.DateField()
 
     def __unicode__(self):
-        return "%s - Stop #%s: %s" % (self.journey.journeynumber, self.date)
+        return "%s (%s)" % (self.journey.journeynumber, self.date)
 
     class Meta:
         verbose_name = _("Ritdag")

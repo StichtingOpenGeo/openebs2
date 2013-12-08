@@ -1,4 +1,5 @@
 from braces.views import LoginRequiredMixin
+from datetime import timedelta
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils.timezone import now
@@ -15,7 +16,7 @@ class LineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
         qry = super(LineSearchView, self).get_queryset()
         qry = qry.filter(dataownercode=self.request.user.userprofile.company) \
             .order_by('lineplanningnumber') \
-            .values('pk', 'dataownercode', 'headsign', 'lineplanningnumber')
+            .values('pk', 'dataownercode', 'headsign', 'lineplanningnumber', 'publiclinenumber')
         if self.kwargs['search']:
             pass
         qry = qry.filter(Q(headsign__icontains=self.kwargs['search']) | Q(lineplanningnumber__startswith=self.kwargs['search']))
@@ -40,12 +41,16 @@ class LineTripView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
 
     def get_object(self, queryset=None):
         '''
-        This is a bit of a hack, but forces our JSON we get out of the db out as JSON again
+        Forces our output as json and do some queries
         '''
         obj = get_object_or_404(self.model, pk=self.kwargs.get('pk', None))
         if obj:
             # Note, the list() is required to serialize correctly
-            return { 'trips' : list(obj.journeys.values('journeynumber')) }
+            # We're filtering on todays trips #
+            journeys = obj.journeys.filter(dates__date=now())\
+                                   .order_by('departuretime')\
+                                   .values('journeynumber', 'direction', 'departuretime')
+            return { 'trips_1' : list(journeys.filter(direction=1)), 'trips_2' : list(journeys.filter(direction=2)) }
         return obj
 
 class ActiveStopListView(LoginRequiredMixin, GeoJSONLayerView):

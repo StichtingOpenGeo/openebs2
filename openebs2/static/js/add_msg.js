@@ -32,7 +32,7 @@ function writeList(data, status) {
         line = data.object_list[key]
             validIds.push('l'+line.pk)
             if (!$('#l'+line.pk).length) {
-                row = '<tr class="line" id="l'+line.pk+'"><td>'+line.lineplanningnumber+ '</td>'
+                row = '<tr class="line" id="l'+line.pk+'"><td>'+line.publiclinenumber+ '</td>'
                     row += '<td>'+line.headsign+'</td></tr>'
                     $(row).hide().appendTo("#rows").fadeIn(999)
             }
@@ -63,6 +63,7 @@ function showTrips(event) {
     $.ajax('/line/'+$(this).attr('id').substring(1)+'/ritten', {
         success : writeTrips
     })
+    $('#line').val($(this).attr('id').substring(1))
     $(this).addClass('success')
 }
 
@@ -75,6 +76,14 @@ function selectStop(event, ui) {
     }
 }
 
+function selectTrip(event, ui) {
+    $('.trip.success').removeClass('success')
+    $(this).addClass('success')
+    ritnr = $(this).attr('id').substring(1)
+    bullet = '<span class="label label-success">Rit '+ritnr+'</span>'
+    $('#rit-list').empty().append(bullet)
+    $("#journey").val(ritnr)
+}
 
 function selectStopFromBall(obj) {
     $('#halte-list .help').remove()
@@ -169,7 +178,39 @@ function writeLine(data, status) {
 }
 
 function writeTrips(data, status) {
-    $('#line_cancel_box').show();
+    $('#trips tbody').fadeOut(200).empty();
+    tripRows = null
+    maxLen = Math.max(data.object.trips_1.length, data.object.trips_2.length)
+    for (i = 0; i <= maxLen; i = i + 1) {
+        a = null
+        b = null
+        if (i in data.object.trips_1)
+            a = data.object.trips_1[i]
+        if (i in data.object.trips_2)
+            b = data.object.trips_2[i]
+        tripRows += renderTrip(a, b);
+    }
+    $('#trips tbody').append(tripRows)
+    $('#trips tbody').fadeIn(200);
+}
+
+function renderTrip(trip_a, trip_b) {
+    out = '<tr>';
+    out += renderTripCell(trip_a);
+    out += renderTripCell(trip_b);
+    out += '</tr>';
+    return out
+}
+
+function renderTripCell(trip) {
+    if (trip == null)
+        return "<td>&nbsp;</td>";
+
+    out = '<td class="trip" id="t'+trip.journeynumber+'">'
+    out += "<strong>Rit "+trip.journeynumber+"</strong>"
+    time = trip.departuretime.split(":", 2).join(":")
+    out += "&nbsp;<small>Vertrek "+time+"</small></td>"
+    return out
 }
 
 function renderRow(row) {

@@ -30,32 +30,39 @@
         <div id="line_cancel_box" class="text-center" style="display: none;">
             <a id="line_cancel" class="btn btn-danger">{% trans "Alle ritten opheffen" %}</a>
         </div>
-        <table class="table openebs-stops" id="stops">
-            <tr class="help text-center"><td><em>Klik een lijn om ritten hier te zien</em></td></tr>
+        <table class="table openebs-trips" id="trips">
+            <thead>
+                <tr>
+                    <th>{% trans "Heen" %}</th>
+                    <th>{% trans "Terug" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="help text-center"><td colspan="2"><em>Klik een lijn om ritten hier te zien</em></td></tr>
+            </tbody>
         </table>
     </div>
     <div class="col-lg-4">
-        <h2>{% trans "Bericht" %}</h2>
-        <form method="post" class="form" action="{% url 'msg_add' %}">
-            <div class="control-group">
-                <label>{% trans "Haltes" %}</label>
-                <p class="form-control-static" id="halte-list">
-                    {% if object.kv15messagestop_set.count > 0 %}
-                        {% for halte in object.kv15messagestop_set.all %}
-                            <span class="stop-selection pull-left label label-primary" id="ss{{ halte.stop.dataownercode }}_{{ halte.stop.userstopcode }}">{{ halte.stop.name }} (?)<span class="stop-remove glyphicon glyphicon-remove"></span></span>
-                        {% endfor %}
-                    {% else %}
-                        <em class="help">{% trans "Klik haltenamen om een selectie te maken" %}</em>
-                    {% endif %}
+        <h2>{% trans "Ritaanpassing" %}</h2>
+        <form method="post" class="form" action="{% url 'change_add' %}">
+            <div class="control-group row">
+                <label class="col-lg-4">{% trans "Aanpassing" %}</label>
+                <p class="col-lg-8 form-control-static" id="">
+                    <span class="label label-danger">{% trans "Opheffen" %}</span>
                 </p><br />
-                <input type="hidden" id="haltes" name="haltes"
-                       value="{% for halte in object.kv15messagestop_set.all %}{{ halte.stop.dataownercode }}_{{ halte.stop.userstopcode }},{% endfor %}" />
+            </div>
+            <div class="control-group row">
+                <label class="col-lg-4">{% trans "Rit" %}</label>
+                <p class="col-lg-8 form-control-static pull-right" id="rit-list">
+                    <em class="help">{% trans "Klik een rit om een selectie te maken" %}</em>
+                </p><br />
             </div>
             <div class="clearfix"></div>
+            <br />
             {% crispy form form.helper %}
             <div class="form-group">
                     <br />
-                    <button type="submit" class="btn btn-primary">{% trans "Toevoegen" %}</button>
+                    <button type="submit" class="btn btn-primary">{% trans "Doorvoeren" %}</button>
             </div>
         </form>
     </div>
@@ -64,10 +71,10 @@
 {% endblock %}
 
 {% block extra_js %}
-    <!-- <script src="{% static 'js/jquery-ui-1.10.3.selectable.min.js' %}"></script> -->
     <script src="{% static 'js/add_msg.js' %}"></script>
 {% endblock %}
 {% block js_init %}
     $('#line_search').on('keyup', changeSearch);
     $( "body" ).on('click', ".line", showTrips);
+    $( "#trips" ).on('click', ".trip", selectTrip);
 {% endblock %}

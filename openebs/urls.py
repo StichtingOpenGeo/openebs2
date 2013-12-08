@@ -31,7 +31,7 @@ urlpatterns = patterns('',
     url(r'^scenario/(?P<scenario>\d+)/haltes.geojson', ScenarioStopsAjaxView.as_view(), name="scenario_stops_ajax"),
 
     # Kv17 views
-    url(r'^ritaanpassing$', ChangeListView.as_view(), name="journey_index"),
-    url(r'^ritaanpassing/add$', ChangeCreateView.as_view(), name="journey_add"),
-    url(r'^ritaanpassing/alles_opheffen$', CancelLinesView.as_view(), name="journey_redbutton")
+    url(r'^ritaanpassing$', ChangeListView.as_view(), name="change_index"),
+    url(r'^ritaanpassing/add$', ChangeCreateView.as_view(), name="change_add"),
+    url(r'^ritaanpassing/alles_opheffen$', CancelLinesView.as_view(), name="change_redbutton")
 )
