@@ -1,6 +1,8 @@
 import logging
-from django.core.urlresolvers import reverse_lazy
+from django.conf import settings
+from django.core.urlresolvers import reverse_lazy, reverse
 from django.db.models import Q
+from django.http import HttpResponseRedirect
 from django.utils.timezone import now
 from django.views.generic import ListView, FormView, CreateView, DeleteView
 from openebs.form import CancelLinesForm, Kv17ChangeForm
@@ -10,6 +12,10 @@ from utils.views import AccessMixin, GoviPushMixin
 
 log = logging.getLogger('openebs.views.changes')
 
+class GoviKv17PushMixin(GoviPushMixin):
+    dossier = settings.GOVI_KV17_DOSSIER
+    path = settings.GOVI_KV17_PATH
+    namespace = settings.GOVI_KV17_NAMESPACE
 
 class ChangeListView(AccessMixin, ListView):
     permission_required = 'openebs.view_changes'
@@ -30,7 +36,7 @@ class ChangeListView(AccessMixin, ListView):
         return context
 
 
-class ChangeCreateView(AccessMixin, CreateView):
+class ChangeCreateView(AccessMixin, GoviKv17PushMixin, CreateView):
     permission_required = 'openebs.view_changes'
     model = Kv17Change
     form_class = Kv17ChangeForm
@@ -38,14 +44,37 @@ class ChangeCreateView(AccessMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.dataownercode = self.request.user.userprofile.company
-        return super(ChangeCreateView, self).form_valid(form)
+        ret = super(ChangeCreateView, self).form_valid(form)
+        if self.push_govi(form.instance.to_xml()):
+            log.info("Sent change to GOVI: %s" % form.instance)
+            return ret
+        else:
+            log.error("Failed to communicate change to GOVI: %s" % form.instance.to_xml())
+            return HttpResponseRedirect(reverse('change_add'))
+            # Need to do more here to alert the user it failed
 
-class ChangeDeleteView(AccessMixin, FilterDataownerMixin, DeleteView):
+
+class ChangeDeleteView(AccessMixin, GoviKv17PushMixin, FilterDataownerMixin, DeleteView):
     permission_required = 'openebs.view_changes'
     model = Kv17Change
     success_url = reverse_lazy('change_index')
 
-class CancelLinesView(AccessMixin, GoviPushMixin, FormView):
+    def delete(self, request, *args, **kwargs):
+        ret = super(ChangeDeleteView, self).delete(request, *args, **kwargs)
+        obj = self.get_object()
+        if self.push_govi(obj.to_xml()):
+            log.error("Recovered line succesfully communicated to GOVI: %s" % obj)
+            return ret
+        else:
+            log.error("Failed to send recover request to GOVI: %s" % obj)
+            # We failed to push, recover our delete operation
+            obj.is_recovered = False
+            obj.recovered = None
+            obj.save()
+            return HttpResponseRedirect(reverse('change_index'))
+
+
+class CancelLinesView(AccessMixin, GoviKv17PushMixin, FormView):
     permission_required = 'openebs.add_change'
     form_class = CancelLinesForm
     template_name = 'openebs/kv17change_redbutton.html'

@@ -291,13 +291,19 @@ class Kv17Change(models.Model):
     reinforcement = models.IntegerField(default=0, verbose_name=_("Versterkingsnummer"))  # Never fill this for now
     is_recovered = models.BooleanField(default=False, verbose_name=_("Teruggedraaid?"))
     created = models.DateTimeField(auto_now_add=True)
-    recovered = models.DateTimeField(null=True)  # Not filled till recovered
+    recovered = models.DateTimeField(null=True, blank=True)  # Not filled till recovered
 
     def delete(self):
         self.is_recovered = True
         self.recovered = now()
         self.save()
         # Warning: Don't perform the actual delete here!
+
+    def to_xml(self):
+        """
+        This xml will reflect the status of the object - wheter we've been canceled or recovered
+        """
+        return render_to_string('xml/kv17journey.xml', {'object': self }).strip(os.linesep)
 
     class Meta:
         verbose_name = _('Ritaanpassing')
@@ -313,7 +319,7 @@ class Kv17JourneyChange(models.Model):
     Store cancel and recover for a complete trip
     If is_recovered = False is a cancel, else it's no longer
     """
-    change = models.ForeignKey(Kv17Change)
+    change = models.ForeignKey(Kv17Change, related_name="journey_details")
     reasontype = models.SmallIntegerField(null=True, blank=True, choices=REASONTYPE, verbose_name=_("Type oorzaak"))
     subreasontype = models.CharField(max_length=10, blank=True, choices=SUBREASONTYPE, verbose_name=_("Oorzaak"))
     reasoncontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg oorzaak"))

@@ -26,14 +26,17 @@ class JSONListResponseMixin(JSONResponseMixin):
 
 
 class GoviPushMixin(object):
-    pusher = Push(settings.GOVI_SUBSCRIBER, settings.GOVI_DOSSIER, settings.GOVI_NAMESPACE)
+    dossier = settings.GOVI_KV15_DOSSIER
+    path = settings.GOVI_KV15_PATH
+    namespace = settings.GOVI_KV15_NAMESPACE
+    pusher = Push(settings.GOVI_SUBSCRIBER)
 
     def push_govi(self, msg):
         """
         Push message _msg_ to GOVI, and return if it was succesfull
         """
         success = False
-        code, content = self.pusher.push(settings.GOVI_HOST, settings.GOVI_PATH, msg)
+        code, content = self.pusher.push(settings.GOVI_HOST, self.namespace, self.dossier, self.path, msg)
         if code == 200 and '>OK</' in content:
             success = True
         else:

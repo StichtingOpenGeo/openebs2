@@ -153,7 +153,7 @@ LOGGING = {
         'logfile': {
             'level':'DEBUG',
             'class':'logging.handlers.RotatingFileHandler',
-            'filename': "/tmp/openebs",
+            'filename': "/tmp/openebs.log",
             'maxBytes': 5000000,
             'backupCount': 5,
             'formatter': 'standard',
@@ -168,6 +168,7 @@ LOGGING = {
         'openebs': {
             'handlers': ['logfile'],
             'level': 'DEBUG',
+            'propogate' : True
         },
     }
 }
@@ -182,11 +183,15 @@ DEBUG_TOOLBAR_CONFIG = {
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 CRISPY_FAIL_SILENTLY = not DEBUG
 
-GOVI_HOST = '192.168.33.1:8000' #'drisacc.transmodel.nl'
-GOVI_PATH = '/TMI_Post/KV15'
+#GOVI_HOST = '192.168.33.1:8000' #'drisacc.transmodel.nl'
+GOVI_HOST = 'localhost:8000'
 GOVI_SUBSCRIBER = 'openOV'
-GOVI_NAMESPACE = 'http://bison.connekt.nl/tmi8/kv15/msg'
-GOVI_DOSSIER = 'KV15messages'
+GOVI_KV15_PATH = '/TMI_Post/KV15'
+GOVI_KV15_NAMESPACE = 'http://bison.connekt.nl/tmi8/kv15/msg'
+GOVI_KV15_DOSSIER = 'KV15messages'
+GOVI_KV17_PATH = '/TMI_Post/KV17'
+GOVI_KV17_NAMESPACE = 'http://bison.connekt.nl/tmi8/kv17/msg'
+GOVI_KV17_DOSSIER = 'KV17cvlinfo'
 
 GOVI_PUSH_TIMEOUT = 10
 GOVI_PUSH_DEBUG = DEBUG

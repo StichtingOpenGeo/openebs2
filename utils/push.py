@@ -4,12 +4,11 @@ from django.conf import settings
 import httplib
 
 class Push:
-    def __init__(self, subscriberid = 'openOV', dossiername = None, namespace = None):
+    def __init__(self, subscriberid = 'openOV', namespace = None):
         self.log = logging.getLogger("openebs.push")
         self.subscriberid = subscriberid
         self.timestamp = now()
 
-        self.dossiername = dossiername
         self.namespace = namespace
 
     def __str__(self):
@@ -24,15 +23,17 @@ class Push:
 <Version>BISON 8.1.0.0</Version>
 <DossierName>%(dossiername)s</DossierName>
 <Timestamp>%(timestamp)s</Timestamp>
-<KV15messages>
+<%(dossiername)s>
 %(content)s
-</KV15messages>
+</%(dossiername)s>
 </VV_TM_PUSH>""" % data
 
         return xml
 
-    def push(self, remote, path, content):
+    def push(self, remote, namespace, dossier, path, content):
         # Add content
+        self.namespace = namespace
+        self.dossiername = dossier
         self.content = content
         # Calculate XML with wrapper/header
         content = str(self)
@@ -43,6 +44,7 @@ class Push:
         response_content = None
         error = False
         if settings.GOVI_PUSH_SEND:
+            self.log.debug("Posting to %s/%s" % (remote, path))
             try:
                 conn = httplib.HTTPConnection(remote, timeout=settings.GOVI_PUSH_TIMEOUT)
                 conn.request("POST", path, content, {"Content-type": "application/xml"})

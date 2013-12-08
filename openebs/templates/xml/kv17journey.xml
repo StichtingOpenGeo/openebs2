@@ -1,0 +1,15 @@
+<KV17JOURNEY>
+    <dataownercode>{{ object.dataownercode }}</dataownercode>
+    <lineplanningnumber>{{ object.line.lineplanningnumber }}</lineplanningnumber>
+    <operatingday>{{ object.operatingday|date:"Y-m-d" }}</operatingday>
+    <journeynumber>{{ object.journey.journeynumber }}</journeynumber>
+    <reinforcementnumber>{{ object.reinforcement }}</reinforcementnumber>
+</KV17JOURNEY>
+<KV17MUTATEJOURNEY>
+    <timestamp>{{ object.created|date:"c" }}</timestamp>
+    {% if not object.is_recovered %}
+    <CANCEL></CANCEL>
+    {% else %}
+    <RECOVER></RECOVER>
+    {% endif %}
+</KV17MUTATEJOURNEY>
