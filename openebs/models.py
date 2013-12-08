@@ -293,6 +293,12 @@ class Kv17Change(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     recovered = models.DateTimeField(null=True)  # Not filled till recovered
 
+    def delete(self):
+        self.is_recovered = True
+        self.recovered = now()
+        self.save()
+        # Warning: Don't perform the actual delete here!
+
     class Meta:
         verbose_name = _('Ritaanpassing')
         verbose_name_plural = _("Ritaanpassingen")

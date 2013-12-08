@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, url
 from django.views.generic import RedirectView, TemplateView
 from openebs.views import MessageListView, MessageCreateView, MessageDeleteView, MessageUpdateView, ActiveStopsAjaxView
-from openebs.views_lines import ChangeListView, CancelLinesView, ChangeCreateView
+from openebs.views_lines import ChangeListView, CancelLinesView, ChangeCreateView, ChangeDeleteView
 from openebs.views_scenario import ScenarioListView, ScenarioCreateView, ScenarioUpdateView, ScenarioDeleteView, PlanScenarioView, ScenarioStopsAjaxView
 from openebs.views_scenario_msg import ScenarioMessageCreateView, ScenarioMessageUpdateView, ScenarioMessageDeleteView
 
@@ -34,5 +34,5 @@ urlpatterns = patterns('',
     url(r'^ritaanpassing$', ChangeListView.as_view(), name="change_index"),
     url(r'^ritaanpassing/add$', ChangeCreateView.as_view(), name="change_add"),
     url(r'^ritaanpassing/alles_opheffen$', CancelLinesView.as_view(), name="change_redbutton"),
-    url(r'^ritaanpassing/(?P<scenario>\d+)/verwijderen$', ChangeCreateView.as_view(), name="change_delete")
+    url(r'^ritaanpassing/(?P<pk>\d+)/verwijderen$', ChangeDeleteView.as_view(), name="change_delete")
 )

@@ -2,9 +2,10 @@ import logging
 from django.core.urlresolvers import reverse_lazy
 from django.db.models import Q
 from django.utils.timezone import now
-from django.views.generic import ListView, FormView, CreateView
+from django.views.generic import ListView, FormView, CreateView, DeleteView
 from openebs.form import CancelLinesForm, Kv17ChangeForm
 from openebs.models import Kv17Change
+from openebs.views import FilterDataownerMixin
 from utils.views import AccessMixin, GoviPushMixin
 
 log = logging.getLogger('openebs.views.changes')
@@ -38,6 +39,11 @@ class ChangeCreateView(AccessMixin, CreateView):
     def form_valid(self, form):
         form.instance.dataownercode = self.request.user.userprofile.company
         return super(ChangeCreateView, self).form_valid(form)
+
+class ChangeDeleteView(AccessMixin, FilterDataownerMixin, DeleteView):
+    permission_required = 'openebs.view_changes'
+    model = Kv17Change
+    success_url = reverse_lazy('change_index')
 
 class CancelLinesView(AccessMixin, GoviPushMixin, FormView):
     permission_required = 'openebs.add_change'
