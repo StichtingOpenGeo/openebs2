@@ -54,7 +54,11 @@
             <div class="control-group row">
                 <label class="col-lg-4">{% trans "Rit" %}</label>
                 <p class="col-lg-8 form-control-static pull-right" id="rit-list">
-                    <em class="help">{% trans "Klik een rit om een selectie te maken" %}</em>
+                    {% if form.instance.journey %}
+                        <span class="label label-success rit-recover" id="l{{form.instance.line.publiclinenumber}}">Rit {{ form.instance.journey.journeynumber }}</span>
+                    {% else %}
+                        <em class="help">{% trans "Klik een rit om een selectie te maken" %}</em>
+                    {% endif %}
                 </p><br />
             </div>
             <div class="clearfix"></div>

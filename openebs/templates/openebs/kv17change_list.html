@@ -17,30 +17,23 @@
   </h2>
   <table class="table table-bordered table-striped table-condensed">
   <tr>
-        <th class="col-lg-1">{% trans "Volgnummer"%}</th>
-        <th class="col-lg-7">{% trans "Bericht" %}</th>
-        <th class="col-lg-1">{% trans "Haltes" %}</th>
-        <th class="col-lg-1">{% trans "Tijden" %}</th>
-        <th class="col-lg-3">&nbsp;</th>
+        <th class="col-lg-4">{% trans "Datum"%}</th>
+        <th class="col-lg-2">{% trans "Lijn" %}</th>
+        <th class="col-lg-3">{% trans "Rit" %}</th>
+        <th class="col-lg-5">&nbsp;</th>
   </tr>
   {% for msg in active_list %}
       <tr class="{% if msg.is_future %}warning{% endif %}">
-        <td>{{ msg.messagecodenumber }}</td>
-        <td>|{{ msg.messagecontent }} {% include "openebs/snippet_status.html" with status=msg.status only %}</td>
-        <td class="text-center">
-
-        </td>
-        <td>{{ msg.messagestarttime|date:"H:i" }} - {{ msg.messageendtime|date:"H:i" }}</td>
+        <td>{{ msg.operatingday|date:"d-m-Y" }} {{ msg.created|date:"H:i" }}</td></td>
+        <td>{{ msg.line.publiclinenumber }}</td>
+        <td>{{ msg.journey.journeynumber }} <small>(Vertrek {{msg.journey.departuretime|date:"H:i"}})</small></td>
         <td>
-            <form method="post" action="{% url 'msg_delete' msg.id %}">
+            <form method="post" action="{% url 'change_delete' msg.id %}">
                 {% csrf_token %}
                 <button class="btn btn-danger pull-right">
                     <span class="glyphicon glyphicon-trash"></span>
                 </button>
             </form>
-            <a href="{% url 'msg_edit' msg.pk %}" class="btn btn-link pull-right">
-                <span class="glyphicon glyphicon-edit"></span> {% trans "Bewerk" %}&nbsp;
-            </a>&nbsp;
         </td>
     </tr>
   {% empty %}

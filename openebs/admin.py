@@ -4,7 +4,7 @@ from django.contrib.auth.models import User, Permission, Group
 from django.contrib.sites.models import Site
 
 from django.utils.translation import ugettext_lazy as _
-from openebs.models import Kv15Stopmessage, Kv15Log, Kv15Scenario, UserProfile, Kv15MessageStop, Kv15ScenarioMessage
+from openebs.models import Kv15Stopmessage, Kv15Log, Kv15Scenario, UserProfile, Kv15MessageStop, Kv15ScenarioMessage, Kv17Change, Kv17JourneyChange
 
 
 class MessageStopInline(admin.StackedInline):
@@ -30,6 +30,17 @@ class Kv15ScenarioAdmin(admin.ModelAdmin):
 
 admin.site.register(Kv15Scenario, Kv15ScenarioAdmin)
 admin.site.register(Kv15Log)
+
+class Kv17JourneyChangeInline(admin.StackedInline):
+    model = Kv17JourneyChange
+    extra = 0
+
+class Kv17ChangeAdmin(admin.ModelAdmin):
+    model = Kv17Change
+    inlines = (Kv17JourneyChangeInline, )
+    raw_id_fields = ('line', 'journey')
+
+admin.site.register(Kv17Change, Kv17ChangeAdmin)
 
 class PermissionFilterMixin(object):
     def formfield_for_manytomany(self, db_field, request=None, **kwargs):

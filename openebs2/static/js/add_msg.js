@@ -206,7 +206,7 @@ function renderTripCell(trip) {
     if (trip == null)
         return "<td>&nbsp;</td>";
 
-    out = '<td class="trip" id="t'+trip.journeynumber+'">'
+    out = '<td class="trip" id="t'+trip.id+'">'
     out += "<strong>Rit "+trip.journeynumber+"</strong>"
     time = trip.departuretime.split(":", 2).join(":")
     out += "&nbsp;<small>Vertrek "+time+"</small></td>"

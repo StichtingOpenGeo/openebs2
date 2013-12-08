@@ -20,12 +20,12 @@ class ChangeListView(AccessMixin, ListView):
         # Get the currently active changes
         context['active_list'] = self.model.objects.filter(operatingday=now().date, is_recovered=False,
                                                            dataownercode=self.request.user.userprofile.company)
-        context['active_list'] = context['active_list'].order_by('-updated')
+        context['active_list'] = context['active_list'].order_by('-created')
 
         # Add the no longer active changes
         context['archive_list'] = self.model.objects.filter(Q(operatingday__lt=now) | Q(is_recovered=True),
                                                             dataownercode=self.request.user.userprofile.company)
-        context['archive_list'] = context['archive_list'].order_by('-updated')
+        context['archive_list'] = context['archive_list'].order_by('-created')
         return context
 
 
@@ -33,13 +33,17 @@ class ChangeCreateView(AccessMixin, CreateView):
     permission_required = 'openebs.view_changes'
     model = Kv17Change
     form_class = Kv17ChangeForm
+    success_url = reverse_lazy('change_index')
 
+    def form_valid(self, form):
+        form.instance.dataownercode = self.request.user.userprofile.company
+        return super(ChangeCreateView, self).form_valid(form)
 
 class CancelLinesView(AccessMixin, GoviPushMixin, FormView):
     permission_required = 'openebs.add_change'
     form_class = CancelLinesForm
     template_name = 'openebs/kv17change_redbutton.html'
-    success_url = reverse_lazy('journey_index')
+    success_url = reverse_lazy('change_index')
 
     def get_context_data(self, **kwargs):
         """ Add data about the trips we'd be cancelling """

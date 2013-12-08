@@ -240,6 +240,7 @@ class Kv15Scenario(models.Model):
 
         return saved_messages
 
+
 class Kv15ScenarioMessage(models.Model):
     """ This stores a 'template' to be used for easily constructing normal KV15 messages """
     scenario = models.ForeignKey(Kv15Scenario)
@@ -272,6 +273,7 @@ class Kv15ScenarioMessage(models.Model):
         verbose_name = _('Scenario bericht')
         verbose_name_plural = _("Scenario berichten")
 
+
 class Kv15ScenarioStop(models.Model):
     """ For the template, this links a stop """
     message = models.ForeignKey(Kv15ScenarioMessage)
@@ -283,12 +285,22 @@ class Kv17Change(models.Model):
     Container for a kv17 change for a particular journey
     """
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
-    operatingday = models.DateField(auto_now=True)
-    line = models.ForeignKey(Kv1Line)
-    journey = models.ForeignKey(Kv1Journey)
-    reinforcement = models.IntegerField(default=0)  # Never fill this for now
-    is_recovered = models.BooleanField(default=False)
-    updated = models.DateTimeField(auto_now=True)
+    operatingday = models.DateField(auto_now=True, verbose_name=_("Datum"))
+    line = models.ForeignKey(Kv1Line, verbose_name=_("Lijn"))
+    journey = models.ForeignKey(Kv1Journey, verbose_name=_("Rit"))
+    reinforcement = models.IntegerField(default=0, verbose_name=_("Versterkingsnummer"))  # Never fill this for now
+    is_recovered = models.BooleanField(default=False, verbose_name=_("Teruggedraaid?"))
+    created = models.DateTimeField(auto_now_add=True)
+    recovered = models.DateTimeField(null=True)  # Not filled till recovered
+
+    class Meta:
+        verbose_name = _('Ritaanpassing')
+        verbose_name_plural = _("Ritaanpassingen")
+        unique_together = ('operatingday', 'line', 'journey', 'reinforcement')
+
+    def __unicode__(self):
+        return "%s Lijn %s Rit# %s" % (self.operatingday, self.line, self.journey.journeynumber)
+
 
 class Kv17JourneyChange(models.Model):
     """
@@ -302,6 +314,13 @@ class Kv17JourneyChange(models.Model):
     advicetype = models.SmallIntegerField(null=True, blank=True, choices=ADVICETYPE, verbose_name=_("Type advies"))
     subadvicetype = models.CharField(max_length=10, blank=True, choices=SUBADVICETYPE, verbose_name=_("Advies"))
     advicecontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg advies"))
+
+    class Meta:
+        verbose_name = _('Ritaanpassingsdetails')
+        verbose_name_plural = _("Ritaanpassingendetails")
+
+    def __unicode__(self):
+        return "%s Details" % self.change
 
 
 class Kv17StopChange(models.Model):
@@ -339,3 +358,7 @@ class Kv17StopChange(models.Model):
     advicetype = models.SmallIntegerField(null=True, blank=True, choices=ADVICETYPE, verbose_name=_("Type advies"))
     subadvicetype = models.CharField(max_length=10, blank=True, choices=SUBADVICETYPE, verbose_name=_("Advies"))
     advicecontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg advies"))
+
+    class Meta:
+        verbose_name = _('Halteaanpassing')
+        verbose_name_plural = _("Halteaanpassingen")

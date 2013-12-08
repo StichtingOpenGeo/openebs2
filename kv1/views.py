@@ -47,9 +47,8 @@ class LineTripView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
         if obj:
             # Note, the list() is required to serialize correctly
             # We're filtering on todays trips #
-            journeys = obj.journeys.filter(dates__date=now())\
-                                   .order_by('departuretime')\
-                                   .values('journeynumber', 'direction', 'departuretime')
+            journeys = obj.journeys.filter(dates__date=now()).order_by('departuretime')\
+                                   .values('id', 'journeynumber', 'direction', 'departuretime')
             return { 'trips_1' : list(journeys.filter(direction=1)), 'trips_2' : list(journeys.filter(direction=2)) }
         return obj
 

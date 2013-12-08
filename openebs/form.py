@@ -3,11 +3,12 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, Field, HTML, Div, Hidden
 from django.utils.timezone import now
 import floppyforms as forms
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
-from kv1.models import Kv1Stop
+from kv1.models import Kv1Stop, Kv1Line, Kv1Journey
 from kv15.enum import REASONTYPE, SUBREASONTYPE, ADVICETYPE, SUBADVICETYPE
 from models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, get_end_service, Kv17Change
+from openebs.models import Kv17JourneyChange
 
 
 class Kv15StopMessageForm(forms.ModelForm):
@@ -182,14 +183,41 @@ class Kv15ScenarioMessageForm(forms.ModelForm):
 
 class Kv17ChangeForm(forms.ModelForm):
     # This is duplication, but should work
-    reasontype = forms.ChoiceField(choices=REASONTYPE, label=_("Type oorzaak"))
-    subreasontype = forms.ChoiceField(choices=SUBREASONTYPE, label=_("Oorzaak"))
-    reasoncontent = forms.CharField(max_length=255, label=_("Uitleg oorzaak"),
+    reasontype = forms.ChoiceField(choices=REASONTYPE, label=_("Type oorzaak"), required=False)
+    subreasontype = forms.ChoiceField(choices=SUBREASONTYPE, label=_("Oorzaak"), required=False)
+    reasoncontent = forms.CharField(max_length=255, label=_("Uitleg oorzaak"), required=False,
                                     widget=forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}))
-    advicetype = forms.ChoiceField(choices=ADVICETYPE, label=_("Type advies"))
-    subadvicetype = forms.ChoiceField(choices=SUBADVICETYPE, label=_("Advies"))
-    advicecontent = forms.CharField(max_length=255, label=_("Uitleg advies"),
+    advicetype = forms.ChoiceField(choices=ADVICETYPE, label=_("Type advies"), required=False)
+    subadvicetype = forms.ChoiceField(choices=SUBADVICETYPE, label=_("Advies"), required=False)
+    advicecontent = forms.CharField(max_length=255, label=_("Uitleg advies"), required=False,
                                     widget=forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}))
+
+    def clean(self):
+        cleaned_data = super(Kv17ChangeForm, self).clean()
+        cleaned_data['dataownercode'] = cleaned_data['line'].dataownercode
+        if Kv17Change.objects.filter(operatingday=now(), line=cleaned_data['line'],
+                                     journey=cleaned_data['journey']).count() != 0:
+            raise ValidationError(_("Deze rit is al aangepast, selecteer een andere rit"))
+        if cleaned_data['line'] != cleaned_data['journey'].line \
+            or cleaned_data['line'].dataownercode != cleaned_data['journey'].dataownercode:
+            raise ValidationError(_("Rit en lijn komen niet overeen"))
+
+        return cleaned_data
+
+    def form_valid(self, form):
+        ret = super(Kv17ChangeForm, self).form_valid(form)
+        self.create_journeychange(form)
+        return ret
+
+    def create_journeychange(self, form):
+        change = Kv17JourneyChange(change=form.instance)
+        change.reasontype = self.cleaned_data['reasontype']
+        change.subreasontype = self.cleaned_data['subreasontype']
+        change.reasoncontent = self.cleaned_data['reasoncontent']
+        change.advicetype = self.cleaned_data['advicetype']
+        change.subadvicetype = self.cleaned_data['subadvicetype']
+        change.advicecontent = self.cleaned_data['advicecontent']
+        change.save()
 
     class Meta:
         model = Kv17Change
@@ -202,6 +230,7 @@ class Kv17ChangeForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(Kv17ChangeForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.form_tag = False
         self.helper.layout = Layout(
             Field('line', id='line'),
             Field('journey', id='journey'),
