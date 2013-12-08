@@ -18,7 +18,7 @@ class GoviKv17PushMixin(GoviPushMixin):
     namespace = settings.GOVI_KV17_NAMESPACE
 
 class ChangeListView(AccessMixin, ListView):
-    permission_required = 'openebs.view_changes'
+    permission_required = 'openebs.view_change'
     model = Kv17Change
 
     def get_context_data(self, **kwargs):
@@ -37,7 +37,7 @@ class ChangeListView(AccessMixin, ListView):
 
 
 class ChangeCreateView(AccessMixin, GoviKv17PushMixin, CreateView):
-    permission_required = 'openebs.view_changes'
+    permission_required = 'openebs.add_change'
     model = Kv17Change
     form_class = Kv17ChangeForm
     success_url = reverse_lazy('change_index')
@@ -55,7 +55,7 @@ class ChangeCreateView(AccessMixin, GoviKv17PushMixin, CreateView):
 
 
 class ChangeDeleteView(AccessMixin, GoviKv17PushMixin, FilterDataownerMixin, DeleteView):
-    permission_required = 'openebs.view_changes'
+    permission_required = 'openebs.add_change'
     model = Kv17Change
     success_url = reverse_lazy('change_index')
 

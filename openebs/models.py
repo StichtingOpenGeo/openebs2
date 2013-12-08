@@ -309,6 +309,10 @@ class Kv17Change(models.Model):
         verbose_name = _('Ritaanpassing')
         verbose_name_plural = _("Ritaanpassingen")
         unique_together = ('operatingday', 'line', 'journey', 'reinforcement')
+        permissions = (
+            ("view_change", _("Ritaanpassingen bekijken")),
+            ("add_change", _("Ritaanpassingen aanmaken")),
+        )
 
     def __unicode__(self):
         return "%s Lijn %s Rit# %s" % (self.operatingday, self.line, self.journey.journeynumber)
