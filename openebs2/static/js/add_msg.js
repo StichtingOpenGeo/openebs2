@@ -80,7 +80,8 @@ function selectTrip(event, ui) {
     $('.trip.success').removeClass('success')
     $(this).addClass('success')
     ritnr = $(this).attr('id').substring(1)
-    bullet = '<span class="label label-success">Rit '+ritnr+'</span>'
+    label = $(this).find("strong").text()
+    bullet = '<span class="label label-success">'+label+'</span>'
     $('#rit-list').empty().append(bullet)
     $("#journey").val(ritnr)
 }
