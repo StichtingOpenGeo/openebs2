@@ -1,5 +1,4 @@
 import logging
-from braces.views import AccessMixin
 from django.core.urlresolvers import reverse_lazy
 from django.shortcuts import get_object_or_404
 from django.views.generic import CreateView, UpdateView, DeleteView
@@ -7,7 +6,7 @@ from django.views.generic.edit import BaseFormView
 from kv1.models import Kv1Stop
 from openebs.form import Kv15ScenarioMessageForm
 from openebs.models import Kv15Scenario, Kv15ScenarioMessage
-from openebs.views import FilterDataownerMixin
+from openebs.views import FilterDataownerMixin, AccessMixin
 
 log = logging.getLogger('openebs.views.scenario_message')
 

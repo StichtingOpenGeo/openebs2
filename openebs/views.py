@@ -1,6 +1,6 @@
 # Create your views here.
 import logging
-from braces.views import AccessMixin, LoginRequiredMixin
+from braces.views import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse_lazy
 from django.db.models import Q
@@ -11,7 +11,7 @@ from django.utils.timezone import now
 from django.views.generic.list import MultipleObjectMixin
 from kv1.models import Kv1Stop
 from utils.client import get_client_ip
-from utils.views import GoviPushMixin, JSONListResponseMixin
+from utils.views import GoviPushMixin, JSONListResponseMixin, AccessMixin
 from openebs.models import Kv15Stopmessage, Kv15Log, MessageStatus
 from openebs.form import Kv15StopMessageForm
 
