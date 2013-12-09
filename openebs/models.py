@@ -7,6 +7,7 @@
 # Also note: You'll have to insert the output of 'django-admin.py sqlcustom [appname]'
 # into your database.
 from __future__ import unicode_literals
+import logging
 import os
 from django.db import models, IntegrityError, transaction
 from django.core.exceptions import ValidationError
@@ -19,6 +20,7 @@ from kv1.models import Kv1Stop, Kv1Line, Kv1Journey
 
 from kv15.enum import *
 
+log = logging.getLogger('openebs.views')
 
 # TODO Move this
 def get_end_service():
@@ -156,6 +158,10 @@ class Kv15Stopmessage(models.Model):
         return num['messagecodenumber__max'] + 1 if num['messagecodenumber__max'] else 1
 
     def to_xml(self):
+        if self.stops.count() == 0:
+            # Never send XML if we have no stops
+            log.error("We tried to send a message with no stops. This should never happen!")
+            return ""
         return render_to_string('xml/kv15stopmessage.xml', {'object': self }).strip(os.linesep)
 
     def to_xml_delete(self):

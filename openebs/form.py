@@ -12,6 +12,23 @@ from openebs.models import Kv17JourneyChange
 
 
 class Kv15StopMessageForm(forms.ModelForm):
+    def clean(self):
+        # TODO Move _all_ halte parsing here!
+        ids = []
+        for halte in self.data['haltes'].split(','):
+            halte_split = halte.split('_')
+            if len(halte_split) == 2:
+                stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
+                if stop:
+                    ids.append(stop.pk)
+                else:
+                    raise ValidationError(_("Datafout: halte niet gevonden in database. Meld dit bij een beheerder."))
+                    break
+        if len(ids) == 0:
+            raise ValidationError(_("Selecteer minimaal een halte"))
+        else:
+            return self.cleaned_data
+
     class Meta:
         model = Kv15Stopmessage
         exclude = ['messagecodenumber', 'status', 'stops', 'messagecodedate', 'isdeleted', 'id', 'dataownercode', 'user']
