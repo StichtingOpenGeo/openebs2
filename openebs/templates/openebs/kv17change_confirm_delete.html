@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Ritaanpassing intrekken" %}{% endblock %}
+
+{% block content %}
+
+  <h1>{% trans "Ritaanpassing intrekken" %}</h1>
+  <p>{% trans "Weet je zeker dat je de ritaanpassing wilt intrekken?" %}</p>
+  <div>
+      <form method="post" action="{% url 'change_delete' object.pk %}">
+          {% csrf_token %}
+          <button class="btn btn-danger pull-left">
+              <span class="glyphicon glyphicon-trash"></span> {% trans "Ja, intrekken" %}
+          </button>
+      </form>
+      <a href="{% url 'change_index' %}" class="btn btn-default pull-right">{% trans "Nee, terug" %}</a>
+  </div>
+{% endblock %}
