@@ -8,9 +8,11 @@
   <h1>{% trans "Berichten" %}</h1>
 
   <h2>{% trans "Actieve berichten" %}
+      {% if perms.openebs.add_messages %}
       <a class="btn btn-success pull-right" href="{% url 'msg_add' %}">
         <span class="glyphicon glyphicon-plus-sign"></span> {% trans "Nieuw bericht" %}
       </a>
+      {% endif %}
   </h2>
   <table class="table table-bordered table-striped table-condensed">
   <tr>

@@ -11,9 +11,11 @@
       </a>&nbsp;</h1>
 
   <h2>{% trans "Actieve aanpassingen" %}
-      <a class="btn btn-success pull-right" href="{% url 'change_add' %}">
-        <span class="glyphicon glyphicon-plus"></span> {% trans "Nieuwe aanpassing" %}
-      </a>
+      {% if perms.openebs.add_change %}
+          <a class="btn btn-success pull-right" href="{% url 'change_add' %}">
+            <span class="glyphicon glyphicon-plus"></span> {% trans "Nieuwe aanpassing" %}
+          </a>
+      {% endif %}
   </h2>
   <table class="table table-bordered table-striped table-condensed">
   <tr>
@@ -28,12 +30,14 @@
         <td>{{ msg.line.publiclinenumber }}</td>
         <td>{{ msg.journey.journeynumber }} <small>(Vertrek {{msg.journey.departuretime|date:"H:i"}})</small></td>
         <td>
+            {% if perms.openebs.add_change %}
             <form method="post" action="{% url 'change_delete' msg.id %}">
                 {% csrf_token %}
                 <button class="btn btn-danger pull-right">
                     <span class="glyphicon glyphicon-trash"></span>
                 </button>
             </form>
+            {% endif %}
         </td>
       </tr>
   {% empty %}
@@ -55,12 +59,14 @@
         <td>{{ msg.line.publiclinenumber }}</td>
         <td>{{ msg.journey.journeynumber }} <small>(Vertrek {{msg.journey.departuretime|date:"H:i"}})</small></td>
         <td>
+            {% if perms.openebs.add_change %}
             <form method="post" action="{% url 'change_delete' msg.id %}">
                 {% csrf_token %}
                 <button class="btn pull-right">
                     <span class="glyphicon glyphicon-repeat"></span>
                 </button>
             </form>
+            {% endif %}
         </td>
     </tr>
   {% empty %}

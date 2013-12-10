@@ -38,18 +38,24 @@
 
     <div class="collapse navbar-collapse navbar-ex1-collapse">
         <ul class="nav navbar-nav">
+          {% if perms.openebs.view_messages %}
           <li><a href="{% url 'msg_index' %}">
                   <span class="glyphicon glyphicon-inbox"></span> {% trans "Berichten" %}
               </a></li>
           <li><a href="{% url 'msg_map' %}">
                   <span class="glyphicon glyphicon-map-marker"></span>&nbsp;{% trans "Kaart" %}
               </a></li>
+          {% endif %}
+          {% if perms.openebs.view_scenario %}
           <li><a href="{% url 'scenario_index' %}">
                   <span class="glyphicon glyphicon-bookmark"></span>&nbsp;{% trans "Scenario's" %}
               </a></li>
+          {% endif %}
+          {% if perms.openebs.view_change %}
           <li><a href="{% url 'change_index' %}">
                   <span class="glyphicon glyphicon-road"></span> {% trans "Ritaanpassingen" %}
               </a></li>
+          {% endif %}
         </ul>
         <ul class="nav navbar-nav navbar-right">
           <li class="dropdown">

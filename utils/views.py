@@ -48,7 +48,7 @@ class GoviPushMixin(object):
         if content is not None and content != "":
             regex = re.compile("<tmi8:ResponseError>(.*)</tmi8:ResponseError>", re.MULTILINE | re.LOCALE | re.DOTALL)
             r = regex.search(content)
-            return r.groups()[0]
+            return r.groups()[0] if r is not None else ""
         return "?"
 
 
