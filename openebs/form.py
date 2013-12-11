@@ -128,10 +128,14 @@ class Kv15ScenarioMessageForm(forms.ModelForm):
             qry = qry.exclude(kv15scenariostop__message=self.instance.pk)
 
         if qry.count() > 0:
+            # Check that this stop isn't already in a messages for this scenario
             out = ""
             for stop in qry:
                 out += "%s, " % stop.name
             raise ValidationError(_("Halte(s) ' %s ' bestaan al voor dit scenario") % out)
+        elif len(ids) == 0:
+            # Select at least one stop for a message
+            raise ValidationError(_("Selecteer minimaal een halte"))
         else:
             return self.cleaned_data
 
@@ -267,8 +271,8 @@ class Kv17ChangeForm(forms.ModelForm):
 
 
 class PlanScenarioForm(forms.Form):
-    messagestarttime = forms.DateTimeField(label=_("Begin"), initial=now) #forms.DateTimeInput()
-    messageendtime = forms.DateTimeField(label=_("Einde"), initial=get_end_service()) #forms.DateTimeInput()
+    messagestarttime = forms.DateTimeField(label=_("Begin"), initial=now)
+    messageendtime = forms.DateTimeField(label=_("Einde"), initial=get_end_service)
 
     def clean(self):
         data = self.cleaned_data
