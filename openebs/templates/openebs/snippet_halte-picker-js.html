@@ -5,7 +5,7 @@ $("#stops").selectable({
   selected: selectStop,
   cancel: 'img'
 });
-$('#line_search').on('keyup', changeSearch);
+$(document).on('keyup', changeSearch);
 $('#id_messagecontent').on('keyup', changeCount);
 $("#id_messagecontent").trigger( "keyup" );
 $( "body" ).on('click', ".line", showStops);

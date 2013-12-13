@@ -12,21 +12,16 @@
     {% block extra_css %} {% endblock %}
     <link href='//fonts.googleapis.com/css?family=Roboto:400,400italic' rel='stylesheet' type='text/css'>
 
-    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    <!--[if lt IE 9]>
-      <script src="../../assets/js/html5shiv.js"></script>
-      <script src="../../assets/js/respond.min.js"></script>
-    <![endif]-->
     <script type="text/javascript">
         {% block js %} {% endblock %}
-
-        function ebs_init() {
-            $('.navbar-nav a[href*="'+location.pathname.split("/")[1]+'"').first().parent().addClass('active')
+        function load_ebs() {
+            {% comment %}This works if URL matches IDs below{% endcomment %}
+            $('#nav-'+location.pathname.split("/")[1]).addClass('active')
             {% block js_init %} {% endblock %}
         }
     </script>
 </head>
-<body onLoad="ebs_init()">
+<body>
     <nav class="navbar navbar-default" role="navigation">
       <!-- Brand and toggle get grouped for better mobile display -->
       <div class="navbar-header">
@@ -39,20 +34,20 @@
     <div class="collapse navbar-collapse navbar-ex1-collapse">
         <ul class="nav navbar-nav">
           {% if perms.openebs.view_messages %}
-          <li><a href="{% url 'msg_index' %}">
+          <li id="nav-bericht"><a href="{% url 'msg_index' %}">
                   <span class="glyphicon glyphicon-inbox"></span> {% trans "Berichten" %}
               </a></li>
-          <li><a href="{% url 'msg_map' %}">
+          <li id="nav-kaart"><a href="{% url 'msg_map' %}">
                   <span class="glyphicon glyphicon-map-marker"></span>&nbsp;{% trans "Kaart" %}
               </a></li>
           {% endif %}
           {% if perms.openebs.view_scenario %}
-          <li><a href="{% url 'scenario_index' %}">
+          <li id="nav-scenario"><a href="{% url 'scenario_index' %}">
                   <span class="glyphicon glyphicon-bookmark"></span>&nbsp;{% trans "Scenario's" %}
               </a></li>
           {% endif %}
           {% if perms.openebs.view_change %}
-          <li><a href="{% url 'change_index' %}">
+          <li id="nav-ritaanpassing"><a href="{% url 'change_index' %}">
                   <span class="glyphicon glyphicon-road"></span> {% trans "Ritaanpassingen" %}
               </a></li>
           {% endif %}
@@ -90,8 +85,14 @@
     <div class="container">
         {% block content %} {% endblock %}
     </div>
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="../../assets/js/html5shiv.js"></script>
+        <script src="../../assets/js/respond.min.js"></script>
+    <![endif]-->
     <script src="{% static 'js/jquery-1.10.2.min.js' %}"></script>
     <script src="{% static 'js/bootstrap.min.js' %}"></script>
     {% block extra_js %} {% endblock %}
+    <script type="text/javascript">$(document).ready(load_ebs);</script>
 </body>
 </html>

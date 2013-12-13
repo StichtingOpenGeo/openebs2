@@ -17,12 +17,12 @@
           </a>
       {% endif %}
   </h2>
-  <table class="table table-bordered table-striped table-condensed">
+  <table class="table table-bordered table-condensed">
   <tr>
         <th class="col-lg-4">{% trans "Datum"%}</th>
         <th class="col-lg-2">{% trans "Lijn" %}</th>
         <th class="col-lg-3">{% trans "Rit" %}</th>
-        <th class="col-lg-5">&nbsp;</th>
+        <th class="col-lg-5">Acties</th>
   </tr>
   {% for msg in active_list %}
       <tr class="{% if msg.is_future %}warning{% endif %}">
