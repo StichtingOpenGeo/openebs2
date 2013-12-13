@@ -28,15 +28,14 @@ function changeCount(event) {
 function writeList(data, status) {
     validIds = []
     /* Add them all, as neccesary */
-    for (key in data.object_list) {
-        line = data.object_list[key]
-            validIds.push('l'+line.pk)
-            if (!$('#l'+line.pk).length) {
-                row = '<tr class="line" id="l'+line.pk+'"><td>'+line.publiclinenumber+ '</td>'
-                    row += '<td>'+line.headsign+'</td></tr>'
-                    $(row).hide().appendTo("#rows").fadeIn(999)
-            }
-    }
+    $.each(data.object_list, function (i, line) {
+        validIds.push('l'+line.pk)
+        if (!$('#l'+line.pk).length) {
+            row = '<tr class="line" id="l'+line.pk+'"><td>'+line.publiclinenumber+ '</td>';
+            row += '<td>'+line.headsign+'</td></tr>';
+            $(row).hide().appendTo("#rows").fadeIn(999);
+        }
+    });
 
     /* Cleanup */
     $("#rows tr").each(function(index) {
@@ -70,7 +69,6 @@ function showTrips(event) {
 
 function selectStop(event, ui) {
     $('#halte-list .help').remove()
-
     if (doSelectStop(ui.selected)) {
         writeHaltesField();
     }
@@ -128,23 +126,22 @@ function doSelectStop(obj) {
 
 /* Write data to the form field */
 function writeHaltesField() {
-    out = ""
-    for (item in selectedStops) {
-        if (selectedStops[item] !== undefined) { /* Don't know why this is required, array gets undefined entries. */
-            out += selectedStops[item].substring(1)+",";
+    var out = "";
+    $.each(selectedStops, function(i, stop) {
+        if (stop !== undefined) { /* Don't know why this is required, array gets undefined entries. */
+            out += stop.substring(1)+",";
         }
-    }
+    });
     $("#haltes").val(out)
 }
 
 /* Do the inverse in case we're editing or something */
 function readHaltesField() {
-    initialHaltes = $("#haltes").val().split(',');
-    for (halte in initialHaltes) {
-        if(initialHaltes[halte] != "") {
-            selectedStops.push('s'+initialHaltes[halte])
+    $.each($("#haltes").val().split(','), function(i, halte) {
+        if (halte != "") {
+            selectedStops.push('s'+halte)
         }
-    }
+    });
 }
 
 /* Wrapper functions to get the id */
@@ -171,9 +168,9 @@ function removeStop(id) {
 function writeLine(data, status) {
     $('#stops').fadeOut(200).empty();
     out = ""
-    for (key in data.object.stop_map) {
-        out += renderRow(data.object.stop_map[key])
-    }
+    $.each(data.object.stop_map, function (i, stop) {
+        out += renderRow(stop)
+    });
     $('#stops').append(out)
     $('#stops').fadeIn(200);
 }
@@ -270,9 +267,11 @@ function getScenarioStops(scenario) {
 }
 
 function writeScenarioStops(data, status) {
-    for (key in data.features) {
-        stop = data.features[key]['properties']['dataownercode']+ '_' + data.features[key]['properties']['userstopcode']
-        scenarioStops.push(stop)
+    if (data.features) {
+        $.each(data.features, function (i, halte) {
+            stop = halte['properties']['dataownercode']+ '_' + halte['properties']['userstopcode']
+            scenarioStops.push(stop)
+        });
     }
 }
 
@@ -283,8 +282,8 @@ function getHaltesWithMessages() {
 }
 
 function writeHaltesWithMessages(data, status) {
-    for (key in data.object) {
-        stop = data.object[key]['dataownercode']+ '_' + data.object[key]['userstopcode']
+    $.each(data.object, function (i, halte) {
+        stop = halte['dataownercode']+ '_' + halte['userstopcode']
         blockedStops.push(stop)
-    }
+    });
 }

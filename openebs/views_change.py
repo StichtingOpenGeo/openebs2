@@ -45,13 +45,13 @@ class ChangeCreateView(AccessMixin, GoviKv17PushMixin, CreateView):
     def form_valid(self, form):
         form.instance.dataownercode = self.request.user.userprofile.company
         ret = super(ChangeCreateView, self).form_valid(form)
+
+        # Push message to GOVI
         if self.push_govi(form.instance.to_xml()):
             log.info("Sent change to GOVI: %s" % form.instance)
-            return ret
         else:
             log.error("Failed to communicate change to GOVI: %s" % form.instance.to_xml())
-            return HttpResponseRedirect(reverse('change_add'))
-            # Need to do more here to alert the user it failed
+        return ret
 
 
 class ChangeDeleteView(AccessMixin, GoviKv17PushMixin, FilterDataownerMixin, DeleteView):
