@@ -19,10 +19,6 @@ class Command(BaseCommand):
         self.log("Got %s stops to process in next step" % len(stops))
         print "==========================\n\nSTEP 2: Stops"
         self.do_stops(stops)
-        print "==========================\r\nSTEP 3a: Journeys"
-        self.do_journeys()
-        print "==========================\r\nSTEP 3b: Journey dates"
-        self.do_journey_dates()
 
 
     def do_lines(self):
@@ -68,42 +64,6 @@ class Command(BaseCommand):
                i = i+1
                if i % 100 == 0:
                    self.log("Did %s stops" % i)
-
-
-    def do_journeys(self):
-        with open(self.folder+'/openebs_journeys.csv') as stops_file:
-            journeystop_reader = csv.DictReader(stops_file, delimiter=',', quotechar='"')
-            for row in journeystop_reader:
-                journey_code = row['journey_id'].split(':')
-
-                # Journey
-                q_journey = Kv1Journey.objects.filter(dataownercode=journey_code[0], line__lineplanningnumber=journey_code[1],
-                                                    journeynumber=journey_code[2])
-                if q_journey.count() == 0:
-                    # Create the journey but first find the line
-                    q_line = Kv1Line.objects.filter(dataownercode=journey_code[0], lineplanningnumber=journey_code[1])
-                    if q_line.count() == 1:
-                        journey = Kv1Journey(dataownercode=journey_code[0], line=q_line[0], journeynumber=journey_code[2])
-                        journey.direction = row['direction']
-                        journey.departuretime = datetime.fromtimestamp(float(row['base_departure_time'])).time()
-                        journey.save()
-                    else:
-                        self.log("Couldn't find line %s" % row['journey_id'])
-
-    def do_journey_dates(self):
-        with open(self.folder+'/openebs_journey_dates.csv') as stops_file:
-            journeydate_reader = csv.DictReader(stops_file, delimiter=',', quotechar='"')
-            for row in journeydate_reader:
-                journey_code = row['privatecode'].split(':')
-                q_journey = Kv1Journey.objects.filter(dataownercode=journey_code[0], line__lineplanningnumber=journey_code[1],
-                                                        journeynumber=journey_code[2])
-                if q_journey.count() == 1:
-                    # We have a journey
-                    jd = Kv1JourneyDate(journey=q_journey[0])
-                    jd.date = row['validdate']
-                    jd.save()
-                else:
-                    self.log("Failed to find journey %s" % row['privatecode'])
 
     def log(self, text):
         print "%s - import_rid: %s" % (datetime.now().isoformat(), text)
