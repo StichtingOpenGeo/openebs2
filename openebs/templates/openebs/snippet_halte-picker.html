@@ -20,7 +20,9 @@
     </table>
 </div>
 <div class="col-lg-5">
-    <h2>Haltes</h2>
+    <h2>Haltes
+        <a class="btn btn-success btn-sm pull-right hide stop_btn" id="stops_all"><i class="glyphicon glyphicon-plus"></i>&nbsp;{% trans "Selecteer lijn" %}</a>&nbsp;&nbsp;
+        <a class="btn btn-danger btn-sm pull-right hide stop_btn" id="stops_none"><i class="glyphicon glyphicon-remove-circle"></i>&nbsp;{% trans "Wis (lijn)selectie" %}</a></h2>
     <table class="table openebs-stops" id="stops">
         <tr class="help text-center"><td><em>Klik een lijn om haltes hier te zien</em></td></tr>
     </table>

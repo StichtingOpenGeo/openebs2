@@ -100,6 +100,27 @@ function selectStopFromBall(obj) {
     }
 }
 
+function selectAllVisibleStops() {
+    $('#stops .stop').each(function(index, value) {
+        /* Check this is not already selected */
+        index = $(this).attr('id').slice(0, -1);
+        if ($.inArray(index, selectedStops) == -1) {
+            doSelectStop($(this));
+        }
+    });
+    writeHaltesField();
+}
+
+function deselectAllVisibleStops() {
+    $('#stops .stop.success').each(function(index, value) {
+        index = $(this).attr('id').slice(0, -1);
+        if ($.inArray(index, selectedStops) != -1) {
+            removeStop(index)
+        }
+    });
+    writeHaltesField();
+}
+
 function doSelectStop(obj) {
     /* Make sure to strip the 'l' or 'r' */
     id = $(obj).attr('id').slice(0, -1)
@@ -173,6 +194,7 @@ function writeLine(data, status) {
     });
     $('#stops').append(out)
     $('#stops').fadeIn(200);
+    $('.stop_btn').removeClass('hide');
 }
 
 function writeTrips(data, status) {

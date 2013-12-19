@@ -8,7 +8,7 @@
 <div class="row">
     {% include "openebs/snippet_halte-picker.html" %}
     <div class="col-lg-4">
-        <h2>Bericht</h2>
+        <h2>{% trans "Bericht" %}</h2>
         <form method="post" class="form" action="{% url 'scenario_msg_add' scenario.pk %}">
             <div class="control-group">
                 <label>{% trans "Haltes" %}</label>
