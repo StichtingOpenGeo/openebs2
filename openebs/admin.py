@@ -10,6 +10,7 @@ from openebs.models import Kv15Stopmessage, Kv15Log, Kv15Scenario, UserProfile, 
 class MessageStopInline(admin.StackedInline):
     model = Kv15MessageStop
     verbose_name_plural = _("haltes")
+    raw_id_fields = ('stop', )
     extra = 1
 
 class Kv15MessageAdmin(admin.ModelAdmin):

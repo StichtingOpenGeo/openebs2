@@ -1,6 +1,7 @@
 # Create your views here.
 import logging
 from braces.views import LoginRequiredMixin
+from datetime import timedelta
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse_lazy
 from django.db.models import Q
@@ -49,7 +50,8 @@ class MessageListView(AccessMixin, ListView):
 
         # Add the no longer active messages
         context['archive_list'] = self.model.objects.filter(Q(messageendtime__lt=now) | Q(isdeleted=True),
-                                                            dataownercode=self.request.user.userprofile.company)
+                                                            dataownercode=self.request.user.userprofile.company,
+                                                            messagestarttime__gt=now()-timedelta(days=3))
         context['archive_list'] = context['archive_list'].order_by('-messagecodedate', '-messagecodenumber')
         return context
 

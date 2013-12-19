@@ -59,16 +59,19 @@
       <th class="col-lg-1">{% trans "Volgnummer"%}</th>
       <th class="col-lg-7">{% trans "Bericht" %}</th>
       <th class="col-lg-1">{% trans "Haltes" %}</th>
-      <th class="col-lg-1">{% trans "Tijden" %}</th>
-      <th class="col-lg-3">&nbsp;</th>
+      <th class="col-lg-4">{% trans "Tijden" %}</th>
   </tr>
   {% for msg in archive_list %}
     <tr class="{% if msg.isdeleted %}danger{% endif %}">
         <td>{{ msg.messagecodenumber }}</td>
         <td>{{ msg.messagecontent }} {% include "openebs/snippet_status.html" with status=msg.status only %}</td>
         <td class="text-center">{{ msg.kv15messagestop_set.count }}</td>
-        <td>{{ msg.messagestarttime|date:"H:i" }} - {{ msg.messageendtime|date:"H:i" }}</td>
-        <td>&nbsp;</td>
+        <td>{% if msg.messagestarttime|date:"d-m-Y" == msg.messageendtime|date:"d-m-Y" %}
+            {{ msg.messagestarttime|date:"d-m-Y H:i" }} - {{ msg.messageendtime|date:"H:i" }}
+            {% else %}
+            {{ msg.messagestarttime|date:"d-m-Y H:i" }} - {{ msg.messageendtime|date:"d-m-Y H:i" }}
+            {% endif %}
+        </td>
     </tr>
   {% empty %}
       <tr><td colspan="5" class="text-center"><em>{% trans "Geen berichten gevonden" %}</em></td></tr>
