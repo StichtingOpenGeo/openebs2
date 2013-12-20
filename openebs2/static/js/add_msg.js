@@ -311,9 +311,9 @@ function writeHaltesWithMessages(data, status) {
 }
 
 function calculateTime(event, ui) {
-    text = $(this).val().replace(':', '');
-    change = false;
-    newdate = new Date()/* Note, set date to the client date... */
+    var text = $(this).val().replace(':', '');
+    var change = false;
+    var newdate = new Date(); /* Note, set date to the client date... */
     if (text.length <= 2) {
         change = true;
         newdate.setHours(parseInt(text));
@@ -322,9 +322,9 @@ function calculateTime(event, ui) {
         change = true;
         console.log(text)
         console.log(text.slice(0,2))
-        console.log(text.slice(2,2))
+        console.log(text.slice(2,4))
         newdate.setHours(parseInt(text.slice(0,2)));
-        newdate.setMinutes(parseInt(text.slice(2,2)));
+        newdate.setMinutes(parseInt(text.slice(2,4)));
     }
     if (change) {
         if (newdate < new Date()) {
