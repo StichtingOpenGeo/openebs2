@@ -309,3 +309,44 @@ function writeHaltesWithMessages(data, status) {
         blockedStops.push(stop)
     });
 }
+
+function calculateTime(event, ui) {
+    text = $(this).val().replace(':', '');
+    change = false;
+    newdate = new Date()/* Note, set date to the client date... */
+    if (text.length <= 2) {
+        change = true;
+        newdate.setHours(parseInt(text));
+        newdate.setMinutes(0)
+    } else if (text.length == 4) {
+        change = true;
+        console.log(text)
+        console.log(text.slice(0,2))
+        console.log(text.slice(2,2))
+        newdate.setHours(parseInt(text.slice(0,2)));
+        newdate.setMinutes(parseInt(text.slice(2,2)));
+    }
+    if (change) {
+        if (newdate < new Date()) {
+            newdate.setDate(newdate.getDate()+1);
+        }
+        $(this).val(formatDate(newdate))
+    }
+}
+
+function formatDate(d) {
+    out = d.getDate() + "-" + (d.getMonth()+1) + "-" + d.getFullYear();
+    out += " "+padTime(d.getHours())+":"+padTime(d.getMinutes())+':00';
+    return out
+}
+
+function padTime(i) {
+    str = i.toString()
+    if (str.length == 2) {
+        return str;
+    } else if (str.length == 1) {
+        return '0'+str;
+    } else {
+        return '00';
+    }
+}
