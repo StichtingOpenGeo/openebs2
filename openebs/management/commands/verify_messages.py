@@ -9,10 +9,6 @@ from django.utils.timezone import now
 import zmq
 from openebs.models import Kv15Stopmessage, MessageStatus
 
-__author__ = 'joel'
-
-
-
 class Command(BaseCommand):
     log = logging.getLogger('openebs.kv8verify')
 
@@ -62,14 +58,14 @@ class Command(BaseCommand):
 
         msg, created = Kv15Stopmessage.objects.get_or_create(dataownercode=row['DataOwnerCode'], messagecodedate=row['MessageCodeDate'],
                                        messagecodenumber=row['MessageCodeNumber'], defaults={ 'user' : self.get_user()})
-        self.log.info("Setting status confirmed for message:  %s" % msg)
+        self.log.info("Setting status confirmed for adding of message: %s (Stop: %s)" % (msg, row['TimingPointCode']))
         msg.status = MessageStatus.CONFIRMED
         # In case this is an update, set these fields to properly restore our message:
         msg.messagestarttime = row['MessageStartTime']
         msg.messageendtime = row['MessageEndTime']
         msg.isdeleted = False
         if created:
-            self.log.info("Creating new message which wasn't in DB: %s" % msg)
+            self.log.info("Creating new message which wasn't in DB (note, stops will be blank): %s" % msg)
             msg.messagecontent = row['MessageContent']
             msg.messagetimestamp = row['MessageTimeStamp']
             msg.messagetype = row['MessageType']
@@ -88,7 +84,7 @@ class Command(BaseCommand):
             self.set_if_filled(msg, 'advicecontent', row['AdviceContent'])
         msg.save()
 
-        # TODO Handle stops here and log which ones we're processing
+        # TODO Handle stops here
 
     @transaction.commit_on_success
     def processDelMessage(self, row):
@@ -99,8 +95,8 @@ class Command(BaseCommand):
             msg.isdeleted = True
             msg.messageendtime = now()
             msg.save()
-            self.log.error("Confirmed deletion of message: %s" % msg)
-            # TODO Handle stops here and log which ones we're processing
+            self.log.error("Confirmed deletion of message: %s (Stop %s)" % (msg, row['TimingPointCode']))
+            # TODO Handle stops here
         except Kv15Stopmessage.DoesNotExist:
             self.log.error("Tried to delete message that doesn't exist: %s" % row)
 
