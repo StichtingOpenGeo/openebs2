@@ -310,21 +310,50 @@ function writeHaltesWithMessages(data, status) {
     });
 }
 
+function updateMessagetime(event, ui) {
+    var starttime = parseDate($("#id_messagestarttime").val());
+    var endtime   = parseDate($("#id_messageendtime").val());
+
+    if (starttime >= endtime) {
+        if ($(this).attr('id') == "id_messagestarttime") {
+            endtime.setDate(endtime.getDate()+1);
+            $("#id_messageendtime").val(formatDate(endtime));
+        } else {
+            starttime.setDate(endtime.getDate()-1);
+            $("#id_messagestarttime").val(formatDate(starttime));
+        }
+    }
+}
+
 function calculateTime(event, ui) {
     var text = $(this).val().replace(':', '');
     var change = false;
     var newdate = new Date(); /* Note, set date to the client date... */
     if (text.length <= 2) {
         change = true;
-        newdate.setHours(parseInt(text));
-        newdate.setMinutes(0)
+        newdate.setHours(parseInt(text), 0, 0);
+
+    } else if (text.length == 3) {
+        change = true;
+        newdate.setHours(parseInt(text.slice(0,1)),
+                         parseInt(text.slice(1,3)), 0);
+
+    } else if (text.length == 5) {
+        change = true;
+        newdate.setHours(parseInt(text.slice(0,1)),
+                         parseInt(text.slice(1,3)),
+                         parseInt(text.slice(3,5)));
+
     } else if (text.length == 4) {
         change = true;
-        console.log(text)
-        console.log(text.slice(0,2))
-        console.log(text.slice(2,4))
-        newdate.setHours(parseInt(text.slice(0,2)));
-        newdate.setMinutes(parseInt(text.slice(2,4)));
+        newdate.setHours(parseInt(text.slice(0,2)),
+                         parseInt(text.slice(2,4)), 0);
+
+    } else if (text.length == 6) {
+        change = true;
+        newdate.setHours(parseInt(text.slice(0,2)),
+                         parseInt(text.slice(2,4)),
+                         parseInt(text.slice(4,6)));
     }
     if (change) {
         if (newdate < new Date()) {
@@ -336,8 +365,23 @@ function calculateTime(event, ui) {
 
 function formatDate(d) {
     out = d.getDate() + "-" + (d.getMonth()+1) + "-" + d.getFullYear();
-    out += " "+padTime(d.getHours())+":"+padTime(d.getMinutes())+':00';
+    out += " "+padTime(d.getHours())+":"+padTime(d.getMinutes())+":"+padTime(d.getSeconds());
     return out
+}
+
+function parseDate(d) {
+    var parts = d.split(' ');
+    var dateparts = parts[0].split('-');
+    var timeparts = parts[1].split(':');
+
+    // Workaround because Date.parse will get into timezone issues.
+    var newdate = new Date();
+    newdate.setFullYear(dateparts[2]);
+    newdate.setMonth(dateparts[1]-1);
+    newdate.setDate(dateparts[0]);
+    newdate.setHours(timeparts[0],timeparts[1],timeparts[2]);
+
+    return newdate;
 }
 
 function padTime(i) {
