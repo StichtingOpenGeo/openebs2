@@ -86,13 +86,17 @@ function selectTrip(event, ui) {
 
 function selectStopFromBall(obj) {
     $('#halte-list .help').remove()
-    did = false
-    if ($(this).parent().parent().find(".stop-right").length) {
-        doSelectStop($(this).parent().parent().find(".stop.stop-right"));
+    var did = false
+    var parent = $(this).parents('.stopRow');
+    var left = $(parent).find(".stop-left");
+    var right = $(parent).find(".stop-right");
+    if (left.length) {
+        doSelectStop(parent.find(".stop.stop-right"));
         did = true;
     }
-    if ($(this).parent().parent().find(".stop-left").length) {
-        doSelectStop($(this).parent().parent().find(".stop.stop-left"));
+    /* Check if left and right stops aren't accidentally equal */
+    if (left.length && right.length && left.attr('id').slice(0, -1) != right.attr('id').slice(0, -1)) {
+        doSelectStop(parent.find(".stop.stop-left"));
         did = true;
     }
     if (did) {
@@ -234,7 +238,7 @@ function renderTripCell(trip) {
 }
 
 function renderRow(row) {
-    out = '<tr>';
+    out = '<tr class="stopRow">';
     if (row.left != null) {
         if ($.inArray(row.left.id, scenarioStops) != -1) {
             out += '<td class="warning">'+row.left.name+' <span class="glyphicon glyphicon-warning-sign pull-right" title="Al in scenario opgenomen"></span></td>'
