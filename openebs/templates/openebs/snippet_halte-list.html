@@ -1,4 +1,4 @@
-<ul>{% for halte in msg.kv15messagestop_set.all|slice:":15" %}
+<ul>{% for halte in msg.get_distinct_stop_names %}
   <li>{{ halte.stop.name }}</li>
 {% endfor %}</ul>
 {% if msg.kv15messagestop_set.count > 15 %}
