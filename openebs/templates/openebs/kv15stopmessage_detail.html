@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load static crispy_forms_tags i18n %}
+
+ {% block title %}{% trans "Bekijk bericht" %}{% endblock %}
+
+{% block content %}
+<h2>{% trans "Bericht" %}
+    {% if object.is_editable %}
+        <form method="post" action="{% url 'msg_delete' object.id %}">
+            {% csrf_token %}
+            <button class="btn btn-danger pull-right">
+                <span class="glyphicon glyphicon-trash"></span>
+            </button>
+        </form>
+        <a href="{% url 'msg_edit' object.pk %}" class="btn btn-link pull-right">
+            <span class="glyphicon glyphicon-edit"></span> {% trans "Bewerk" %}&nbsp;
+        </a>&nbsp;
+    {% endif %}
+    </h2>
+<div>
+    <div class="control-group row">
+        <label class="col-lg-2">{% trans "Volgnummer" %}</label>
+        <p class="form-control-static col-lg-10">
+            {{ object.dataownercode }} - {{ object.messagecodedate }} - #{{ object.messagecodenumber }}
+        </p>
+    </div>
+    <div class="control-group row">
+        <label class="col-lg-2">{% trans "Bericht" %}</label>
+        <p class="form-control-static col-lg-10">
+            {{ object.messagecontent }}<br /><br />
+        </p>
+    </div>
+    <div class="control-group row">
+        <label class="col-lg-2">{% trans "Geldigheid" %}</label>
+        <p class="form-control-static col-lg-10">
+            {{ object.messagestarttime }} - {{ object.messageendtime }}
+        </p>
+    </div>
+    <div class="control-group row">
+        <label class="col-lg-2">{% trans "Type tijdsrooster" %}</label>
+        <p class="form-control-static col-lg-10">
+            {{ object.get_messagedurationtype_display }}
+        </p>
+    </div>
+    <div class="control-group row">
+        <label class="col-lg-2">{% trans "Type bericht" %}</label>
+        <p class="form-control-static col-lg-10">
+            {{ object.get_messagetype_display }}
+        </p>
+    </div>
+    <div class="control-group row">
+        <label class="col-lg-2">{% trans "Prioriteit" %}</label>
+        <p class="form-control-static col-lg-10">
+            {{ object.get_messagepriority_display }}
+        </p>
+    </div>
+
+
+    <h3>{% trans "Haltes" %} <span style="font-weight: normal;">({{ object.kv15messagestop_set.count }})</span></h3>
+    <table class="table table-bordered table-striped">
+    <tr>
+        <th class="col-lg-1">&nbsp;</th>
+        <th>Halte</th>
+        <th class="col-lg-2 text-right">Haltenummer</th>
+    </tr>
+    {% for halte in object.kv15messagestop_set.all %}
+        <tr>
+            <td><img class="user-icon" src="{{ STATIC_URL }}img/logos/{{ halte.stop.dataownercode|lower }}.png" /></td>
+            <td>{{ halte.stop.name }}</td>
+            <td class="text-right">{{ halte.stop.userstopcode }}</td>
+        </tr>
+    {% endfor %}
+    </table>
+
+    <h3>Overige informatie</h3>
+    {% if not object.reasontype and not object.effecttype and not object.measuretype and not object.advicetype %}
+        <p><em>Geen</em></p><br />
+    {% endif %}
+    {% if object.reasontype %}
+        <div class="control-group row">
+            <label class="col-lg-2">{% trans "Oorzaak" %}</label>
+            <p class="form-control-static col-lg-10">
+                <em>{{ object.get_reasontype_display }} - {{ object.get_subreasontype_display }}</em><br />
+                {{ object.reasoncontent}}
+            </p>
+        </div>
+    {% endif %}
+    {% if object.reasontype %}
+        <div class="control-group row">
+            <label class="col-lg-2">{% trans "Gevolg" %}</label>
+            <p class="form-control-static col-lg-10">
+                <em>{{ object.get_effecttype_display }} - {{ object.get_subeffecttype_display }}</em><br />
+                {{ object.effectcontent}}
+            </p>
+        </div>
+    {% endif %}
+    {% if object.measuretype %}
+        <div class="control-group row">
+            <label class="col-lg-2">{% trans "Aanpassing" %}</label>
+            <p class="form-control-static col-lg-10">
+                <em>{{ object.get_measuretype_display }} - {{ object.get_submeasuretype_display }}</em><br />
+                {{ object.measurecontent}}
+            </p>
+        </div>
+    {% endif %}
+    {% if object.advicetype %}
+        <div class="control-group row">
+            <label class="col-lg-2">{% trans "Advies" %}</label>
+            <p class="form-control-static col-lg-10">
+                <em>{{ object.get_advicetype_display }} - {{ object.get_subadvicetype_display }}</em><br />
+                {{ object.advicecontent}}
+            </p>
+        </div>
+    {% endif %}
+</div>
+
+
+{% endblock %}

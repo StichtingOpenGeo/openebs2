@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url
 from django.views.generic import RedirectView, TemplateView
-from openebs.views import MessageListView, MessageCreateView, MessageDeleteView, MessageUpdateView, ActiveStopsAjaxView
+from openebs.views import MessageListView, MessageCreateView, MessageDeleteView, MessageUpdateView, ActiveStopsAjaxView, MessageDetailsView
 from openebs.views_change import ChangeListView, CancelLinesView, ChangeCreateView, ChangeDeleteView
 from openebs.views_scenario import ScenarioListView, ScenarioCreateView, ScenarioUpdateView, ScenarioDeleteView, PlanScenarioView, ScenarioStopsAjaxView
 from openebs.views_scenario_msg import ScenarioMessageCreateView, ScenarioMessageUpdateView, ScenarioMessageDeleteView
@@ -15,6 +15,7 @@ urlpatterns = patterns('',
     # Berichten views
     url(r'^bericht$', MessageListView.as_view(), name="msg_index"),
     url(r'^bericht/nieuw$', MessageCreateView.as_view(), name="msg_add"),
+    url(r'^bericht/(?P<pk>\d+)/bekijken', MessageDetailsView.as_view(), name="msg_view"),
     url(r'^bericht/(?P<pk>\d+)/bewerken$', MessageUpdateView.as_view(), name="msg_edit"),
     url(r'^bericht/(?P<pk>\d+)/verwijderen$', MessageDeleteView.as_view(), name="msg_delete"),
     url(r'^bericht/haltes.json', ActiveStopsAjaxView.as_view(), name="scenario_stops_ajax"),

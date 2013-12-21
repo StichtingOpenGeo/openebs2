@@ -147,6 +147,9 @@ class MessageDeleteView(AccessMixin, GoviPushMixin, FilterDataownerMixin, Delete
             log.error("Failed to send delete request to GOVI: %s" % obj)
         return ret
 
+class MessageDetailsView(AccessMixin, FilterDataownerMixin, DetailView):
+    permission_required = 'openebs.view_messages'
+    model = Kv15Stopmessage
 
 # AJAX Views
 class ActiveStopsAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):

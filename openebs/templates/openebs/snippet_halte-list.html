@@ -1,3 +1,6 @@
-<ul>{% for halte in msg.kv15messagestop_set.all %}
+<ul>{% for halte in msg.kv15messagestop_set.all|slice:":15" %}
   <li>{{ halte.stop.name }}</li>
 {% endfor %}</ul>
+{% if msg.kv15messagestop_set.count > 15 %}
+<p><small>en {{  msg.kv15messagestop_set.count|add:-15 }} overige haltes. (klik cijfer om te bekijken)</small></p>
+{% endif %}

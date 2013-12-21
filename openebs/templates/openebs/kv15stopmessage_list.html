@@ -28,7 +28,7 @@
         <td>{{ msg.messagecontent }} {% include "openebs/snippet_status.html" with status=msg.status only %}</td>
         <td class="text-center">
             {% if msg.kv15messagestop_set.count > 0 %}
-            <a class="halte-count btn btn-link" data-title="{% trans 'Haltes bij bericht' %}" data-html="true" data-content="{% include 'openebs/snippet_halte-list.html' %}">
+            <a class="halte-count btn btn-link" href="{% url 'msg_view' msg.id %}" data-title="{% trans 'Haltes bij bericht' %}" data-html="true" data-content="{% include 'openebs/snippet_halte-list.html' %}">
                 {{ msg.kv15messagestop_set.count }}</a>
             {% else %}
                 0
@@ -65,7 +65,10 @@
     <tr class="{% if msg.isdeleted %}danger{% endif %}">
         <td>{{ msg.messagecodenumber }}</td>
         <td>{{ msg.messagecontent }} {% include "openebs/snippet_status.html" with status=msg.status only %}</td>
-        <td class="text-center">{{ msg.kv15messagestop_set.count }}</td>
+        <td class="text-center">
+            <a class="halte-count btn btn-link" href="{% url 'msg_view' msg.id %}" data-title="{% trans 'Haltes bij bericht' %}" data-html="true" data-content="{% include 'openebs/snippet_halte-list.html' %}">
+                {{ msg.kv15messagestop_set.count }}</a>
+        </td>
         <td>{% if msg.messagestarttime|date:"d-m-Y" == msg.messageendtime|date:"d-m-Y" %}
             {{ msg.messagestarttime|date:"d-m-Y H:i" }} - {{ msg.messageendtime|date:"H:i" }}
             {% else %}
