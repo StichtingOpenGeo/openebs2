@@ -24,12 +24,6 @@ DATABASES = {
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = []
 
-# Debug bar config
-INTERNAL_IPS = ('127.0.0.1',)
-DEBUG_TOOLBAR_CONFIG = {
-    'INTERCEPT_REDIRECTS': False
-}
-
 SITE_ID = 1
 
 TIME_ZONE = 'Europe/Amsterdam'
@@ -87,7 +81,6 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    #'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
@@ -126,7 +119,6 @@ INSTALLED_APPS = (
     # Admin & tools
     'django_admin_bootstrapped',
     'django.contrib.admin',
-    'debug_toolbar'
 )
 
 # Logging so far
@@ -171,12 +163,6 @@ LOGGING = {
             'propogate' : True
         },
     }
-}
-
-# Debug bar config
-INTERNAL_IPS = ('127.0.0.1',)
-DEBUG_TOOLBAR_CONFIG = {
-    'INTERCEPT_REDIRECTS': False
 }
 
 # Crispy = form addon

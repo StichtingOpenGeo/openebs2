@@ -13,8 +13,6 @@ django-braces
 transitfeed # Read Write GTFS
 
 # Dev
-django-debug-toolbar
-django-rosetta
 lxml # Tests - needs libxml2-dev libxslt-dev packages
 
 
