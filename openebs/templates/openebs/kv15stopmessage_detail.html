@@ -44,6 +44,12 @@
                         </p>
                     </div>
                     <div class="control-group row">
+                        <label class="col-lg-4">{% trans "Laatst aangepast door" %}</label>
+                        <p class="form-control-static col-lg-8">
+                            <i class="glyphicon glyphicon-user"></i>&nbsp;{{ object.user.get_full_name|default:object.user.username }}
+                        </p>
+                    </div>
+                    <div class="control-group row">
                         <label class="col-lg-4">{% trans "Type tijdsrooster" %}</label>
                         <p class="form-control-static col-lg-8">
                             {{ object.get_messagedurationtype_display }}

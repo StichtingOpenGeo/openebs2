@@ -100,6 +100,9 @@ class MessageUpdateView(AccessMixin, GoviPushMixin, FilterDataownerMixin, Update
     success_url = reverse_lazy('msg_index')
 
     def form_valid(self, form):
+        if self.request.user:
+            form.instance.user = self.request.user
+
         # Save and then log
         ret = super(MessageUpdateView, self).form_valid(form)
         # TODO figure out edit logs
@@ -138,14 +141,19 @@ class MessageDeleteView(AccessMixin, GoviPushMixin, FilterDataownerMixin, Delete
     success_url = reverse_lazy('msg_index')
 
     def delete(self, request, *args, **kwargs):
+        # Ensure we update the user
+        msg = self.get_object()
+        msg.user = request.user
+        msg.save()
+
         ret = super(MessageDeleteView, self).delete(request, *args, **kwargs)
-        obj = self.get_object()
-        if self.push_govi(obj.to_xml_delete()):
-            obj.set_status(MessageStatus.DELETED)
-            log.error("Deleted message succesfully communicated to GOVI: %s" % obj)
+        msg = self.get_object()
+        if self.push_govi(msg.to_xml_delete()):
+            msg.set_status(MessageStatus.DELETED)
+            log.error("Deleted message succesfully communicated to GOVI: %s" % msg)
         else:
-            obj.set_status(MessageStatus.ERROR_SEND_DELETE)
-            log.error("Failed to send delete request to GOVI: %s" % obj)
+            msg.set_status(MessageStatus.ERROR_SEND_DELETE)
+            log.error("Failed to send delete request to GOVI: %s" % msg)
         return ret
 
 class MessageDetailsView(AccessMixin, FilterDataownerMixin, DetailView):
