@@ -40,7 +40,7 @@
                     <div class="control-group row">
                         <label class="col-lg-4">{% trans "Geldigheid" %}</label>
                         <p class="form-control-static col-lg-8">
-                            {{ object.messagestarttime }} - {{ object.messageendtime }}
+                            {% include "openebs/snippet_message-duration.html" with msg=object only %}
                         </p>
                     </div>
                     <div class="control-group row">
