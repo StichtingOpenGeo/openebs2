@@ -10,6 +10,7 @@ from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import CreateView, DeleteView
 from django.utils.timezone import now
 from django.views.generic.list import MultipleObjectMixin
+from djgeojson.views import GeoJSONLayerView
 from kv1.models import Kv1Stop
 from utils.client import get_client_ip
 from utils.views import GoviPushMixin, JSONListResponseMixin, AccessMixin
@@ -166,3 +167,14 @@ class ActiveStopsAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView)
                                              dataownercode=self.request.user.userprofile.company).distinct()
         print queryset.count()
         return list(queryset.values('dataownercode', 'userstopcode'))
+
+class MessageStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
+    model = Kv1Stop
+    geometry_field = 'location'
+    properties = ['name', 'userstopcode', 'dataownercode']
+
+    def get_queryset(self):
+        qry = super(MessageStopsAjaxView, self).get_queryset()
+        qry = qry.filter(kv15stopmessage__id=self.kwargs.get('pk', None),
+                         kv15stopmessage__dataownercode=self.request.user.userprofile.company)
+        return qry
