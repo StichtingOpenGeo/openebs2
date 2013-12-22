@@ -1,0 +1,11 @@
+{% load i18n %}
+{{ msg.messagestarttime|date:"H:i" }} -
+{% if msg.get_message_duration == 0 %}
+    {{ msg.messageendtime|date:"H:i" }}
+{% elif msg.get_message_duration == 1 %}
+    {{ msg.messageendtime|date:"H:i" }} <span title="{% trans 'Volgende dag' %}"><em>(+1)</em></span>
+{% elif msg.get_message_duration > 1 and msg.get_message_duration < 365 %}
+    {{ msg.messageendtime|date:"d-m-Y H:i" }}
+{% else %}
+    <span title="{% trans 'Tot bericht wordt verwijderd' %}"><i class="glyphicon glyphicon-trash"></i></span>
+{% endif %}

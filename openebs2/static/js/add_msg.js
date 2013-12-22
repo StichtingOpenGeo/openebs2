@@ -398,3 +398,17 @@ function padTime(i) {
         return '00';
     }
 }
+
+function hideEndTime() {
+    $('#div_id_messageendtime').hide();
+    $('#id_messageendtime').val('31-12-2099 00:00:00');
+}
+
+function showEndTime() {
+   $('#div_id_messageendtime').show();
+   var enddate = new Date();
+   enddate.setHours(3, 0, 0);
+   enddate.setDate(enddate.getDate()+1);
+   $('#id_messageendtime').val(formatDate(enddate));
+
+}

@@ -15,7 +15,7 @@ from django.contrib.auth.models import User
 from django.template.loader import render_to_string
 from datetime import timedelta
 from django.utils.translation import ugettext, ugettext_lazy as _
-from django.utils.timezone import now
+from django.utils.timezone import now, datetime, make_aware, get_current_timezone
 from kv1.models import Kv1Stop, Kv1Line, Kv1Journey
 
 from kv15.enum import *
@@ -128,6 +128,9 @@ class Kv15Stopmessage(models.Model):
 
     def clean(self):
         # Validate the object
+        if self.messagedurationtype == 'REMOVE':
+            self.messageendtime = Kv15Stopmessage.get_max_end_time()
+
         if self.messageendtime is not None and self.messageendtime < self.messagestarttime:
             raise ValidationError(_("Eindtijd moet na begintijd zijn"))
 
@@ -147,6 +150,25 @@ class Kv15Stopmessage(models.Model):
     def force_delete(self):
         super(Kv15Stopmessage, self).delete()
 
+    def set_status(self, status):
+        self.status = status
+        self.save()
+
+    def to_xml(self):
+        if self.stops.count() == 0:
+            # Never send XML if we have no stops
+            log.error("We tried to send a message with no stops. This should never happen!")
+            return ""
+        return render_to_string('xml/kv15stopmessage.xml', {'object': self }).strip(os.linesep)
+
+    def to_xml_delete(self):
+        """
+        This is slightly weird - the logic for keeping the status in sync can't be in the model unfortunately.
+        (because we can't push without stops, and stops are a submodel, requiring the main object to be saved)
+        Idealy you would only allow this to be called on update (which is delete+add) or if object is deleted
+        """
+        return render_to_string('xml/kv15deletemessage.xml', {'object': self }).strip(os.linesep)
+
     def is_future(self):
         return self.messagestarttime > now()
 
@@ -164,24 +186,13 @@ class Kv15Stopmessage(models.Model):
             raise IntegrityError(ugettext("Teveel berichten vestuurd - probeer het morgen weer"))
         return num['messagecodenumber__max'] + 1 if num['messagecodenumber__max'] else 1
 
-    def to_xml(self):
-        if self.stops.count() == 0:
-            # Never send XML if we have no stops
-            log.error("We tried to send a message with no stops. This should never happen!")
-            return ""
-        return render_to_string('xml/kv15stopmessage.xml', {'object': self }).strip(os.linesep)
+    def get_message_duration(self):
+        return (self.messageendtime.date() - self.messagestarttime.date()).days
 
-    def to_xml_delete(self):
-        """
-        This is slightly weird - the logic for keeping the status in sync can't be in the model unfortunately.
-        (because we can't push without stops, and stops are a submodel, requiring the main object to be saved)
-        Idealy you would only allow this to be called on update (which is delete+add) or if object is deleted
-        """
-        return render_to_string('xml/kv15deletemessage.xml', {'object': self }).strip(os.linesep)
-
-    def set_status(self, status):
-        self.status = status
-        self.save()
+    @staticmethod
+    def get_max_end_time():
+        ''' Get the maximum end time, to use when we use messagedurationtype 'REMOVE' '''
+        return datetime(year=2099, month=12, day=31, tzinfo=get_current_timezone())
 
 class Kv15Schedule(models.Model):
     stopmessage = models.ForeignKey(Kv15Stopmessage)

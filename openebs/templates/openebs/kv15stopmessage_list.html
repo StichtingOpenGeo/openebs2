@@ -17,9 +17,9 @@
   <table class="table table-bordered table-condensed">
   <tr>
         <th class="col-lg-1">{% trans "Volgnummer"%}</th>
-        <th class="col-lg-7">{% trans "Bericht" %}</th>
+        <th class="col-lg-6">{% trans "Bericht" %}</th>
         <th class="col-lg-1">{% trans "Haltes" %}</th>
-        <th class="col-lg-1">{% trans "Tijden" %}</th>
+        <th class="col-lg-2">{% trans "Tijden" %}</th>
         <th class="col-lg-3">&nbsp;</th>
   </tr>
   {% for msg in active_list %}
@@ -34,7 +34,7 @@
                 0
             {% endif %}
         </td>
-        <td>{{ msg.messagestarttime|date:"H:i" }} - {{ msg.messageendtime|date:"H:i" }}</td>
+        <td>{% include "openebs/snippet_message-duration_small.html" with msg=msg only %}</td></td>
         <td>
             <form method="post" action="{% url 'msg_delete' msg.id %}">
                 {% csrf_token %}
@@ -57,9 +57,9 @@
   <table class="table table-bordered table-condensed">
   <tr>
       <th class="col-lg-1">{% trans "Volgnummer"%}</th>
-      <th class="col-lg-7">{% trans "Bericht" %}</th>
+      <th class="col-lg-6">{% trans "Bericht" %}</th>
       <th class="col-lg-1">{% trans "Haltes" %}</th>
-      <th class="col-lg-4">{% trans "Tijden" %}</th>
+      <th class="col-lg-5">{% trans "Tijden" %}</th>
   </tr>
   {% for msg in archive_list %}
     <tr class="{% if msg.isdeleted %}danger{% endif %}">
@@ -69,11 +69,8 @@
             <a class="halte-count btn btn-link" href="{% url 'msg_view' msg.id %}" data-title="{% trans 'Haltes bij bericht' %}" data-html="true" data-content="{% include 'openebs/snippet_halte-list.html' %}">
                 {{ msg.kv15messagestop_set.count }}</a>
         </td>
-        <td>{% if msg.messagestarttime|date:"d-m-Y" == msg.messageendtime|date:"d-m-Y" %}
-            {{ msg.messagestarttime|date:"d-m-Y H:i" }} - {{ msg.messageendtime|date:"H:i" }}
-            {% else %}
-            {{ msg.messagestarttime|date:"d-m-Y H:i" }} - {{ msg.messageendtime|date:"d-m-Y H:i" }}
-            {% endif %}
+        <td>
+            {% include "openebs/snippet_message-duration.html" with msg=msg only %}</td>
         </td>
     </tr>
   {% empty %}
