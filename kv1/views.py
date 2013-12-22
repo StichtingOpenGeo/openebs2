@@ -17,9 +17,8 @@ class LineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
         qry = qry.filter(dataownercode=self.request.user.userprofile.company) \
             .order_by('lineplanningnumber') \
             .values('pk', 'dataownercode', 'headsign', 'lineplanningnumber', 'publiclinenumber')
-        if self.kwargs['search']:
-            pass
-        qry = qry.filter(Q(headsign__icontains=self.kwargs['search']) | Q(publiclinenumber__startswith=self.kwargs['search']))
+        needle = unicode(self.kwargs.get('search', '') or '')
+        qry = qry.filter(Q(headsign__icontains=needle) | Q(publiclinenumber__startswith=needle))
         return qry
 
 class LineStopView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
