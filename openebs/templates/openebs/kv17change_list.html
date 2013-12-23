@@ -21,18 +21,22 @@
   </h2>
   {% regroup active_list by line as line_active_changes %}
   <div class="row">
-  <div class="col-md-6 col-lg-6">
-  {% for line in line_active_changes|partition:"2"|first %}
-    {% include "openebs/snippet_changes-line.html" %}
-  {% endfor %}
-  </div>
-  <div class="col-md-6 col-lg-6">
-  {% for line in line_active_changes|partition:"2"|last %}
-    {% include "openebs/snippet_changes-line.html" %}
-  {% empty %}
-    <em>{% trans "Geen berichten gevonden" %}</em>
-  {% endfor %}
-  </div>
+  {% if line_active_changes|length == 0 %}
+      <div class="col-md-12 col-lg-12 text-center"><em>{% trans "Geen berichten gevonden" %}</em></div>
+  {% else %}
+      <div class="col-md-6 col-lg-6">
+      {% if line_active_changes|rows_distributed:"2" %}
+          {% for line in line_active_changes|rows_distributed:"2"|first %}
+            {% include "openebs/snippet_changes-line.html" %}
+          {% endfor %}
+      {% endif %}
+      </div>
+      <div class="col-md-6 col-lg-6">
+      {% for line in line_active_changes|rows_distributed:"2"|last %}
+        {% include "openebs/snippet_changes-line.html" %}
+      {% endfor %}
+      </div>
+  {% endif %}
 </div>
 
   <h2>Verlopen Aanpassingen</h2>

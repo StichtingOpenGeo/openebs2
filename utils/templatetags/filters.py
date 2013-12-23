@@ -67,3 +67,53 @@ def partition_horizontal(thelist, n):
     for i, val in enumerate(thelist):
         newlists[i%n].append(val)
     return newlists
+
+# From https://djangosnippets.org/snippets/401/
+@register.filter
+def rows_distributed(thelist, n):
+    """
+    Break a list into ``n`` rows, distributing columns as evenly as possible
+    across the rows. For example::
+
+        >>> l = range(10)
+
+        >>> rows_distributed(l, 2)
+        [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]]
+
+        >>> rows_distributed(l, 3)
+        [[0, 1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        >>> rows_distributed(l, 4)
+        [[0, 1, 2], [3, 4, 5], [6, 7], [8, 9]]
+
+        >>> rows_distributed(l, 5)
+        [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9]]
+
+        >>> rows_distributed(l, 9)
+        [[0, 1], [2], [3], [4], [5], [6], [7], [8], [9]]
+
+        # This filter will always return `n` rows, even if some are empty:
+        >>> rows(range(2), 3)
+        [[0], [1], []]
+    """
+    try:
+        n = int(n)
+        thelist = list(thelist)
+    except (ValueError, TypeError):
+        return [thelist]
+    list_len = len(thelist)
+    split = list_len // n
+
+    remainder = list_len % n
+    offset = 0
+    rows = []
+    for i in range(n):
+        if remainder:
+            start, end = (split+1)*i, (split+1)*(i+1)
+        else:
+            start, end = split*i+offset, split*(i+1)+offset
+        rows.append(thelist[start:end])
+        if remainder:
+            remainder -= 1
+            offset += 1
+    return rows
