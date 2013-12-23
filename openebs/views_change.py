@@ -5,7 +5,8 @@ from django.core.urlresolvers import reverse_lazy, reverse
 from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.utils.timezone import now
-from django.views.generic import ListView, FormView, CreateView, DeleteView, DetailView
+from django.views.generic import ListView, FormView, CreateView, DeleteView, DetailView, UpdateView
+from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import ModelFormMixin
 from kv1.models import Kv1Journey
 from openebs.form import CancelLinesForm, Kv17ChangeForm
@@ -71,15 +72,39 @@ class ChangeDeleteView(AccessMixin, GoviKv17PushMixin, FilterDataownerMixin, Del
         obj = self.get_object()
         if self.push_govi(obj.to_xml()):
             log.error("Recovered line succesfully communicated to GOVI: %s" % obj)
-            return ret
         else:
             log.error("Failed to send recover request to GOVI: %s" % obj)
             # We failed to push, recover our delete operation
             obj.is_recovered = False
             obj.recovered = None
-            obj.save()
-            return HttpResponseRedirect(reverse('change_index'))
+            obj.save() # Note, this won't work locally!
+        return ret
 
+class ChangeUpdateView(AccessMixin, GoviKv17PushMixin, FilterDataownerMixin, DeleteView):
+    """ This is a really weird view - it's redoing a change that you deleted   """
+    permission_required = 'openebs.add_change'
+    model = Kv17Change
+    success_url = reverse_lazy('change_index')
+
+    def update_object(self):
+        obj = self.get_object()
+        obj.is_recovered = False
+        obj.recovered = None
+        obj.save()
+        return obj
+
+    def delete(self, request, *args, **kwargs):
+        orig = self.get_object() # Store an original to undo our redo
+        obj = self.update_object()
+        if self.push_govi(obj.to_xml()):
+            log.error("Redo line cancel succesfully communicated to GOVI: %s" % obj)
+        else:
+            log.error("Failed to send redo request to GOVI: %s" % obj)
+            # We failed to push, recover our redo operation by restoring previous state
+            obj.is_recovered = orig.is_recovered
+            obj.recovered = orig.recovered
+            obj.save() # Note, this won't work locally!
+        return HttpResponseRedirect(self.get_success_url())
 
 class CancelLinesView(AccessMixin, GoviKv17PushMixin, FormView):
     permission_required = 'openebs.add_change'

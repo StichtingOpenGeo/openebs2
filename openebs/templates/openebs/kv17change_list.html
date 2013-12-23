@@ -50,7 +50,7 @@
         <td>{{ msg.journey.journeynumber }} <small>(Vertrek {{msg.journey.departuretime|date:"H:i"}})</small></td>
         <td>
             {% if perms.openebs.add_change %}
-            <form method="post" action="{% url 'change_delete' msg.id %}">
+            <form method="post" action="{% url 'change_redo' msg.id %}">
                 {% csrf_token %}
                 <button class="btn pull-right">
                     <span class="glyphicon glyphicon-repeat"></span>

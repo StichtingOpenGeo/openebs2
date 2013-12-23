@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, url
 from django.views.generic import RedirectView, TemplateView
 from openebs.views import MessageListView, MessageCreateView, MessageDeleteView, MessageUpdateView, ActiveStopsAjaxView, MessageDetailsView, MessageStopsAjaxView
-from openebs.views_change import ChangeListView, CancelLinesView, ChangeCreateView, ChangeDeleteView, ActiveJourneysAjaxView
+from openebs.views_change import ChangeListView, CancelLinesView, ChangeCreateView, ChangeDeleteView, ActiveJourneysAjaxView, ChangeUpdateView
 from openebs.views_scenario import ScenarioListView, ScenarioCreateView, ScenarioUpdateView, ScenarioDeleteView, PlanScenarioView, ScenarioStopsAjaxView
 from openebs.views_scenario_msg import ScenarioMessageCreateView, ScenarioMessageUpdateView, ScenarioMessageDeleteView
 
@@ -38,6 +38,7 @@ urlpatterns = patterns('',
     url(r'^ritaanpassing/add$', ChangeCreateView.as_view(), name="change_add"),
     # url(r'^ritaanpassing/alles_opheffen$', CancelLinesView.as_view(), name="change_redbutton"),
     url(r'^ritaanpassing/(?P<pk>\d+)/verwijderen$', ChangeDeleteView.as_view(), name="change_delete"),
+    url(r'^ritaanpassing/(?P<pk>\d+)/herstellen', ChangeUpdateView.as_view(), name="change_redo"),
     url(r'^ritaanpassing/ritten.json$', ActiveJourneysAjaxView.as_view(), name="active_journeys_ajax")
 
 )
