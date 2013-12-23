@@ -24,13 +24,13 @@
   <div class="col-md-6 col-lg-6">
   {% for line in line_active_changes|partition:"2"|first %}
     {% include "openebs/snippet_changes-line.html" %}
-  {% empty %}
-      <em>{% trans "Geen berichten gevonden" %}</em>
   {% endfor %}
   </div>
   <div class="col-md-6 col-lg-6">
   {% for line in line_active_changes|partition:"2"|last %}
     {% include "openebs/snippet_changes-line.html" %}
+  {% empty %}
+    <em>{% trans "Geen berichten gevonden" %}</em>
   {% endfor %}
   </div>
 </div>

@@ -311,7 +311,7 @@ class Kv17Change(models.Model):
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
     operatingday = models.DateField(auto_now=True, verbose_name=_("Datum"))
     line = models.ForeignKey(Kv1Line, verbose_name=_("Lijn"))
-    journey = models.ForeignKey(Kv1Journey, verbose_name=_("Rit"))
+    journey = models.ForeignKey(Kv1Journey, verbose_name=_("Rit"), related_name="changes") # "A journey has changes"
     reinforcement = models.IntegerField(default=0, verbose_name=_("Versterkingsnummer"))  # Never fill this for now
     is_recovered = models.BooleanField(default=False, verbose_name=_("Teruggedraaid?"))
     created = models.DateTimeField(auto_now_add=True)

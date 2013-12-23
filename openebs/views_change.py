@@ -1,15 +1,17 @@
 import logging
+from braces.views import LoginRequiredMixin
 from django.conf import settings
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.utils.timezone import now
-from django.views.generic import ListView, FormView, CreateView, DeleteView
+from django.views.generic import ListView, FormView, CreateView, DeleteView, DetailView
 from django.views.generic.edit import ModelFormMixin
+from kv1.models import Kv1Journey
 from openebs.form import CancelLinesForm, Kv17ChangeForm
 from openebs.models import Kv17Change
 from openebs.views import FilterDataownerMixin
-from utils.views import AccessMixin, GoviPushMixin
+from utils.views import AccessMixin, GoviPushMixin, JSONListResponseMixin
 
 log = logging.getLogger('openebs.views.changes')
 
@@ -103,3 +105,17 @@ class CancelLinesView(AccessMixin, GoviKv17PushMixin, FormView):
         else:
             log.error("Failed to communicate planned messages to GOVI: %s")
         return ret
+
+class ActiveJourneysAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+    model = Kv1Journey
+    render_object = 'object'
+
+    def get_object(self):
+        # Note, can't set this on the view, because it triggers the queryset cache
+        queryset = self.model.objects.filter(changes__operatingday=now(),
+                                             changes__is_recovered=False,
+                                             # These two are double, but just in case
+                                             changes__dataownercode=self.request.user.userprofile.company,
+                                             dataownercode=self.request.user.userprofile.company).distinct()
+        print queryset.count()
+        return list(queryset.values('id', 'dataownercode'))

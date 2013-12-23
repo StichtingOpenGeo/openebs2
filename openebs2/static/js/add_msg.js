@@ -261,6 +261,7 @@ function writeHaltesWithMessages(data, status) {
 
 /* TRIP SELECTION */
 var selectedTrips = [];
+var activeJourneys = [];
 
 function showTrips(event) {
     $("#rows tr.success").removeClass('success');
@@ -274,10 +275,13 @@ function showTrips(event) {
 }
 
 function selectTrip(event, ui) {
-    $('#rit-list .help').hide();
     var ritnr = $(ui.selected).attr('id').substring(1);
+    if ($.inArray(parseInt(ritnr), activeJourneys) != -1) /* Note our array stores numbers, so convert */
+        return;
+
     var id = $.inArray(ritnr, selectedTrips);
     if (id == -1) {
+        $('#rit-list .help').hide();
         $(ui.selected).addClass('success');
         var label = $(ui.selected).find("strong").text();
         var dellink = '<span class="trip-remove glyphicon glyphicon-remove"></span>';
@@ -343,13 +347,34 @@ function renderTripCell(trip) {
     if (trip == null)
         return "<td>&nbsp;</td>";
 
-    out = '<td class="trip" id="t'+trip.id+'">'
+    if ($.inArray(trip.id, activeJourneys) != -1) {
+        out = '<td class="trip warning" id="t'+trip.id+'">'
+    } else {
+        out = '<td class="trip" id="t'+trip.id+'">'
+    }
     out += "<strong>Rit "+trip.journeynumber+"</strong>"
     time = trip.departuretime.split(":", 2).join(":")
-    out += "&nbsp;<small>Vertrek "+time+"</small></td>"
+    out += "&nbsp;<small>Vertrek "+time+"</small>"
+    if ($.inArray(trip.id, activeJourneys) != -1) {
+        out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Rit is al opgeheven"></span>'
+    }
+    out += "</td>"
     return out
 }
 
+function getActiveJourneys() {
+     $.ajax('/ritaanpassing/ritten.json', {
+            success : writeActiveJourneys
+     })
+}
+
+function writeActiveJourneys(data, status) {
+    if (data.object) {
+        $.each(data.object, function (i, journey) {
+            activeJourneys.push(journey.id)
+        });
+    }
+}
 
 /* TIME FUNCTIONS */
 function checkMessageTime(event, ui) {

@@ -80,6 +80,7 @@
     <script src="{% static 'js/add_msg.js' %}"></script>
 {% endblock %}
 {% block js_init %}
+    getActiveJourneys();
     $('#line_search').on('keyup', changeSearch);
     $( "body" ).on('click', ".line", showTrips);
     $("#trips").selectable({
