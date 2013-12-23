@@ -138,7 +138,7 @@ class ActiveJourneysAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailVi
     def get_object(self):
         # Note, can't set this on the view, because it triggers the queryset cache
         queryset = self.model.objects.filter(changes__operatingday=now(),
-                                             changes__is_recovered=False,
+                                             # changes__is_recovered=False, # TODO Fix this - see bug #61
                                              # These two are double, but just in case
                                              changes__dataownercode=self.request.user.userprofile.company,
                                              dataownercode=self.request.user.userprofile.company).distinct()
