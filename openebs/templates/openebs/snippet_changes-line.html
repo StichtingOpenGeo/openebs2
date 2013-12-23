@@ -1,0 +1,25 @@
+{% load i18n %}
+<h4>{% trans "Lijn" %} {{ line.grouper.publiclinenumber }} <small>{{ line.grouper.headsign }}</small></h4>
+  <table class="table table-condensed table-bordered">
+  <tr>
+      <th>{% trans "Vertrektijd" %}</th>
+      <th>{% trans "Ritnummer" %}</th>
+      <th>&nbsp;</th>
+  </tr>
+  {% for msg in line.list %}
+      <tr>
+          <td>{{ msg.journey.departuretime|date:"H:i"}}</td>
+          <td>{{ msg.journey.journeynumber }}</td>
+          <td>
+            {% if perms.openebs.add_change %}
+                <form method='post' action='{% url 'change_delete' msg.id %}'>
+                    {% csrf_token %}
+                    <button class='btn btn-xs btn-danger pull-right'>
+                        <span class='glyphicon glyphicon-trash'></span>
+                    </button>
+                </form>
+            {% endif %}
+          </td>
+      </tr>
+  {% endfor %}
+  </table>

@@ -1,13 +1,15 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n filters %}
 
 {% block title %}Ritaanpassingen{% endblock %}
 
 {% block content %}
 
   <h1>{% trans "Ritaanpassingen" %}
-      <!-- <a class="btn btn-danger pull-right" href="{% url 'change_redbutton' %}">
-        <span class="glyphicon glyphicon-trash"></span> {% trans "Alle ritten opheffen" %} -->
+        {% comment %}
+        <a class="btn btn-danger pull-right" href="{% url 'change_redbutton' %}">
+        <span class="glyphicon glyphicon-trash"></span> {% trans "Alle ritten opheffen" %}
+        {% endcomment %}
       </a>&nbsp;</h1>
 
   <h2>{% trans "Actieve aanpassingen" %}
@@ -17,33 +19,19 @@
           </a>
       {% endif %}
   </h2>
-  <table class="table table-bordered table-condensed">
-  <tr>
-        <th class="col-lg-4">{% trans "Datum"%}</th>
-        <th class="col-lg-2">{% trans "Lijn" %}</th>
-        <th class="col-lg-3">{% trans "Rit" %}</th>
-        <th class="col-lg-5">Acties</th>
-  </tr>
-  {% for msg in active_list %}
-      <tr class="{% if msg.is_future %}warning{% endif %}">
-        <td>{{ msg.operatingday|date:"d-m-Y" }} {{ msg.created|date:"H:i" }}</td></td>
-        <td>{{ msg.line.publiclinenumber }}</td>
-        <td>{{ msg.journey.journeynumber }} <small>(Vertrek {{msg.journey.departuretime|date:"H:i"}})</small></td>
-        <td>
-            {% if perms.openebs.add_change %}
-            <form method="post" action="{% url 'change_delete' msg.id %}">
-                {% csrf_token %}
-                <button class="btn btn-danger pull-right">
-                    <span class="glyphicon glyphicon-trash"></span>
-                </button>
-            </form>
-            {% endif %}
-        </td>
-      </tr>
-  {% empty %}
-      <tr><td colspan="5" class="text-center"><em>{% trans "Geen aanpassingen gevonden" %}</em></td></tr>
+  {% regroup active_list by line as line_active_changes %}
+  <div class="row">
+  <div class="col-md-6 col-lg-6">
+  {% for line in line_active_changes|partition:"2"|first %}
+    {% include "openebs/snippet_changes-line.html" %}
   {% endfor %}
-  </table>
+  </div>
+  <div class="col-md-6 col-lg-6">
+  {% for line in line_active_changes|partition:"2"|last %}
+    {% include "openebs/snippet_changes-line.html" %}
+  {% endfor %}
+  </div>
+</div>
 
   <h2>Verlopen Aanpassingen</h2>
   <table class="table table-bordered table-condensed">
@@ -74,8 +62,4 @@
   {% endfor %}
   </table>
   <p><small>{% trans "Rood = teruggedraaide aanpassing" %}</small></p>
-{% endblock %}
-
-{% block js_init %}
-    $('.halte-count').popover({trigger : 'hover'});
 {% endblock %}

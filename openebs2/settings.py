@@ -107,7 +107,7 @@ INSTALLED_APPS = (
     # Order matters for testing: openebs depends on kv1 not viceversa
     'kv1', # Static data stuff
     'openebs',
-
+    'utils', # Load our custom filters
 
     # Libs
     'south',
