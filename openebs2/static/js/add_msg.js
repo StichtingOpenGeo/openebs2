@@ -1,7 +1,7 @@
+/* STOP AND SCENARIO FUNCTIONS */
 var selectedStops = []
 var scenarioStops = []
 var blockedStops = [] /* Already have messages set */
-
 
 function changeSearch(event) {
     if ($("#line_search").val().length > 0) {
@@ -55,17 +55,6 @@ function showStops(event) {
     $(this).addClass('success')
 }
 
-function showTrips(event) {
-    $("#rows tr.success").removeClass('success');
-    $(".suc-icon").remove();
-    $(this).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
-    $.ajax('/line/'+$(this).attr('id').substring(1)+'/ritten', {
-        success : writeTrips
-    })
-    $('#line').val($(this).attr('id').substring(1))
-    $(this).addClass('success')
-}
-
 
 function selectStop(event, ui) {
     $('#halte-list .help').remove()
@@ -74,15 +63,7 @@ function selectStop(event, ui) {
     }
 }
 
-function selectTrip(event, ui) {
-    $('.trip.success').removeClass('success')
-    $(this).addClass('success')
-    ritnr = $(this).attr('id').substring(1)
-    label = $(this).find("strong").text()
-    bullet = '<span class="label label-success">'+label+'</span>'
-    $('#rit-list').empty().append(bullet)
-    $("#journey").val(ritnr)
-}
+
 
 function selectStopFromBall(obj) {
     $('#halte-list .help').remove()
@@ -201,42 +182,6 @@ function writeLine(data, status) {
     $('.stop_btn').removeClass('hide');
 }
 
-function writeTrips(data, status) {
-    $('#trips tbody').fadeOut(200).empty();
-    tripRows = null
-    maxLen = Math.max(data.object.trips_1.length, data.object.trips_2.length)
-    for (i = 0; i <= maxLen; i = i + 1) {
-        a = null
-        b = null
-        if (i in data.object.trips_1)
-            a = data.object.trips_1[i]
-        if (i in data.object.trips_2)
-            b = data.object.trips_2[i]
-        tripRows += renderTrip(a, b);
-    }
-    $('#trips tbody').append(tripRows)
-    $('#trips tbody').fadeIn(200);
-}
-
-function renderTrip(trip_a, trip_b) {
-    out = '<tr>';
-    out += renderTripCell(trip_a);
-    out += renderTripCell(trip_b);
-    out += '</tr>';
-    return out
-}
-
-function renderTripCell(trip) {
-    if (trip == null)
-        return "<td>&nbsp;</td>";
-
-    out = '<td class="trip" id="t'+trip.id+'">'
-    out += "<strong>Rit "+trip.journeynumber+"</strong>"
-    time = trip.departuretime.split(":", 2).join(":")
-    out += "&nbsp;<small>Vertrek "+time+"</small></td>"
-    return out
-}
-
 function renderRow(row) {
     out = '<tr class="stopRow">';
     if (row.left != null) {
@@ -314,7 +259,100 @@ function writeHaltesWithMessages(data, status) {
     });
 }
 
-function updateMessagetime(event, ui) {
+/* TRIP SELECTION */
+var selectedTrips = [];
+
+function showTrips(event) {
+    $("#rows tr.success").removeClass('success');
+    $(".suc-icon").remove();
+    $(this).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
+    $.ajax('/line/'+$(this).attr('id').substring(1)+'/ritten', {
+        success : writeTrips
+    })
+    $('#line').val($(this).attr('id').substring(1))
+    $(this).addClass('success')
+}
+
+function selectTrip(event, ui) {
+    $('#rit-list .help').hide();
+    var ritnr = $(ui.selected).attr('id').substring(1);
+    var id = $.inArray(ritnr, selectedTrips);
+    if (id == -1) {
+        $(ui.selected).addClass('success');
+        var label = $(ui.selected).find("strong").text();
+        var dellink = '<span class="trip-remove glyphicon glyphicon-remove"></span>';
+        $('#rit-list').append('<span id="st'+ritnr+'" class="pull-left trip-selection label label-danger">'+label+' '+dellink+'</span>');
+        selectedTrips.push(ritnr);
+        writeTripList();
+    } else {
+        removeTrip($(ui.selected).attr('id').substring(1));
+    }
+}
+
+function removeTripFromX(event, ui) {
+    removeTrip($(this).parent().attr('id').substring(2));
+}
+
+function removeTrip(ritnr) {
+    var id = $.inArray(ritnr, selectedTrips);
+    if (id != -1) {
+        $('#t'+ritnr).removeClass('success');
+        $('#st'+ritnr).remove();
+        selectedTrips.splice(id, 1);
+    }
+    if (selectedTrips.length == 0) {
+        $('#rit-list .help').show();
+    }
+    writeTripList();
+}
+
+function writeTripList() {
+    var out = "";
+    $.each(selectedTrips, function(index, val) {
+        out += val+',';
+    });
+    $("#journeys").val(out)
+}
+
+function writeTrips(data, status) {
+    $('#trips tbody').fadeOut(200).empty();
+    tripRows = null
+    maxLen = Math.max(data.object.trips_1.length, data.object.trips_2.length)
+    for (i = 0; i <= maxLen; i = i + 1) {
+        a = null
+        b = null
+        if (i in data.object.trips_1)
+            a = data.object.trips_1[i]
+        if (i in data.object.trips_2)
+            b = data.object.trips_2[i]
+        tripRows += renderTrip(a, b);
+    }
+    $('#trips tbody').append(tripRows)
+    $('#trips tbody').fadeIn(200);
+}
+
+function renderTrip(trip_a, trip_b) {
+    out = '<tr>';
+    out += renderTripCell(trip_a);
+    out += renderTripCell(trip_b);
+    out += '</tr>';
+    return out
+}
+
+function renderTripCell(trip) {
+    if (trip == null)
+        return "<td>&nbsp;</td>";
+
+    out = '<td class="trip" id="t'+trip.id+'">'
+    out += "<strong>Rit "+trip.journeynumber+"</strong>"
+    time = trip.departuretime.split(":", 2).join(":")
+    out += "&nbsp;<small>Vertrek "+time+"</small></td>"
+    return out
+}
+
+
+/* TIME FUNCTIONS */
+function checkMessageTime(event, ui) {
     var starttime = parseDate($("#id_messagestarttime").val());
     var endtime   = parseDate($("#id_messageendtime").val());
 

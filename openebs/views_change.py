@@ -5,6 +5,7 @@ from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.utils.timezone import now
 from django.views.generic import ListView, FormView, CreateView, DeleteView
+from django.views.generic.edit import ModelFormMixin
 from openebs.form import CancelLinesForm, Kv17ChangeForm
 from openebs.models import Kv17Change
 from openebs.views import FilterDataownerMixin
@@ -44,14 +45,18 @@ class ChangeCreateView(AccessMixin, GoviKv17PushMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.dataownercode = self.request.user.userprofile.company
-        ret = super(ChangeCreateView, self).form_valid(form)
+
+        # TODO this is a bad solution - totally gets rid of any benefit of Django's CBV and Forms
+        xml = form.save()
 
         # Push message to GOVI
-        if self.push_govi(form.instance.to_xml()):
-            log.info("Sent change to GOVI: %s" % form.instance)
+        if self.push_govi(xml):
+            log.info("Sent KV17 line change to GOVI: %s" % self.request.POST.get('journeys', "<unknown>"))
         else:
-            log.error("Failed to communicate change to GOVI: %s" % form.instance.to_xml())
-        return ret
+            log.error("Failed to communicate KV17 line change to GOVI: %s" % xml)
+
+        # Another hack to redirect correctly
+        return HttpResponseRedirect(self.success_url)
 
 
 class ChangeDeleteView(AccessMixin, GoviKv17PushMixin, FilterDataownerMixin, DeleteView):

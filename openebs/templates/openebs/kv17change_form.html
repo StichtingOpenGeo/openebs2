@@ -50,12 +50,13 @@
                 <p class="col-lg-8 form-control-static" id="">
                     <span class="label label-danger">{% trans "Opheffen" %}</span>
                 </p><br />
+                <input type="hidden" id="journeys" name="journeys" />
             </div>
-            <div class="control-group row">
-                <label class="col-lg-4">{% trans "Rit" %}</label>
-                <p class="col-lg-8 form-control-static pull-right" id="rit-list">
+            <div class="control-group">
+                <label>{% trans "Rit" %}</label>
+                <p class="form-control-static" id="rit-list">
                     {% if form.instance.journey %}
-                        <span class="label label-success rit-recover" id="l{{form.instance.line.publiclinenumber}}">Rit {{ form.instance.journey.journeynumber }}</span>
+                        <span class="label label-danger rit-recover" id="l{{form.instance.line.publiclinenumber}}">Rit {{ form.instance.journey.journeynumber }}</span>
                     {% else %}
                         <em class="help">{% trans "Klik een rit om een selectie te maken" %}</em>
                     {% endif %}
@@ -75,10 +76,15 @@
 {% endblock %}
 
 {% block extra_js %}
+    <script src="{% static 'js/jquery-ui-1.10.3.selectable.min.js' %}"></script>
     <script src="{% static 'js/add_msg.js' %}"></script>
 {% endblock %}
 {% block js_init %}
     $('#line_search').on('keyup', changeSearch);
     $( "body" ).on('click', ".line", showTrips);
-    $( "#trips" ).on('click', ".trip", selectTrip);
+    $("#trips").selectable({
+      filter:'td.trip',
+      selected: selectTrip,
+    });
+    $('#rit-list').on('click', '.trip-remove', removeTripFromX);
 {% endblock %}

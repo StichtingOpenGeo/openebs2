@@ -1,3 +1,4 @@
+import logging
 from crispy_forms.bootstrap import AccordionGroup, Accordion, AppendedText
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, Field, HTML, Div, Hidden
@@ -10,6 +11,7 @@ from kv15.enum import REASONTYPE, SUBREASONTYPE, ADVICETYPE, SUBADVICETYPE
 from models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, get_end_service, Kv17Change
 from openebs.models import Kv17JourneyChange
 
+log = logging.getLogger('openebs.forms')
 
 class Kv15StopMessageForm(forms.ModelForm):
     def clean(self):
@@ -115,7 +117,7 @@ class Kv15ScenarioForm(forms.ModelForm):
 class Kv15ScenarioMessageForm(forms.ModelForm):
 
     def clean(self):
-        # TODO Move _all_ halte parsing here!
+        # TODO Move _all_ halte parsing here! Also duplicated with code above
         ids = []
         for halte in self.data['haltes'].split(','):
             halte_split = halte.split('_')
@@ -128,7 +130,7 @@ class Kv15ScenarioMessageForm(forms.ModelForm):
             qry = qry.exclude(kv15scenariostop__message=self.instance.pk)
 
         if qry.count() > 0:
-            # Check that this stop isn't already in a messages for this scenario
+            # Check that this stop isn't already in a messages for this scenario. If not, write a nice message
             out = ""
             for stop in qry:
                 out += "%s, " % stop.name
@@ -215,15 +217,36 @@ class Kv17ChangeForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super(Kv17ChangeForm, self).clean()
-        cleaned_data['dataownercode'] = cleaned_data['line'].dataownercode
-        if Kv17Change.objects.filter(operatingday=now(), line=cleaned_data['line'],
-                                     journey=cleaned_data['journey']).count() != 0:
-            raise ValidationError(_("Deze rit is al aangepast, selecteer een andere rit"))
-        if cleaned_data['line'] != cleaned_data['journey'].line \
-            or cleaned_data['line'].dataownercode != cleaned_data['journey'].dataownercode:
-            raise ValidationError(_("Rit en lijn komen niet overeen"))
+        for journey in self.data['journeys'].split(',')[0:-1]:
+            journey_qry =  Kv1Journey.objects.filter(pk=journey, dates__date=now())
+            if journey_qry.count() == 0:
+                raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
+            if Kv17Change.objects.filter(journey__pk=journey, line=journey_qry[0].line, operatingday=now()).count() != 0:
+                raise ValidationError(_("Een of meer geselecteerde ritten zijn al aangepast"))
 
         return cleaned_data
+
+    def save(self, force_insert=False, force_update=False, commit=True):
+        ''' Save each of the journeys in the model. This is a disaster, we return the XML
+        TODO: Figure out a better solution fo this! '''
+        xml_output = ""
+        for journey in self.data['journeys'].split(',')[0:-1]:
+            qry = Kv1Journey.objects.filter(id=journey, dates__date=now())
+            if qry.count() == 1:
+                self.instance.pk = None
+                self.instance.journey = qry[0]
+                self.instance.line = qry[0].line
+                # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
+                if self.instance.journey.dataownercode == self.instance.dataownercode:
+                    self.object = self.instance.save()
+                    xml_output += self.instance.to_xml()
+                else:
+                    log.error("Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
+                              (self.instance.journey.dataownercode, self.instance.dataownercode))
+            else:
+                print "Failed to find journey %s" % journey
+        return xml_output
+
 
     def form_valid(self, form):
         ret = super(Kv17ChangeForm, self).form_valid(form)
@@ -231,6 +254,7 @@ class Kv17ChangeForm(forms.ModelForm):
         return ret
 
     def create_journeychange(self, form):
+        # TODO: Fix this!
         change = Kv17JourneyChange(change=form.instance)
         change.reasontype = self.cleaned_data['reasontype']
         change.subreasontype = self.cleaned_data['subreasontype']
@@ -242,19 +266,13 @@ class Kv17ChangeForm(forms.ModelForm):
 
     class Meta:
         model = Kv17Change
-        exclude = [ 'dataownercode', 'is_recovered', 'reinforcement']
-        widgets = {
-            'line': forms.HiddenInput(),
-            'journey': forms.HiddenInput()
-        }
+        exclude = [ 'dataownercode', 'line', 'journey', 'is_recovered', 'reinforcement']
 
     def __init__(self, *args, **kwargs):
         super(Kv17ChangeForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
-            Field('line', id='line'),
-            Field('journey', id='journey'),
             Accordion(
                 AccordionGroup(_('Oorzaak'),
                        'reasontype',
