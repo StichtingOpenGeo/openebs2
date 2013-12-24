@@ -58,7 +58,7 @@ class Kv1Journey(models.Model):
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
     line = models.ForeignKey(Kv1Line, related_name="journeys")  # Represent lineplanningnumber
     journeynumber = models.PositiveIntegerField(max_length=6)  # 0 - 999999
-    departuretime = models.TimeField()
+    departuretime = models.PositiveIntegerField()
     direction = models.PositiveSmallIntegerField()
 
     def __unicode__(self):

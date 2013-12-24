@@ -1,12 +1,8 @@
 import csv
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import BaseCommand
-from django.utils.datetime_safe import datetime
 from django.utils.timezone import now
 from kv1.models import Kv1Journey, Kv1JourneyDate, Kv1Line
-
-__author__ = 'joel'
-
 
 
 class Command(BaseCommand):
@@ -14,11 +10,11 @@ class Command(BaseCommand):
         self.folder = args[0]
         print "==========================\r\nSTEP A: Journeys"
         self.do_journeys()
-        print "==========================\r\nSTEP B: Journey dates"
-        self.do_journey_dates()
+        #print "==========================\r\nSTEP B: Journey dates"
+        #self.do_journey_dates()
 
     def do_journeys(self):
-        self.log("Printing 's' for every 1000 skipped trips, '.' for every 1000 saved trips")
+        self.log("Printing '.' for every 1000 saved trips")
         with open(self.folder+'/openebs_journeys.csv') as stops_file:
             journeystop_reader = csv.DictReader(stops_file, delimiter=',', quotechar='"')
 
@@ -42,14 +38,16 @@ class Command(BaseCommand):
                     if q_journey.count() == 0 and row['journey_id'] not in buffer_keys:
                         # Create the journey
                         journey = Kv1Journey(dataownercode=journey_code[0], line=line, journeynumber=journey_code[2], direction=row['direction'])
-                        journey.departuretime = datetime.fromtimestamp(float(row['base_departure_time'])).time()
+                        journey.departuretime = float(row['base_departure_time'])
                         create_buffer.append(journey)
                         buffer_keys.append(row['journey_id'])
+                    elif q_journey.count() > 0:
+                        # Update existing trip
+                        journey = q_journey[0]
+                        journey.departuretime = float(row['base_departure_time'])
+                        journey.save()
                     else:
                         skip += 1
-
-                if skip % 1000 == 0:
-                    print('s'),
 
                 if len(create_buffer) > 0 and (len(create_buffer) % 1000) == 0:
                     print('.'),
@@ -58,6 +56,9 @@ class Command(BaseCommand):
                     buffer_keys = []
 
     def do_journey_dates(self):
+        '''
+        Disable this for now - too slow
+        '''
         hit = 0
         miss = 0
         with open(self.folder+'/openebs_journey_dates.csv') as stops_file:
