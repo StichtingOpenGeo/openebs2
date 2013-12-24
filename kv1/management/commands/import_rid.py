@@ -20,7 +20,6 @@ class Command(BaseCommand):
         print "==========================\n\nSTEP 2: Stops"
         self.do_stops(stops)
 
-
     def do_lines(self):
         stops = []
         with open(self.folder+'/openebs_lines.csv') as routes_file:
