@@ -353,13 +353,23 @@ function renderTripCell(trip) {
         out = '<td class="trip" id="t'+trip.id+'">'
     }
     out += "<strong>Rit "+trip.journeynumber+"</strong>"
-    time = trip.departuretime.split(":", 2).join(":")
-    out += "&nbsp;<small>Vertrek "+time+"</small>"
+    out += "&nbsp;<small>Vertrek "+convertSecondsToTime(trip.departuretime)+"</small>"
     if ($.inArray(trip.id, activeJourneys) != -1) {
         out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Rit is al opgeheven"></span>'
     }
     out += "</td>"
     return out
+}
+
+function convertSecondsToTime(seconds) {
+    var hours   = Math.floor(seconds / 3600);
+    var minutes = Math.floor((seconds - (hours * 3600)) / 60);
+    var extra = "";
+    if (hours > 23) {
+        hours = hours - 24
+        extra = " <em>(+1)</em>"
+    }
+    return ""+padTime(hours)+":"+padTime(minutes)+extra;
 }
 
 function getActiveJourneys() {
