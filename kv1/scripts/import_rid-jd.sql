@@ -1,4 +1,4 @@
-create table if not exist tmp_jd (jid text, d date);
+create table if not exists tmp_jd (jid text, d date);
 delete from tmp_jd ;
 \copy tmp_jd from '/tmp/rid/openebs_journey_dates.csv' csv header ;
 delete from kv1_kv1journeydate ;
