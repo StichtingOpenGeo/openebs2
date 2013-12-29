@@ -2,10 +2,11 @@
 Make line patterns out of line stop patterns (there & back again)
 Runs straight on the RID database
 
-This version adjusted to use _ as seperator instead of | because that's what OpenEBS expects
-The output is HTML files - they're used by OpenEBS1 and considered legacy. Issue exists to move away from it
+This version adjusted to use _ as seperator instead of | because that's what OpenEBS2 expects.
+Also, it spits out JSON files that are "stop maps" - which is what OpenEBS2 uses.
 
 """
+import json
 
 import psycopg2
 import psycopg2.extras
@@ -39,27 +40,7 @@ for row in rows:
     operator_id = row['operator_id']
     key = operator_id.replace(':','_')
     print key
-    f = open(key+'.html','w')
-    f.write("""
-<table class="lijn">
-  <tr>
-    <th class="left">
-      <button class="btn btn-success btn-mini" onclick="patternSelect(0);">
-        <i class="icon-arrow-down icon-white">
-      </i>
-    </th>
-      <th>
-        <button class="btn btn-success btn-mini" onclick="patternSelect(2);">
-          <i class="icon-resize-horizontal icon-white">
-        </i>
-      </th>
-        <th class="right">
-          <button class="btn btn-success btn-mini" onclick="patternSelect(1);">
-            <i class="icon-arrow-up icon-white">
-          </i>
-        </th>
-      </tr>
-""")
+    f = open(key+'.json','w')
     cur.execute("""
 SELECT
 heen.pointorder as heenorder,
@@ -128,25 +109,13 @@ ORDER BY pointorder DESC) as terug ON (heen.stoparearef = terug.stoparearef)""",
                     i = indexofterugorder(stops,stops[-1]['terugorder'])
                     stops.insert(i,stops[-1])
                     del(stops[-1])
+    output = []
     for stop in stops:
         if stop['heenorder'] is None and stop['terugorder'] is not None:
-            f.write("""
-<tr><td></td><td></td><td class="right">
-     <button type="button" onclick="patternSelectStop(this)" class="btn btn-primary btn-mini btn-stop"
-         id="%(terugstopid)s">%(terugnaam)s</button></td></tr>\n""" % stop)
+            output.append({'left': None, 'right' : {'id': stop['terugstopid'], 'name': stop['terugnaam']}})
         elif stop['heenorder'] is not None and stop['terugorder'] is None:
-            f.write("""
-<tr><td class="left">
-    <button type="button" class="btn btn-primary btn-mini btn-stop" onclick="patternSelectStop(this)" id="%(heenstopid)s">%(heennaam)s
-    </button>
-</td><td></td><td></td></tr>\n""" % stop)
+            output.append({'left' : {'id': stop['heenstopid'], 'name': stop['heennaam']}, 'right' : None})
         else:
-            f.write("""
-<tr>
-    <td class="left">
-       <button type="button" onclick="patternSelectStop(this)" class="btn btn-primary btn-mini btn-stop" id="%(heenstopid)s">%(heennaam)s</button></td><td><button class="btn btn-success btn-mini" onclick="patternSelectRow(this);"><i class="icon-resize-horizontal icon-white"></i></td>
-    <td class="right">
-       <button type="button" onclick="patternSelectStop(this)" class="btn btn-primary btn-mini btn-stop" id="%(terugstopid)s">%(terugnaam)s</button>
-    </td></tr>\n""" %stop)
-    f.write("\n</table>")
+            output.append({'left' : {'id': stop['heenstopid'], 'name': stop['heennaam']}, 'right' : {'id': stop['terugstopid'], 'name': stop['terugnaam']}})
+    f.write(json.dumps(output))
     f.close()
