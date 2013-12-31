@@ -229,7 +229,7 @@ class Kv17ChangeForm(forms.ModelForm):
     def save(self, force_insert=False, force_update=False, commit=True):
         ''' Save each of the journeys in the model. This is a disaster, we return the XML
         TODO: Figure out a better solution fo this! '''
-        xml_output = ""
+        xml_output = []
         for journey in self.data['journeys'].split(',')[0:-1]:
             qry = Kv1Journey.objects.filter(id=journey, dates__date=now())
             if qry.count() == 1:
@@ -239,7 +239,7 @@ class Kv17ChangeForm(forms.ModelForm):
                 # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
                 if self.instance.journey.dataownercode == self.instance.dataownercode:
                     self.object = self.instance.save()
-                    xml_output += self.instance.to_xml()
+                    xml_output.append(self.instance.to_xml())
                 else:
                     log.error("Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
                               (self.instance.journey.dataownercode, self.instance.dataownercode))

@@ -16,16 +16,28 @@ class Push:
                 'subscriberid': self.subscriberid,
                 'dossiername': self.dossiername,
                 'timestamp':self.timestamp.isoformat('T'),
-                'content': str(self.content) }
+                'content' : self.content
+                }
+
+        wrapper = """<%(dossiername)s>
+        %(content)s
+        </%(dossiername)s>"""
+
+        # If we have list, wrap each item in the dossiername
+        if isinstance(self.content, list):
+            final_content = ""
+            for item in self.content:
+                final_content += wrapper % {'dossiername': data['dossiername'], 'content': item}
+        else:
+            final_content = wrapper % data
+        data['content'] = final_content
 
         xml = """<VV_TM_PUSH xmlns="%(namespace)s">
 <SubscriberID>%(subscriberid)s</SubscriberID>
 <Version>BISON 8.1.0.0</Version>
 <DossierName>%(dossiername)s</DossierName>
 <Timestamp>%(timestamp)s</Timestamp>
-<%(dossiername)s>
-%(content)s
-</%(dossiername)s>
+$(content)s
 </VV_TM_PUSH>""" % data
 
         return xml
