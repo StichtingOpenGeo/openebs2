@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n filters %}
 <h4>{% trans "Lijn" %} {{ line.grouper.publiclinenumber }} <small>{{ line.grouper.headsign }}</small></h4>
   <table class="table table-condensed table-bordered">
   <tr>
@@ -8,7 +8,7 @@
   </tr>
   {% for msg in line.list %}
       <tr>
-          <td>{{ msg.journey.departuretime|date:"H:i"}}</td>
+          <td>{{ msg.journey.departuretime|seconds_time|date:"H:i"}}</td>
           <td>{{ msg.journey.journeynumber }}</td>
           <td>
             {% if perms.openebs.add_change %}

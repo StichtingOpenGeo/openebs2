@@ -11,8 +11,10 @@ You'll use these in templates thusly::
         {% endfor %}
     {% endfor %}
 """
+from datetime import time, datetime
 
 from django import template
+from django.utils.timezone import now
 
 register = template.Library()
 
@@ -117,3 +119,10 @@ def rows_distributed(thelist, n):
             remainder -= 1
             offset += 1
     return rows
+
+@register.filter
+def seconds_time(seconds):
+    m, s = divmod(seconds, 60)
+    h, m = divmod(m, 60)
+
+    return datetime.combine(now(), time(h, m, s))
