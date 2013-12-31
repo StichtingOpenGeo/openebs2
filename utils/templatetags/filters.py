@@ -11,7 +11,7 @@ You'll use these in templates thusly::
         {% endfor %}
     {% endfor %}
 """
-from datetime import time, datetime
+from datetime import time, datetime, timedelta
 
 from django import template
 from django.utils.timezone import now
@@ -124,5 +124,11 @@ def rows_distributed(thelist, n):
 def seconds_time(seconds):
     m, s = divmod(seconds, 60)
     h, m = divmod(m, 60)
+    d = now()
 
-    return datetime.combine(now(), time(h, m, s))
+    # Check if this is a time in the next day
+    if h > 23:
+        h -= 24
+        d = d + timedelta(days=1)
+
+    return datetime.combine(d, time(h, m, s))
