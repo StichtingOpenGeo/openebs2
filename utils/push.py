@@ -24,8 +24,8 @@ class Push:
         </%(dossiername)s>"""
 
         # If we have list, wrap each item in the dossiername
+        final_content = ""
         if isinstance(self.content, list):
-            final_content = ""
             for item in self.content:
                 final_content += wrapper % {'dossiername': data['dossiername'], 'content': item}
         else:
@@ -37,7 +37,7 @@ class Push:
 <Version>BISON 8.1.0.0</Version>
 <DossierName>%(dossiername)s</DossierName>
 <Timestamp>%(timestamp)s</Timestamp>
-$(content)s
+%(content)s
 </VV_TM_PUSH>""" % data
 
         return xml
