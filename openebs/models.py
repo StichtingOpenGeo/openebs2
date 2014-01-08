@@ -232,7 +232,7 @@ class Kv15Scenario(models.Model):
 
     def plan_messages(self, user, start, end):
         saved_messages = []
-        for msg in self.kv15scenariomessage_set.all().order_by('updated'):
+        for msg in self.messages.all().order_by('updated'):
             a = Kv15Stopmessage(dataownercode=msg.dataownercode)
             a.user = user
             a.messagecodedate = now()
@@ -257,7 +257,7 @@ class Kv15Scenario(models.Model):
             a.save()
 
             # Now add the stops
-            for msg_stop in msg.kv15scenariostop_set.all():
+            for msg_stop in msg.stops.all():
                 Kv15MessageStop(stopmessage=a, stop=msg_stop.stop).save()
 
             saved_messages.append(a)

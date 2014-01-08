@@ -16,7 +16,7 @@
                     <ul>
                     {% for msg in scenario.messages.all %}
                         <li>{{ msg.messagecontent }} <a class="halte-count" data-title="{% trans 'Haltes bij bericht' %}" data-html="true" data-content="{% include 'openebs/snippet_scenario-halte-list.html' %}">
-                            ({{ msg.messages.count }} haltes)</a></li>
+                            ({{ msg.stops.count }} haltes)</a></li>
                     {% endfor %}
                     </ul>
                 </div>
