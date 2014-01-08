@@ -1,5 +1,6 @@
 import logging
 from braces.views import LoginRequiredMixin
+from datetime import timedelta
 from django.conf import settings
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.db.models import Q
@@ -35,7 +36,8 @@ class ChangeListView(AccessMixin, ListView):
 
         # Add the no longer active changes
         context['archive_list'] = self.model.objects.filter(Q(operatingday__lt=now) | Q(is_recovered=True),
-                                                            dataownercode=self.request.user.userprofile.company)
+                                                            dataownercode=self.request.user.userprofile.company,
+                                                            created__gt=now()-timedelta(days=3))
         context['archive_list'] = context['archive_list'].order_by('-created')
         return context
 
