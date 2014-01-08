@@ -51,7 +51,7 @@
     <tr class="{% if msg.is_recovered %}warning{% endif %}">
         <td>{{ msg.operatingday|date:"d-m-Y" }} {{ msg.created|date:"H:i" }}</td></td>
         <td>{{ msg.line.publiclinenumber }}</td>
-        <td>{{ msg.journey.journeynumber }} <small>(Vertrek {{msg.journey.departuretime|date:"H:i"}})</small></td>
+        <td>{{ msg.journey.journeynumber }} <small>(Vertrek {{msg.journey.departuretime|seconds_time|date:"H:i"}})</small></td>
         <td>
             {% if perms.openebs.add_change %}
             <form method="post" action="{% url 'change_redo' msg.id %}">
