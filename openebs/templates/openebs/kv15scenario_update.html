@@ -27,13 +27,13 @@
         <th class="col-lg-1">{% trans "Haltes" %}</th>
         <th class="col-lg-3">&nbsp;</th>
   </tr>
-  {% for msg in object.kv15scenariomessage_set.all %}
+  {% for msg in object.messages.all %}
       <tr>
         <td>{{ msg.messagecontent }}</td>
         <td class="text-center">
-            {% if msg.kv15scenariostop_set.count > 0 %}
+            {% if msg.stops.count > 0 %}
             <a class="halte-count btn btn-link" data-title="{% trans 'Haltes bij bericht' %}" data-html="true" data-content="{% include 'openebs/snippet_scenario-halte-list.html' %}">
-                {{ msg.kv15scenariostop_set.count }}</a>
+                {{ msg.stops.count }}</a>
             {% else %}
                 0
             {% endif %}

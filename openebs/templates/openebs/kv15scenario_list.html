@@ -24,9 +24,9 @@
         <td><a href="{% url 'scenario_edit' scenario.pk %}">{{ scenario.name }}<a/></td>
         <td>{{ scenario.description|default:"<em><geen></em>" }}&nbsp;</td>
         <td class="text-center">
-            {% if scenario.kv15scenariomessage_set.count > 0 %}
+            {% if scenario.messages.count > 0 %}
             <a class="msg-count btn btn-link" data-title="{% trans 'Berichten bij scenario' %}" data-html="true" data-content="{% include 'openebs/snippet_message-list.html' %}">
-                {{ scenario.kv15scenariomessage_set.count }}</a>
+                {{ scenario.messages.count }}</a>
             {% else %}
                 0
             {% endif %}

@@ -53,7 +53,7 @@ class ScenarioMessageCreateView(AccessMixin, ScenarioContentMixin, CreateView):
         haltes = self.request.POST.get('haltes', None)
         if haltes:
             for stop in Kv1Stop.find_stops_from_haltes(haltes):
-                form.instance.kv15scenariostop_set.create(message=form.instance, stop=stop)
+                form.instance.stops.create(message=form.instance, stop=stop)
 
         return ret
 
@@ -68,7 +68,7 @@ class ScenarioMessageUpdateView(AccessMixin, FilterDataownerMixin, ScenarioConte
         ret = super(ScenarioMessageUpdateView, self).form_valid(form)
 
         haltes = self.request.POST.get('haltes', None)
-        self.process_new_old_haltes(form.instance, form.instance.kv15scenariostop_set, haltes if haltes else "")
+        self.process_new_old_haltes(form.instance, form.instance.stops, haltes if haltes else "")
 
         return ret
 

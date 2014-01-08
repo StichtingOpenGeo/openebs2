@@ -267,7 +267,7 @@ class Kv15Scenario(models.Model):
 
 class Kv15ScenarioMessage(models.Model):
     """ This stores a 'template' to be used for easily constructing normal KV15 messages """
-    scenario = models.ForeignKey(Kv15Scenario)
+    scenario = models.ForeignKey(Kv15Scenario, related_name='messages')
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
     messagepriority = models.CharField(max_length=10, choices=MESSAGEPRIORITY, default='PTPROCESS', verbose_name=_("Prioriteit"))
     messagetype = models.CharField(max_length=10, choices=MESSAGETYPE, default='GENERAL', verbose_name=_("Type bericht"))
@@ -300,7 +300,7 @@ class Kv15ScenarioMessage(models.Model):
 
 class Kv15ScenarioStop(models.Model):
     """ For the template, this links a stop """
-    message = models.ForeignKey(Kv15ScenarioMessage)
+    message = models.ForeignKey(Kv15ScenarioMessage, related_name='stops')
     stop = models.ForeignKey(Kv1Stop)
 
 

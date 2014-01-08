@@ -13,8 +13,8 @@
             <div class="control-group">
                 <label>{% trans "Haltes" %}</label>
                 <p class="form-control-static" id="halte-list">
-                    {% if object.kv15scenariostop_set.count > 0 %}
-                        {% for halte in object.kv15scenariostop_set.all %}
+                    {% if object.stops.count > 0 %}
+                        {% for halte in object.stops.all %}
                             <span class="stop-selection pull-left label label-primary" id="ss{{ halte.stop.dataownercode }}_{{ halte.stop.userstopcode }}">{{ halte.stop.name }} (?)<span class="stop-remove glyphicon glyphicon-remove"></span></span>
                         {% endfor %}
                     {% else %}
@@ -22,7 +22,7 @@
                     {% endif %}
                 </p><br />
                 <input type="hidden" id="haltes" name="haltes"
-                       value="{% for halte in object.kv15scenariostop_set.all %}{{ halte.stop.dataownercode }}_{{ halte.stop.userstopcode }},{% endfor %}" />
+                       value="{% for halte in object.stops.all %}{{ halte.stop.dataownercode }}_{{ halte.stop.userstopcode }},{% endfor %}" />
             </div>
             <div class="clearfix"></div>
             {% csrf_token %}

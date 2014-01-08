@@ -14,9 +14,9 @@
                 <div class="panel-body">
                     <p><strong>{% trans "Je gaat de volgende berichten inplannen:" %}</strong><p>
                     <ul>
-                    {% for msg in scenario.kv15scenariomessage_set.all %}
+                    {% for msg in scenario.messages.all %}
                         <li>{{ msg.messagecontent }} <a class="halte-count" data-title="{% trans 'Haltes bij bericht' %}" data-html="true" data-content="{% include 'openebs/snippet_scenario-halte-list.html' %}">
-                            ({{ msg.kv15scenariostop_set.count }} haltes)</a></li>
+                            ({{ msg.messages.count }} haltes)</a></li>
                     {% endfor %}
                     </ul>
                 </div>

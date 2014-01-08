@@ -56,7 +56,7 @@ class ScenarioListView(AccessMixin, FilterDataownerListMixin, ListView):
     model = Kv15Scenario
 
     def get_queryset(self):
-        return super(ScenarioListView, self).get_queryset().order_by('name')
+        return super(ScenarioListView, self).get_queryset().order_by('name').prefetch_related('messages', 'messages__stops')
 
 class ScenarioCreateView(AccessMixin, CreateView):
     permission_required = 'openebs.add_scenario'
@@ -79,6 +79,9 @@ class ScenarioUpdateView(AccessMixin, FilterDataownerMixin, UpdateView):
     form_class = Kv15ScenarioForm
     template_name_suffix = '_update'
     success_url = reverse_lazy('scenario_index')
+
+    def get_queryset(self):
+        return super(ScenarioUpdateView, self).get_queryset().prefetch_related('messages', 'messages__stops', 'messages__stops__stop')
 
 
 class ScenarioDeleteView(AccessMixin, FilterDataownerMixin, DeleteView):
