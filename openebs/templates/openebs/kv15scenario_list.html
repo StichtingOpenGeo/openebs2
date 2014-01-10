@@ -53,6 +53,15 @@
       <tr><td colspan=4 class="text-center"><em>{% trans "Er zijn nog geen scenario's" %}</em></td></tr>
   {% endfor %}
   </table>
+
+    {% if page_obj.has_previous %}
+    Previous
+    {% endif %}
+    Pagina {{ page_obj.number }} van {{ page_obj.paginator.number }}
+    {% if page_obj.has_next %}
+    Next
+    {% endif %}
+
 {% endblock %}
 
 {% block js_init %}

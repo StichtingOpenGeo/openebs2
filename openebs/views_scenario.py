@@ -54,9 +54,10 @@ class PlanScenarioView(AccessMixin, GoviPushMixin, FormView):
 class ScenarioListView(AccessMixin, FilterDataownerListMixin, ListView):
     permission_required = 'openebs.view_scenario'
     model = Kv15Scenario
+    #paginate_by = 100
 
     def get_queryset(self):
-        return super(ScenarioListView, self).get_queryset().order_by('name').prefetch_related('messages', 'messages__stops')
+        return super(ScenarioListView, self).get_queryset().order_by('name').prefetch_related('messages')
 
 class ScenarioCreateView(AccessMixin, CreateView):
     permission_required = 'openebs.add_scenario'
