@@ -1,12 +1,13 @@
 import logging
 from braces.views import LoginRequiredMixin
 from django.core.urlresolvers import reverse_lazy
+from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django.views.generic import FormView, ListView, CreateView, UpdateView, DeleteView
 from djgeojson.views import GeoJSONLayerView
 from kv1.models import Kv1Stop
 from openebs.form import PlanScenarioForm, Kv15ScenarioForm
-from openebs.models import Kv15Scenario, MessageStatus
+from openebs.models import Kv15Scenario, MessageStatus, Kv15ScenarioMessage
 from openebs.views import FilterDataownerListMixin, FilterDataownerMixin
 from utils.views import AccessMixin, GoviPushMixin
 
@@ -51,13 +52,15 @@ class PlanScenarioView(AccessMixin, GoviPushMixin, FormView):
         return ret
 
 
-class ScenarioListView(AccessMixin, FilterDataownerListMixin, ListView):
+class ScenarioListView(AccessMixin, ListView):
     permission_required = 'openebs.view_scenario'
     model = Kv15Scenario
     #paginate_by = 100
 
     def get_queryset(self):
-        return super(ScenarioListView, self).get_queryset().order_by('name').prefetch_related('messages')
+        return super(ScenarioListView, self).get_queryset().order_by('name').annotate(Count('messages'));
+        #.raw("select openebs_kv15scenario.*, x.nummsg from openebs_kv15scenario join (select openebs_kv15scenario.id, count(*) as nummsg from openebs_kv15scenario join openebs_kv15scenariomessage on (openebs_kv15scenario.id = openebs_kv15scenariomessage.scenario_id) where openebs_kv15scenario.dataownercode = 'HTM' group by openebs_kv15scenario.id) as x using (id) order by name")
+        #return super(ScenarioListView, self).get_queryset().order_by('name').prefetch_related('messages')
 
 class ScenarioCreateView(AccessMixin, CreateView):
     permission_required = 'openebs.add_scenario'
