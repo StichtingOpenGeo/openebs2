@@ -21,25 +21,25 @@
   </tr>
   {% for scenario in object_list %}
       <tr>
-        <td><a href="{% url 'scenario_edit' scenario.pk %}">{{ scenario.name }}<a/></td>
+        <td><a href="/scenario/{{ scenario.pk }}/bewerk">{{ scenario.name }}<a/></td>
         <td>{{ scenario.description|default:"<em><geen></em>" }}&nbsp;</td>
         <td class="text-center">
             {{ scenario.messages__count }}
         </td>
         <td class="text-right">
-            <form method="get" action="{% url 'scenario_delete' scenario.pk %}">
+            <form method="get" action="/scenario/{{ scenario.pk }}/verwijderen">
                 {% csrf_token %}
                 <button class="btn btn-link pull-right">
                     <span class="glyphicon glyphicon-trash"></span> {% trans "Verwijder" %}
                 </button>
             </form>
-            <a href="{% url 'scenario_edit' scenario.pk %}" class="btn btn-link pull-right">
+            <a href="/scenario/{{ scenario.pk }}/bewerk" class="btn btn-link pull-right">
                 <span class="glyphicon glyphicon-edit"></span> {% trans "Bewerk" %}&nbsp;
             </a>
-            <a href="{% url 'scenario_msg_add' scenario.pk %}" class="btn btn-link pull-right">
+            <a href="/scenario/{{ scenario.pk }}/bericht/nieuw" class="btn btn-link pull-right">
                 <span class="glyphicon glyphicon-plus"></span> {% trans "Bericht toevoegen" %}&nbsp;
             </a>
-            <a href="{% url 'scenario_plan' scenario.pk %}" class="btn btn-link pull-right">
+            <a href="/scenario/{{ scenario.pk }}/inplannen" class="btn btn-link pull-right">
                 <span class="glyphicon glyphicon-play"></span> {% trans "Inplannen" %}&nbsp;
             </a>
         </td>
@@ -48,13 +48,5 @@
       <tr><td colspan=4 class="text-center"><em>{% trans "Er zijn nog geen scenario's" %}</em></td></tr>
   {% endfor %}
   </table>
-
-    {% if page_obj.has_previous %}
-    Previous
-    {% endif %}
-    Pagina {{ page_obj.number }} van {{ page_obj.paginator.number }}
-    {% if page_obj.has_next %}
-    Next
-    {% endif %}
 
 {% endblock %}
