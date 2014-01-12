@@ -2,12 +2,13 @@ from django.conf.urls import patterns, url
 from django.views.generic import RedirectView, TemplateView
 from openebs.views import MessageListView, MessageCreateView, MessageDeleteView, MessageUpdateView, ActiveStopsAjaxView, MessageDetailsView, MessageStopsAjaxView
 from openebs.views_change import ChangeListView, CancelLinesView, ChangeCreateView, ChangeDeleteView, ActiveJourneysAjaxView, ChangeUpdateView
+from openebs.views_generic import ChangeCompanyView
 from openebs.views_scenario import ScenarioListView, ScenarioCreateView, ScenarioUpdateView, ScenarioDeleteView, PlanScenarioView, ScenarioStopsAjaxView
 from openebs.views_scenario_msg import ScenarioMessageCreateView, ScenarioMessageUpdateView, ScenarioMessageDeleteView
 
 urlpatterns = patterns('',
     # Onze Index
-    url(r'^$', RedirectView.as_view(url='/bericht')),
+    url(r'^$', RedirectView.as_view(url='/bericht'), name='index'),
 
     # Kaart views
     url(r'^kaart$', TemplateView.as_view(template_name='openebs/kv15stopmessage_map.html'), name="msg_map"),
@@ -39,6 +40,7 @@ urlpatterns = patterns('',
     # url(r'^ritaanpassing/alles_opheffen$', CancelLinesView.as_view(), name="change_redbutton"),
     url(r'^ritaanpassing/(?P<pk>\d+)/verwijderen$', ChangeDeleteView.as_view(), name="change_delete"),
     url(r'^ritaanpassing/(?P<pk>\d+)/herstellen', ChangeUpdateView.as_view(), name="change_redo"),
-    url(r'^ritaanpassing/ritten.json$', ActiveJourneysAjaxView.as_view(), name="active_journeys_ajax")
+    url(r'^ritaanpassing/ritten.json$', ActiveJourneysAjaxView.as_view(), name="active_journeys_ajax"),
 
+    url(r'^vervoerder/wijzig', ChangeCompanyView.as_view(), name="company_change")
 )

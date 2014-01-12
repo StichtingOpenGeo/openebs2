@@ -59,6 +59,44 @@
           {% endif %}
         </ul>
         <ul class="nav navbar-nav navbar-right">
+          {% if user.is_superuser %}
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-cog"></span>&nbsp;{% trans "Extra opties" %}</a>
+                <ul class="dropdown-menu">
+                    <li><a href="#"><span class="glyphicon glyphicon-lock"></span>&nbsp;<strong>{% trans "Wijzig vervoerder" %}:</strong></a></li>
+                    <li><a href="{% url 'company_change' %}?company=HTM">
+                        <img src="{{ STATIC_URL }}img/logos/htm.png" class="user-icon"/> HTM
+                    </a></li>
+                    <li><a href="{% url 'company_change' %}?company=VTN">
+                        <img src="{{ STATIC_URL }}img/logos/vtn.png" class="user-icon"/> Veolia
+                    </a></li>
+                    <li><a href="{% url 'company_change' %}?company=ARR">
+                        <img src="{{ STATIC_URL }}img/logos/arr.png" class="user-icon"/> Arriva
+                    </a></li>
+                    <li><a href="{% url 'company_change' %}?company=EBS">
+                        <img src="{{ STATIC_URL }}img/logos/ebs.png" class="user-icon"/> EBS
+                    </a></li>
+                    <li><a href="{% url 'company_change' %}?company=CXX">
+                        <img src="{{ STATIC_URL }}img/logos/cxx.png" class="user-icon"/> Connexxion
+                    </a></li>
+                    <li><a href="{% url 'company_change' %}?company=GVB">
+                        <img src="{{ STATIC_URL }}img/logos/gvb.png" class="user-icon"/> GVB
+                    </a></li>
+                    <li><a href="{% url 'company_change' %}?company=RET">
+                        <img src="{{ STATIC_URL }}img/logos/ret.png" class="user-icon"/> RET
+                    </a></li>
+                    <li><a href="{% url 'company_change' %}?company=QBUZZ">
+                        <img src="{{ STATIC_URL }}img/logos/qbuzz.png" class="user-icon"/> QBuzz
+                    </a></li>
+                    <li><a href="{% url 'company_change' %}?company=SYNTUS">
+                        <img src="{{ STATIC_URL }}img/logos/syntus.png" class="user-icon"/> Syntus
+                    </a></li>
+                    <li><a href="{% url 'company_change' %}?company=NS">
+                        <img src="{{ STATIC_URL }}img/logos/ns.png" class="user-icon"/> NS
+                    </a></li>
+                </ul>
+              </li>
+          {% endif %}
           <li class="dropdown">
             {% if user and not user.is_anonymous %}
             <a href="#" class="dropdown-toggle" data-toggle="dropdown">
@@ -71,6 +109,7 @@
                 <li><a href="{% url 'admin:index' %}" target="_new" title="Backoffice">
                     <span class="glyphicon glyphicon-wrench"></span>&nbsp;{% trans "Backoffice" %}
                     </a></li>
+                <li class="divider"></li>
               {% endif %}
               <li><a href="{% url 'app_password_change' %}">
                   <span class="glyphicon glyphicon-user"></span>&nbsp;{% trans "Wachtwoord wijzigen" %}
