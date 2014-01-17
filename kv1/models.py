@@ -56,8 +56,9 @@ class Kv1Stop(models.Model):
 
 class Kv1Journey(models.Model):
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
-    line = models.ForeignKey(Kv1Line, related_name="journeys")  # Represent lineplanningnumber
+    line = models.ForeignKey(Kv1Line, related_name="journeys")  # Represent lineplanningnumber\
     journeynumber = models.PositiveIntegerField(max_length=6)  # 0 - 999999
+    scheduleref = models.PositiveIntegerField() # Field 'availabilityconditionref'
     departuretime = models.PositiveIntegerField()
     direction = models.PositiveSmallIntegerField()
 
@@ -67,7 +68,7 @@ class Kv1Journey(models.Model):
     class Meta:
         verbose_name = _("Rit")
         verbose_name_plural = _("Ritinformatie")
-        unique_together = ('dataownercode', 'line', 'journeynumber')
+        unique_together = ('dataownercode', 'line', 'journeynumber', 'scheduleref')
 
 
 class Kv1JourneyStop(models.Model):
