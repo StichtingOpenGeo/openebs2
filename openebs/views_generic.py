@@ -1,7 +1,8 @@
 import logging
-from braces.views import SuperuserRequiredMixin, LoginRequiredMixin
+from braces.views import SuperuserRequiredMixin, LoginRequiredMixin, StaffuserRequiredMixin
 from django.core.urlresolvers import reverse_lazy
-from django.views.generic import RedirectView
+from django.views.generic import RedirectView, ListView
+from kv1.models import Kv1Journey
 from kv15.enum import DATAOWNERCODE
 
 log = logging.getLogger('openebs.views.scenario')
@@ -23,4 +24,3 @@ class ChangeCompanyView(LoginRequiredMixin, SuperuserRequiredMixin, RedirectView
                 self.request.user.userprofile.company = company
                 self.request.user.userprofile.save()
         return super(ChangeCompanyView, self).get_redirect_url()
-

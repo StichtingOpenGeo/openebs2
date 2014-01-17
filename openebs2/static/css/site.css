@@ -42,3 +42,54 @@ span.stop-selection,span.trip-selection{
 .btn-tall {
     height: 150px;
 }
+
+/* Calendar */
+#calendar table {
+    width: 80%;
+    border: 1px solid #ddd;
+}
+
+#calendar table tr th {
+    text-align: center;
+    font-size: 16px;
+}
+
+#calendar table tr td {
+    width: 10%;
+    vertical-align: top;
+    border: 1px solid #ddd;
+    height: 45px;
+    padding: 2px;
+}
+#calendar table tr td span.day {
+    font-size: 75%;
+    color: #777;
+    padding-left: 2px;
+}
+#calendar table tr td ul {
+    padding: 0;
+    margin: 0;
+}
+#calendar table tr td li {
+    list-style-type: none;
+    text-align: center;
+    padding: 0;
+    margin: 0;
+    text-style:
+}
+
+#calendar td.noday {
+    background-color: #f2dede;
+}
+
+#calendar td.filled {
+    background-color: #fff;
+}
+
+#calendar td.today {
+    background-color: #dff0d8;
+}
+
+#calendar a {
+    font-size: 10px;
+}

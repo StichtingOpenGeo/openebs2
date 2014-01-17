@@ -1,12 +1,15 @@
-from braces.views import LoginRequiredMixin
+from braces.views import LoginRequiredMixin, StaffuserRequiredMixin
 from datetime import timedelta
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.shortcuts import get_object_or_404
+from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from django.views.generic import ListView, DetailView
 from djgeojson.views import GeoJSONLayerView
+from utils.calender import CountCalendar
 from utils.views import JSONListResponseMixin
-from kv1.models import Kv1Line, Kv1Stop
+from kv1.models import Kv1Line, Kv1Stop, Kv1Journey, Kv1JourneyDate
+
 
 class LineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
     model = Kv1Line
@@ -63,4 +66,21 @@ class ActiveStopListView(LoginRequiredMixin, GeoJSONLayerView):
         qry = super(ActiveStopListView, self).get_queryset()
         return qry.filter(dataownercode=self.request.user.userprofile.company)
 
+class DataImportView(LoginRequiredMixin, StaffuserRequiredMixin, ListView):
+    '''
+    Show details about what data was or wasn't imported
+    '''
+    model = Kv1JourneyDate
+    template_name = 'kv1/importdata_list.html'
 
+    def get_context_data(self, **kwargs):
+        context = super(DataImportView, self).get_context_data(**kwargs)
+        cal = CountCalendar(context['object_list'])
+        context['calendar'] = mark_safe(cal.formatmonth(2014, 1)+'<br />'+cal.formatmonth(2014, 2))
+        return context
+
+    def get_queryset(self):
+        qry = super(DataImportView, self).get_queryset()
+        qry = qry.filter(journey__dataownercode=self.request.user.userprofile.company)
+        qry = qry.values('date').annotate(dcount=Count('date')).order_by('date')
+        return qry
