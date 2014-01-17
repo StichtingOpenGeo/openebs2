@@ -7,7 +7,7 @@ SELECT split_part(privatecode,':',1), l.id, cast(split_part(privatecode,':',3) a
 FROM tmp_js, kv1_kv1line l
 WHERE l.dataownercode = split_part(privatecode,':',1) AND l.lineplanningnumber = split_part(privatecode,':',2)
 AND NOT EXISTS (
-    SELECT id FROM kv1_kv1journey WHERE dataownercode=dataownercode AND line_id=line_id AND journeynumber=journeynumber AND scheduleref=scheduleref
+    SELECT id FROM kv1_kv1journey WHERE dataownercode=split_part(privatecode,':',1) AND line_id=l.id AND journeynumber=cast(split_part(privatecode,':',3) as integer) AND scheduleref=availability
 );
 /* Note: need to still delete old trips (related to archiving) */
 
