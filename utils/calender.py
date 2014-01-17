@@ -7,7 +7,6 @@ class CountCalendar(LocaleHTMLCalendar):
     def __init__(self, items):
         super(CountCalendar, self).__init__(0, 'nl_NL.UTF8')
         self.counts = self.group_by_day(items)
-        print self.counts
 
     def formatday(self, day, weekday):
         if day != 0:
