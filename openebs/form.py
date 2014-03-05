@@ -31,6 +31,11 @@ class Kv15StopMessageForm(forms.ModelForm):
         else:
             return self.cleaned_data
 
+    def clean_messagecontent(self):
+        # Improve: Strip spaces from message
+        if len(self.cleaned_data['messagecontent']) < 1 and self.cleaned_data['messagetype'] != 'OVERRULE':
+            raise ValidationError(_("Bericht mag niet leeg zijn"))
+
     class Meta:
         model = Kv15Stopmessage
         exclude = ['messagecodenumber', 'status', 'stops', 'messagecodedate', 'isdeleted', 'id', 'dataownercode', 'user']

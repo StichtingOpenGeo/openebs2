@@ -25,6 +25,7 @@ class TestKv8Verify(TestCase):
 
         row = {
             'DataOwnerCode': 'HTM',
+            'TimingPointCode' : 100,
             'MessageCodeDate': now().date().isoformat(),
             'MessageStartTime': now(),
             'MessageEndTime': now()+timedelta(hours=2),
@@ -47,6 +48,7 @@ class TestKv8Verify(TestCase):
         count = Kv15Stopmessage.objects.count()
         row = {
             'DataOwnerCode' : 'HTM',
+            'TimingPointCode' : 100,
             'MessageCodeDate' : now().date().isoformat(),
             'MessageCodeNumber': '25',
             'MessageContent': "Test content",
@@ -102,6 +104,7 @@ class TestKv8Verify(TestCase):
         count = Kv15Stopmessage.objects.count()
         row = {
             'DataOwnerCode': 'HTM',
+            'TimingPointCode' : 100,
             'MessageCodeDate': now().date().isoformat(),
             'MessageCodeNumber': '26',
             'MessageContent': "Test content",
@@ -166,6 +169,7 @@ class TestKv8Verify(TestCase):
 
         row = {
             'DataOwnerCode': 'HTM',
+            'TimingPointCode' : 100,
             'MessageCodeDate': '2013-11-17',
             'MessageCodeNumber': '30'
         }
@@ -189,6 +193,7 @@ class TestKv8Verify(TestCase):
 
         row = {
             'DataOwnerCode': 'HTM',
+            'TimingPointCode' : 100,
             'MessageCodeDate': '2013-11-17',
             'MessageCodeNumber': '31'
         }
@@ -216,11 +221,13 @@ class TestKv8Verify(TestCase):
 
         delete_row = {
             'DataOwnerCode': 'HTM',
+            'TimingPointCode' : 100,
             'MessageCodeDate': now().date().isoformat(),
             'MessageCodeNumber': '32'
         }
         add_row = {
             'DataOwnerCode': 'HTM',
+            'TimingPointCode' : 101,
             'MessageCodeDate': now().date().isoformat(),
             'MessageStartTime': now(),
             'MessageEndTime': now()+timedelta(hours=2),
@@ -235,3 +242,60 @@ class TestKv8Verify(TestCase):
         self.assertEqual(a.isdeleted, False)
         self.assertEqual(a.messagestarttime, add_row['MessageStartTime'])
         self.assertEqual(a.messageendtime, add_row['MessageEndTime'])
+
+    def test_message_overrule_message(self):
+        ''' See bug #80 '''
+        """
+        Test whether adding a message from KV8 works - all the fields must be transferred across
+        """
+        count = Kv15Stopmessage.objects.count()
+        row = {
+            'DataOwnerCode' : 'HTM',
+            'TimingPointCode' : 100,
+            'MessageCodeDate' : now().date().isoformat(),
+            'MessageCodeNumber': '35',
+            'MessageContent': None,
+            'MessageStartTime': now(),
+            'MessageEndTime': now()+timedelta(hours=2),
+            'MessageTimeStamp': now(),
+            'MessageType': 'OVERRULE',
+            'MessageDurationType': 'ENDTIME',
+            'ReasonType': 1,
+            'SubReasonType': '11',
+            'ReasonContent': "uitleg reden",
+            'EffectType': 1,
+            'SubEffectType': '11',
+            'EffectContent': "uitleg effect",
+            'MeasureType': 1,
+            'SubMeasureType': '1',
+            'MeasureContent': "uitleg maatregel",
+            'AdviceType': 1,
+            'SubAdviceType': '1',
+            'AdviceContent': "uitleg afvies"
+        }
+
+        # Method under test
+        self.testClass.processMessage(row)
+
+        self.assertEqual(Kv15Stopmessage.objects.count(), count+1)
+        msg = Kv15Stopmessage.objects.get(dataownercode='HTM', messagecodedate=now().date(), messagecodenumber=35)
+        self.assertEqual(msg.messagecontent, row['MessageContent'])
+        self.assertEqual(msg.messagestarttime, row['MessageStartTime'])
+        self.assertEqual(msg.messageendtime, row['MessageEndTime'])
+        self.assertEqual(msg.messagetimestamp, row['MessageTimeStamp'])
+        self.assertEqual(msg.messagetype, row['MessageType'])
+        self.assertEqual(msg.messagedurationtype, row['MessageDurationType'])
+        self.assertEqual(msg.reasontype, row['ReasonType'])
+        self.assertEqual(msg.subreasontype, row['SubReasonType'])
+        self.assertEqual(msg.reasoncontent, row['ReasonContent'])
+        self.assertEqual(msg.effecttype, row['EffectType'])
+        self.assertEqual(msg.subeffecttype, row['SubEffectType'])
+        self.assertEqual(msg.effectcontent, row['EffectContent'])
+        self.assertEqual(msg.measuretype, row['MeasureType'])
+        self.assertEqual(msg.submeasuretype, row['SubMeasureType'])
+        self.assertEqual(msg.measurecontent, row['MeasureContent'])
+        self.assertEqual(msg.advicetype, row['AdviceType'])
+        self.assertEqual(msg.subadvicetype, row['SubAdviceType'])
+        self.assertEqual(msg.advicecontent, row['AdviceContent'])
+        self.assertEqual(msg.status, MessageStatus.CONFIRMED)
+        self.assertEqual(msg.user.username, 'kv8update')

@@ -55,7 +55,10 @@ class Kv15Log(models.Model):
         log.messagecodedate = stop_message.messagecodedate
         log.messagecodenumber = stop_message.messagecodenumber
         log.user = stop_message.user
-        log.message = stop_message.messagecontent
+        if stop_message.messagecontent is not None: # Can happen with overrule
+            log.message = stop_message.messagecontent
+        else:
+            log.message = ugettext("<leeg of overschrijven>") # Default
         log.ipaddress = ipaddress
         log.save()
         return log
@@ -93,7 +96,7 @@ class Kv15Stopmessage(models.Model):
     messagedurationtype = models.CharField(max_length=10, choices=MESSAGEDURATIONTYPE, default='ENDTIME', verbose_name=_("Type tijdsrooster"))
     messagestarttime = models.DateTimeField(null=True, blank=True, default=now, verbose_name=_("Begintijd"))
     messageendtime = models.DateTimeField(null=True, blank=True, default=get_end_service, verbose_name=_("Eindtijd"))
-    messagecontent = models.CharField(max_length=255, blank=True, verbose_name="Bericht")
+    messagecontent = models.CharField(max_length=255, blank=True, null=True, verbose_name="Bericht")
     reasontype = models.SmallIntegerField(null=True, blank=True, choices=REASONTYPE, verbose_name=_("Type oorzaak"))
     subreasontype = models.CharField(max_length=10, blank=True, choices=SUBREASONTYPE, verbose_name=_("Oorzaak"))
     reasoncontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg oorzaak"))
