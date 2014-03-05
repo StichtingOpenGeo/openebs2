@@ -165,6 +165,12 @@ LOGGING = {
     }
 }
 
+# Django Leaflet
+LEAFLET_CONFIG = {
+    'TILES': 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    'RESET_VIEW': False
+}
+
 # Crispy = form addon
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 CRISPY_FAIL_SILENTLY = not DEBUG
