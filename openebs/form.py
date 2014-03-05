@@ -179,7 +179,8 @@ class Kv15ScenarioMessageForm(forms.ModelForm):
         self.helper.form_tag = False
         self.helper.layout = Layout(
             'scenario',
-            'messagecontent',
+            Div(HTML('<span class="charcount badge badge-success pull-right">0</span>'),
+                Field('messagecontent'),  css_class='countwrapper'),
             Accordion(
                 AccordionGroup(_('Bericht instellingen'),
                     'messagepriority',
