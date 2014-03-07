@@ -34,7 +34,7 @@
                     <div class="control-group row">
                         <label class="col-lg-4">{% trans "Bericht" %}</label>
                         <p class="form-control-static col-lg-8">
-                            {{ object.messagecontent }}<br /><br />
+                            {{ object.messagecontent|default_if_none:"[geen of overschrijf bericht]" }}<br /><br />
                         </p>
                     </div>
                     <div class="control-group row">
