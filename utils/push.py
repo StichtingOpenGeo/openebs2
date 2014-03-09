@@ -2,6 +2,7 @@ import logging, socket
 from django.utils.timezone import now
 from django.conf import settings
 import httplib
+from xml.dom import minidom
 
 class Push:
     alias = None
@@ -35,7 +36,8 @@ class Push:
         final_content = ""
         if isinstance(self.content, list):
             for item in self.content:
-                final_content += wrapper % {'dossiername': data['dossiername'], 'content': item}
+                final_content += wrapper % {'dossiername': data['dossiername'],
+                                            'content': item.replace('\n', '')}
         else:
             final_content = wrapper % data
         data['content'] = final_content
@@ -48,7 +50,7 @@ class Push:
 %(content)s
 </VV_TM_PUSH>""" % data
 
-        return xml
+        return minidom.parseString(xml).toprettyxml()
 
     def push(self, content):
         # Add content
