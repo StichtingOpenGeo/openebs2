@@ -7,14 +7,14 @@ from django.views.generic import FormView, ListView, CreateView, UpdateView, Del
 from djgeojson.views import GeoJSONLayerView
 from kv1.models import Kv1Stop
 from openebs.form import PlanScenarioForm, Kv15ScenarioForm
-from openebs.models import Kv15Scenario, MessageStatus, Kv15ScenarioMessage
-from openebs.views import FilterDataownerListMixin, FilterDataownerMixin
-from utils.views import AccessMixin, GoviPushMixin
+from openebs.models import Kv15Scenario, MessageStatus
+from openebs.views import FilterDataownerListMixin, FilterDataownerMixin, Kv15PushMixin
+from utils.views import AccessMixin
 
 log = logging.getLogger('openebs.views.scenario')
 
 # SCENARIO VIEWS
-class PlanScenarioView(AccessMixin, GoviPushMixin, FormView):
+class PlanScenarioView(AccessMixin, Kv15PushMixin, FormView):
     permission_required = 'openebs.view_scenario'  # TODO Also add message!
     form_class = PlanScenarioForm
     template_name = 'openebs/kv15scenario_plan.html'
@@ -40,15 +40,15 @@ class PlanScenarioView(AccessMixin, GoviPushMixin, FormView):
                                            form.cleaned_data['messageendtime'])
             # Concatenate XML for a single request
             message_string = "".join([msg.to_xml() for msg in saved])
-            if self.push_govi(message_string):
+            if self.push_message(message_string):
                 for msg in saved:
                     msg.set_status(MessageStatus.SENT)
-                log.error("Planned messages sent to GOVI: %s" % ",".join([str(msg.messagecodenumber) for msg in saved]))
+                log.error("Planned messages sent to subscribers: %s" % ",".join([str(msg.messagecodenumber) for msg in saved]))
             else:
                 for msg in saved:
                     msg.set_status(MessageStatus.ERROR_SEND)
                 ids = ",".join([str(msg.messagecodenumber) for msg in saved])
-                log.error("Failed to communicate planned messages to GOVI: %s" % ids)
+                log.error("Failed to communicate planned messages to subscribers: %s" % ids)
         return ret
 
 

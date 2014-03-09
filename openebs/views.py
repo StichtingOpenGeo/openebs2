@@ -13,7 +13,7 @@ from django.views.generic.list import MultipleObjectMixin
 from djgeojson.views import GeoJSONLayerView
 from kv1.models import Kv1Stop
 from utils.client import get_client_ip
-from utils.views import GoviPushMixin, JSONListResponseMixin, AccessMixin
+from utils.views import ExternalMessagePushMixin, JSONListResponseMixin, AccessMixin
 from openebs.models import Kv15Stopmessage, Kv15Log, MessageStatus
 from openebs.form import Kv15StopMessageForm
 
@@ -34,6 +34,11 @@ class FilterDataownerListMixin(MultipleObjectMixin):
         if company is None:
             raise PermissionDenied("Je account is nog niet gelinkt aan een vervoerder")
         return super(FilterDataownerListMixin, self).get_queryset().filter(dataownercode=company)
+
+class Kv15PushMixin(ExternalMessagePushMixin):
+    message_type = 'KV15'
+    dossier = 'KV15messages'
+    namespace = 'http://bison.connekt.nl/tmi8/kv15/msg'
 
 # MESSAGE VIEWS
 
@@ -57,7 +62,7 @@ class MessageListView(AccessMixin, ListView):
         return context
 
 
-class MessageCreateView(AccessMixin, GoviPushMixin, CreateView):
+class MessageCreateView(AccessMixin, Kv15PushMixin, CreateView):
     permission_required = 'openebs.add_messages'
     model = Kv15Stopmessage
     form_class = Kv15StopMessageForm
@@ -82,17 +87,17 @@ class MessageCreateView(AccessMixin, GoviPushMixin, CreateView):
         Kv15Log.create_log_entry(form.instance, get_client_ip(self.request))
 
         # Send to GOVI
-        if self.push_govi(form.instance.to_xml()):
+        if self.push_message(form.instance.to_xml()):
             form.instance.set_status(MessageStatus.SENT)
-            log.info("Sent message to GOVI: %s" % (form.instance))
+            log.info("Sent message to subscribers: %s" % (form.instance))
         else:
             form.instance.set_status(MessageStatus.ERROR_SEND)
-            log.error("Failed to send message to GOVI: %s" % (form.instance))
+            log.error("Failed to send message to subscribers: %s" % (form.instance))
 
         return ret
 
 
-class MessageUpdateView(AccessMixin, GoviPushMixin, FilterDataownerMixin, UpdateView):
+class MessageUpdateView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, UpdateView):
     permission_required = 'openebs.add_messages'
     model = Kv15Stopmessage
     form_class = Kv15StopMessageForm
@@ -113,12 +118,12 @@ class MessageUpdateView(AccessMixin, GoviPushMixin, FilterDataownerMixin, Update
         self.process_new_old_haltes(form.instance, form.instance.kv15messagestop_set, haltes if haltes else "")
 
         # Push a delete, then a create, but we can use the same message id
-        if self.push_govi(form.instance.to_xml_delete()+form.instance.to_xml()):
+        if self.push_message(form.instance.to_xml_delete()+form.instance.to_xml()):
             form.instance.set_status(MessageStatus.SENT)
-            log.info("Sent message to GOVI: %s" % (form.instance))
+            log.info("Sent message to subscribers: %s" % (form.instance))
         else:
             form.instance.set_status(MessageStatus.ERROR_SEND)
-            log.error("Failed to send updated message to GOVI: %s" % (form.instance))
+            log.error("Failed to send updated message to subscribers: %s" % (form.instance))
 
         return ret
 
@@ -135,7 +140,7 @@ class MessageUpdateView(AccessMixin, GoviPushMixin, FilterDataownerMixin, Update
                 old_msg_stop.delete()
 
 
-class MessageDeleteView(AccessMixin, GoviPushMixin, FilterDataownerMixin, DeleteView):
+class MessageDeleteView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, DeleteView):
     permission_required = 'openebs.add_messages'
     model = Kv15Stopmessage
     success_url = reverse_lazy('msg_index')
@@ -148,12 +153,12 @@ class MessageDeleteView(AccessMixin, GoviPushMixin, FilterDataownerMixin, Delete
 
         ret = super(MessageDeleteView, self).delete(request, *args, **kwargs)
         msg = self.get_object()
-        if self.push_govi(msg.to_xml_delete()):
+        if self.push_message(msg.to_xml_delete()):
             msg.set_status(MessageStatus.DELETED)
-            log.error("Deleted message succesfully communicated to GOVI: %s" % msg)
+            log.error("Deleted message succesfully communicated to subscribers: %s" % msg)
         else:
             msg.set_status(MessageStatus.ERROR_SEND_DELETE)
-            log.error("Failed to send delete request to GOVI: %s" % msg)
+            log.error("Failed to send delete request to subscribers: %s" % msg)
         return ret
 
 class MessageDetailsView(AccessMixin, FilterDataownerMixin, DetailView):

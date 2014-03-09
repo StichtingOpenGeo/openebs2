@@ -175,22 +175,15 @@ LEAFLET_CONFIG = {
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 CRISPY_FAIL_SILENTLY = not DEBUG
 
-#GOVI_HOST = '192.168.33.1:8000' #'drisacc.transmodel.nl'
-GOVI_HOST = 'localhost:8000'
-GOVI_SUBSCRIBER = 'openOV'
-GOVI_KV15_PATH = '/TMI_Post/KV15'
-GOVI_KV15_NAMESPACE = 'http://bison.connekt.nl/tmi8/kv15/msg'
-GOVI_KV15_DOSSIER = 'KV15messages'
-GOVI_KV17_PATH = '/TMI_Post/KV17'
-GOVI_KV17_NAMESPACE = 'http://bison.connekt.nl/tmi8/kv17/msg'
-GOVI_KV17_DOSSIER = 'KV17cvlinfo'
-
-GOVI_PUSH_TIMEOUT = 10
-GOVI_PUSH_DEBUG = DEBUG
-GOVI_PUSH_SEND = True
-
+# Verification feed settings
 GOVI_VERIFY_FEED = 'tcp://192.168.33.1:8001' #'tcp://node02.kv7.openov.nl:7817'
 GOVI_VERIFY_SUB =  "/InTraffic/KV8gen"
+
+# Push settings
+try:
+    from settings_push import *
+except ImportError:
+    PUSH_SETTINGS = False
 
 try:
     from local_settings import *

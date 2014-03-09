@@ -4,12 +4,20 @@ from django.conf import settings
 import httplib
 
 class Push:
-    def __init__(self, subscriberid = 'openOV', namespace = None):
-        self.log = logging.getLogger("openebs.push")
-        self.subscriberid = subscriberid
-        self.timestamp = now()
+    alias = None
+    timeout = 10
+    enabled = True
+    fail_on_failure = False
+    debug = True
 
+    def __init__(self, host, endpoint, namespace, dossiername, subscriberid = 'openOV'):
+        self.log = logging.getLogger("openebs.push")
+        self.host = host
+        self.endpoint = endpoint
+        self.subscriberid = subscriberid
         self.namespace = namespace
+        self.dossiername = dossiername
+        self.timestamp = now()
 
     def __str__(self):
         data = {'namespace': self.namespace,
@@ -42,30 +50,29 @@ class Push:
 
         return xml
 
-    def push(self, remote, namespace, dossier, path, content):
+    def push(self, content):
         # Add content
-        self.namespace = namespace
-        self.dossiername = dossier
         self.content = content
+
         # Calculate XML with wrapper/header
         content = str(self)
-        if settings.GOVI_PUSH_DEBUG:
+        if self.debug:
             self.log.debug(content)
 
         response_code = -1
         response_content = None
         error = False
-        if settings.GOVI_PUSH_SEND:
-            self.log.debug("Posting to %s/%s" % (remote, path))
+        if self.enabled:
+            self.log.debug("Posting to %s (%s/%s)" % (self.alias, self.host, self.endpoint))
             try:
-                conn = httplib.HTTPConnection(remote, timeout=settings.GOVI_PUSH_TIMEOUT)
-                conn.request("POST", path, content, {"Content-type": "application/xml"})
+                conn = httplib.HTTPConnection(self.host, timeout=self.timeout)
+                conn.request("POST", self.endpoint, content, {"Content-type": "application/xml"})
             except socket.timeout:
                 error = True
-                self.log.error("Got timeout while connecting")
+                self.log.error("Got timeout while connecting to %s" % self.alias)
             except (httplib.HTTPException, socket.error) as ex:
                 error = True
-                self.log.error("Got exception while connecting: %s" % ex)
+                self.log.error("Got exception while connecting to %s: %s" % (self.alias, ex))
 
             if not error:
                 response = conn.getresponse()
@@ -73,7 +80,7 @@ class Push:
                 response_content = response.read()
                 conn.close()
 
-            if settings.GOVI_PUSH_DEBUG:
-                self.log.debug("Got response code %s and content: %s" % (response_code, response_content))
+            if self.debug:
+                self.log.debug("Connecting to %s and got response code %s and content: %s" % (self.alias, response_code, response_content))
 
         return (response_code,response_content)

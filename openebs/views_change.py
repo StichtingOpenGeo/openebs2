@@ -13,14 +13,14 @@ from kv1.models import Kv1Journey
 from openebs.form import CancelLinesForm, Kv17ChangeForm
 from openebs.models import Kv17Change
 from openebs.views import FilterDataownerMixin
-from utils.views import AccessMixin, GoviPushMixin, JSONListResponseMixin
+from utils.views import AccessMixin, ExternalMessagePushMixin, JSONListResponseMixin
 
 log = logging.getLogger('openebs.views.changes')
 
-class GoviKv17PushMixin(GoviPushMixin):
-    dossier = settings.GOVI_KV17_DOSSIER
-    path = settings.GOVI_KV17_PATH
-    namespace = settings.GOVI_KV17_NAMESPACE
+class Kv17PushMixin(ExternalMessagePushMixin):
+    message_type = 'KV17'
+    namespace = 'http://bison.connekt.nl/tmi8/kv17/msg'
+    dossier = 'KV17cvlinfo'
 
 class ChangeListView(AccessMixin, ListView):
     permission_required = 'openebs.view_change'
@@ -42,7 +42,7 @@ class ChangeListView(AccessMixin, ListView):
         return context
 
 
-class ChangeCreateView(AccessMixin, GoviKv17PushMixin, CreateView):
+class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
     permission_required = 'openebs.add_change'
     model = Kv17Change
     form_class = Kv17ChangeForm
@@ -55,16 +55,16 @@ class ChangeCreateView(AccessMixin, GoviKv17PushMixin, CreateView):
         xml = form.save()
 
         # Push message to GOVI
-        if self.push_govi(xml):
-            log.info("Sent KV17 line change to GOVI: %s" % self.request.POST.get('journeys', "<unknown>"))
+        if self.push_message(xml):
+            log.info("Sent KV17 line change to subscribers: %s" % self.request.POST.get('journeys', "<unknown>"))
         else:
-            log.error("Failed to communicate KV17 line change to GOVI: %s" % xml)
+            log.error("Failed to communicate KV17 line change to subscribers: %s" % xml)
 
         # Another hack to redirect correctly
         return HttpResponseRedirect(self.success_url)
 
 
-class ChangeDeleteView(AccessMixin, GoviKv17PushMixin, FilterDataownerMixin, DeleteView):
+class ChangeDeleteView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteView):
     permission_required = 'openebs.add_change'
     model = Kv17Change
     success_url = reverse_lazy('change_index')
@@ -72,17 +72,17 @@ class ChangeDeleteView(AccessMixin, GoviKv17PushMixin, FilterDataownerMixin, Del
     def delete(self, request, *args, **kwargs):
         ret = super(ChangeDeleteView, self).delete(request, *args, **kwargs)
         obj = self.get_object()
-        if self.push_govi(obj.to_xml()):
-            log.error("Recovered line succesfully communicated to GOVI: %s" % obj)
+        if self.push_message(obj.to_xml()):
+            log.error("Recovered line succesfully communicated to subscribers: %s" % obj)
         else:
-            log.error("Failed to send recover request to GOVI: %s" % obj)
+            log.error("Failed to send recover request to subscribers: %s" % obj)
             # We failed to push, recover our delete operation
             obj.is_recovered = False
             obj.recovered = None
             obj.save() # Note, this won't work locally!
         return ret
 
-class ChangeUpdateView(AccessMixin, GoviKv17PushMixin, FilterDataownerMixin, DeleteView):
+class ChangeUpdateView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteView):
     """ This is a really weird view - it's redoing a change that you deleted   """
     permission_required = 'openebs.add_change'
     model = Kv17Change
@@ -98,17 +98,17 @@ class ChangeUpdateView(AccessMixin, GoviKv17PushMixin, FilterDataownerMixin, Del
     def delete(self, request, *args, **kwargs):
         orig = self.get_object() # Store an original to undo our redo
         obj = self.update_object()
-        if self.push_govi(obj.to_xml()):
-            log.error("Redo line cancel succesfully communicated to GOVI: %s" % obj)
+        if self.push_message(obj.to_xml()):
+            log.error("Redo line cancel succesfully communicated to subscribers: %s" % obj)
         else:
-            log.error("Failed to send redo request to GOVI: %s" % obj)
+            log.error("Failed to send redo request to subscribers: %s" % obj)
             # We failed to push, recover our redo operation by restoring previous state
             obj.is_recovered = orig.is_recovered
             obj.recovered = orig.recovered
             obj.save() # Note, this won't work locally!
         return HttpResponseRedirect(self.get_success_url())
 
-class CancelLinesView(AccessMixin, GoviKv17PushMixin, FormView):
+class CancelLinesView(AccessMixin, Kv17PushMixin, FormView):
     permission_required = 'openebs.add_change'
     form_class = CancelLinesForm
     template_name = 'openebs/kv17change_redbutton.html'
@@ -127,10 +127,10 @@ class CancelLinesView(AccessMixin, GoviKv17PushMixin, FormView):
 
         # Concatenate XML for a single request
         message_string = ""
-        if self.push_govi(message_string):
-            log.error("Planned messages sent to GOVI: %s" % "")
+        if self.push_message(message_string):
+            log.error("Planned messages sent to subscribers: %s" % "")
         else:
-            log.error("Failed to communicate planned messages to GOVI: %s")
+            log.error("Failed to communicate planned messages to subscribers: %s")
         return ret
 
 class ActiveJourneysAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):

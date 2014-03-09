@@ -25,22 +25,29 @@ class JSONListResponseMixin(JSONResponseMixin):
         return self.render_json_response(contents)
 
 
-class GoviPushMixin(object):
-    dossier = settings.GOVI_KV15_DOSSIER
-    path = settings.GOVI_KV15_PATH
-    namespace = settings.GOVI_KV15_NAMESPACE
-    pusher = Push(settings.GOVI_SUBSCRIBER)
+class ExternalMessagePushMixin(object):
+    message_type = None # Abstract
+    namespace = ''
+    dossier = ''
+    pushers = []
 
-    def push_govi(self, msg):
+    def __init__(self):
+        self.pushers = self.get_pushers(settings.PUSH_SETTINGS, settings.PUSH_DEFAULTS)
+
+    def push_message(self, msg):
         """
-        Push message _msg_ to GOVI, and return if it was succesfull
+        Push message _msg_ to GOVI and other subscribers, and return if it was successful
         """
         success = False
-        code, content = self.pusher.push(settings.GOVI_HOST, self.namespace, self.dossier, self.path, msg)
-        if code == 200 and '>OK</' in content:
-            success = True
-        else:
-            log.error("Push to GOVI failed with code %s: %s" % (code, self.parse_error(content)))
+        for pusher in self.pushers:
+            code, content = pusher.push(msg)
+            if code == 200 and '>OK</' in content:
+                success = True
+            else:
+                log.error("Push to %s failed with code %s: %s" % (pusher.alias, code, self.parse_error(content)))
+                if pusher.fail_on_failure:
+                    log.error("Failing after %s failed, not pushing to other subscribers" % (pusher.alias))
+                    break
         return success
 
     @staticmethod
@@ -50,6 +57,31 @@ class GoviPushMixin(object):
             r = regex.search(content)
             return r.groups()[0] if r is not None else ""
         return "?"
+
+    def get_pushers(self, settings, defaults):
+        '''
+        Setup the push class - storage for all things related to a specific subscriber channel (meaning an endpoint)
+        '''
+        push_list = []
+        for destination in sorted(settings, key=lambda k: k['priority']):
+            if destination['enabled'] == False:
+                continue
+            if self.message_type is None or self.message_type not in destination['endpoints']:
+                raise ImproperlyConfigured("Endpoint type isn't registered")
+            if self.namespace == '' or self.namespace is None:
+                raise ImproperlyConfigured("Namespace isn't configured")
+            if self.dossier == '' or self.dossier is None:
+                raise ImproperlyConfigured("Dossier isn't configured")
+
+            endpoint = destination['endpoints'][self.message_type]
+
+            p = Push(destination['host'], endpoint['path'], self.namespace, self.dossier, destination['subscriberName'])
+            p.alias = destination.get('alias', destination['host'])
+            p.fail_on_failure = destination.get('failOnFailure', True)
+            p.debug = destination.get('debug', defaults.get('debug', False))
+            p.timeout = destination.get('timeout', defaults.get('timeout', False))
+            push_list.append(p)
+        return push_list
 
 
 class AccessMixin(AccessMixin):
