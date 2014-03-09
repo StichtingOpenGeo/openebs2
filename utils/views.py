@@ -46,8 +46,11 @@ class ExternalMessagePushMixin(object):
             else:
                 log.error("Push to %s failed with code %s: %s" % (pusher.alias, code, self.parse_error(content)))
                 if pusher.fail_on_failure:
+                    success = False
                     log.error("Failing after %s failed, not pushing to other subscribers" % (pusher.alias))
                     break
+                else:
+                    success = True
         return success
 
     @staticmethod

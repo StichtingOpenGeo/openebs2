@@ -109,6 +109,9 @@ class ChangeUpdateView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteV
         return HttpResponseRedirect(self.get_success_url())
 
 class CancelLinesView(AccessMixin, Kv17PushMixin, FormView):
+    '''
+    TODO : This is a big red button view allowing you to cancel all active trips if you so wish.
+    '''
     permission_required = 'openebs.add_change'
     form_class = CancelLinesForm
     template_name = 'openebs/kv17change_redbutton.html'
