@@ -300,9 +300,9 @@ class PlanScenarioForm(forms.Form):
     messageendtime = forms.DateTimeField(label=_("Einde"), initial=get_end_service)
 
     def clean(self):
-        data = self.cleaned_data
-        if self.data['messageendtime'] <= self.data['messagestarttime']:
-            raise ValidationError(_("Einde moet na begin zijn"))
+        data = super(PlanScenarioForm, self).clean()
+        if data['messageendtime'] <= data['messagestarttime']:
+            raise ValidationError(_("Einde bericht moet na begin zijn"))
         return data
 
     def __init__(self, *args, **kwargs):
