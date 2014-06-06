@@ -16,8 +16,7 @@
                 <td>{{ lijn.lineplanningnumber }}</td>
                 <td>{{ lijn.seen }}</td>
                 <td>{{ lijn.planned }}</td>
-
-                <td>{% widthratio lijn.seen lijn.planned 100 %}%</td>
+                <td>{{ lijn.percentage }}%</td>
             </tr>
         {% endfor %}
     </table>
