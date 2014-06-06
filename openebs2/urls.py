@@ -1,6 +1,7 @@
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
 from django.views.generic import TemplateView
+from reports.views import VehicleReportView
 
 admin.autodiscover()
 
@@ -19,6 +20,8 @@ urlpatterns = patterns('',
     url(r'^wachtwoord/gewijzigd$', 'django.contrib.auth.views.password_change_done', {'template_name': 'users/password_change_done.html'}, name="app_password_changed"),
     url(r'^geweigerd/$', TemplateView.as_view(template_name="openebs/nopermission.html"), name="app_nopermission"),
 
+    url(r'^report/lijnen/$', VehicleReportView.as_view(), name="report_vehicles"),
+
     # Uncomment the next line to enable the admin:
-    url(r'^admin/', include(admin.site.urls)),
+    url(r'^admin/', include(admin.site.urls))
 )

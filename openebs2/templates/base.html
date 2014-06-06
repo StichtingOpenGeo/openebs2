@@ -109,8 +109,11 @@
                 <li><a href="{% url 'admin:index' %}" target="_new" title="Backoffice">
                     <span class="glyphicon glyphicon-wrench"></span>&nbsp;{% trans "Backoffice" %}
                     </a></li>
-                <li><a href="{% url 'kv1_imports' %}" title="Import status">
+                <!-- <li><a href="{% url 'kv1_imports' %}" title="Import status">
                     <span class="glyphicon glyphicon-calendar"></span>&nbsp;{% trans "Import status" %}
+                    </a></li> -->
+                <li><a href="{% url 'report_vehicles' %}" title="Ritten">
+                    <span class="glyphicon glyphicon-calendar"></span>&nbsp;{% trans "Ritten" %}
                     </a></li>
                 <li class="divider"></li>
               {% endif %}

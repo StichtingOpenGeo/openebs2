@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Gerealiseerde ritten</h2>
+    <p>Die in het afgelopen half uur moesten vertrekken</p>
+
+    <table class="table table-striped">
+        <tr>
+            <th>Lijn</th>
+            <th>Gereden</th>
+            <th>Verwacht</th>
+            <th>Percentage</th>
+        </tr>
+        {% for lijn in list %}
+            <tr>
+                <td>{{ lijn.lineplanningnumber }}</td>
+                <td>{{ lijn.seen }}</td>
+                <td>{{ lijn.planned }}</td>
+
+                <td>{% widthratio lijn.seen lijn.planned 100 %}%</td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}
