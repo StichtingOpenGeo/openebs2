@@ -42,7 +42,7 @@ class Command(BaseCommand):
                                                lineplanningnumber=vehicle['lineplanningnumber'],
                                                journeynumber = int(vehicle['journeynumber']),
                                                operatingday=date(int(split_date[0]), int(split_date[1]), int(split_date[2])),
-                                               defaults={'last_punctuality': default, 'max_punctuality': default})
+                                               defaults={'last_punctuality': default, 'max_punctuality': default, 'vehiclenumber' : vehicle['vehiclenumber']})
         if 'punctuality' in vehicle:
             logline.last_punctuality = int(vehicle['punctuality'])
             if logline.max_punctuality < logline.last_punctuality:

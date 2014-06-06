@@ -9,6 +9,8 @@ class Kv6Log(models.Model):
     journeynumber = models.PositiveIntegerField(max_length=6)  # 0 - 999999
     operatingday = models.DateField()
 
+    vehiclenumber = models.CharField(max_length=10, blank=True)
+
     last_punctuality = models.IntegerField()
     max_punctuality = models.IntegerField()
     last_logged = models.DateTimeField(auto_now=True)
