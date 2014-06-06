@@ -2,7 +2,7 @@
 
 {% block content %}
     <h2>Gerealiseerde ritten</h2>
-    <p>Die in het afgelopen half uur moesten vertrekken</p>
+    <p>Die in het afgelopen half uur reden</p>
 
     <table class="table table-striped">
         <tr>
@@ -13,18 +13,13 @@
         </tr>
         {% for lijn in list %}
             <tr class="line" data-line="{{ lijn.lineplanningnumber }}">
-                <td>{{ lijn.lineplanningnumber }}</td>
+                <td><strong>{{ lijn.lineplanningnumber }}</strong></td>
                 <td>{{ lijn.seen }}</td>
                 <td>{{ lijn.planned }}</td>
-                <td>{{ lijn.percentage }}%  <a class="btn btn-primary btn-sm pull-right view-detail">Details</a> </td>
+                <td>{{ lijn.percentage }}%  <a class="btn btn-primary btn-xs pull-right view-detail">Details</a> </td>
             </tr>
         {% endfor %}
     </table>
-
-    <script>
-
-
-    </script>
 {% endblock %}
 
 {% block js_init %}
@@ -42,6 +37,6 @@
      });
 
      function getText(val) {
-        return '<li class="col-xs-4">'+val['vehiclenumber']+ " - "+val['journeynumber']+"</li>";
+        return '<li class="col-xs-4">'+val['vehiclenumber']+ " - Rit "+val['journeynumber']+"</li>";
      }
 {% endblock %}

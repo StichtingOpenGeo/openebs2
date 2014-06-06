@@ -21,15 +21,14 @@ class Kv6Log(models.Model):
 
     @staticmethod
     def do_report():
-        qry = """select l.id, l.publiclinenumber, l.lineplanningnumber, coalesce(count(lg.id), 0) as seen, count(*) as planned, ROUND(100.0 * count(lg.id)/count(*),1) as percentage
-        from kv1_kv1journey j
-        join kv1_kv1line l on (j.line_id = l.id)
-        join kv1_kv1journeydate jd on (jd.journey_id = j.id and jd.date = CURRENT_DATE)
-        left outer join reports_kv6log lg on (j.journeynumber = lg.journeynumber and jd.date = lg.operatingday and lg.lineplanningnumber = l.lineplanningnumber)
-        WHERE j.dataownercode = 'HTM' and
-        j.departuretime between ROUND(EXTRACT(EPOCH FROM CURRENT_TIME - INTERVAL '15 MIN')) and ROUND(EXTRACT(EPOCH FROM CURRENT_TIME))
-        group by l.id, l.lineplanningnumber
-        order by percentage, l.lineplanningnumber::int;"""
+        qry = """SELECT l.id, l.publiclinenumber, l.lineplanningnumber, coalesce(count(lg.id), 0) as seen, count(*) as planned, ROUND(100.0 * count(lg.id)/count(*),1) as percentage
+        FROM kv1_kv1journey j
+        JOIN kv1_kv1line l ON (j.line_id = l.id)
+        JOIN kv1_kv1journeydate jd ON (jd.journey_id = j.id and jd.date = CURRENT_DATE)
+        LEFT OUTER JOIN reports_kv6log lg ON (j.journeynumber = lg.journeynumber and jd.date = lg.operatingday and lg.lineplanningnumber = l.lineplanningnumber)
+        WHERE j.dataownercode = 'HTM' AND ROUND(EXTRACT(EPOCH FROM CURRENT_TIME - INTERVAL '15 MIN')) BETWEEN j.departuretime and j.departuretime+j.duration
+        GROUP BY l.id, l.lineplanningnumber
+        ORDER BY percentage, l.lineplanningnumber::int;"""
 
         cursor = connection.cursor()
         cursor.execute(qry)
