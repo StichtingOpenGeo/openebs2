@@ -21,7 +21,7 @@ class Kv6Log(models.Model):
 
     @staticmethod
     def do_report():
-        qry = """select l.id, l.publiclinenumber, l.lineplanningnumber, coalesce(count(lg.id), 0) as seen, count(*) as planned, (coalesce(count(lg.id), 0)/count(*)*100) as percentage
+        qry = """select l.id, l.publiclinenumber, l.lineplanningnumber, coalesce(count(lg.id), 0) as seen, count(*) as planned, ROUND(100.0 * count(lg.id)/count(*),1) as percentage
         from kv1_kv1journey j
         join kv1_kv1line l on (j.line_id = l.id)
         join kv1_kv1journeydate jd on (jd.journey_id = j.id and jd.date = CURRENT_DATE)
