@@ -27,7 +27,7 @@ class Kv6Log(models.Model):
         join kv1_kv1journeydate jd on (jd.journey_id = j.id and jd.date = CURRENT_DATE)
         left outer join reports_kv6log lg on (j.journeynumber = lg.journeynumber and jd.date = lg.operatingday and lg.lineplanningnumber = l.lineplanningnumber)
         WHERE j.dataownercode = 'HTM' and
-        j.departuretime between ROUND(EXTRACT(EPOCH FROM CURRENT_TIME - INTERVAL '30 MIN')) and ROUND(EXTRACT(EPOCH FROM CURRENT_TIME))
+        j.departuretime between ROUND(EXTRACT(EPOCH FROM CURRENT_TIME - INTERVAL '15 MIN')) and ROUND(EXTRACT(EPOCH FROM CURRENT_TIME))
         group by l.id, l.lineplanningnumber
         order by percentage, l.lineplanningnumber::int;"""
 
@@ -37,7 +37,7 @@ class Kv6Log(models.Model):
 
     @staticmethod
     def do_details():
-        qry = """SELECT l.id, l.dataownercode, l.lineplanningnumber, j.journeynumber, j.departuretime, lg.id, lg.max_punctuality, lg.vehiclenumber
+        qry = """SELECT l.id, l.dataownercode, l.lineplanningnumber, j.journeynumber, j.departuretime, j.direction, j.duration, lg.id, lg.max_punctuality, lg.vehiclenumber
         FROM kv1_kv1journey j
         JOIN kv1_kv1line l ON (j.line_id = l.id)
         JOIN kv1_kv1journeydate jd ON (jd.journey_id = j.id and jd.date = CURRENT_DATE)
@@ -45,6 +45,10 @@ class Kv6Log(models.Model):
         WHERE j.dataownercode = 'HTM' and
         j.departuretime < ROUND(EXTRACT(EPOCH FROM CURRENT_TIME))
         ORDER BY l.lineplanningnumber::int, j.departuretime;"""
+
+        cursor = connection.cursor()
+        cursor.execute(qry)
+        return dictfetchall(cursor)
 
 
 

@@ -12,12 +12,36 @@
             <th>Percentage</th>
         </tr>
         {% for lijn in list %}
-            <tr>
+            <tr class="line" data-line="{{ lijn.lineplanningnumber }}">
                 <td>{{ lijn.lineplanningnumber }}</td>
                 <td>{{ lijn.seen }}</td>
                 <td>{{ lijn.planned }}</td>
-                <td>{{ lijn.percentage }}%</td>
+                <td>{{ lijn.percentage }}%  <a class="btn btn-primary btn-sm pull-right view-detail">Details</a> </td>
             </tr>
         {% endfor %}
     </table>
+
+    <script>
+
+
+    </script>
+{% endblock %}
+
+{% block js_init %}
+     $(".view-detail").click(function() {
+            $('.detail-row').remove();
+            var url = "{% url "report_line_details" 999 %}";
+            var line = $($(this).parents('tr')[0]).attr('data-line');
+            url = url.replace("999", line);
+            $(this).closest('tr.line').after('<tr class="detail-row"><td>Details</td><td colspan="3"><ul class="detail row"></ul></td></tr>');
+            $.ajax(url).success(function(data) {
+                $.each(data.object_list, function(i, val) {
+                    $('.detail').append(getText(val));
+                });
+            });
+     });
+
+     function getText(val) {
+        return '<li class="col-xs-4">'+val['vehiclenumber']+ " - "+val['journeynumber']+"</li>";
+     }
 {% endblock %}
