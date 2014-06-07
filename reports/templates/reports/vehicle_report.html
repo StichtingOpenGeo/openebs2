@@ -23,7 +23,7 @@
                 <td colspan="4">
                     <ul class="row">
                         {% for vehicle in lijn.live %}
-                            <li>{{ vehicle.vehiclenumber }}</li>
+                            <li class="col-xs-4">{{ vehicle.vehiclenumber }} - {{ vehicle.journeynumber }}</li>
                         {% endfor %}
                     </ul>
                 </td>

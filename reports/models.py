@@ -21,7 +21,7 @@ class Kv6Log(models.Model):
 
     @staticmethod
     def do_report():
-        qry = """SELECT l.id, l.publiclinenumber, l.lineplanningnumber, lg.id as log_id, lg.vehiclenumber, lg.last_logged, lg.last_punctuality
+        qry = """SELECT l.id, l.publiclinenumber, l.lineplanningnumber, j.journeynumber, lg.id as log_id, lg.vehiclenumber, lg.last_logged, lg.last_punctuality
         FROM kv1_kv1journey j
         JOIN kv1_kv1line l ON (j.line_id = l.id)
         JOIN kv1_kv1journeydate jd ON (jd.journey_id = j.id and jd.date = CURRENT_DATE)
