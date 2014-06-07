@@ -37,14 +37,16 @@ class Kv6Log(models.Model):
             line = journey['lineplanningnumber']
             if line not in output:
                 output[line] = { 'lineplanningnumber': line, 'publiclinenumber': journey['publiclinenumber'],
-                                 'list': [], 'seen': 0, 'expected': 0 }
+                                 'list': [], 'live': [], 'seen': 0, 'expected': 0 }
             output[line]['list'] += journey
             output[line]['expected'] += 1
             if journey['log_id'] is not None:
                 output[line]['seen'] += 1
+                output[line]['live'] += journey
             output[line]['percentage'] = round((output[line]['seen'] / output[line]['expected']) * 100.0, 1)
 
-        return output.values()
+        list = sorted(output.values(), key= lambda k: k['percentage'])
+        return sorted(list, key= lambda k: int(k['lineplanningnumber']))
 
 
 def dictfetchall(cursor):
