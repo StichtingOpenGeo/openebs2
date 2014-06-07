@@ -27,7 +27,7 @@ class Kv6Log(models.Model):
         JOIN kv1_kv1journeydate jd ON (jd.journey_id = j.id and jd.date = CURRENT_DATE)
         LEFT OUTER JOIN reports_kv6log lg ON (j.journeynumber = lg.journeynumber and jd.date = lg.operatingday and lg.lineplanningnumber = l.lineplanningnumber)
         WHERE j.dataownercode = 'HTM' AND ROUND(EXTRACT(EPOCH FROM CURRENT_TIME - INTERVAL '15 MIN')) BETWEEN j.departuretime and j.departuretime+j.duration
-        ORDER BY l.lineplanningnumber::int;"""
+        ORDER BY l.lineplanningnumber;"""
 
         cursor = connection.cursor()
         cursor.execute(qry)
@@ -42,8 +42,7 @@ class Kv6Log(models.Model):
             output[line]['expected'] += 1
             if journey['log_id'] is not None:
                 output[line]['seen'] += 1
-            output[line]['percentage'] = (output[line]['seen'] / output[line]['expected']) * 100
-            print journey
+            output[line]['percentage'] = round((output[line]['seen'] / output[line]['expected']) * 100.0, 1)
 
         return output.values()
 

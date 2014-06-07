@@ -11,7 +11,7 @@
             <th>Verwacht</th>
             <th>Percentage</th>
         </tr>
-        {% for lijn in list %}
+        {% for lijn in list|dictsort:"percentage" %}
             <tr class="line" data-line="{{ lijn.lineplanningnumber }}">
                 <td><strong>{{ lijn.publiclinenumber }}</strong></td>
                 <td>{{ lijn.seen }}</td>
