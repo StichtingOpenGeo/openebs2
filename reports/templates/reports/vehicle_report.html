@@ -16,9 +16,13 @@
                 <td><strong>{{ lijn.publiclinenumber }}</strong></td>
                 <td>{{ lijn.seen }}</td>
                 <td>{{ lijn.expected }}</td>
-                <td>{{ lijn.percentage }}%  <a class="btn btn-primary btn-xs pull-right view-detail">Details</a> </td>
+                <td>{{ lijn.percentage }}%
+                    <a class="btn btn-primary btn-xs pull-right view-detail" data-toggle="collapse" data-target="#l{{ lijn.lineplanningnumber }}">
+                        Details
+                    </a>
+                </td>
             </tr>
-            <tr>
+            <tr class="collapse" id="l{{ lijn.lineplanningnumber }}">
                 <td></td>
                 <td colspan="4">
                     <ul class="row">
