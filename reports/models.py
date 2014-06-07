@@ -38,11 +38,11 @@ class Kv6Log(models.Model):
             if line not in output:
                 output[line] = { 'lineplanningnumber': line, 'publiclinenumber': journey['publiclinenumber'],
                                  'list': [], 'live': [], 'seen': 0, 'expected': 0 }
-            output[line]['list'] += journey
+            output[line]['list'].append(journey)
             output[line]['expected'] += 1
             if journey['log_id'] is not None:
                 output[line]['seen'] += 1
-                output[line]['live'] += journey
+                output[line]['live'].append(journey)
             output[line]['percentage'] = round((output[line]['seen'] / output[line]['expected']) * 100.0, 1)
 
         list = sorted(output.values(), key= lambda k: k['percentage'])
