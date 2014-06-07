@@ -4,12 +4,12 @@
     <h2>Gerealiseerde ritten</h2>
     <p>Die in het afgelopen half uur reden</p>
 
-    <table class="table table-striped table-condensed table-bordered">
+    <table class="table table-striped table-condensed table-bordered col-lg-8">
         <tr>
-            <th>Lijn</th>
-            <th>Gereden</th>
-            <th>Verwacht</th>
-            <th>Percentage</th>
+            <th class="col-lg-2">Lijn</th>
+            <th class="col-lg-3">Gereden</th>
+            <th class="col-lg-3">Verwacht</th>
+            <th class="col-lg-4">Percentage</th>
         </tr>
         {% for lijn in list|dictsort:"percentage" %}
             <tr class="line" data-line="{{ lijn.lineplanningnumber }}">

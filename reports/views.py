@@ -24,15 +24,3 @@ class VehicleReportDetailsView(AccessMixin, JSONListResponseMixin, TemplateView)
     def get_context_data(self, **kwargs):
         return {'details': Kv6Log.do_details() }
 
-class LineDetailsView(AccessMixin, JSONListResponseMixin, ListView):
-    permission_required = 'openebs.view_dashboard'
-    render_object = 'object_list'
-    model = Kv6Log
-
-    def get_queryset(self):
-        qryset = super(LineDetailsView, self).get_queryset()
-        return qryset.filter(lineplanningnumber=self.kwargs['line'], operatingday=datetime.date.today(),
-                             last_logged__gt=(datetime.datetime.now() - datetime.timedelta(minutes=15)))\
-                     .order_by('vehiclenumber').values()
-
-

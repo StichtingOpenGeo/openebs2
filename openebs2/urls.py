@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
 from django.views.generic import TemplateView
-from reports.views import VehicleReportView, VehicleReportDetailsView, LineDetailsView
+from reports.views import VehicleReportView
 
 admin.autodiscover()
 
@@ -22,8 +22,6 @@ urlpatterns = patterns('',
     url(r'^geweigerd/$', TemplateView.as_view(template_name="openebs/nopermission.html"), name="app_nopermission"),
 
     url(r'^report/lijnen/$', VehicleReportView.as_view(), name="report_vehicles"),
-    url(r'^report/lijnen.json$', VehicleReportDetailsView.as_view(), name="report_details"),
-    url(r'^report/lijn/(?P<line>\d+).json$', LineDetailsView.as_view(), name="report_line_details"),
 
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls))
