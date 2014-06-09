@@ -32,6 +32,15 @@ span.stop-selection,span.trip-selection{
     height: 600px;
 }
 
+#smallmap {
+    height: 500px;
+    margin-bottom: 25px;
+}
+
+#daygraph {
+    height: 200px;
+}
+
 .container {
     max-width: none;
     min-width: none;

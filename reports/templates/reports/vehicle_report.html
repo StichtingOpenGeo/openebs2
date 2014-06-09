@@ -4,7 +4,7 @@
 {% block content %}
     <h2>Dashboard Ritten</h2>
     <h3>Daggrafiek</h3>
-    <div id="daychart" style="height: 250px;"></div>
+    <div id="daychart"></div>
 
     <h3>Actueel</h3>
     <p class="help-text">Ritten die in de afgelopen 15 minuten reden</p>
@@ -65,7 +65,7 @@
 {% endblock %}
 
 {% block js %}
-    var leafletMap;
+    var leafletMap, leafletLayer;
     var geojsonMarkerOptions = {
         radius: 8,
         fillColor: "#ff0000",
@@ -86,12 +86,15 @@
         leafletMap = map;
         leafletMap.setView(new L.LatLng(52.05, 4.32), 12);
         getData();
-        window.setInterval(getData, 10000);
+        window.setInterval(getData, 30000);
     }
 
     function getData() {
         $.getJSON("{% url 'ajax_vehicles' %}", function (data) {
-            L.geoJson(data, {
+            if (leafletLayer) {
+                leafletMap.removeLayer(leafletLayer);
+            }
+            leafletLayer = L.geoJson(data, {
                 onEachFeature: onEachFeature,
                 pointToLayer: function (feature, latlng) {
                     if (feature.properties.vehiclenumber[0] == '1') {
@@ -105,7 +108,8 @@
                     }
                     return L.circleMarker(latlng, geojsonMarkerOptions);
                 }
-            }).addTo(leafletMap);
+            })
+            leafletLayer.addTo(leafletMap);
         });
     }
 
