@@ -40,7 +40,7 @@ class Kv6Log(models.Model):
         for journey in journey_list:
             line = journey['lineplanningnumber']
             if line not in output:
-                output[line] = { 'line_id': line, 'publiclinenumber': journey['lineplanningnumber'],
+                output[line] = { 'lineplanningnumber': line, 'publiclinenumber': journey['lineplanningnumber'],
                                  'list': [], 'live': [], 'seen': 0, 'expected': 0 }
             output[line]['list'].append(journey)
             output[line]['expected'] += 1
