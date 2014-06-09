@@ -54,11 +54,42 @@
 {% endblock %}
 
 {% block js %}
+    var geojsonMarkerOptions = {
+        radius: 8,
+        fillColor: "#ff0000",
+        color: "#000",
+        weight: 1,
+        opacity: 1,
+        fillOpacity: 0.8
+    };
+
+    function onEachFeature(feature, layer) {
+        text = "<b>Voertuig:</b> "+feature.properties.vehiclenumber+"<br />";
+        text += "<b>Rit:</b> "+feature.properties.journeynumber+"<br />";
+        text += "<b>Punctualiteit:</b> "+feature.properties.last_punctuality+"s<br />";
+        layer.bindPopup(text);
+    }
+
     function main_map_init (map, options) {
         map.setView(new L.LatLng(52.05, 4.32), 12);
         $.getJSON("{% url 'ajax_vehicles' %}", function (data) {
-            // Add GeoJSON layer
-            L.geoJson(data).addTo(map);
+            L.geoJson(data, {
+                onEachFeature: onEachFeature,
+                pointToLayer: function (feature, latlng) {
+                    if (feature.properties.vehiclenumber[0] == '1') {
+                        geojsonMarkerOptions.fillColor = '#ffffff';
+                    }
+                    if (feature.properties.vehiclenumber[0] == '3') {
+                        geojsonMarkerOptions.fillColor = '#ff0000';
+                    }
+                    if (feature.properties.vehiclenumber[0] == '4') {
+                        geojsonMarkerOptions.fillColor = '#000099';
+                    }
+                    return L.circleMarker(latlng, geojsonMarkerOptions);
+                }
+            }).addTo(map);
         });
+
+
     }
 {% endblock %}
