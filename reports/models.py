@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.db import models, connection
 from kv1.models import Kv1Line
 from kv15.enum import DATAOWNERCODE
@@ -21,13 +22,13 @@ class Kv6Log(models.Model):
 
     @staticmethod
     def do_report():
-        qry = """SELECT l.publiclinenumber, l.lineplanningnumber, j.journeynumber, lg.id as log_id, lg.vehiclenumber, lg.last_logged, lg.last_punctuality
+        now = datetime.now()
+        qry = """SELECT j.line_id, j.journeynumber, lg.id as log_id, lg.vehiclenumber, lg.last_logged, lg.last_punctuality
         FROM kv1_kv1journey j
         JOIN kv1_kv1journeydate jd ON (jd.journey_id = j.id and jd.date = CURRENT_DATE)
-        JOIN kv1_kv1line l ON (j.line_id = l.id)
-        LEFT OUTER JOIN reports_kv6log lg ON (j.journeynumber = lg.journeynumber and jd.date = lg.operatingday and lg.lineplanningnumber = l.lineplanningnumber)
-        WHERE j.dataownercode = 'HTM' AND ROUND(EXTRACT(EPOCH FROM CURRENT_TIME - INTERVAL '15 MIN')) BETWEEN j.departuretime and j.departuretime+j.duration
-        ORDER BY l.lineplanningnumber;"""
+        LEFT OUTER JOIN reports_kv6log lg ON (j.journeynumber = lg.journeynumber and jd.date = lg.operatingday)
+        WHERE j.dataownercode = 'HTM' AND %s BETWEEN j.departuretime and j.arrivaltime
+        ORDER BY j.line_id;""" % ((now.hour*60*60)+(now.minute*60)+now.seconds)
 
         cursor = connection.cursor()
         cursor.execute(qry)
