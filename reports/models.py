@@ -72,7 +72,7 @@ class SnapshotLog(models.Model):
         snapshot.save()
 
     @staticmethod
-    def do_graph(date):
+    def do_graph_all(date):
         datapoints = SnapshotLog.objects.filter(created__range=[date-timedelta(days=1), date+timedelta(days=1)])\
                                         .exclude(data='[]').values('created', 'data')
         output = []
@@ -82,6 +82,26 @@ class SnapshotLog(models.Model):
             for line in stored:
                 datapoint['seen'] += line['seen']
                 datapoint['expected'] += line['expected']
+            output.append(datapoint)
+        return output
+
+    @staticmethod
+    def do_graph_vehicles(date):
+        datapoints = SnapshotLog.objects.filter(created__range=[date-timedelta(days=1), date+timedelta(days=1)])\
+                                        .exclude(data='[]').values('created', 'data')
+        output = []
+        for point in datapoints:
+            stored = json.loads(point['data'])
+            datapoint = { 'date': point['created'], 'gtl' : 0, 'rr': 0, 'bus': 0 }
+            for line in stored:
+                for vehicle in line['list']:
+                    if 'vehiclenumber' in vehicle and vehicle['vehiclenumber'] is not None:
+                        if vehicle['vehiclenumber'][0] == '1':
+                            datapoint['bus'] += 1
+                        if vehicle['vehiclenumber'][0] == '3':
+                            datapoint['gtl'] += 1
+                        if vehicle['vehiclenumber'][0] == '4':
+                            datapoint['rr'] += 1
             output.append(datapoint)
         return output
 

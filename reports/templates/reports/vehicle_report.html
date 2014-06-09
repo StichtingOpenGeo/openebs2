@@ -3,7 +3,7 @@
 
 {% block content %}
     <h2>Dashboard Ritten</h2>
-    <h3>Daggrafiek</h3>
+    <h3>Materieelinzet</h3>
     <div id="daychart"></div>
 
     <h3>Actueel</h3>
@@ -61,7 +61,8 @@
 {% endblock %}
 
 {% block js_init %}
-    $.getJSON("{% url 'ajax_graph' date_today %}", makeGraph);
+    /*$.getJSON("{% url 'ajax_graph_all' date_today %}", makeGraphAll);*/
+    $.getJSON("{% url 'ajax_graph_vehicles' date_today %}", makeGraphVehicles);
 {% endblock %}
 
 {% block js %}
@@ -113,7 +114,7 @@
         });
     }
 
-    function makeGraph(data) {
+    function makeGraphAll(data) {
         new Morris.Line({
           element: 'daychart',
           data: data.points,
@@ -121,6 +122,17 @@
           ykeys: ['expected', 'seen'],
           lineColors: ['#000000', '#dd0000'],
           labels: ['Ritten verwacht','Ritten gereden']
+        });
+    }
+
+    function makeGraphVehicles(data) {
+        new Morris.Line({
+          element: 'daychart',
+          data: data.points,
+          xkey: 'date',
+          ykeys: ['gtl', 'rr', 'bus'],
+          lineColors: ['#dd0000', '#000099', '#000000'],
+          labels: ['GTL (3xxx)','RandstadRail (4xxx)', 'Bus (1xxx)']
         });
     }
 {% endblock %}

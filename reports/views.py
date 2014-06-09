@@ -22,12 +22,19 @@ class VehicleReportView(AccessMixin, TemplateView):
 
 class GraphDataView(AccessMixin, JSONListResponseMixin, TemplateView):
     permission_required = 'openebs.view_dashboard'
+    report_type = 'all'
     render_object = 'points'
 
     def get_context_data(self, **kwargs):
+        result = []
+        print self.request.GET
         datestring = self.request.GET.get('date', now().date().isoformat()).split('-')
         qrydate = date(int(datestring[0]), int(datestring[1]), int(datestring[2]))
-        return {'points': SnapshotLog.do_graph(qrydate) }
+        if self.report_type == 'all':
+            result = SnapshotLog.do_graph_all(qrydate)
+        else:
+            result = SnapshotLog.do_graph_vehicles(qrydate)
+        return {'points': result }
 
 class ActiveVehiclesListView(AccessMixin, GeoJSONLayerView):
     permission_required = 'openebs.view_dashboard'

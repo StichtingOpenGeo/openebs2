@@ -22,7 +22,8 @@ urlpatterns = patterns('',
     url(r'^geweigerd/$', TemplateView.as_view(template_name="openebs/nopermission.html"), name="app_nopermission"),
 
     url(r'^report/lijnen/$', VehicleReportView.as_view(), name="report_vehicles"),
-    url(r'^report/lijnen/(?P<date>[0-9]{4}-[0-9]{2}-[0-9]{2})/graph.json$', GraphDataView.as_view(), name="ajax_graph"),
+    url(r'^report/lijnen/(?P<date>[0-9]{4}-[0-9]{2}-[0-9]{2})/all.json$', GraphDataView.as_view(report_type='all'), name="ajax_graph_all"),
+    url(r'^report/lijnen/(?P<date>[0-9]{4}-[0-9]{2}-[0-9]{2})/vehicles.json$', GraphDataView.as_view(report_type='vehicles'), name="ajax_graph_vehicles"),
     url(r'^report/lijnen/live.json$', ActiveVehiclesListView.as_view(), name="ajax_vehicles"),
 
     # Uncomment the next line to enable the admin:
