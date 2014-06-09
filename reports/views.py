@@ -27,7 +27,6 @@ class GraphDataView(AccessMixin, JSONListResponseMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         result = []
-        print self.request.GET
         datestring = self.request.GET.get('date', now().date().isoformat()).split('-')
         qrydate = date(int(datestring[0]), int(datestring[1]), int(datestring[2]))
         if self.report_type == 'all':
