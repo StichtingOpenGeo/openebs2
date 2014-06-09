@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS tmp_js (privatecode character varying(255), dep_time 
 DELETE FROM tmp_js;
 \COPY tmp_js FROM '/tmp/rid/openebs_journeys.csv' CSV HEADER;
 /* Insert new trips */
-INSERT INTO kv1_kv1journey (dataownercode, line_id, journeynumber, scheduleref, direction, departuretime, duration)
+INSERT INTO kv1_kv1journey (dataownercode, line_id, journeynumber, scheduleref, direction, departuretime, arrivaltime)
 SELECT split_part(privatecode,':',1), l.id, cast(split_part(privatecode,':',3) as integer), availability, direction, dep_time, dep_time+journey_duration
 FROM tmp_js, kv1_kv1line l
 WHERE l.dataownercode = split_part(privatecode,':',1) AND l.lineplanningnumber = split_part(privatecode,':',2)
