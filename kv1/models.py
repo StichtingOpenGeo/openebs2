@@ -60,7 +60,7 @@ class Kv1Journey(models.Model):
     journeynumber = models.PositiveIntegerField(max_length=6)  # 0 - 999999
     scheduleref = models.PositiveIntegerField() # Field 'availabilityconditionref'
     departuretime = models.PositiveIntegerField(db_index=True) # In seconds
-    duration = models.PositiveIntegerField() # Also in seconds
+    duration = models.PositiveIntegerField(db_index=True) # Also in seconds
     direction = models.PositiveSmallIntegerField()
 
     def __unicode__(self):
