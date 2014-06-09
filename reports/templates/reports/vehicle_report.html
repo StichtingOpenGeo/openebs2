@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load leaflet_tags %}
 
 {% block content %}
     <h2>Gerealiseerde ritten</h2>
@@ -38,10 +39,26 @@
             </tr>
         {% endfor %}
     </table>
+
+    <h3>Voertuigposities</h3>
+    {% leaflet_map "smallmap" callback="main_map_init" %}
+
 {% endblock %}
 
-{% block js_init %}
-     $(".view-detail").click(function() {
+{% block extra_css %}
+    {% leaflet_css %}
+{% endblock %}
 
-     });
+{% block extra_js %}
+    {% leaflet_js %}
+{% endblock %}
+
+{% block js %}
+    function main_map_init (map, options) {
+        map.setView(new L.LatLng(52.05, 4.32), 12);
+        $.getJSON("{% url 'ajax_vehicles' %}", function (data) {
+            // Add GeoJSON layer
+            L.geoJson(data).addTo(map);
+        });
+    }
 {% endblock %}

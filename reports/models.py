@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
-from django.db import models, connection
+from django.contrib.gis.db import models
+from django.contrib.gis.geos import Point
+from django.db import connection
 from kv1.models import Kv1Line
 from kv15.enum import DATAOWNERCODE
 
@@ -12,10 +14,12 @@ class Kv6Log(models.Model):
 
     vehiclenumber = models.CharField(max_length=10, blank=True)
 
+    last_position = models.PointField(blank=True, null=True)
     last_punctuality = models.IntegerField()
     max_punctuality = models.IntegerField()
     last_logged = models.DateTimeField(auto_now=True)
 
+    objects = models.GeoManager()
 
     class Meta:
         unique_together = ('dataownercode', 'lineplanningnumber', 'journeynumber', 'operatingday')
