@@ -3,8 +3,18 @@
 
 {% block content %}
     <h2>Dashboard Ritten</h2>
-    <h3>Materieelinzet</h3>
-    <div id="daychart"></div>
+    <h3>Daggrafieken</h3>
+    <ul class="nav nav-tabs">
+      <li class="active"><a href="#journey" data-toggle="tab">Ritten</a></li>
+      <li><a href="#vehicles" data-toggle="tab">Materieel</a></li>
+    </ul>
+
+    <!-- Tab panes -->
+    <div class="tab-content">
+      <div class="tab-pane active" id="journey"><div id="journeychart" class="graph"></div></div>
+      <div class="tab-pane" id="vehicles"><div id="vehiclechart" class="graph"></div></div>
+    </div>
+
 
     <h3>Actueel</h3>
     <p class="help-text">Ritten die in de afgelopen 15 minuten reden</p>
@@ -61,12 +71,18 @@
 {% endblock %}
 
 {% block js_init %}
-    /*$.getJSON("{% url 'ajax_graph_all' date_today %}", makeGraphAll);*/
+    $.getJSON("{% url 'ajax_graph_all' date_today %}", makeGraphJourneys);
     $.getJSON("{% url 'ajax_graph_vehicles' date_today %}", makeGraphVehicles);
+    $('ul.nav a').on('shown.bs.tab', function (e) {
+        graphJourneys.redraw();
+        graphVehicles.redraw();
+    });
 {% endblock %}
 
 {% block js %}
     var leafletMap, leafletLayer;
+    var graphJourneys, graphVehicles;
+
     var geojsonMarkerOptions = {
         radius: 8,
         fillColor: "#ff0000",
@@ -114,9 +130,9 @@
         });
     }
 
-    function makeGraphAll(data) {
-        new Morris.Line({
-          element: 'daychart',
+    function makeGraphJourneys(data) {
+        graphJourneys = new Morris.Line({
+          element: 'journeychart',
           data: data.points,
           xkey: 'date',
           ykeys: ['expected', 'seen'],
@@ -126,8 +142,8 @@
     }
 
     function makeGraphVehicles(data) {
-        new Morris.Line({
-          element: 'daychart',
+        graphVehicles = new Morris.Line({
+          element: 'vehiclechart',
           data: data.points,
           xkey: 'date',
           ykeys: ['gtl', 'rr', 'bus'],

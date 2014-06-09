@@ -37,8 +37,12 @@ span.stop-selection,span.trip-selection{
     margin-bottom: 25px;
 }
 
-#daygraph {
+.graph {
     height: 200px;
+    width: 100%;
+}
+.graph svg {
+    width: 100% !important;
 }
 
 .container {
