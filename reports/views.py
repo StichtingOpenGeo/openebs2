@@ -1,9 +1,7 @@
 # Create your views here.
-from braces.views import LoginRequiredMixin
 from django.utils.timezone import now
 from django.views.generic import TemplateView
 from djgeojson.views import GeoJSONLayerView
-from kv1.models import Kv1Line
 from reports.models import Kv6Log, SnapshotLog
 from utils.views import JSONListResponseMixin, AccessMixin
 from datetime import timedelta, date
