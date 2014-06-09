@@ -1,8 +1,8 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+import json
 from django.contrib.gis.db import models
-from django.contrib.gis.geos import Point
 from django.db import connection
-from kv1.models import Kv1Line
+from json_field import JSONField
 from kv15.enum import DATAOWNERCODE
 
 
@@ -55,6 +55,41 @@ class Kv6Log(models.Model):
         list = sorted(output.values(), key= lambda k: k['percentage'])
         return sorted(list, key= lambda k: int(k['lineplanningnumber']))
 
+
+class SnapshotLog(models.Model):
+    dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
+    created = models.DateTimeField(auto_now=True)
+    data = JSONField()
+
+    class Meta:
+        unique_together = ('dataownercode', 'created')
+
+    @staticmethod
+    def do_snapshot():
+        snapshot = SnapshotLog()
+        snapshot.dataownercode = 'HTM'
+        snapshot.data = json.dumps(Kv6Log.do_report(), default=dthandler)
+        snapshot.save()
+
+    @staticmethod
+    def do_graph(date):
+        datapoints = SnapshotLog.objects.filter(created__range=[date-timedelta(days=1), date+timedelta(days=1)])\
+                                        .exclude(data='[]').values('created', 'data')
+        output = []
+        for point in datapoints:
+            stored = json.loads(point['data'])
+            datapoint = { 'date': point['created'], 'seen' : 0, 'expected': 0 }
+            for line in stored:
+                datapoint['seen'] += line['seen']
+                datapoint['expected'] += line['expected']
+            output.append(datapoint)
+        return output
+
+dthandler = lambda obj: (
+     obj.isoformat()
+     if isinstance(obj, datetime)
+     or isinstance(obj, date)
+     else None)
 
 def dictfetchall(cursor):
     desc = cursor.description
