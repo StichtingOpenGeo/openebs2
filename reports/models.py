@@ -28,7 +28,7 @@ class Kv6Log(models.Model):
         JOIN kv1_kv1journeydate jd ON (jd.journey_id = j.id and jd.date = CURRENT_DATE)
         LEFT OUTER JOIN reports_kv6log lg ON (j.journeynumber = lg.journeynumber and jd.date = lg.operatingday)
         WHERE j.dataownercode = 'HTM' AND %s BETWEEN j.departuretime and j.arrivaltime
-        ORDER BY j.line_id;""" % ((now.hour*60*60)+(now.minute*60)+now.seconds)
+        ORDER BY j.line_id;""" % ((now.hour*60*60)+(now.minute*60)+now.second)
 
         cursor = connection.cursor()
         cursor.execute(qry)
