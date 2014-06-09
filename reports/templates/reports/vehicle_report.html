@@ -26,8 +26,12 @@
                 <td></td>
                 <td colspan="4">
                     <ul class="row">
-                        {% for vehicle in lijn.live %}
-                            <li class="col-xs-4">{{ vehicle.vehiclenumber }} - {{ vehicle.journeynumber }}</li>
+                        {% for vehicle in lijn.list %}
+                            {% if vehicle.log_id %}
+                                <li class="col-xs-4">{{ vehicle.vehiclenumber }} - <small>Rit {{ vehicle.journeynumber }}</small></li>
+                            {% else %}
+                                <li class="col-xs-4"><small style="color: red;">Rit {{ vehicle.journeynumber }}</small></li>
+                            {% endif %}
                         {% endfor %}
                     </ul>
                 </td>
