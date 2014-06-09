@@ -50,18 +50,18 @@
 {% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="http://cdn.oesmith.co.uk/morris-0.4.3.min.css">
+    <link rel="stylesheet" href="//cdn.oesmith.co.uk/morris-0.4.3.min.css">
     {% leaflet_css %}
 {% endblock %}
 
 {% block extra_js %}
     <script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
-    <script src="http://cdn.oesmith.co.uk/morris-0.4.3.min.js"></script>
+    <script src="//cdn.oesmith.co.uk/morris-0.4.3.min.js"></script>
     {% leaflet_js %}
 {% endblock %}
 
 {% block js_init %}
-    $.getJSON("{% url 'ajax_graph' '2014-06-09' %}", makeGraph);
+    $.getJSON("{% url 'ajax_graph' date_today %}", makeGraph);
 {% endblock %}
 
 {% block js %}
@@ -100,7 +100,7 @@
                     if (feature.properties.vehiclenumber[0] == '3') {
                         geojsonMarkerOptions.fillColor = '#ff0000';
                     }
-                    if (feature.properties.vehiclenumber[0] == '4') {
+                    if (feature.properties.vehiclgotenumber[0] == '4') {
                         geojsonMarkerOptions.fillColor = '#000099';
                     }
                     return L.circleMarker(latlng, geojsonMarkerOptions);

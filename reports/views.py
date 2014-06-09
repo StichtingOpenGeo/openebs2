@@ -16,6 +16,7 @@ class VehicleReportView(AccessMixin, TemplateView):
     def get_context_data(self, **kwargs):
         data = super(VehicleReportView, self).get_context_data(**kwargs)
         data['list'] = Kv6Log.do_report()
+        data['date_today'] = date.today().isoformat()
         return data
 
 
