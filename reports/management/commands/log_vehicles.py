@@ -1,13 +1,17 @@
 from datetime import date
-import logging
 from StringIO import StringIO
 from gzip import GzipFile
-from django.contrib.gis.geos import Point
-
-from django.core.management import BaseCommand
-from django.conf import settings
 import zmq
 
+from django.core.management import BaseCommand
+from django.contrib.gis.geos import Point
+from django.conf import settings
+
+# Hack to disable logging for now
+from django.db import connection
+connection.use_debug_cursor = False
+
+import logging
 from reports.json6 import kv6tojson
 from reports.models import Kv6Log
 from utils.geo import transform_rd
@@ -34,6 +38,7 @@ class Command(BaseCommand):
             for vehicle in message:
                 if vehicle['dataownercode'] in self.filter_dataowner and vehicle['lineplanningnumber'] is not None:
                     self.save_log(vehicle)
+            del multipart, content, message
 
     def save_log(self, vehicle):
         split_date = vehicle['operatingday'].split('-')
