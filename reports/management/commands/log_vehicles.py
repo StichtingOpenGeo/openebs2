@@ -19,10 +19,10 @@ class Command(BaseCommand):
     filter_dataowner = ('HTM')
 
     def handle(self, *args, **options):
-        print 'Setting up a ZeroMQ SUB: pubsub.ndovloket.nl\n'
+        print 'Setting up a ZeroMQ SUB: %s\n' % settings.KV6_FEED
         context = zmq.Context()
         sub = context.socket(zmq.SUB)
-        sub.connect("tcp://pubsub.ndovloket.nl:7658")
+        sub.connect(settings.KV6_FEED)
         sub.setsockopt(zmq.SUBSCRIBE, "/RIG")
         while True:
             multipart = sub.recv_multipart()

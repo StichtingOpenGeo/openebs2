@@ -180,6 +180,9 @@ CRISPY_FAIL_SILENTLY = not DEBUG
 GOVI_VERIFY_FEED = 'tcp://192.168.33.1:8001' #'tcp://node02.kv7.openov.nl:7817'
 GOVI_VERIFY_SUB =  "/InTraffic/KV8gen"
 
+# Reporting
+KV6_FEED = 'tcp://localhost:7658'
+
 # Push settings
 try:
     from settings_push import *

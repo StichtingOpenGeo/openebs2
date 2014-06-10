@@ -12,8 +12,8 @@ AND NOT EXISTS (
 /* Note: need to still delete old trips (related to archiving) */
 
 /* Insert journey dates - we don't link to these so just delete and reinsert */
-create table if not exists tmp_jd (jid text, availability integer, d date);
-delete from tmp_jd;
+CREATE TABLE IF NOT EXISTS tmp_jd (jid text, availability integer, d date);
+DELETE FROM tmp_jd;
 \copy tmp_jd from '/tmp/rid/openebs_journey_dates.csv' csv header;
 delete from kv1_kv1journeydate ;
 insert into kv1_kv1journeydate (journey_id, date)
