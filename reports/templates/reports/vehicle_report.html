@@ -134,11 +134,12 @@
         graphJourneys = new Morris.Line({
           element: 'journeychart',
           data: data.points,
+          dateFormat: getFormattedDate,
           xkey: 'date',
           ykeys: ['expected', 'seen', 'percentage'],
           lineColors: ['#000000', '#dd0000', '#009900'],
-          labels: ['Ritten verwacht','Ritten gereden','Percentage'],
-          dateFormat: getFormattedDate
+          labels: ['Ritten verwacht','Ritten gereden','Percentage (%)'],
+          pointSize: 3
         });
     }
 
@@ -150,7 +151,8 @@
           xkey: 'date',
           ykeys: ['gtl', 'rr', 'bus'],
           lineColors: ['#dd0000', '#000099', '#000000'],
-          labels: ['GTL (3xxx)','RandstadRail (4xxx)', 'Bus (1xxx)']
+          labels: ['GTL (3xxx)','RandstadRail (4xxx)', 'Bus (1xxx)'],
+          pointSize: 3
         });
     }
 

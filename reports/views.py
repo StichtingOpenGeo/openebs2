@@ -28,7 +28,7 @@ class GraphDataView(AccessMixin, JSONListResponseMixin, TemplateView):
         datestring = self.request.GET.get('date', now().date().isoformat()).split('-')
         qrydate = date(int(datestring[0]), int(datestring[1]), int(datestring[2]))
         if self.report_type == 'all':
-            result = SnapshotLog.do_graph_all(qrydate)
+            result = SnapshotLog.do_graph_journeys(qrydate)
         else:
             result = SnapshotLog.do_graph_vehicles(qrydate)
         return {'points': result }

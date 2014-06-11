@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, time
 import json
 from django.contrib.gis.db import models
 from django.db import connection
@@ -76,9 +76,10 @@ class SnapshotLog(models.Model):
         snapshot.save()
 
     @staticmethod
-    def do_graph_all(date):
-        datapoints = SnapshotLog.objects.filter(created__range=[date-timedelta(days=1), date+timedelta(days=1)])\
-                                        .exclude(data='[]').values('created', 'data')
+    def do_graph_journeys(date):
+        begin = datetime.combine(date, time(0,0))
+        end = datetime.combine(date, time(23,59))
+        datapoints = SnapshotLog.objects.filter(created__range=[begin, end]).exclude(data='[]').values('created', 'data')
         output = []
         for point in datapoints:
             stored = json.loads(point['data'])
@@ -92,7 +93,9 @@ class SnapshotLog(models.Model):
 
     @staticmethod
     def do_graph_vehicles(date):
-        datapoints = SnapshotLog.objects.filter(created__range=[date-timedelta(days=1), date+timedelta(days=1)])\
+        begin = datetime.combine(date, time(0,0))
+        end = datetime.combine(date, time(23,59))
+        datapoints = SnapshotLog.objects.filter(created__range=[begin, end])\
                                         .exclude(data='[]').values('created', 'data')
         output = []
         for point in datapoints:
