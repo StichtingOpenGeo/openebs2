@@ -135,9 +135,10 @@
           element: 'journeychart',
           data: data.points,
           xkey: 'date',
-          ykeys: ['expected', 'seen'],
-          lineColors: ['#000000', '#dd0000'],
-          labels: ['Ritten verwacht','Ritten gereden']
+          ykeys: ['expected', 'seen', 'percentage'],
+          lineColors: ['#000000', '#dd0000', '#009900'],
+          labels: ['Ritten verwacht','Ritten gereden','Percentage'],
+          dateFormat: getFormattedDate
         });
     }
 
@@ -145,10 +146,16 @@
         graphVehicles = new Morris.Line({
           element: 'vehiclechart',
           data: data.points,
+          dateFormat: getFormattedDate,
           xkey: 'date',
           ykeys: ['gtl', 'rr', 'bus'],
           lineColors: ['#dd0000', '#000099', '#000000'],
           labels: ['GTL (3xxx)','RandstadRail (4xxx)', 'Bus (1xxx)']
         });
+    }
+
+    function getFormattedDate(x) {
+        d = new Date(x+60*60*2); /* Fix timezone for now */
+        return d.getDate()+"-"+(d.getMonth()+1)+"-"+d.getFullYear()+" "+d.getHours()+":"+d.getMinutes();
     }
 {% endblock %}
