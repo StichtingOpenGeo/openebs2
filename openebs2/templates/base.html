@@ -57,9 +57,12 @@
                   <span class="glyphicon glyphicon-road"></span> {% trans "Ritaanpassingen" %}
               </a></li>
           {% endif %}
+          {% if perms.reports.view_dashboard %}
            <li><a href="{% url 'report_vehicles' %}" title="Dashboard">
                     <span class="glyphicon glyphicon-dashboard"></span>&nbsp;{% trans "Ritten" %}
                     </a></li>
+          {% endif %}
+
         </ul>
         <ul class="nav navbar-nav navbar-right">
           {% if user.is_superuser %}

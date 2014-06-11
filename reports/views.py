@@ -8,7 +8,7 @@ from datetime import timedelta, date
 
 
 class VehicleReportView(AccessMixin, TemplateView):
-    permission_required = 'openebs.view_dashboard'
+    permission_required = 'reports.view_dashboard'
     template_name = "reports/vehicle_report.html"
 
     def get_context_data(self, **kwargs):
@@ -19,7 +19,7 @@ class VehicleReportView(AccessMixin, TemplateView):
 
 
 class GraphDataView(AccessMixin, JSONListResponseMixin, TemplateView):
-    permission_required = 'openebs.view_dashboard'
+    permission_required = 'reports.view_dashboard'
     report_type = 'all'
     render_object = 'points'
 
@@ -34,7 +34,7 @@ class GraphDataView(AccessMixin, JSONListResponseMixin, TemplateView):
         return {'points': result }
 
 class ActiveVehiclesListView(AccessMixin, GeoJSONLayerView):
-    permission_required = 'openebs.view_dashboard'
+    permission_required = 'reports.view_dashboard'
     model = Kv6Log
     geometry_field = 'last_position'
     properties = ['journeynumber', 'vehiclenumber', 'last_punctuality']

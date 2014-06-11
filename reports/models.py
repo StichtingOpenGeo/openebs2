@@ -4,6 +4,7 @@ from django.contrib.gis.db import models
 from django.db import connection
 from json_field import JSONField
 from kv15.enum import DATAOWNERCODE
+from django.utils.translation import ugettext_lazy as _
 
 
 class Kv6Log(models.Model):
@@ -63,6 +64,9 @@ class SnapshotLog(models.Model):
 
     class Meta:
         unique_together = ('dataownercode', 'created')
+        permissions = (
+            ("view_dashboard", _("Ritten dashboard bekijken")),
+        )
 
     @staticmethod
     def do_snapshot():
