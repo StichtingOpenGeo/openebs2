@@ -83,11 +83,12 @@ class SnapshotLog(models.Model):
         output = []
         for point in datapoints:
             stored = json.loads(point['data'])
-            datapoint = { 'date': point['created'], 'seen' : 0, 'expected': 0, 'percentage': 100.0 }
+            datapoint = {'date': point['created'], 'seen' : 0, 'expected': 0, 'percentage': 0.0}
             for line in stored:
                 datapoint['seen'] += line['seen']
                 datapoint['expected'] += line['expected']
-                datapoint['percentage'] = round(100.0 * float(line['seen'])/float(line['expected']), 1)
+            # Calculate percentage based on all the sightings
+            datapoint['percentage'] = round((float(datapoint['seen']) / float(datapoint['expected'])) * 100.0, 1)
             output.append(datapoint)
         return output
 
