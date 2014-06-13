@@ -87,8 +87,12 @@ class SnapshotLog(models.Model):
             for line in stored:
                 datapoint['seen'] += line['seen']
                 datapoint['expected'] += line['expected']
+
             # Calculate percentage based on all the sightings
-            datapoint['percentage'] = round((float(datapoint['seen']) / float(datapoint['expected'])) * 100.0, 1)
+            if datapoint['expected'] == 0:
+                datapoint['percentage'] = 0.0
+            else:
+                datapoint['percentage'] = round((float(datapoint['seen']) / float(datapoint['expected'])) * 100.0, 1)
             output.append(datapoint)
         return output
 
