@@ -87,7 +87,7 @@ class SnapshotLog(models.Model):
             for line in stored:
                 datapoint['seen'] += line['seen']
                 datapoint['expected'] += line['expected']
-                datapoint['percentage'] = round(100.0 * line['seen']/line['expected'], 1)
+                datapoint['percentage'] = round(100.0 * float(line['seen'])/float(line['expected']), 1)
             output.append(datapoint)
         return output
 
