@@ -3,11 +3,21 @@
 
 {% block content %}
     <h2>Dashboard Ritten</h2>
-    <h3>Daggrafieken</h3>
+    <h3>Daggrafieken
+       <div class="btn-group pull-right" data-toggle="buttons">
+          <label class="btn btn-primary active">
+            <input type="radio" name="chartType" id="chartDay"> Dag
+          </label>
+          <label class="btn btn-primary">
+            <input type="radio" name="chartType" id="chartWeek"> Week
+          </label>
+        </div>
+    </h3>
     <ul class="nav nav-tabs">
       <li class="active"><a href="#journey" data-toggle="tab">Ritten</a></li>
       <li><a href="#vehicles" data-toggle="tab">Materieel</a></li>
     </ul>
+
 
     <!-- Tab panes -->
     <div class="tab-content">
@@ -71,11 +81,20 @@
 {% endblock %}
 
 {% block js_init %}
-    $.getJSON("{% url 'ajax_graph_all' date_today %}", makeGraphJourneys);
+    $.getJSON("{% url 'ajax_graph_journeys' date_today %}", makeGraphJourneys);
     $.getJSON("{% url 'ajax_graph_vehicles' date_today %}", makeGraphVehicles);
     $('ul.nav a').on('shown.bs.tab', function (e) {
         graphJourneys.redraw();
         graphVehicles.redraw();
+    });
+    $('input[name=chartType]:radio').change(function() {
+        if ($("#chartWeek").prop("checked")) {
+            $.getJSON("{% url 'ajax_graph_journeys_week' date_today %}", updateGraphJourneys);
+            $.getJSON("{% url 'ajax_graph_vehicles_week' date_today %}", updateGraphVehicles);
+        } else if ($("#chartDay").prop("checked")) {
+            $.getJSON("{% url 'ajax_graph_journeys' date_today %}", updateGraphJourneys);
+            $.getJSON("{% url 'ajax_graph_vehicles' date_today %}", updateGraphVehicles);
+        }
     });
 {% endblock %}
 
@@ -143,6 +162,10 @@
         });
     }
 
+    function updateGraphJourneys(data) {
+        graphJourneys.setData(data.points);
+    }
+
     function makeGraphVehicles(data) {
         graphVehicles = new Morris.Line({
           element: 'vehiclechart',
@@ -154,6 +177,10 @@
           labels: ['GTL (3xxx)','RandstadRail (4xxx)', 'Bus (1xxx)'],
           pointSize: 3
         });
+    }
+
+    function updateGraphVehicles(data) {
+        graphVehicles.setData(data.points);
     }
 
     function getFormattedDate(x) {

@@ -1,10 +1,10 @@
 # Create your views here.
+from datetime import timedelta, datetime, time, date
 from django.utils.timezone import now
 from django.views.generic import TemplateView
 from djgeojson.views import GeoJSONLayerView
 from reports.models import Kv6Log, SnapshotLog
 from utils.views import JSONListResponseMixin, AccessMixin
-from datetime import timedelta, date
 
 
 class VehicleReportView(AccessMixin, TemplateView):
@@ -21,15 +21,23 @@ class VehicleReportView(AccessMixin, TemplateView):
 class GraphDataView(AccessMixin, JSONListResponseMixin, TemplateView):
     permission_required = 'reports.view_dashboard'
     report_type = 'all'
+    period = 'day'
     render_object = 'points'
 
     def get_context_data(self, **kwargs):
         result = []
         datestring = self.request.GET.get('date', now().date().isoformat()).split('-')
         qrydate = date(int(datestring[0]), int(datestring[1]), int(datestring[2]))
-        if self.report_type == 'all':
+        if self.period == 'day':
+            begin = datetime.combine(qrydate, time(2, 0))
+            end = datetime.combine(qrydate + timedelta(days=1), time(1, 59))
+        elif self.period == 'week':
+            begin = datetime.combine(qrydate - timedelta(days=7), time(2, 0))
+            end = datetime.combine(qrydate, time(1, 59))
+        qrydate = [begin, end]
+        if self.report_type == 'journeys':
             result = SnapshotLog.do_graph_journeys(qrydate)
-        else:
+        elif self.report_type == 'vehicles':
             result = SnapshotLog.do_graph_vehicles(qrydate)
         return {'points': result }
 

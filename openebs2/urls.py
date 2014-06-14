@@ -22,8 +22,10 @@ urlpatterns = patterns('',
     url(r'^geweigerd/$', TemplateView.as_view(template_name="openebs/nopermission.html"), name="app_nopermission"),
 
     url(r'^report/lijnen/$', VehicleReportView.as_view(), name="report_vehicles"),
-    url(r'^report/lijnen/(?P<date>[0-9]{4}-[0-9]{2}-[0-9]{2})/all.json$', GraphDataView.as_view(report_type='all'), name="ajax_graph_all"),
+    url(r'^report/lijnen/(?P<date>[0-9]{4}-[0-9]{2}-[0-9]{2})/journeys.json$', GraphDataView.as_view(report_type='journeys'), name="ajax_graph_journeys"),
     url(r'^report/lijnen/(?P<date>[0-9]{4}-[0-9]{2}-[0-9]{2})/vehicles.json$', GraphDataView.as_view(report_type='vehicles'), name="ajax_graph_vehicles"),
+    url(r'^report/lijnen/(?P<date>[0-9]{4}-[0-9]{2}-[0-9]{2})/week/journeys.json$', GraphDataView.as_view(report_type='journeys', period='week'), name="ajax_graph_journeys_week"),
+    url(r'^report/lijnen/(?P<date>[0-9]{4}-[0-9]{2}-[0-9]{2})/week/vehicles.json$', GraphDataView.as_view(report_type='vehicles', period='week'), name="ajax_graph_vehicles_week"),
     url(r'^report/lijnen/live.json$', ActiveVehiclesListView.as_view(), name="ajax_vehicles"),
 
     # Uncomment the next line to enable the admin:

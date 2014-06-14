@@ -76,10 +76,8 @@ class SnapshotLog(models.Model):
         snapshot.save()
 
     @staticmethod
-    def do_graph_journeys(date):
-        begin = datetime.combine(date, time(2, 0))
-        end = datetime.combine(date + timedelta(days=1), time(1, 59))
-        datapoints = SnapshotLog.objects.filter(created__range=[begin, end]).exclude(data='[]').values('created', 'data')
+    def do_graph_journeys(range):
+        datapoints = SnapshotLog.objects.filter(created__range=range).exclude(data='[]').values('created', 'data')
         output = []
         for point in datapoints:
             stored = json.loads(point['data'])
@@ -97,11 +95,8 @@ class SnapshotLog(models.Model):
         return output
 
     @staticmethod
-    def do_graph_vehicles(date):
-        begin = datetime.combine(date, time(2, 0))
-        end = datetime.combine(date + timedelta(days=1), time(1, 59))
-        datapoints = SnapshotLog.objects.filter(created__range=[begin, end])\
-                                        .exclude(data='[]').values('created', 'data')
+    def do_graph_vehicles(range):
+        datapoints = SnapshotLog.objects.filter(created__range=range).exclude(data='[]').values('created', 'data')
         output = []
         for point in datapoints:
             stored = json.loads(point['data'])
