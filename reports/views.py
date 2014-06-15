@@ -28,17 +28,22 @@ class GraphDataView(AccessMixin, JSONListResponseMixin, TemplateView):
         result = []
         datestring = self.request.GET.get('date', now().date().isoformat()).split('-')
         qrydate = date(int(datestring[0]), int(datestring[1]), int(datestring[2]))
+
         if self.period == 'day':
             begin = datetime.combine(qrydate, time(2, 0))
             end = datetime.combine(qrydate + timedelta(days=1), time(1, 59))
+            key_func = lambda k: k['created'].isoformat()
         elif self.period == 'week':
             begin = datetime.combine(qrydate - timedelta(days=7), time(2, 0))
             end = datetime.combine(qrydate, time(1, 59))
+            key_func = lambda k: k['created'].date().isoformat()
+
         qrydate = [begin, end]
         if self.report_type == 'journeys':
-            result = SnapshotLog.do_graph_journeys(qrydate)
+            result = SnapshotLog.do_graph_journeys(qrydate, key_func)
         elif self.report_type == 'vehicles':
-            result = SnapshotLog.do_graph_vehicles(qrydate)
+            result = SnapshotLog.do_graph_vehicles(qrydate, key_func)
+
         return {'points': result }
 
 class ActiveVehiclesListView(AccessMixin, GeoJSONLayerView):

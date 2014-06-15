@@ -76,41 +76,53 @@ class SnapshotLog(models.Model):
         snapshot.save()
 
     @staticmethod
-    def do_graph_journeys(range):
-        datapoints = SnapshotLog.objects.filter(created__range=range).exclude(data='[]').values('created', 'data')
-        output = []
-        for point in datapoints:
-            stored = json.loads(point['data'])
-            datapoint = {'date': point['created'], 'seen' : 0, 'expected': 0, 'percentage': 0.0}
-            for line in stored:
-                datapoint['seen'] += line['seen']
-                datapoint['expected'] += line['expected']
+    def do_graph_journeys(date_range, key_func):
+        ''' Parameters: a range of dates for which to search for and an anonymous function providing the key '''
+        datapoints = SnapshotLog.objects.filter(created__range=date_range).exclude(data='[]').order_by('created').values('created', 'data')
 
-            # Calculate percentage based on all the sightings
-            if datapoint['expected'] == 0:
-                datapoint['percentage'] = 0.0
-            else:
-                datapoint['percentage'] = round((float(datapoint['seen']) / float(datapoint['expected'])) * 100.0, 1)
-            output.append(datapoint)
-        return output
+        output = { key_func(datapoints[0]) : {'date': datapoints[0]['created'], 'seen' : 0, 'expected': 0, 'percentage': 0.0 }}
+        last_key = None
+        for point in datapoints:
+            key = key_func(point)
+            if last_key is not None and key != last_key:
+                # Calculate percentage based on all the sightings
+                if output[last_key]['expected'] == 0:
+                    output[last_key]['percentage'] = 0.0
+                else:
+                    output[last_key]['percentage'] = round((float(output[last_key]['seen']) / float(output[last_key]['expected'])) * 100.0, 1)
+
+                # Clear
+                output[key] = {'date': point['created'], 'seen' : 0, 'expected': 0, 'percentage': 0.0 }
+
+            for line in json.loads(point['data']):
+                output[key]['seen'] += line['seen']
+                output[key]['expected'] += line['expected']
+
+            last_key = key
+
+        return output.values()
 
     @staticmethod
-    def do_graph_vehicles(range):
-        datapoints = SnapshotLog.objects.filter(created__range=range).exclude(data='[]').values('created', 'data')
-        output = []
+    def do_graph_vehicles(date_range, key_func):
+        datapoints = SnapshotLog.objects.filter(created__range=date_range).exclude(data='[]').order_by('created').values('created', 'data')
+        output = { key_func(datapoints[0]) : {'date': datapoints[0]['created'], 'gtl' : 0, 'rr': 0, 'bus': 0 } }
+
+        last_key = None
         for point in datapoints:
-            stored = json.loads(point['data'])
-            datapoint = { 'date': point['created'], 'gtl' : 0, 'rr': 0, 'bus': 0 }
-            for line in stored:
+            key = key_func(point)
+            if last_key is not None and key != last_key:
+                output[key] = {'date': point['created'], 'gtl' : 0, 'rr': 0, 'bus': 0 }
+
+            for line in json.loads(point['data']):
                 for vehicle in line['list']:
                     if 'vehiclenumber' in vehicle and vehicle['vehiclenumber'] is not None:
                         if vehicle['vehiclenumber'][0] == '1':
-                            datapoint['bus'] += 1
+                            output[key]['bus'] += 1
                         if vehicle['vehiclenumber'][0] == '3':
-                            datapoint['gtl'] += 1
+                            output[key]['gtl'] += 1
                         if vehicle['vehiclenumber'][0] == '4':
-                            datapoint['rr'] += 1
-            output.append(datapoint)
+                            output[key]['rr'] += 1
+            last_key = key
         return output
 
 dthandler = lambda obj: (
