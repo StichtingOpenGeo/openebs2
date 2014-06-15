@@ -123,7 +123,7 @@ class SnapshotLog(models.Model):
                         if vehicle['vehiclenumber'][0] == '4':
                             output[key]['rr'] += 1
             last_key = key
-        return output
+        return output.values()
 
 dthandler = lambda obj: (
      obj.isoformat()
