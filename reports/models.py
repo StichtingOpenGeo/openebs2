@@ -80,17 +80,11 @@ class SnapshotLog(models.Model):
         ''' Parameters: a range of dates for which to search for and an anonymous function providing the key '''
         datapoints = SnapshotLog.objects.filter(created__range=date_range).exclude(data='[]').order_by('created').values('created', 'data')
 
-        output = { key_func(datapoints[0]) : {'date': datapoints[0]['created'], 'seen' : 0, 'expected': 0, 'percentage': 0.0 }}
+        output = {}
         last_key = None
         for point in datapoints:
             key = key_func(point)
-            if last_key is not None and key != last_key:
-                # Calculate percentage based on all the sightings
-                if output[last_key]['expected'] == 0:
-                    output[last_key]['percentage'] = 0.0
-                else:
-                    output[last_key]['percentage'] = round((float(output[last_key]['seen']) / float(output[last_key]['expected'])) * 100.0, 1)
-
+            if key != last_key:
                 # Clear
                 output[key] = {'date': point['created'], 'seen' : 0, 'expected': 0, 'percentage': 0.0 }
 
@@ -98,31 +92,52 @@ class SnapshotLog(models.Model):
                 output[key]['seen'] += line['seen']
                 output[key]['expected'] += line['expected']
 
+            # Calculate percentage based on all the sightings - could be more efficient, works for now
+            if output[key]['expected'] == 0:
+                output[key]['percentage'] = 0.0
+            else:
+                output[key]['percentage'] = round((float(output[key]['seen']) / float(output[key]['expected'])) * 100.0, 1)
+
             last_key = key
 
         return output.values()
 
     @staticmethod
+    def get_type(vehicle):
+        if vehicle[0] == '1':
+            type = 'bus'
+        if vehicle[0] == '3':
+            type = 'gtl'
+        if vehicle[0] == '4':
+            type = 'rr'
+        return type
+
+    @staticmethod
     def do_graph_vehicles(date_range, key_func):
         datapoints = SnapshotLog.objects.filter(created__range=date_range).exclude(data='[]').order_by('created').values('created', 'data')
-        output = { key_func(datapoints[0]) : {'date': datapoints[0]['created'], 'gtl' : 0, 'rr': 0, 'bus': 0 } }
+        output = { key_func(datapoints[0]) : {'date': datapoints[0]['created'], 'gtl' : [], 'rr': [], 'bus': [] } }
 
         last_key = None
         for point in datapoints:
             key = key_func(point)
             if last_key is not None and key != last_key:
-                output[key] = {'date': point['created'], 'gtl' : 0, 'rr': 0, 'bus': 0 }
+                output[key] = {'date': point['created'], 'gtl' : [], 'rr': [], 'bus': [] }
 
             for line in json.loads(point['data']):
                 for vehicle in line['list']:
                     if 'vehiclenumber' in vehicle and vehicle['vehiclenumber'] is not None:
-                        if vehicle['vehiclenumber'][0] == '1':
-                            output[key]['bus'] += 1
-                        if vehicle['vehiclenumber'][0] == '3':
-                            output[key]['gtl'] += 1
-                        if vehicle['vehiclenumber'][0] == '4':
-                            output[key]['rr'] += 1
+                        type = SnapshotLog.get_type(vehicle['vehiclenumber'])
+                        if vehicle['vehiclenumber'] not in output[key][type]:
+                            output[key][type].append(vehicle['vehiclenumber'])
+
             last_key = key
+
+        # The above loop gathers unique vehicles, we need sums
+        for key, val in output.items():
+            val['bus'] = len(val['bus'])
+            val['gtl'] = len(val['gtl'])
+            val['rr'] = len(val['rr'])
+
         return output.values()
 
 dthandler = lambda obj: (
