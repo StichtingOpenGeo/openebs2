@@ -1,6 +1,7 @@
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
 from django.views.generic import TemplateView
+from bigdata.views import DashboardView
 from reports.views import VehicleReportView, ActiveVehiclesListView, GraphDataView
 
 admin.autodiscover()
@@ -27,6 +28,8 @@ urlpatterns = patterns('',
     url(r'^report/lijnen/(?P<date>[0-9]{4}-[0-9]{2}-[0-9]{2})/week/journeys.json$', GraphDataView.as_view(report_type='journeys', period='week'), name="ajax_graph_journeys_week"),
     url(r'^report/lijnen/(?P<date>[0-9]{4}-[0-9]{2}-[0-9]{2})/week/vehicles.json$', GraphDataView.as_view(report_type='vehicles', period='week'), name="ajax_graph_vehicles_week"),
     url(r'^report/lijnen/live.json$', ActiveVehiclesListView.as_view(), name="ajax_vehicles"),
+
+    url(r'^report/$', DashboardView.as_view(), name="report_dashboard"),
 
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls))

@@ -1,6 +1,6 @@
 import logging
 import re
-from braces.views import JSONResponseMixin, AccessMixin
+from braces.views import JSONResponseMixin, PermissionRequiredMixin, LoginRequiredMixin
 from django.conf import settings
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ImproperlyConfigured
@@ -87,7 +87,7 @@ class ExternalMessagePushMixin(object):
         return push_list
 
 
-class AccessMixin(AccessMixin):
+class AccessMixin(LoginRequiredMixin, PermissionRequiredMixin):
     """
     This is based on the braces LoginRequiredMixin and PermissionRequiredMixin but will only raise the exception
     if the user is logged in

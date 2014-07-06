@@ -108,6 +108,7 @@ INSTALLED_APPS = (
     'kv1', # Static data stuff
     'openebs',
     'reports',
+    'bigdata',
     'utils', # Load our custom filters
 
     # Libs

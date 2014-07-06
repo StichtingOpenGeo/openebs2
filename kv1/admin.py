@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.contrib.gis.admin import OSMGeoAdmin
 from kv1.models import *
 
 
@@ -11,7 +10,7 @@ class LineAdmin(admin.ModelAdmin):
 admin.site.register(Kv1Line, LineAdmin)
 
 
-class StopAdmin(OSMGeoAdmin):
+class StopAdmin(admin.ModelAdmin):
     model = Kv1Stop
     list_display = ('name', 'userstopcode', 'dataownercode')
     list_filter = ('dataownercode', )

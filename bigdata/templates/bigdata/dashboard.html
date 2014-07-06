@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block content %}
+        <h2>Actuele Materieelinzet</h2>
+        <div class="row">
+            <div id="stock-graph" style="height:400px;" class="col-lg-10">
+
+            </div>
+        </div>
+
+        <h2>Actuele Ritten</h2>
+        <div class="row">
+            <div id="trip-graph" style="height:300px;" class="col-lg-10">
+
+            </div>
+        </div>
+{% endblock %}
+
+{% block js_init %}
+
+
+{% endblock %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{{ STATIC_URL }}js/jquery.flot.min.js"></script>
+    <script src="{{ STATIC_URL }}js/jquery.flot.time.min.js"></script>
+    <script src="{{ STATIC_URL }}js/bigdata/queries.js"></script>
+    <script type="text/javascript">
+        $(function() {
+            getMatData();
+            getTripData();
+            getLocationData();
+            /*;*/
+        });
+
+        function getMatData() {
+            var opts = {
+                xaxis : { mode: "time" },
+                legend : { show: true, position: "ne" }
+            }
+            $.ajax({
+                type: "POST",
+                url: "http://bigdata.openebs.nl/elasticsearch/logstash-kv6-20140703/_search",
+                processData: false,
+                dataType: 'json',
+                data: JSON.stringify(qryAggStock)
+            }).done(function(data) {
+                var bus = [];
+                var avenio = [];
+                var gtl = [];
+                var rr = [];
+                $.each(data.aggregations.vehicles_running.buckets, function(val, data) {
+                    bus.push([data.key, data.bus_count.vehicle_count.value]);
+                    avenio.push([data.key, data.avenio_count.vehicle_count.value])
+                    gtl.push([data.key, data.gtl_count.vehicle_count.value])
+                    rr.push([data.key, data.rr_count.vehicle_count.value])
+                })
+                $.plot("#stock-graph", [
+                    { data: bus, label: "Bus", hoverable: true },
+                    { data: avenio, label: "Avenio", hoverable: true },
+                    { data: gtl, label: "GTL", hoverable: true },
+                    { data: rr, label: "Randstadrail", hoverable: true }
+                    ], opts);
+            })
+        }
+
+        function getTripData() {
+            var opts = {
+                xaxis : { mode: "time" },
+                legend : { show: true, position: "ne" }
+            }
+            $.ajax({
+                type: "POST",
+                url: "http://bigdata.openebs.nl/elasticsearch/logstash-kv6-20140703/_search",
+                processData: false,
+                dataType: 'json',
+                data: JSON.stringify(qryAggTrips)
+            }).done(function(data) {
+                var trips = [];
+
+                $.each(data.aggregations.trips_active_per_15m.buckets, function(val, data) {
+                    trips.push([data.key, data.trips_active.value]);
+                })
+                $.plot("#trip-graph", [
+                    { data: trips, label: "Ritten", hoverable: true }
+                ], opts);
+            })
+        }
+
+        function getLocationData() {
+            $.ajax({
+                type: "POST",
+                url: "http://bigdata.openebs.nl/elasticsearch/logstash-kv6-20140703/_search",
+                processData: false,
+                dataType: 'json',
+                data: JSON.stringify(qryAggLocations)
+            }).done(function(data) {
+                var locations = {};
+                $.each(data.aggregations, function (key, val) {
+                    locations[key] = []
+                    $.each(data.aggregations[key].voertuigen.buckets, function(bucket_key, bucket_value) {
+                        locations[key].push(bucket_value.key)
+                    })
+                })
+                console.log(locations);
+            });
+        }
+    </script>
+{% endblock %}
+
