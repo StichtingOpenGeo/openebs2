@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
+        <h1>03-07-2014</h1>
         <h2>Actuele Materieelinzet</h2>
         <div class="row">
             <div id="stock-graph" style="height:400px;" class="col-lg-10">
@@ -14,6 +15,19 @@
 
             </div>
         </div>
+
+        <h2>Materieellocaties</h2>
+        <table class="table table-bordered">
+            <tr><th>Javalaan</th><th>Leidschendam</th><th>Lijsterbes</th><th>Scheveningen</th><th>Radarstraat</th><th>Zichtenburg</th></tr>
+            <tr>
+                <td id="zichtenburg"></td>
+                <td id="scheveningen"></td>
+                <td id="javalaan"></td>
+                <td id="leidschendam"></td>
+                <td id="lijsterbes"></td>
+                <td id="radarstraat"></td>
+            </tr>
+        </table>
 {% endblock %}
 
 {% block js_init %}
@@ -91,6 +105,15 @@
             })
         }
 
+        function getList(list) {
+            output = "<ul>";
+            $.each(list, function(key, val) {
+               output += "<li>" + val + "</li>";
+            });
+            output += "</ul>";
+            return output;
+        }
+
         function getLocationData() {
             $.ajax({
                 type: "POST",
@@ -104,9 +127,10 @@
                     locations[key] = []
                     $.each(data.aggregations[key].voertuigen.buckets, function(bucket_key, bucket_value) {
                         locations[key].push(bucket_value.key)
-                    })
-                })
-                console.log(locations);
+                    });
+                    locations[key].sort();
+                    $("#"+key).html(getList(locations[key]));
+                });
             });
         }
     </script>
