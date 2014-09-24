@@ -1,4 +1,9 @@
 import csv
+
+# Hack to disable logging for now
+from django.db import connection
+connection.use_debug_cursor = False
+
 from django.contrib.gis.geos import Point
 from django.core.management import BaseCommand
 from django.utils.datetime_safe import datetime

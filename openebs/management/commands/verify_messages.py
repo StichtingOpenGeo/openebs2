@@ -1,3 +1,7 @@
+# Hack to disable logging for now
+from django.db import connection
+connection.use_debug_cursor = False
+
 import logging
 from StringIO import StringIO
 from gzip import GzipFile
