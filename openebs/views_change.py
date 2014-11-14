@@ -1,18 +1,15 @@
 import logging
 from braces.views import LoginRequiredMixin
 from datetime import timedelta
-from django.conf import settings
-from django.core.urlresolvers import reverse_lazy, reverse
+from django.core.urlresolvers import reverse_lazy
 from django.db.models import Q
 from django.http import HttpResponseRedirect
-from django.utils.timezone import now
-from django.views.generic import ListView, FormView, CreateView, DeleteView, DetailView, UpdateView
-from django.views.generic.detail import SingleObjectMixin
-from django.views.generic.edit import ModelFormMixin
+from django.views.generic import ListView, CreateView, DeleteView, DetailView
 from kv1.models import Kv1Journey
-from openebs.form import CancelLinesForm, Kv17ChangeForm
+from openebs.form import Kv17ChangeForm
 from openebs.models import Kv17Change
 from openebs.views import FilterDataownerMixin
+from utils.time import get_operator_date
 from utils.views import AccessMixin, ExternalMessagePushMixin, JSONListResponseMixin
 
 log = logging.getLogger('openebs.views.changes')
@@ -30,14 +27,14 @@ class ChangeListView(AccessMixin, ListView):
         context = super(ChangeListView, self).get_context_data(**kwargs)
 
         # Get the currently active changes
-        context['active_list'] = self.model.objects.filter(operatingday=now().date, is_recovered=False,
+        context['active_list'] = self.model.objects.filter(operatingday=get_operator_date(), is_recovered=False,
                                                            dataownercode=self.request.user.userprofile.company)
         context['active_list'] = context['active_list'].order_by('line__publiclinenumber', 'journey__departuretime', 'created')
 
         # Add the no longer active changes
-        context['archive_list'] = self.model.objects.filter(Q(operatingday__lt=now) | Q(is_recovered=True),
+        context['archive_list'] = self.model.objects.filter(Q(operatingday__lt=get_operator_date()) | Q(is_recovered=True),
                                                             dataownercode=self.request.user.userprofile.company,
-                                                            created__gt=now()-timedelta(days=3))
+                                                            created__gt=get_operator_date()-timedelta(days=3))
         context['archive_list'] = context['archive_list'].order_by('-created')
         return context
 
@@ -47,6 +44,16 @@ class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
     model = Kv17Change
     form_class = Kv17ChangeForm
     success_url = reverse_lazy('change_index')
+
+    def get_context_data(self, **kwargs):
+        data = super(ChangeCreateView, self).get_context_data(**kwargs)
+        data['operator_date'] = get_operator_date()
+        return data
+
+    def form_invalid(self, form):
+        log.error("Form invalid!")
+        return super(ChangeCreateView, self).form_invalid(form)
+
 
     def form_valid(self, form):
         form.instance.dataownercode = self.request.user.userprofile.company
@@ -108,33 +115,34 @@ class ChangeUpdateView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteV
             obj.save() # Note, this won't work locally!
         return HttpResponseRedirect(self.get_success_url())
 
-class CancelLinesView(AccessMixin, Kv17PushMixin, FormView):
-    '''
-    TODO : This is a big red button view allowing you to cancel all active trips if you so wish.
-    '''
-    permission_required = 'openebs.add_change'
-    form_class = CancelLinesForm
-    template_name = 'openebs/kv17change_redbutton.html'
-    success_url = reverse_lazy('change_index')
-
-    def get_context_data(self, **kwargs):
-        """ Add data about the trips we'd be cancelling """
-        data = super(CancelLinesView, self).get_context_data(**kwargs)
-        data['trips'] = Kv17Change.objects.filter(dataownercode=self.request.user.userprofile.company)
-        return data
-
-    def form_valid(self, form):
-        ret = super(CancelLinesView, self).form_valid(form)
-        # Find our scenario
-        # Plan messages
-
-        # Concatenate XML for a single request
-        message_string = ""
-        if self.push_message(message_string):
-            log.error("Planned messages sent to subscribers: %s" % "")
-        else:
-            log.error("Failed to communicate planned messages to subscribers: %s")
-        return ret
+'''
+TODO : This is a big red button view allowing you to cancel all active trips if you so wish.
+'''
+# class CancelLinesView(AccessMixin, Kv17PushMixin, FormView):
+#
+#     permission_required = 'openebs.add_change'
+#     form_class = CancelLinesForm
+#     template_name = 'openebs/kv17change_redbutton.html'
+#     success_url = reverse_lazy('change_index')
+#
+#     def get_context_data(self, **kwargs):
+#         """ Add data about the trips we'd be cancelling """
+#         data = super(CancelLinesView, self).get_context_data(**kwargs)
+#         data['trips'] = Kv17Change.objects.filter(dataownercode=self.request.user.userprofile.company)
+#         return data
+#
+#     def form_valid(self, form):
+#         ret = super(CancelLinesView, self).form_valid(form)
+#         # Find our scenario
+#         # Plan messages
+#
+#         # Concatenate XML for a single request
+#         message_string = ""
+#         if self.push_message(message_string):
+#             log.error("Planned messages sent to subscribers: %s" % "")
+#         else:
+#             log.error("Failed to communicate planned messages to subscribers: %s")
+#         return ret
 
 class ActiveJourneysAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
     model = Kv1Journey
@@ -142,10 +150,9 @@ class ActiveJourneysAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailVi
 
     def get_object(self):
         # Note, can't set this on the view, because it triggers the queryset cache
-        queryset = self.model.objects.filter(changes__operatingday=now(),
+        queryset = self.model.objects.filter(changes__operatingday=get_operator_date(),
                                              # changes__is_recovered=False, # TODO Fix this - see bug #61
                                              # These two are double, but just in case
                                              changes__dataownercode=self.request.user.userprofile.company,
                                              dataownercode=self.request.user.userprofile.company).distinct()
-        print queryset.count()
         return list(queryset.values('id', 'dataownercode'))

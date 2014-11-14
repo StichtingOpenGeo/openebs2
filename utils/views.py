@@ -1,6 +1,12 @@
 import logging
 import re
-from braces.views import JSONResponseMixin, AccessMixin
+# TODO: Figure out which mixin we really need
+try:
+    from braces.views import AccessMixin
+except:
+    from braces.views._access import AccessMixin
+
+from braces.views import JSONResponseMixin
 from django.conf import settings
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ImproperlyConfigured

@@ -7,6 +7,7 @@ from django.utils.timezone import now
 from django.views.generic import ListView, DetailView
 from djgeojson.views import GeoJSONLayerView
 from utils.calender import CountCalendar
+from utils.time import get_operator_date
 from utils.views import JSONListResponseMixin
 from kv1.models import Kv1Line, Kv1Stop, Kv1Journey, Kv1JourneyDate
 
@@ -49,7 +50,7 @@ class LineTripView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
         if obj:
             # Note, the list() is required to serialize correctly
             # We're filtering on todays trips #
-            journeys = obj.journeys.filter(dates__date=now()).order_by('departuretime')\
+            journeys = obj.journeys.filter(dates__date=get_operator_date()).order_by('departuretime')\
                                    .values('id', 'journeynumber', 'direction', 'departuretime')
             return { 'trips_1' : list(journeys.filter(direction=1)), 'trips_2' : list(journeys.filter(direction=2)) }
         return obj

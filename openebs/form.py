@@ -1,15 +1,16 @@
 import logging
-from crispy_forms.bootstrap import AccordionGroup, Accordion, AppendedText
+from crispy_forms.bootstrap import AccordionGroup, Accordion
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, Field, HTML, Div, Hidden
 from django.utils.timezone import now
 import floppyforms as forms
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
-from kv1.models import Kv1Stop, Kv1Line, Kv1Journey
+from kv1.models import Kv1Stop, Kv1Journey
 from kv15.enum import REASONTYPE, SUBREASONTYPE, ADVICETYPE, SUBADVICETYPE
-from models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, get_end_service, Kv17Change
+from models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, Kv17Change, get_end_service
 from openebs.models import Kv17JourneyChange
+from utils.time import get_operator_date
 
 log = logging.getLogger('openebs.forms')
 
@@ -225,10 +226,10 @@ class Kv17ChangeForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super(Kv17ChangeForm, self).clean()
         for journey in self.data['journeys'].split(',')[0:-1]:
-            journey_qry =  Kv1Journey.objects.filter(pk=journey, dates__date=now())
+            journey_qry =  Kv1Journey.objects.filter(pk=journey, dates__date=get_operator_date())
             if journey_qry.count() == 0:
                 raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
-            if Kv17Change.objects.filter(journey__pk=journey, line=journey_qry[0].line, operatingday=now()).count() != 0:
+            if Kv17Change.objects.filter(journey__pk=journey, line=journey_qry[0].line, operatingday=get_operator_date()).count() != 0:
                 raise ValidationError(_("Een of meer geselecteerde ritten zijn al aangepast"))
 
         return cleaned_data
@@ -238,11 +239,12 @@ class Kv17ChangeForm(forms.ModelForm):
         TODO: Figure out a better solution fo this! '''
         xml_output = []
         for journey in self.data['journeys'].split(',')[0:-1]:
-            qry = Kv1Journey.objects.filter(id=journey, dates__date=now())
+            qry = Kv1Journey.objects.filter(id=journey, dates__date=get_operator_date())
             if qry.count() == 1:
                 self.instance.pk = None
                 self.instance.journey = qry[0]
                 self.instance.line = qry[0].line
+                self.instance.operatingday = get_operator_date()
                 # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
                 if self.instance.journey.dataownercode == self.instance.dataownercode:
                     self.object = self.instance.save()
@@ -251,7 +253,7 @@ class Kv17ChangeForm(forms.ModelForm):
                     log.error("Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
                               (self.instance.journey.dataownercode, self.instance.dataownercode))
             else:
-                print "Failed to find journey %s" % journey
+                log.error("Failed to find journey %s" % journey)
         return xml_output
 
 
@@ -273,7 +275,7 @@ class Kv17ChangeForm(forms.ModelForm):
 
     class Meta:
         model = Kv17Change
-        exclude = [ 'dataownercode', 'line', 'journey', 'is_recovered', 'reinforcement']
+        exclude = [ 'dataownercode', 'operatingday', 'line', 'journey', 'is_recovered', 'reinforcement']
 
     def __init__(self, *args, **kwargs):
         super(Kv17ChangeForm, self).__init__(*args, **kwargs)

@@ -312,7 +312,7 @@ class Kv17Change(models.Model):
     Container for a kv17 change for a particular journey
     """
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
-    operatingday = models.DateField(auto_now=True, verbose_name=_("Datum"))
+    operatingday = models.DateField(verbose_name=_("Datum"))
     line = models.ForeignKey(Kv1Line, verbose_name=_("Lijn"))
     journey = models.ForeignKey(Kv1Journey, verbose_name=_("Rit"), related_name="changes") # "A journey has changes"
     reinforcement = models.IntegerField(default=0, verbose_name=_("Versterkingsnummer"))  # Never fill this for now

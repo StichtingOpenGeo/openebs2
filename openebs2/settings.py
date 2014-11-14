@@ -175,6 +175,9 @@ LEAFLET_CONFIG = {
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 CRISPY_FAIL_SILENTLY = not DEBUG
 
+# Operator day
+CROSSOVER_HOUR = 4
+
 # Verification feed settings
 GOVI_VERIFY_FEED = 'tcp://192.168.33.1:8001' #'tcp://node02.kv7.openov.nl:7817'
 GOVI_VERIFY_SUB =  "/InTraffic/KV8gen"
