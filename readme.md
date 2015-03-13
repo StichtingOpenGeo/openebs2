@@ -19,7 +19,7 @@ Tool for posting KV15 messages
 
 1. Run ```python manage.py migrate```
 
--1. Run ```python manage.py import_json lines/``` where lines is a folder containing JSON output of the script ```kv1/scripts/patternizer.py``` (run on RID)-
+~~1. Run ```python manage.py import_json lines/``` where lines is a folder containing JSON output of the script ```kv1/scripts/patternizer.py``` (run on RID)~~
 
 1. Run ```python manage.py import_html lines/``` where lines is a folder containing HTML line data
 
