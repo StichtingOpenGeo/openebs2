@@ -6,6 +6,9 @@ from django.utils.timezone import now
 
 class TestUtils:
 
+    def __init__(self):
+        pass
+
     @staticmethod
     def create_message_default(user):
         msg = Kv15Stopmessage()

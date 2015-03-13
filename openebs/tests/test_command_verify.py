@@ -1,9 +1,11 @@
 from datetime import timedelta, datetime
 from django.contrib.auth.models import User
+from django.contrib.gis.geos import Point
 from django.utils.timezone import now
 from django.utils.unittest.case import TestCase
+from kv1.models import Kv1Stop
 from openebs.management.commands.verify_messages import Command as VerifyCommand
-from openebs.models import Kv15Stopmessage, MessageStatus
+from openebs.models import Kv15Stopmessage, MessageStatus, Kv15MessageStop
 
 
 class TestKv8Verify(TestCase):
@@ -13,19 +15,30 @@ class TestKv8Verify(TestCase):
         self.testClass = VerifyCommand()
         self.user = User.objects.create_user("test_kv8")
 
+        # Create two fake sotps
+        stop_a = Kv1Stop(userstopcode=400, dataownercode='HTM', name="Om de ene hoek", location=Point(1, 1))
+        stop_b = Kv1Stop(userstopcode=401, dataownercode='HTM', name="Om de ander hoek", location=Point(1, 1))
+        stop_c = Kv1Stop(userstopcode=402, dataownercode='HTM', name="In Lutjebroek", location=Point(1, 1))
+        stop_a.save()
+        stop_b.save()
+        stop_c.save()
+
     def test_message_verify_basic(self):
         """
         Test whether updating an existing message from KV8 works - the status must be updated
         """
-        a = Kv15Stopmessage(dataownercode='HTM', user=self.user, messagecodedate=now().date(), messagecodenumber=24 )
+        a = Kv15Stopmessage(dataownercode='HTM', user=self.user, messagecodedate=now().date(), messagecodenumber=24)
         a.save()
+        stop = Kv15MessageStop(stopmessage=a, stop=Kv1Stop.objects.get(userstopcode=400))
+        stop.save()
         self.assertEqual(a.status, MessageStatus.SAVED)
+        self.assertEqual(a.stops.count(), 1)
 
         count = Kv15Stopmessage.objects.count()
 
         row = {
             'DataOwnerCode': 'HTM',
-            'TimingPointCode' : 100,
+            'TimingPointCode': 400,
             'MessageCodeDate': now().date().isoformat(),
             'MessageStartTime': now(),
             'MessageEndTime': now()+timedelta(hours=2),
@@ -33,11 +46,13 @@ class TestKv8Verify(TestCase):
         }
 
         # Method under test
-        self.testClass.processMessage(row)
+        self.testClass.process_message(row, False)
 
         a = Kv15Stopmessage.objects.get(pk=a.pk) # Get latest from db
         self.assertEqual(a.status, MessageStatus.CONFIRMED)
         self.assertEqual(a.user.username, self.user.username)
+        self.assertEqual(a.stops.count(), 1)
+
         # No new messages created - check count
         self.assertEqual(Kv15Stopmessage.objects.count(), count)
 
@@ -47,9 +62,9 @@ class TestKv8Verify(TestCase):
         """
         count = Kv15Stopmessage.objects.count()
         row = {
-            'DataOwnerCode' : 'HTM',
-            'TimingPointCode' : 100,
-            'MessageCodeDate' : now().date().isoformat(),
+            'DataOwnerCode': 'HTM',
+            'TimingPointCode': 400,
+            'MessageCodeDate': now().date().isoformat(),
             'MessageCodeNumber': '25',
             'MessageContent': "Test content",
             'MessageStartTime': now(),
@@ -72,7 +87,7 @@ class TestKv8Verify(TestCase):
         }
 
         # Method under test
-        self.testClass.processMessage(row)
+        self.testClass.process_message(row, False)
 
         self.assertEqual(Kv15Stopmessage.objects.count(), count+1)
         msg = Kv15Stopmessage.objects.get(dataownercode='HTM', messagecodedate=now().date(), messagecodenumber=25)
@@ -96,6 +111,54 @@ class TestKv8Verify(TestCase):
         self.assertEqual(msg.advicecontent, row['AdviceContent'])
         self.assertEqual(msg.status, MessageStatus.CONFIRMED)
         self.assertEqual(msg.user.username, 'kv8update')
+        self.assertEqual(len(msg.stops.all()), 1)
+        self.assertEqual(msg.stops.all()[0].userstopcode, '400')
+
+    def test_message_add_multiple(self):
+        """
+        Test a message with lots of stops
+        """
+        count = Kv15Stopmessage.objects.count()
+        row = {
+            'DataOwnerCode': 'HTM',
+            'TimingPointCode': 400,
+            'MessageCodeDate': now().date().isoformat(),
+            'MessageCodeNumber': '37',
+            'MessageContent': "Test content",
+            'MessageStartTime': now(),
+            'MessageEndTime': now()+timedelta(hours=2),
+            'MessageTimeStamp': now(),
+            'MessageType': 'GENERAL',
+            'MessageDurationType': 'ENDTIME',
+            'ReasonType': 1,
+            'SubReasonType': '11',
+            'ReasonContent': "uitleg reden",
+            'EffectType': 1,
+            'SubEffectType': '11',
+            'EffectContent': "uitleg effect",
+            'MeasureType': 1,
+            'SubMeasureType': '1',
+            'MeasureContent': "uitleg maatregel",
+            'AdviceType': 1,
+            'SubAdviceType': '1',
+            'AdviceContent': "uitleg afvies"
+        }
+
+        # Method under test
+        self.testClass.process_message(row, False)
+        row['TimingPointCode'] = 401
+        self.testClass.process_message(row, False)
+        row['TimingPointCode'] = 402
+        self.testClass.process_message(row, False)
+
+        self.assertEqual(Kv15Stopmessage.objects.count(), count+1)
+        msg = Kv15Stopmessage.objects.get(dataownercode='HTM', messagecodedate=now().date(), messagecodenumber=37)
+
+        self.assertEqual(len(msg.stops.all()), 3)
+        self.assertEqual(msg.stops.all()[0].userstopcode, '400')
+        self.assertEqual(msg.stops.all()[1].userstopcode, '401')
+        self.assertEqual(msg.stops.all()[2].userstopcode, '402')
+
 
     def test_message_add_some_missing(self):
         """
@@ -104,7 +167,7 @@ class TestKv8Verify(TestCase):
         count = Kv15Stopmessage.objects.count()
         row = {
             'DataOwnerCode': 'HTM',
-            'TimingPointCode' : 100,
+            'TimingPointCode': 400,
             'MessageCodeDate': now().date().isoformat(),
             'MessageCodeNumber': '26',
             'MessageContent': "Test content",
@@ -128,7 +191,7 @@ class TestKv8Verify(TestCase):
         }
 
         # Method under test
-        self.testClass.processMessage(row)
+        self.testClass.process_message(row, False)
 
         self.assertEqual(Kv15Stopmessage.objects.count(), count+1)
         msg = Kv15Stopmessage.objects.get(dataownercode='HTM', messagecodedate=now().date(), messagecodenumber=26)
@@ -152,12 +215,15 @@ class TestKv8Verify(TestCase):
         self.assertEqual(msg.advicecontent, row['AdviceContent'])
         self.assertEqual(msg.status, MessageStatus.CONFIRMED)
         self.assertEqual(msg.user.username, 'kv8update')
+        self.assertEqual(len(msg.stops.all()), 1)
+        self.assertEqual(msg.stops.all()[0].userstopcode, '400')
 
     def test_message_deleted(self):
         """
         Test an already deleted message is marked as such, and the end time is about now
         """
-        a = Kv15Stopmessage(dataownercode='HTM', user=self.user, messagecodedate=datetime(2013, 11, 17), messagecodenumber=30 )
+        a = Kv15Stopmessage(dataownercode='HTM', user=self.user, messagecodedate=datetime(2013, 11, 17),
+                            messagecodenumber=30)
         a.save()
         a.delete()
         a.set_status(MessageStatus.DELETED)
@@ -165,24 +231,24 @@ class TestKv8Verify(TestCase):
         self.assertEqual(a.status, MessageStatus.DELETED)
         self.assertEqual(a.isdeleted, True)
 
-        count = Kv15Stopmessage.objects.count()
-
         row = {
             'DataOwnerCode': 'HTM',
-            'TimingPointCode' : 100,
+            'TimingPointCode': 400,
             'MessageCodeDate': '2013-11-17',
             'MessageCodeNumber': '30'
         }
         # Method under test
-        self.testClass.processDelMessage(row)
+        self.testClass.process_message(row, True)
 
         a = Kv15Stopmessage.objects.get(pk=a.pk) # Get latest from db
         self.assertEqual(a.status, MessageStatus.DELETE_CONFIRMED)
         self.assertLess((now() - a.messageendtime), timedelta(seconds=30), "Time wasn't set right")
+        self.assertEqual(len(a.stops.all()), 1)
+        self.assertEqual(a.stops.all()[0].userstopcode, '400')
 
     def test_message_deletion(self):
         """
-        Test a message that wasn't deleted, but now is (not sure this is possible...)
+        Test a message that was deleted
         """
         a = Kv15Stopmessage(dataownercode='HTM', user=self.user, messagecodedate=datetime(2013, 11, 17), messagecodenumber=31)
         a.save()
@@ -193,17 +259,76 @@ class TestKv8Verify(TestCase):
 
         row = {
             'DataOwnerCode': 'HTM',
-            'TimingPointCode' : 100,
+            'TimingPointCode': 400,
             'MessageCodeDate': '2013-11-17',
             'MessageCodeNumber': '31'
         }
         # Method under test
-        self.testClass.processDelMessage(row)
+        self.testClass.process_message(row, True)
 
         a = Kv15Stopmessage.objects.get(pk=a.pk) # Get latest from db
         self.assertEqual(a.status, MessageStatus.DELETE_CONFIRMED)
         self.assertEqual(a.isdeleted, True)
         self.assertLess((now() - a.messageendtime), timedelta(seconds=30), "Time wasn't set right")
+        self.assertEqual(len(a.stops.all()), 1)
+        self.assertEqual(a.stops.all()[0].userstopcode, '400')
+
+
+    def test_message_deletion_unknown(self):
+        """
+        Test a message that was previously unknown but is now deleted
+        """
+
+        count = Kv15Stopmessage.objects.count()
+
+        row = {
+            'DataOwnerCode': 'HTM',
+            'TimingPointCode': 400,
+            'MessageCodeDate': '2013-11-17',
+            'MessageCodeNumber': '38'
+        }
+        # Method under test
+        self.testClass.process_message(row, True)
+
+        a = Kv15Stopmessage.objects.get(messagecodenumber=38)
+        self.assertEqual(a.status, MessageStatus.DELETE_CONFIRMED)
+        self.assertEqual(a.isdeleted, True)
+        self.assertLess((now() - a.messageendtime), timedelta(seconds=30), "Time wasn't set right")
+        self.assertEqual(len(a.stops.all()), 1)
+        self.assertEqual(a.stops.all()[0].userstopcode, '400')
+
+    def test_message_deletion_multiple(self):
+        """
+        Test a message that was deleted, with multiple stops (one row per stop)
+        """
+        messagecodenumber = 36
+        a = Kv15Stopmessage(dataownercode='HTM',
+                            user=self.user,
+                            messagecodedate=datetime(2013, 11, 17),
+                            messagecodenumber=messagecodenumber)
+        a.save()
+        self.assertEqual(a.status, MessageStatus.SAVED)
+        self.assertEqual(a.isdeleted, False)
+        self.assertEqual(len(a.stops.all()), 0)
+
+        row = {
+            'DataOwnerCode': 'HTM',
+            'TimingPointCode': 400,
+            'MessageCodeDate': '2013-11-17',
+            'MessageCodeNumber': str(messagecodenumber)
+        }
+        # Method under test
+        self.testClass.process_message(row, True)
+        row['TimingPointCode'] = 401
+        self.testClass.process_message(row, True)
+
+        a = Kv15Stopmessage.objects.get(pk=a.pk) # Get latest from db
+        self.assertEqual(a.status, MessageStatus.DELETE_CONFIRMED)
+        self.assertEqual(a.isdeleted, True)
+        self.assertLess((now() - a.messageendtime), timedelta(seconds=30), "Time wasn't set right")
+        self.assertEqual(len(a.stops.all()), 2)
+        self.assertEqual(a.stops.all()[0].userstopcode, '400')
+        self.assertEqual(a.stops.all()[1].userstopcode, '401')
 
 
     def test_message_update(self):
@@ -221,21 +346,21 @@ class TestKv8Verify(TestCase):
 
         delete_row = {
             'DataOwnerCode': 'HTM',
-            'TimingPointCode' : 100,
+            'TimingPointCode': 400,
             'MessageCodeDate': now().date().isoformat(),
             'MessageCodeNumber': '32'
         }
         add_row = {
             'DataOwnerCode': 'HTM',
-            'TimingPointCode' : 101,
+            'TimingPointCode': 401,
             'MessageCodeDate': now().date().isoformat(),
             'MessageStartTime': now(),
             'MessageEndTime': now()+timedelta(hours=2),
             'MessageCodeNumber': '32'
         }
         # Method under test
-        self.testClass.processDelMessage(delete_row)
-        self.testClass.processMessage(add_row)
+        self.testClass.process_message(delete_row, True)
+        self.testClass.process_message(add_row, False)
 
         a = Kv15Stopmessage.objects.get(pk=a.pk) # Get latest from db
         self.assertEqual(a.status, MessageStatus.CONFIRMED)
@@ -244,15 +369,15 @@ class TestKv8Verify(TestCase):
         self.assertEqual(a.messageendtime, add_row['MessageEndTime'])
 
     def test_message_overrule_message(self):
-        ''' See bug #80 '''
         """
         Test whether adding a message from KV8 works - all the fields must be transferred across
+        See bug #80
         """
         count = Kv15Stopmessage.objects.count()
         row = {
             'DataOwnerCode' : 'HTM',
-            'TimingPointCode' : 100,
-            'MessageCodeDate' : now().date().isoformat(),
+            'TimingPointCode': 400,
+            'MessageCodeDate': now().date().isoformat(),
             'MessageCodeNumber': '35',
             'MessageContent': None,
             'MessageStartTime': now(),
@@ -275,7 +400,7 @@ class TestKv8Verify(TestCase):
         }
 
         # Method under test
-        self.testClass.processMessage(row)
+        self.testClass.process_message(row, False)
 
         self.assertEqual(Kv15Stopmessage.objects.count(), count+1)
         msg = Kv15Stopmessage.objects.get(dataownercode='HTM', messagecodedate=now().date(), messagecodenumber=35)
@@ -299,3 +424,5 @@ class TestKv8Verify(TestCase):
         self.assertEqual(msg.advicecontent, row['AdviceContent'])
         self.assertEqual(msg.status, MessageStatus.CONFIRMED)
         self.assertEqual(msg.user.username, 'kv8update')
+        self.assertEqual(len(msg.stops.all()), 1)
+        self.assertEqual(msg.stops.all()[0].userstopcode, '400')
