@@ -22,7 +22,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         print 'Setting up a ZeroMQ SUB: %s\n' % (settings.GOVI_VERIFY_FEED)
-        sub = self.setup_subscription()
+        sub = Command.setup_subscription()
         print "Further messages are in your logfile"
         while True:
             self.receive_message(sub)
@@ -120,7 +120,7 @@ class Command(BaseCommand):
             self.log.error("Couldn't find stop %s - %s" % (row['DataOwnerCode'], row['TimingPointCode']))
 
     @staticmethod
-    def setup_subscription(self):
+    def setup_subscription():
         context = zmq.Context()
         sub = context.socket(zmq.SUB)
         sub.connect(settings.GOVI_VERIFY_FEED)
