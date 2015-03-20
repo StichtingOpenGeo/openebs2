@@ -91,7 +91,7 @@ class Command(BaseCommand):
         self.add_stop_for_message(msg, row)
 
     def copy_message_content(self, msg, row):
-        self.log.info("Creating new message which wasn't in DB (note, stops will be blank): %s" % msg)
+        self.log.info("Creating new message which wasn't in DB: %s" % msg)
         msg.messagecontent = row['MessageContent']
         msg.messagetimestamp = row['MessageTimeStamp']
         msg.messagetype = row['MessageType']
@@ -111,11 +111,12 @@ class Command(BaseCommand):
 
     def add_stop_for_message(self, msg, row):
         try:
-            stop = Kv1Stop.objects.get(userstopcode=row['TimingPointCode'], dataownercode=row['DataOwnerCode'])
-            message_stop, created = Kv15MessageStop.objects.get_or_create(stopmessage=msg, stop=stop)
-            if created:
-                self.log.debug("Created KV15MessageStop for stop %s and message %s" % (message_stop, stop))
-                message_stop.save()
+            stops = Kv1Stop.objects.filter(timingpointcode=row['TimingPointCode'])
+            for stop in stops:
+                message_stop, created = Kv15MessageStop.objects.get_or_create(stopmessage=msg, stop=stop)
+                if created:
+                    self.log.debug("Created KV15MessageStop for stop %s and message %s" % (message_stop, stop))
+                    message_stop.save()
         except Kv1Stop.DoesNotExist:
             self.log.error("Couldn't find stop %s - %s" % (row['DataOwnerCode'], row['TimingPointCode']))
 

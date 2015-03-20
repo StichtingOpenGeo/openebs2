@@ -16,9 +16,9 @@ class TestKv8Verify(TestCase):
         self.user = User.objects.create_user("test_kv8")
 
         # Create two fake sotps
-        stop_a = Kv1Stop(userstopcode=400, dataownercode='HTM', name="Om de ene hoek", location=Point(1, 1))
-        stop_b = Kv1Stop(userstopcode=401, dataownercode='HTM', name="Om de ander hoek", location=Point(1, 1))
-        stop_c = Kv1Stop(userstopcode=402, dataownercode='HTM', name="In Lutjebroek", location=Point(1, 1))
+        stop_a = Kv1Stop(userstopcode=400, dataownercode='HTM', timingpointcode=400, name="Om de ene hoek", location=Point(1, 1))
+        stop_b = Kv1Stop(userstopcode=401, dataownercode='HTM', timingpointcode=401, name="Om de ander hoek", location=Point(1, 1))
+        stop_c = Kv1Stop(userstopcode=402, dataownercode='HTM', timingpointcode=3000402, name="In Lutjebroek", location=Point(1, 1))
         stop_a.save()
         stop_b.save()
         stop_c.save()
@@ -148,7 +148,7 @@ class TestKv8Verify(TestCase):
         self.testClass.process_message(row, False)
         row['TimingPointCode'] = 401
         self.testClass.process_message(row, False)
-        row['TimingPointCode'] = 402
+        row['TimingPointCode'] = 3000402
         self.testClass.process_message(row, False)
 
         self.assertEqual(Kv15Stopmessage.objects.count(), count+1)
@@ -158,6 +158,54 @@ class TestKv8Verify(TestCase):
         self.assertEqual(msg.stops.all()[0].userstopcode, '400')
         self.assertEqual(msg.stops.all()[1].userstopcode, '401')
         self.assertEqual(msg.stops.all()[2].userstopcode, '402')
+
+    def test_message_add_multiple_dataowners(self):
+        """
+        Now we have proper support for TPC, check we can have message with two linked stops
+        """
+
+        stop_d = Kv1Stop(userstopcode=403, dataownercode='HTM', timingpointcode=3000403, name="In Lutjebroek", location=Point(1, 1))
+        stop_e = Kv1Stop(userstopcode=999, dataownercode='VTN', timingpointcode=3000403, name="In Lutjebrk", location=Point(1, 1))
+        stop_d.save()
+        stop_e.save()
+
+        count = Kv15Stopmessage.objects.count()
+        row = {
+            'DataOwnerCode': 'HTM',
+            'TimingPointCode': 3000403,
+            'MessageCodeDate': now().date().isoformat(),
+            'MessageCodeNumber': '50',
+            'MessageContent': "Test content some more for two vervoerders",
+            'MessageStartTime': now(),
+            'MessageEndTime': now()+timedelta(hours=2),
+            'MessageTimeStamp': now(),
+            'MessageType': 'GENERAL',
+            'MessageDurationType': 'ENDTIME',
+            'ReasonType': 1,
+            'SubReasonType': '11',
+            'ReasonContent': "uitleg reden",
+            'EffectType': 1,
+            'SubEffectType': '11',
+            'EffectContent': "uitleg effect",
+            'MeasureType': 1,
+            'SubMeasureType': '1',
+            'MeasureContent': "uitleg maatregel",
+            'AdviceType': 1,
+            'SubAdviceType': '1',
+            'AdviceContent': "uitleg afvies"
+        }
+
+        # Method under test
+        self.testClass.process_message(row, False)
+
+        self.assertEqual(Kv15Stopmessage.objects.count(), count+1)
+        msg = Kv15Stopmessage.objects.get(dataownercode='HTM', messagecodedate=now().date(), messagecodenumber=50)
+
+        self.assertEqual(len(msg.stops.all()), 2)
+        self.assertEqual(msg.stops.all()[0].userstopcode, '403')
+        self.assertEqual(msg.stops.all()[0].dataownercode, 'HTM')
+        self.assertEqual(msg.stops.all()[1].userstopcode, '999')
+        self.assertEqual(msg.stops.all()[1].dataownercode, 'VTN')
 
 
     def test_message_add_some_missing(self):

@@ -7,8 +7,7 @@ connection.use_debug_cursor = False
 from django.contrib.gis.geos import Point
 from django.core.management import BaseCommand
 from django.utils.datetime_safe import datetime
-import sys
-from kv1.models import Kv1Line, Kv1Stop, Kv1Journey, Kv1JourneyStop, Kv1JourneyDate
+from kv1.models import Kv1Line, Kv1Stop
 
 
 class Command(BaseCommand):
@@ -58,16 +57,15 @@ class Command(BaseCommand):
            for row in stop_reader:
                if row['operator_id'] in stops:
                    stop_code = row['operator_id'].split(':')
-                   if Kv1Stop.objects.filter(dataownercode=stop_code[0], userstopcode=stop_code[1]).count() == 0:
-                       s = Kv1Stop()
-                       s.dataownercode = stop_code[0]
-                       s.userstopcode = stop_code[1]
-                       s.name = row['name']
-                       s.location = Point(float(row['longitude']), float(row['latitude']), srid=4326)
-                       s.save()
+                   s, created = Kv1Stop.objects.get_or_create(dataownercode=stop_code[0], userstopcode=stop_code[1])
+                   s.name = row['name']
+                   s.location = Point(float(row['longitude']), float(row['latitude']), srid=4326)
+                   s.timingpointcode = row['timingpointcode']
+                   s.save()
                i = i+1
                if i % 100 == 0:
                    self.log("Did %s stops" % i)
 
-    def log(self, text):
+    @staticmethod
+    def log(text):
         print "%s - import_rid: %s" % (datetime.now().isoformat(), text)
