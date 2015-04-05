@@ -180,6 +180,9 @@ class Kv15Stopmessage(models.Model):
     def is_editable(self):
         return self.messageendtime > now() and self.isdeleted == False
 
+    def is_external(self):
+        return self.user.username == "kv8update"
+
     def get_distinct_stop_names(self, number=15):
         ''' Get a unique sample of stop names to use when we've got too many'''
         return self.kv15messagestop_set.distinct('stop__name').order_by('stop__name')[0:number]

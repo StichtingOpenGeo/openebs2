@@ -34,7 +34,9 @@
         {% if view_all %}
             <td><img src="{{ STATIC_URL }}img/logos/{{ msg.dataownercode|lower }}.png" class="user-icon" /></td>
         {% endif %}
-        <td>{{ msg.messagecodenumber }}</td>
+        <td>{{ msg.messagecodenumber }}
+            {% include "openebs/snippet_message-external.html" with msg=msg only %}
+            </td>
         <td>{{ msg.messagecontent|default_if_none:"[geen of overschrijf bericht]" }} {% include "openebs/snippet_status.html" with status=msg.status only %}</td>
         <td class="text-center">
             {% if msg.kv15messagestop_set.count > 0 %}
@@ -81,7 +83,9 @@
         {% if view_all %}
             <td><img src="{{ STATIC_URL }}img/logos/{{ msg.dataownercode|lower }}.png" class="user-icon" /></td>
         {% endif %}
-        <td>{{ msg.messagecodenumber }}</td>
+        <td>{{ msg.messagecodenumber }}
+            {% include "openebs/snippet_message-external.html" with msg=msg only %}
+        </td>
         <td>{{ msg.messagecontent|default:"<em>[geen of overschrijf bericht]</em>"|default_if_none:"<em>[geen of overschrijf bericht]</em>" }} {% include "openebs/snippet_status.html" with status=msg.status only %}</td>
         <td class="text-center">
             <a class="halte-count btn btn-link" href="{% url 'msg_view' msg.id %}" data-title="{% trans 'Haltes bij bericht' %}" data-html="true" data-content="{% include 'openebs/snippet_halte-list.html' %}">

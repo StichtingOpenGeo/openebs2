@@ -48,7 +48,11 @@
                     <div class="control-group row">
                         <label class="col-lg-4">{% trans "Laatst aangepast door" %}</label>
                         <p class="form-control-static col-lg-8">
-                            <i class="glyphicon glyphicon-user"></i>&nbsp;{{ object.user.get_full_name|default:object.user.username }}
+                            {% if not object.is_external %}
+                                <i class="glyphicon glyphicon-user"></i>&nbsp;{{ object.user.get_full_name|default:object.user.username }}
+                            {% else %}
+                                <i class="glyphicon glyphicon-info-sign"></i>&nbsp;{% trans "Auteur onbekend - bericht opgesteld buiten OpenEBS" %}
+                            {% endif %}
                         </p>
                     </div>
                     <div class="control-group row">
