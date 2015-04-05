@@ -33,7 +33,7 @@ class MessageListView(AccessMixin, ListView):
 
         # Get the currently active messages
         active = self.model.objects.filter(messageendtime__gt=now, isdeleted=False)\
-                                   .order_by('-messagecodedate', '-messagecodenumber')
+                                   .order_by('-messagetimestamp')
         if not context['view_all']:
             active = active.filter(dataownercode=self.request.user.userprofile.company)
         context['active_list'] = active
@@ -41,7 +41,7 @@ class MessageListView(AccessMixin, ListView):
         # Add the no longer active messages
         archive = self.model.objects.filter(Q(messageendtime__lt=now) | Q(isdeleted=True),
                                             messagestarttime__gt=now() - timedelta(days=3))\
-                                    .order_by('-messagecodedate', '-messagecodenumber')
+                                    .order_by('-messagetimestamp')
         if not context['view_all']:
             archive = archive.filter(dataownercode=self.request.user.userprofile.company)
         context['archive_list'] = archive
