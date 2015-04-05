@@ -9,6 +9,7 @@ from django.test import TestCase
 from django.db import IntegrityError
 from django.utils.timezone import now
 from django.contrib.auth.models import User
+from openebs.models import Kv15Stopmessage
 from openebs.tests.utils import TestUtils
 
 class TestKv15MessageModel(TestCase):
@@ -20,12 +21,12 @@ class TestKv15MessageModel(TestCase):
     def test_new_message_twice(self):
         msg = TestUtils.create_message_default(self.user)
         msg.save()
-        self.assertEqual(msg.messagecodenumber, 1)
+        self.assertEqual(msg.messagecodenumber, 4)
 
         msg = TestUtils.create_message_default(self.user)
         msg.save()
 
-        self.assertEqual(msg.messagecodenumber, 2)
+        self.assertEqual(msg.messagecodenumber, 5)
 
     def test_new_message_too_many(self):
         msg = TestUtils.create_message_default(self.user)
@@ -40,7 +41,7 @@ class TestKv15MessageModel(TestCase):
     def test_new_message_per_day(self):
         msg = TestUtils.create_message_default(self.user)
         msg.save()
-        self.assertEqual(msg.messagecodenumber, 1)
+        previous_num = msg.messagecodenumber
 
         # Create another message and add a day
         msg = TestUtils.create_message_default(self.user)
@@ -49,6 +50,7 @@ class TestKv15MessageModel(TestCase):
         msg.save()
 
         self.assertEqual(msg.messagecodenumber, 1)
+        self.assertLess(1, previous_num, "On a new day, messagecodenumber wasn't one")
 
     def test_delete(self):
         msg = TestUtils.create_message_default(self.user)
