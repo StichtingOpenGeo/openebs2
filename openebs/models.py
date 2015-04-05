@@ -121,6 +121,8 @@ class Kv15Stopmessage(models.Model):
         permissions = (
             ("view_messages", _("Berichten bekijken")),
             ("add_messages", _("Berichten toevoegen, aanpassen of verwijderen")),
+            ("view_all", _("Alle berichten inzien")),
+            ("edit_all", _("Alle berichten bewerken")),
         )
 
     def __unicode__(self):

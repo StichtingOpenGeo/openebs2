@@ -19,21 +19,35 @@ from openebs.form import Kv15StopMessageForm
 
 log = logging.getLogger('openebs.views')
 
+# TODO: Refactor these two classes
 class FilterDataownerMixin(SingleObjectMixin):
+    # Permission level is used to check which permission is needed by the view. 'read' forces read_only, 'write' allows modifications
+    permission_level = None
 
     def get_queryset(self):
         company = self.request.user.userprofile.company
         if company is None:
             raise PermissionDenied("Je account is nog niet gelinkt aan een vervoerder")
-        return super(FilterDataownerMixin, self).get_queryset().filter(dataownercode=company)
+
+        if self.request.user.has_perm('openebs.view_all') and self.permission_level == 'read':
+            return super(FilterDataownerMixin, self).get_queryset()
+        else:
+            return super(FilterDataownerMixin, self).get_queryset().filter(dataownercode=company)
+
 
 class FilterDataownerListMixin(MultipleObjectMixin):
+    # See comment above for usage!
+    permission_level = None
 
     def get_queryset(self):
         company = self.request.user.userprofile.company
         if company is None:
             raise PermissionDenied("Je account is nog niet gelinkt aan een vervoerder")
-        return super(FilterDataownerListMixin, self).get_queryset().filter(dataownercode=company)
+
+        if self.request.user.has_perm('openebs.view_all') and self.permission_level == 'read':
+            return super(FilterDataownerListMixin, self).get_queryset()
+        else:
+            return super(FilterDataownerListMixin, self).get_queryset().filter(dataownercode=company)
 
 class Kv15PushMixin(ExternalMessagePushMixin):
     message_type = 'KV15'
@@ -49,18 +63,30 @@ class MessageListView(AccessMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super(MessageListView, self).get_context_data(**kwargs)
 
+        context['view_all'] = self.is_view_all()
+        context['edit_all'] = False # TODO Implement
+
         # Get the currently active messages
-        context['active_list'] = self.model.objects.filter(messageendtime__gt=now, isdeleted=False,
-                                                           dataownercode=self.request.user.userprofile.company)
-        context['active_list'] = context['active_list'].order_by('-messagecodedate', '-messagecodenumber')
+        active = self.model.objects.filter(messageendtime__gt=now, isdeleted=False)\
+                                   .order_by('-messagecodedate', '-messagecodenumber')
+        if not context['view_all']:
+            active = active.filter(dataownercode=self.request.user.userprofile.company)
+        context['active_list'] = active
 
         # Add the no longer active messages
-        context['archive_list'] = self.model.objects.filter(Q(messageendtime__lt=now) | Q(isdeleted=True),
-                                                            dataownercode=self.request.user.userprofile.company,
-                                                            messagestarttime__gt=now()-timedelta(days=3))
-        context['archive_list'] = context['archive_list'].order_by('-messagecodedate', '-messagecodenumber')
+        archive = self.model.objects.filter(Q(messageendtime__lt=now) | Q(isdeleted=True),
+                                            messagestarttime__gt=now() - timedelta(days=3))\
+                                    .order_by('-messagecodedate', '-messagecodenumber')
+        if not context['view_all']:
+            archive = archive.filter(dataownercode=self.request.user.userprofile.company)
+        context['archive_list'] = archive
+
         return context
 
+    def is_view_all(self):
+        has_query_all = "all" in self.request.GET and self.request.GET['all'] == "true"
+        is_superuser = self.request.user.is_superuser
+        return (is_superuser and has_query_all) or (not is_superuser and self.request.user.has_perm("openebs.view_all"))
 
 class MessageCreateView(AccessMixin, Kv15PushMixin, CreateView):
     permission_required = 'openebs.add_messages'
@@ -99,6 +125,7 @@ class MessageCreateView(AccessMixin, Kv15PushMixin, CreateView):
 
 class MessageUpdateView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, UpdateView):
     permission_required = 'openebs.add_messages'
+    permission_level = 'write'
     model = Kv15Stopmessage
     form_class = Kv15StopMessageForm
     template_name_suffix = '_update'
@@ -142,6 +169,7 @@ class MessageUpdateView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, Update
 
 class MessageDeleteView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, DeleteView):
     permission_required = 'openebs.add_messages'
+    permission_level = 'write'
     model = Kv15Stopmessage
     success_url = reverse_lazy('msg_index')
 
@@ -163,6 +191,7 @@ class MessageDeleteView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, Delete
 
 class MessageDetailsView(AccessMixin, FilterDataownerMixin, DetailView):
     permission_required = 'openebs.view_messages'
+    permission_level = 'read'
     model = Kv15Stopmessage
 
 # AJAX Views

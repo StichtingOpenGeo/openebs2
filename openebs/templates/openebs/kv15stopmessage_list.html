@@ -5,10 +5,14 @@
 
 {% block content %}
 
-  <h1>{% trans "Berichten" %}</h1>
+  {% if view_all %}
+      <h1>{% trans "Alle berichten" %}</h1>
+  {% else %}
+      <h1>{% trans "Berichten" %}</h1>
+  {% endif %}
 
   <h2>{% trans "Actieve berichten" %}
-      {% if perms.openebs.add_messages %}
+      {% if perms.openebs.add_messages and not view_all %}
       <a class="btn btn-success pull-right" href="{% url 'msg_add' %}">
         <span class="glyphicon glyphicon-plus-sign"></span> {% trans "Nieuw bericht" %}
       </a>
@@ -16,6 +20,9 @@
   </h2>
   <table class="table table-bordered table-condensed">
   <tr>
+        {% if view_all %}
+            <th>{% trans "Vervoerder"%}</th>
+        {% endif %}
         <th class="col-lg-1">{% trans "Volgnummer"%}</th>
         <th class="col-lg-6">{% trans "Bericht" %}</th>
         <th class="col-lg-1">{% trans "Haltes" %}</th>
@@ -24,6 +31,9 @@
   </tr>
   {% for msg in active_list %}
       <tr class="{% if msg.is_future %}warning{% endif %}">
+        {% if view_all %}
+            <td><img src="{{ STATIC_URL }}img/logos/{{ msg.dataownercode|lower }}.png" class="user-icon" /></td>
+        {% endif %}
         <td>{{ msg.messagecodenumber }}</td>
         <td>{{ msg.messagecontent|default_if_none:"[geen of overschrijf bericht]" }} {% include "openebs/snippet_status.html" with status=msg.status only %}</td>
         <td class="text-center">
@@ -36,19 +46,21 @@
         </td>
         <td>{% include "openebs/snippet_message-duration_small.html" with msg=msg only %}</td></td>
         <td>
-            <form method="post" action="{% url 'msg_delete' msg.id %}">
-                {% csrf_token %}
-                <button class="btn btn-danger pull-right">
-                    <span class="glyphicon glyphicon-trash"></span>
-                </button>
-            </form>
-            <a href="{% url 'msg_edit' msg.pk %}" class="btn btn-link pull-right">
-                <span class="glyphicon glyphicon-edit"></span> {% trans "Bewerk" %}&nbsp;
-            </a>&nbsp;
+            {% if not view_all or edit_all %}
+                <form method="post" action="{% url 'msg_delete' msg.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-danger pull-right">
+                        <span class="glyphicon glyphicon-trash"></span>
+                    </button>
+                </form>
+                <a href="{% url 'msg_edit' msg.pk %}" class="btn btn-link pull-right">
+                    <span class="glyphicon glyphicon-edit"></span> {% trans "Bewerk" %}&nbsp;
+                </a>&nbsp;
+            {% endif %}
         </td>
     </tr>
   {% empty %}
-      <tr><td colspan="5" class="text-center"><em>{% trans "Geen berichten gevonden" %}</em></td></tr>
+      <tr><td {% if view_all %}colspan="6"{% else %}colspan="5"{% endif %} class="text-center"><em>{% trans "Geen berichten gevonden" %}</em></td></tr>
   {% endfor %}
   </table>
   <p><small>{% trans "Geel = toekomstig bericht" %}</small></p>
@@ -56,6 +68,9 @@
   <h2>Verlopen berichten</h2>
   <table class="table table-bordered table-condensed">
   <tr>
+      {% if view_all %}
+          <th>{% trans "Vervoerder"%}</th>
+      {% endif %}
       <th class="col-lg-1">{% trans "Volgnummer"%}</th>
       <th class="col-lg-6">{% trans "Bericht" %}</th>
       <th class="col-lg-1">{% trans "Haltes" %}</th>
@@ -63,6 +78,9 @@
   </tr>
   {% for msg in archive_list %}
     <tr class="{% if msg.isdeleted %}danger{% endif %}">
+        {% if view_all %}
+            <td><img src="{{ STATIC_URL }}img/logos/{{ msg.dataownercode|lower }}.png" class="user-icon" /></td>
+        {% endif %}
         <td>{{ msg.messagecodenumber }}</td>
         <td>{{ msg.messagecontent|default:"<em>[geen of overschrijf bericht]</em>"|default_if_none:"<em>[geen of overschrijf bericht]</em>" }} {% include "openebs/snippet_status.html" with status=msg.status only %}</td>
         <td class="text-center">

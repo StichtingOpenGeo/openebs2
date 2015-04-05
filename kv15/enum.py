@@ -10,6 +10,7 @@ DATAOWNERCODE = (
     ('SYNTUS', 'Syntus'),
     ('QBUZZ', 'Qbuzz'),
     ('TCR', 'Taxi Centrale Renesse'),
+    ('GOVI', 'GOVI')
 )
 
 MESSAGEPRIORITY = (

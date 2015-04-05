@@ -6,15 +6,17 @@
 {% block content %}
 <h2>{% trans "Bericht" %}
     {% if object.is_editable %}
-        <form method="post" action="{% url 'msg_delete' object.id %}">
-            {% csrf_token %}
-            <button class="btn btn-danger pull-right">
-                <span class="glyphicon glyphicon-trash"></span>
-            </button>
-        </form>
-        <a href="{% url 'msg_edit' object.pk %}" class="btn btn-link pull-right">
-            <span class="glyphicon glyphicon-edit"></span> {% trans "Bewerk" %}&nbsp;
-        </a>&nbsp;
+        {% if not perms.openebs.view_all or object.dataownercode == user.userprofile.company %}
+            <form method="post" action="{% url 'msg_delete' object.id %}">
+                {% csrf_token %}
+                <button class="btn btn-danger pull-right">
+                    <span class="glyphicon glyphicon-trash"></span>
+                </button>
+            </form>
+            <a href="{% url 'msg_edit' object.pk %}" class="btn btn-link pull-right">
+                <span class="glyphicon glyphicon-edit"></span> {% trans "Bewerk" %}&nbsp;
+            </a>&nbsp;
+        {% endif %}
     {% endif %}
     </h2>
 <div>
@@ -83,9 +85,9 @@
     </div>
 
     <h3>{% trans "Haltes" %} <span style="font-weight: normal;">({{ object.kv15messagestop_set.count }})</span></h3>
-    <table class="table table-bordered table-striped">
+    <table class="table table-bordered table-condensed">
     <tr>
-        <th class="col-lg-1">&nbsp;</th>
+        <th class="col-lg-1">{% trans "Vervoerder" %}</th>
         <th>Halte</th>
         <th class="col-lg-2 text-right">Haltenummer</th>
     </tr>
