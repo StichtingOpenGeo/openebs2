@@ -6,7 +6,7 @@
 {% block content %}
 <h2>{% trans "Bericht" %}
     {% if object.is_editable %}
-        {% if not perms.openebs.view_all or object.dataownercode == user.userprofile.company %}
+        {% if perms.openebs.edit_all or not perms.openebs.view_all or object.dataownercode == user.userprofile.company %}
             <form method="post" action="{% url 'msg_delete' object.id %}">
                 {% csrf_token %}
                 <button class="btn btn-danger pull-right">

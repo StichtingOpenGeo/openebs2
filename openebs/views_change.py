@@ -8,7 +8,7 @@ from django.views.generic import ListView, CreateView, DeleteView, DetailView
 from kv1.models import Kv1Journey
 from openebs.form import Kv17ChangeForm
 from openebs.models import Kv17Change
-from openebs.views import FilterDataownerMixin
+from openebs.views_utils import FilterDataownerMixin
 from utils.time import get_operator_date
 from utils.views import AccessMixin, ExternalMessagePushMixin, JSONListResponseMixin
 

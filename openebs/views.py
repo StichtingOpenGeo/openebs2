@@ -1,61 +1,27 @@
 # Create your views here.
 import logging
-from braces.views import LoginRequiredMixin
 from datetime import timedelta
-from django.core.exceptions import PermissionDenied
+
+from braces.views import LoginRequiredMixin
 from django.core.urlresolvers import reverse_lazy
 from django.db.models import Q
 from django.views.generic import ListView, UpdateView, DetailView
-from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import CreateView, DeleteView
 from django.utils.timezone import now
-from django.views.generic.list import MultipleObjectMixin
+
 from djgeojson.views import GeoJSONLayerView
+
 from kv1.models import Kv1Stop
+from openebs.views_utils import FilterDataownerMixin, Kv15PushMixin
 from utils.client import get_client_ip
-from utils.views import ExternalMessagePushMixin, JSONListResponseMixin, AccessMixin
+from utils.views import JSONListResponseMixin, AccessMixin
 from openebs.models import Kv15Stopmessage, Kv15Log, MessageStatus
 from openebs.form import Kv15StopMessageForm
 
+
 log = logging.getLogger('openebs.views')
 
-# TODO: Refactor these two classes
-class FilterDataownerMixin(SingleObjectMixin):
-    # Permission level is used to check which permission is needed by the view. 'read' forces read_only, 'write' allows modifications
-    permission_level = None
-
-    def get_queryset(self):
-        company = self.request.user.userprofile.company
-        if company is None:
-            raise PermissionDenied("Je account is nog niet gelinkt aan een vervoerder")
-
-        if self.request.user.has_perm('openebs.view_all') and self.permission_level == 'read':
-            return super(FilterDataownerMixin, self).get_queryset()
-        else:
-            return super(FilterDataownerMixin, self).get_queryset().filter(dataownercode=company)
-
-
-class FilterDataownerListMixin(MultipleObjectMixin):
-    # See comment above for usage!
-    permission_level = None
-
-    def get_queryset(self):
-        company = self.request.user.userprofile.company
-        if company is None:
-            raise PermissionDenied("Je account is nog niet gelinkt aan een vervoerder")
-
-        if self.request.user.has_perm('openebs.view_all') and self.permission_level == 'read':
-            return super(FilterDataownerListMixin, self).get_queryset()
-        else:
-            return super(FilterDataownerListMixin, self).get_queryset().filter(dataownercode=company)
-
-class Kv15PushMixin(ExternalMessagePushMixin):
-    message_type = 'KV15'
-    dossier = 'KV15messages'
-    namespace = 'http://bison.connekt.nl/tmi8/kv15/msg'
-
 # MESSAGE VIEWS
-
 class MessageListView(AccessMixin, ListView):
     permission_required = 'openebs.view_messages'
     model = Kv15Stopmessage
@@ -64,7 +30,7 @@ class MessageListView(AccessMixin, ListView):
         context = super(MessageListView, self).get_context_data(**kwargs)
 
         context['view_all'] = self.is_view_all()
-        context['edit_all'] = False # TODO Implement
+        context['edit_all'] = self.is_view_all() and self.request.user.has_perm("openebs.edit_all")
 
         # Get the currently active messages
         active = self.model.objects.filter(messageendtime__gt=now, isdeleted=False)\
@@ -85,8 +51,9 @@ class MessageListView(AccessMixin, ListView):
 
     def is_view_all(self):
         has_query_all = "all" in self.request.GET and self.request.GET['all'] == "true"
-        is_superuser = self.request.user.is_superuser
-        return (is_superuser and has_query_all) or (not is_superuser and self.request.user.has_perm("openebs.view_all"))
+        user = self.request.user
+        return (user.is_superuser and has_query_all) or \
+               (not user.is_superuser and (user.has_perm("openebs.view_all") or user.has_perm("openebs.edit_all")))
 
 class MessageCreateView(AccessMixin, Kv15PushMixin, CreateView):
     permission_required = 'openebs.add_messages'

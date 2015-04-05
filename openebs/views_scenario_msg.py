@@ -6,7 +6,8 @@ from django.views.generic.edit import BaseFormView
 from kv1.models import Kv1Stop
 from openebs.form import Kv15ScenarioMessageForm
 from openebs.models import Kv15Scenario, Kv15ScenarioMessage
-from openebs.views import FilterDataownerMixin, AccessMixin
+from openebs.views import AccessMixin
+from openebs.views_utils import FilterDataownerMixin
 
 log = logging.getLogger('openebs.views.scenario_message')
 

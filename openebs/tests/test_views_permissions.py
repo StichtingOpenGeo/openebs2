@@ -8,6 +8,7 @@ class TestViewPermissions(TestCase):
     """
     Gathering place of all tests related to permissions, especially on isolation between different companies
     """
+    @classmethod
     def setUpClass(cls):
         # Setup user and assign company
         cls.user = User.objects.create_user(username="test_permission", password="test")

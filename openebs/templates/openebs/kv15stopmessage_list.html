@@ -12,7 +12,7 @@
   {% endif %}
 
   <h2>{% trans "Actieve berichten" %}
-      {% if perms.openebs.add_messages and not view_all %}
+      {% if perms.openebs.add_messages and not view_all and not edit_all %}
       <a class="btn btn-success pull-right" href="{% url 'msg_add' %}">
         <span class="glyphicon glyphicon-plus-sign"></span> {% trans "Nieuw bericht" %}
       </a>
