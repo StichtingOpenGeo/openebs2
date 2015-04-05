@@ -27,10 +27,9 @@ class MessageListView(AccessMixin, ListView):
     model = Kv15Stopmessage
 
     def get_context_data(self, **kwargs):
-        context = super(MessageListView, self).get_context_data(**kwargs)
-
-        context['view_all'] = self.is_view_all()
-        context['edit_all'] = self.is_view_all() and self.request.user.has_perm("openebs.edit_all")
+        # context = super(MessageListView, self).get_context_data(**kwargs)
+        context = {'view_all': self.is_view_all(),
+                   'edit_all': self.is_view_all() and self.request.user.has_perm("openebs.edit_all")}
 
         # Get the currently active messages
         active = self.model.objects.filter(messageendtime__gt=now, isdeleted=False)\
