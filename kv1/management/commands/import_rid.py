@@ -37,21 +37,20 @@ class Command(BaseCommand):
                 else:
                     self.log("Failed to match route: %s" % row['operator_id'])
 
-
     def do_stops(self):
         with open(self.folder+'/openebs_stops.csv') as stops_file:
-           stop_reader = csv.DictReader(stops_file, delimiter=',', quotechar='"')
-           i = 0
-           for row in stop_reader:
-               stop_code = row['operator_id'].split(':')
-               s, created = Kv1Stop.objects.get_or_create(dataownercode=stop_code[0], userstopcode=stop_code[1])
-               s.name = row['name']
-               s.location = Point(float(row['longitude']), float(row['latitude']), srid=4326)
-               s.timingpointcode = row['timingpointcode']
-               s.save()
-               i = i+1
-               if i % 100 == 0:
-                   self.log("Did %s stops" % i)
+            stop_reader = csv.DictReader(stops_file, delimiter=',', quotechar='"')
+            i = 0
+            for row in stop_reader:
+                stop_code = row['operator_id'].split(':')
+                s, created = Kv1Stop.objects.get_or_create(dataownercode=stop_code[0], userstopcode=stop_code[1])
+                s.name = row['name']
+                s.location = Point(float(row['longitude']), float(row['latitude']), srid=4326)
+                s.timingpointcode = row['timingpointcode']
+                s.save()
+                i += 1
+                if i % 100 == 0:
+                    self.log("Did %s stops" % i)
 
     @staticmethod
     def log(text):
