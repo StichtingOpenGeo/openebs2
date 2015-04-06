@@ -43,9 +43,10 @@ class Command(BaseCommand):
             i = 0
             for row in stop_reader:
                 stop_code = row['operator_id'].split(':')
-                s, created = Kv1Stop.objects.get_or_create(dataownercode=stop_code[0], userstopcode=stop_code[1])
+                location = Point(float(row['longitude']), float(row['latitude']), srid=4326)
+                s, created = Kv1Stop.objects.get_or_create(dataownercode=stop_code[0], userstopcode=stop_code[1], defaults={'location' : location})
                 s.name = row['name']
-                s.location = Point(float(row['longitude']), float(row['latitude']), srid=4326)
+                s.location = location
                 s.timingpointcode = row['timingpointcode']
                 s.save()
                 i += 1
