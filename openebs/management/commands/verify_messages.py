@@ -53,7 +53,7 @@ class Command(BaseCommand):
                         row[k] = None
                     else:
                         row[k] = v
-                self.log.debug("Got new message of type %s" % type)
+                #self.log.debug("Got new message of type %s" % type)
                 if type == 'GENERALMESSAGEUPDATE':
                     self.process_message(row, False)
                 elif type == 'GENERALMESSAGEDELETE':
@@ -67,7 +67,6 @@ class Command(BaseCommand):
                                                              messagecodedate=row['MessageCodeDate'],
                                                              messagecodenumber=row['MessageCodeNumber'],
                                                              defaults={'user': self.get_user()})
-        self.log.info("Setting status confirmed for adding of message: %s (Stop: %s)" % (msg, row['TimingPointCode']))
         if not deleted:
             msg.status = MessageStatus.CONFIRMED
             # In case this is an update, set these fields to properly restore our message:
@@ -75,15 +74,18 @@ class Command(BaseCommand):
             msg.messageendtime = row['MessageEndTime']
             msg.isdeleted = False
             if created:
+                self.log.info("Message added and confirmed: %s (Stop: %s)" % (msg, row['TimingPointCode']))
                 self.copy_message_content(msg, row)
+            else:
+                self.log.info("Message confirmed: %s (Stop/TPC %s)" % (msg, row['TimingPointCode']))
         else:
-            self.log.error("Confirmed deletion of message: %s (Stop %s)" % (msg, row['TimingPointCode']))
+            if not created:
+                self.log.error("Message confirmed deleted: %s (Stop/TPC %s)" % (msg, row['TimingPointCode']))
+            else:
+                self.log.error("Message added and confirmed deleted: %s (Stop/TPC %s)" % (msg, row['TimingPointCode']))
             msg.status = MessageStatus.DELETE_CONFIRMED
             msg.messageendtime = now()
             msg.isdeleted = True
-
-        if created:
-            self.log.info("Created messages not in database: %s (Stop: %s)" % (msg, row['TimingPointCode']))
 
         msg.save()
 
@@ -91,7 +93,6 @@ class Command(BaseCommand):
         self.add_stop_for_message(msg, row)
 
     def copy_message_content(self, msg, row):
-        self.log.info("Creating new message which wasn't in DB: %s" % msg)
         msg.messagecontent = row['MessageContent']
         msg.messagetimestamp = row['MessageTimeStamp']
         msg.messagetype = row['MessageType']
@@ -110,15 +111,14 @@ class Command(BaseCommand):
         self.set_if_filled(msg, 'advicecontent', row['AdviceContent'])
 
     def add_stop_for_message(self, msg, row):
-        try:
-            stops = Kv1Stop.objects.filter(timingpointcode=row['TimingPointCode'])
-            for stop in stops:
-                message_stop, created = Kv15MessageStop.objects.get_or_create(stopmessage=msg, stop=stop)
-                if created:
-                    self.log.debug("Created KV15MessageStop for stop %s and message %s" % (message_stop, stop))
-                    message_stop.save()
-        except Kv1Stop.DoesNotExist:
-            self.log.error("Couldn't find stop %s - %s" % (row['DataOwnerCode'], row['TimingPointCode']))
+        stops = Kv1Stop.objects.filter(timingpointcode=row['TimingPointCode'])
+        for stop in stops:
+            message_stop, created = Kv15MessageStop.objects.get_or_create(stopmessage=msg, stop=stop)
+            if created:
+                self.log.debug("Stop added to message: %s (Stop/TPC %s)" % (msg, row['TimingPointCode']))
+                message_stop.save()
+        if len(stops) == 0:
+            self.log.error("Tried to add stops to message but couldn't find matching TPC: %s (Stop/TPC %s)" % (msg, row['TimingPointCode']))
 
     @staticmethod
     def setup_subscription():
