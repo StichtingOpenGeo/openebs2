@@ -6,19 +6,22 @@
 {% block content %}
 
   {% if view_all %}
-      <h1>{% trans "Alle berichten" %}</h1>
-      <form class="form-inline pull-right" method="get" id="filter" role="form">
-          <div class="form-group">
-              <label for="filter">{% trans "Filter:" %}
-                  <select id="filter-select" name="filter" class="form-control">
-                    <option value="-1">{% trans "Geen" %}</option>
-                  {% for id, name in filters %}
-                      <option value="{% url 'msg_index' %}?all=true&filter={{ id }}"{% if id == filter %} selected{% endif %}>{{ name }}</option>
-                  {% endfor %}
-                  </select>
-              </label>
-        </div>
-      </form>
+      <div class="row">
+          <h1 class="col-md-8">{% trans "Alle berichten" %}</h1>
+          <form class="form-horizontal" method="get" id="filter" role="form" style="vertical-align: middle;">
+              <div class="form-group">
+                  <label for="filter" class="control-label col-md-1">{% trans "Filter" %}</label>
+                  <div class="col-md-2">
+                      <select id="filter-select" name="filter" class="form-control">
+                          <option value="{% url 'msg_index' %}?all=true"><em>{% trans "Geen" %}</em></option>
+                          {% for id, name in filters %}
+                              <option value="{% url 'msg_index' %}?all=true&filter={{ id }}"{% if id == filter %} selected{% endif %}>{{ name }}</option>
+                          {% endfor %}
+                      </select>
+                  </div>
+            </div>
+          </form>
+      </div>
   {% else %}
       <h1>{% trans "Berichten" %}</h1>
   {% endif %}
