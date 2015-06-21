@@ -61,7 +61,7 @@ class Kv1Stop(models.Model):
 class Kv1Journey(models.Model):
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
     line = models.ForeignKey(Kv1Line, related_name="journeys")  # Represent lineplanningnumber\
-    journeynumber = models.PositiveIntegerField(max_length=6)  # 0 - 999999
+    journeynumber = models.PositiveIntegerField()  # 0 - 999999
     scheduleref = models.PositiveIntegerField() # Field 'availabilityconditionref'
     departuretime = models.PositiveIntegerField()
     direction = models.PositiveSmallIntegerField()

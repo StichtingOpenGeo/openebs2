@@ -110,7 +110,6 @@ INSTALLED_APPS = (
     'utils', # Load our custom filters
 
     # Libs
-    'south',
     'json_field',
     'floppyforms',
     'crispy_forms',

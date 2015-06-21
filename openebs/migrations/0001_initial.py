@@ -1,272 +1,272 @@
 # -*- coding: utf-8 -*-
-import datetime
-from south.db import db
-from south.v2 import SchemaMigration
-from django.db import models
+from __future__ import unicode_literals
+
+from django.db import models, migrations
+import openebs.models
+import django.utils.timezone
+from django.conf import settings
 
 
-class Migration(SchemaMigration):
+class Migration(migrations.Migration):
 
-    def forwards(self, orm):
-        # Adding model 'UserProfile'
-        db.create_table(u'openebs_userprofile', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('user', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['auth.User'], unique=True)),
-            ('company', self.gf('django.db.models.fields.CharField')(max_length=10)),
-        ))
-        db.send_create_signal(u'openebs', ['UserProfile'])
+    dependencies = [
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+        ('kv1', '0001_initial'),
+    ]
 
-        # Adding model 'Kv15Log'
-        db.create_table(u'openebs_kv15log', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('timestamp', self.gf('django.db.models.fields.DateTimeField')()),
-            ('dataownercode', self.gf('django.db.models.fields.CharField')(max_length=10)),
-            ('messagecodedate', self.gf('django.db.models.fields.DateField')()),
-            ('messagecodenumber', self.gf('django.db.models.fields.DecimalField')(max_digits=4, decimal_places=0)),
-            ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'])),
-            ('message', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('ipaddress', self.gf('django.db.models.fields.CharField')(max_length=100)),
-        ))
-        db.send_create_signal(u'openebs', ['Kv15Log'])
-
-        # Adding model 'Kv15Stopmessage'
-        db.create_table(u'openebs_kv15stopmessage', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'])),
-            ('dataownercode', self.gf('django.db.models.fields.CharField')(max_length=10)),
-            ('messagecodedate', self.gf('django.db.models.fields.DateField')()),
-            ('messagecodenumber', self.gf('django.db.models.fields.DecimalField')(max_digits=4, decimal_places=0)),
-            ('messagepriority', self.gf('django.db.models.fields.CharField')(default=u'PTPROCESS', max_length=10)),
-            ('messagetype', self.gf('django.db.models.fields.CharField')(default=u'GENERAL', max_length=10)),
-            ('messagedurationtype', self.gf('django.db.models.fields.CharField')(default=u'ENDTIME', max_length=10)),
-            ('messagestarttime', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime.now, null=True, blank=True)),
-            ('messageendtime', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
-            ('messagecontent', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('reasontype', self.gf('django.db.models.fields.SmallIntegerField')(null=True, blank=True)),
-            ('subreasontype', self.gf('django.db.models.fields.CharField')(max_length=10, blank=True)),
-            ('reasoncontent', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('effecttype', self.gf('django.db.models.fields.SmallIntegerField')(null=True, blank=True)),
-            ('subeffecttype', self.gf('django.db.models.fields.CharField')(max_length=10, blank=True)),
-            ('effectcontent', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('measuretype', self.gf('django.db.models.fields.SmallIntegerField')(null=True, blank=True)),
-            ('submeasuretype', self.gf('django.db.models.fields.CharField')(max_length=10, blank=True)),
-            ('measurecontent', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('advicetype', self.gf('django.db.models.fields.SmallIntegerField')(null=True, blank=True)),
-            ('subadvicetype', self.gf('django.db.models.fields.CharField')(max_length=10, blank=True)),
-            ('advicecontent', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('messagetimestamp', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('isdeleted', self.gf('django.db.models.fields.BooleanField')(default=False)),
-        ))
-        db.send_create_signal(u'openebs', ['Kv15Stopmessage'])
-
-        # Adding unique constraint on 'Kv15Stopmessage', fields ['dataownercode', 'messagecodedate', 'messagecodenumber']
-        db.create_unique(u'openebs_kv15stopmessage', ['dataownercode', 'messagecodedate', 'messagecodenumber'])
-
-        # Adding model 'Kv15Scenario'
-        db.create_table(u'openebs_kv15scenario', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('scenario', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('messagepriority', self.gf('django.db.models.fields.CharField')(default=u'PTPROCESS', max_length=10)),
-            ('messagetype', self.gf('django.db.models.fields.CharField')(default=u'GENERAL', max_length=10)),
-            ('messagedurationtype', self.gf('django.db.models.fields.CharField')(default=u'ENDTIME', max_length=10)),
-            ('messagestarttime', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime.now, null=True, blank=True)),
-            ('messageendtime', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
-            ('messagecontent', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('reasontype', self.gf('django.db.models.fields.SmallIntegerField')(null=True, blank=True)),
-            ('subreasontype', self.gf('django.db.models.fields.CharField')(max_length=10, blank=True)),
-            ('reasoncontent', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('effecttype', self.gf('django.db.models.fields.SmallIntegerField')(null=True, blank=True)),
-            ('subeffecttype', self.gf('django.db.models.fields.CharField')(max_length=10, blank=True)),
-            ('effectcontent', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('measuretype', self.gf('django.db.models.fields.SmallIntegerField')(null=True, blank=True)),
-            ('submeasuretype', self.gf('django.db.models.fields.CharField')(max_length=10, blank=True)),
-            ('measurecontent', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('advicetype', self.gf('django.db.models.fields.SmallIntegerField')(null=True, blank=True)),
-            ('subadvicetype', self.gf('django.db.models.fields.CharField')(max_length=10, blank=True)),
-            ('advicecontent', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('messagetimestamp', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-        ))
-        db.send_create_signal(u'openebs', ['Kv15Scenario'])
-
-        # Adding model 'Kv15Schedule'
-        db.create_table(u'openebs_kv15schedule', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('stopmessage', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['openebs.Kv15Stopmessage'])),
-            ('messagestarttime', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
-            ('messageendtime', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
-            ('weekdays', self.gf('django.db.models.fields.SmallIntegerField')(null=True, blank=True)),
-        ))
-        db.send_create_signal(u'openebs', ['Kv15Schedule'])
-
-        # Adding model 'Kv15StopmessageLineplanningnumber'
-        db.create_table(u'openebs_kv15stopmessagelineplanningnumber', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('stopmessage', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['openebs.Kv15Stopmessage'])),
-            ('lineplanningnumber', self.gf('django.db.models.fields.CharField')(max_length=10)),
-        ))
-        db.send_create_signal(u'openebs', ['Kv15StopmessageLineplanningnumber'])
-
-        # Adding model 'Kv15StopmessageUserstopcode'
-        db.create_table(u'openebs_kv15stopmessageuserstopcode', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('stopmessage', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['openebs.Kv15Stopmessage'])),
-            ('userstopcode', self.gf('django.db.models.fields.CharField')(max_length=10)),
-        ))
-        db.send_create_signal(u'openebs', ['Kv15StopmessageUserstopcode'])
-
-
-    def backwards(self, orm):
-        # Removing unique constraint on 'Kv15Stopmessage', fields ['dataownercode', 'messagecodedate', 'messagecodenumber']
-        db.delete_unique(u'openebs_kv15stopmessage', ['dataownercode', 'messagecodedate', 'messagecodenumber'])
-
-        # Deleting model 'UserProfile'
-        db.delete_table(u'openebs_userprofile')
-
-        # Deleting model 'Kv15Log'
-        db.delete_table(u'openebs_kv15log')
-
-        # Deleting model 'Kv15Stopmessage'
-        db.delete_table(u'openebs_kv15stopmessage')
-
-        # Deleting model 'Kv15Scenario'
-        db.delete_table(u'openebs_kv15scenario')
-
-        # Deleting model 'Kv15Schedule'
-        db.delete_table(u'openebs_kv15schedule')
-
-        # Deleting model 'Kv15StopmessageLineplanningnumber'
-        db.delete_table(u'openebs_kv15stopmessagelineplanningnumber')
-
-        # Deleting model 'Kv15StopmessageUserstopcode'
-        db.delete_table(u'openebs_kv15stopmessageuserstopcode')
-
-
-    models = {
-        u'auth.group': {
-            'Meta': {'object_name': 'Group'},
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '80'}),
-            'permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['auth.Permission']", 'symmetrical': 'False', 'blank': 'True'})
-        },
-        u'auth.permission': {
-            'Meta': {'ordering': "(u'content_type__app_label', u'content_type__model', u'codename')", 'unique_together': "((u'content_type', u'codename'),)", 'object_name': 'Permission'},
-            'codename': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['contenttypes.ContentType']"}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '50'})
-        },
-        u'auth.user': {
-            'Meta': {'object_name': 'User'},
-            'date_joined': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
-            'email': ('django.db.models.fields.EmailField', [], {'max_length': '75', 'blank': 'True'}),
-            'first_name': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
-            'groups': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['auth.Group']", 'symmetrical': 'False', 'blank': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'is_staff': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'is_superuser': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'last_login': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
-            'last_name': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
-            'password': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
-            'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['auth.Permission']", 'symmetrical': 'False', 'blank': 'True'}),
-            'username': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '30'})
-        },
-        u'contenttypes.contenttype': {
-            'Meta': {'ordering': "('name',)", 'unique_together': "(('app_label', 'model'),)", 'object_name': 'ContentType', 'db_table': "'django_content_type'"},
-            'app_label': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'model': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
-        },
-        u'openebs.kv15log': {
-            'Meta': {'object_name': 'Kv15Log'},
-            'dataownercode': ('django.db.models.fields.CharField', [], {'max_length': '10'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'ipaddress': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'message': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'messagecodedate': ('django.db.models.fields.DateField', [], {}),
-            'messagecodenumber': ('django.db.models.fields.DecimalField', [], {'max_digits': '4', 'decimal_places': '0'}),
-            'timestamp': ('django.db.models.fields.DateTimeField', [], {}),
-            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']"})
-        },
-        u'openebs.kv15scenario': {
-            'Meta': {'object_name': 'Kv15Scenario'},
-            'advicecontent': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'advicetype': ('django.db.models.fields.SmallIntegerField', [], {'null': 'True', 'blank': 'True'}),
-            'effectcontent': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'effecttype': ('django.db.models.fields.SmallIntegerField', [], {'null': 'True', 'blank': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'measurecontent': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'measuretype': ('django.db.models.fields.SmallIntegerField', [], {'null': 'True', 'blank': 'True'}),
-            'messagecontent': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'messagedurationtype': ('django.db.models.fields.CharField', [], {'default': "u'ENDTIME'", 'max_length': '10'}),
-            'messageendtime': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
-            'messagepriority': ('django.db.models.fields.CharField', [], {'default': "u'PTPROCESS'", 'max_length': '10'}),
-            'messagestarttime': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now', 'null': 'True', 'blank': 'True'}),
-            'messagetimestamp': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'messagetype': ('django.db.models.fields.CharField', [], {'default': "u'GENERAL'", 'max_length': '10'}),
-            'reasoncontent': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'reasontype': ('django.db.models.fields.SmallIntegerField', [], {'null': 'True', 'blank': 'True'}),
-            'scenario': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'subadvicetype': ('django.db.models.fields.CharField', [], {'max_length': '10', 'blank': 'True'}),
-            'subeffecttype': ('django.db.models.fields.CharField', [], {'max_length': '10', 'blank': 'True'}),
-            'submeasuretype': ('django.db.models.fields.CharField', [], {'max_length': '10', 'blank': 'True'}),
-            'subreasontype': ('django.db.models.fields.CharField', [], {'max_length': '10', 'blank': 'True'})
-        },
-        u'openebs.kv15schedule': {
-            'Meta': {'object_name': 'Kv15Schedule'},
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'messageendtime': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
-            'messagestarttime': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
-            'stopmessage': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['openebs.Kv15Stopmessage']"}),
-            'weekdays': ('django.db.models.fields.SmallIntegerField', [], {'null': 'True', 'blank': 'True'})
-        },
-        u'openebs.kv15stopmessage': {
-            'Meta': {'unique_together': "((u'dataownercode', u'messagecodedate', u'messagecodenumber'),)", 'object_name': 'Kv15Stopmessage'},
-            'advicecontent': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'advicetype': ('django.db.models.fields.SmallIntegerField', [], {'null': 'True', 'blank': 'True'}),
-            'dataownercode': ('django.db.models.fields.CharField', [], {'max_length': '10'}),
-            'effectcontent': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'effecttype': ('django.db.models.fields.SmallIntegerField', [], {'null': 'True', 'blank': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'isdeleted': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'measurecontent': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'measuretype': ('django.db.models.fields.SmallIntegerField', [], {'null': 'True', 'blank': 'True'}),
-            'messagecodedate': ('django.db.models.fields.DateField', [], {}),
-            'messagecodenumber': ('django.db.models.fields.DecimalField', [], {'max_digits': '4', 'decimal_places': '0'}),
-            'messagecontent': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'messagedurationtype': ('django.db.models.fields.CharField', [], {'default': "u'ENDTIME'", 'max_length': '10'}),
-            'messageendtime': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
-            'messagepriority': ('django.db.models.fields.CharField', [], {'default': "u'PTPROCESS'", 'max_length': '10'}),
-            'messagestarttime': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now', 'null': 'True', 'blank': 'True'}),
-            'messagetimestamp': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'messagetype': ('django.db.models.fields.CharField', [], {'default': "u'GENERAL'", 'max_length': '10'}),
-            'reasoncontent': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'reasontype': ('django.db.models.fields.SmallIntegerField', [], {'null': 'True', 'blank': 'True'}),
-            'subadvicetype': ('django.db.models.fields.CharField', [], {'max_length': '10', 'blank': 'True'}),
-            'subeffecttype': ('django.db.models.fields.CharField', [], {'max_length': '10', 'blank': 'True'}),
-            'submeasuretype': ('django.db.models.fields.CharField', [], {'max_length': '10', 'blank': 'True'}),
-            'subreasontype': ('django.db.models.fields.CharField', [], {'max_length': '10', 'blank': 'True'}),
-            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']"})
-        },
-        u'openebs.kv15stopmessagelineplanningnumber': {
-            'Meta': {'object_name': 'Kv15StopmessageLineplanningnumber'},
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'lineplanningnumber': ('django.db.models.fields.CharField', [], {'max_length': '10'}),
-            'stopmessage': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['openebs.Kv15Stopmessage']"})
-        },
-        u'openebs.kv15stopmessageuserstopcode': {
-            'Meta': {'object_name': 'Kv15StopmessageUserstopcode'},
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'stopmessage': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['openebs.Kv15Stopmessage']"}),
-            'userstopcode': ('django.db.models.fields.CharField', [], {'max_length': '10'})
-        },
-        u'openebs.userprofile': {
-            'Meta': {'object_name': 'UserProfile'},
-            'company': ('django.db.models.fields.CharField', [], {'max_length': '10'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'user': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['auth.User']", 'unique': 'True'})
-        }
-    }
-
-    complete_apps = ['openebs']
+    operations = [
+        migrations.CreateModel(
+            name='Kv15Log',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('timestamp', models.DateTimeField(auto_now=True)),
+                ('dataownercode', models.CharField(max_length=10, verbose_name='Vervoerder', choices=[(b'ARR', b'Arriva'), (b'VTN', b'Veolia'), (b'CXX', b'Connexxion'), (b'EBS', b'EBS'), (b'GVB', b'GVB'), (b'HTM', b'HTM'), (b'NS', b'Nederlandse Spoorwegen'), (b'RET', b'RET'), (b'SYNTUS', b'Syntus'), (b'QBUZZ', b'Qbuzz'), (b'TCR', b'Taxi Centrale Renesse'), (b'GOVI', b'GOVI')])),
+                ('messagecodedate', models.DateField()),
+                ('messagecodenumber', models.IntegerField()),
+                ('message', models.CharField(max_length=255)),
+                ('ipaddress', models.CharField(max_length=100)),
+                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+                'verbose_name': 'Logbericht',
+                'verbose_name_plural': 'Logberichten',
+                'permissions': (('view_log', 'Logberichten inzien'),),
+            },
+        ),
+        migrations.CreateModel(
+            name='Kv15MessageLine',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('line', models.ForeignKey(to='kv1.Kv1Line')),
+            ],
+        ),
+        migrations.CreateModel(
+            name='Kv15MessageStop',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('stop', models.ForeignKey(related_name='messages', to='kv1.Kv1Stop')),
+            ],
+        ),
+        migrations.CreateModel(
+            name='Kv15Scenario',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('name', models.CharField(max_length=50, verbose_name='Naam scenario', blank=True)),
+                ('dataownercode', models.CharField(max_length=10, verbose_name='Vervoerder', choices=[(b'ARR', b'Arriva'), (b'VTN', b'Veolia'), (b'CXX', b'Connexxion'), (b'EBS', b'EBS'), (b'GVB', b'GVB'), (b'HTM', b'HTM'), (b'NS', b'Nederlandse Spoorwegen'), (b'RET', b'RET'), (b'SYNTUS', b'Syntus'), (b'QBUZZ', b'Qbuzz'), (b'TCR', b'Taxi Centrale Renesse'), (b'GOVI', b'GOVI')])),
+                ('description', models.CharField(max_length=255, verbose_name='Omschrijving scenario', blank=True)),
+            ],
+            options={
+                'verbose_name': 'Scenario',
+                'verbose_name_plural': "Scenario's",
+                'permissions': (('view_scenario', "Scenario's bekijken"), ('add_scenario', "Scenario's aanmaken")),
+            },
+        ),
+        migrations.CreateModel(
+            name='Kv15ScenarioMessage',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('dataownercode', models.CharField(max_length=10, verbose_name='Vervoerder', choices=[(b'ARR', b'Arriva'), (b'VTN', b'Veolia'), (b'CXX', b'Connexxion'), (b'EBS', b'EBS'), (b'GVB', b'GVB'), (b'HTM', b'HTM'), (b'NS', b'Nederlandse Spoorwegen'), (b'RET', b'RET'), (b'SYNTUS', b'Syntus'), (b'QBUZZ', b'Qbuzz'), (b'TCR', b'Taxi Centrale Renesse'), (b'GOVI', b'GOVI')])),
+                ('messagepriority', models.CharField(default='PTPROCESS', max_length=10, verbose_name='Prioriteit', choices=[(b'CALAMITY', b'Calamiteit'), (b'PTPROCESS', b'OV'), (b'COMMERCIAL', b'Commercieel'), (b'MISC', b'Overig')])),
+                ('messagetype', models.CharField(default='GENERAL', max_length=10, verbose_name='Type bericht', choices=[(b'GENERAL', b'Algemeen'), (b'ADDITIONAL', b'Extra'), (b'OVERRULE', b'Overschrijf'), (b'BOTTOMLINE', b'Onderaan')])),
+                ('messagedurationtype', models.CharField(default='ENDTIME', max_length=10, verbose_name='Type tijdsrooster', choices=[(b'REMOVE', b'Verwijder'), (b'FIRSTVEJO', b'Volgende rit'), (b'ENDTIME', b'Eind Tijd')])),
+                ('messagecontent', models.CharField(max_length=255, verbose_name='Bericht', blank=True)),
+                ('reasontype', models.SmallIntegerField(blank=True, null=True, verbose_name='Type oorzaak', choices=[(0, b'Onbekend'), (1, b'Overig'), (2, b'Personeel'), (3, b'Materieel'), (4, b'Omgeving'), (255, b'Ongedefinieerd')])),
+                ('subreasontype', models.CharField(blank=True, max_length=10, verbose_name='Oorzaak', choices=[(b'0_1', b'Eerdere verstoring'), (b'11', b'Herstel werkzaamheden'), (b'11_2', b'Uitloop herstelwerkzaamheden'), (b'12', b'Stroomstoring'), (b'12_1', b'Defecte bovenleiding'), (b'12_2', b'Uitloop werkzaamheden'), (b'14', b'Defecte brug'), (b'14', b'Wateroverlast'), (b'14_1', b'Defect viaduct'), (b'15', b'File'), (b'16', b'Route versperd'), (b'16', b'Stremming'), (b'17', b'Mensen op de route'), (b'18', b'Auto in spoor'), (b'19_1', b'Omgevallen bomen'), (b'20', b'Vee op de route'), (b'23', b'Werkzaamheden'), (b'23_1', b'Rioleringswerkzaamheden'), (b'23_2', b'Wegwerkzaamheden'), (b'23_3', b'Asfalteringswerkzaamheden'), (b'23_4', b'Bestratingswerkzaamheden'), (b'24_1', b'Optocht'), (b'24_10', b'Kermis'), (b'24_11', b'Koniginnedag'), (b'24_12', b'Marathon'), (b'24_13', b'Wielerronde'), (b'24_14', b'Voetbalwedstrijd'), (b'24_15', b'Herdenking'), (b'24_16', b'Avondvierdaagse'), (b'24_6', b'Bloemencorso'), (b'24_7', b'Braderie'), (b'24_8', b'Carnaval'), (b'24_9', b'Jaarmarkt'), (b'255', b'Onbekend'), (b'255', b'Weersomstandigheden'), (b'255_1', b'Blikeminslag'), (b'26_1', b'Snelheidsbeperkingen'), (b'26_2', b'Logistieke problemen'), (b'3', b'Sneeuw'), (b'3_1', b'Op last van de politie'), (b'3_11', b'Ontruiming'), (b'3_15', b'Ruimen WO II bom'), (b'3_17', b'Op last van de brandweer'), (b'3_9', b'Bommelding'), (b'4', b'Brand'), (b'4', b'Seinstoring'), (b'4', b'Tekort aan personeel'), (b'4_1', b'Sein en wisselstoring'), (b'5', b'Ontsporing'), (b'5', b'Staking'), (b'5', b'Storm'), (b'5', b'Vakbondsacties'), (b'5_1', b'Mogelijke staking'), (b'6', b'Ongeval'), (b'6', b'Stiptheidsactie'), (b'6_2', b'Defecte trein'), (b'6_3', b'Aanrijding met een persoon'), (b'6_4', b'Passagier onwel'), (b'6_6', b'Aanrijding'), (b'7', b'Defect materieel'), (b'7', b'Extreme drukte'), (b'8_1', b'Defect spoor'), (b'8_10', b'Wisselstoring'), (b'8_11', b'Overwegstoring'), (b'8_12', b'Storing in verkeersleidingsysteem'), (b'8_13', b'Gladde sporen'), (b'8_4', b'Tekort aan materieel'), (b'9', b'Herstelwerkzaamheden'), (b'9_1', b'Gladheid'), (b'9_2', b'IJsgang'), (b'9_2', b'IJzel')])),
+                ('reasoncontent', models.CharField(max_length=255, verbose_name='Uitleg oorzaak', blank=True)),
+                ('effecttype', models.SmallIntegerField(blank=True, null=True, verbose_name='Type gevolg', choices=[(0, b'Onbekend'), (1, b'Algemeen Effect'), (255, b'Ongedefineerd')])),
+                ('subeffecttype', models.CharField(blank=True, max_length=10, verbose_name='Gevolg', choices=[(b'0', b'onbekend'), (b'11', b'minder vervoer'), (b'5', b'geen vervoer'), (b'6', b'vervoer ontregeld'), (b'5', b'geen treinen'), (b'4', b'omleiding'), (b'4_1', b'omleiding met vertraging'), (b'3_1', b'vertraging onbekend'), (b'3_2', b'vertraging 5 min.'), (b'3_3', b'vertraging 10 min.'), (b'3_4', b'vertraging 15 min.'), (b'3_5', b'vertraging 30 min.'), (b'3_6', b'vertraging 45 min.'), (b'3_7', b'vertraging 60 min.'), (b'3_8', b'vertraging 60 min. en meer'), (b'3_9', b'vertraging 5 tot 10 min.'), (b'3_10', b'vertraging 10 tot 15 min.'), (b'3_11', b'vertraging 15 tot 30 min.'), (b'3_12', b'vertraging 30 tot 60 min.'), (b'5_1', b'vervallen halte(n)'), (b'5_2', b'traject vervallen')])),
+                ('effectcontent', models.CharField(max_length=255, verbose_name='Uitleg gevolg', blank=True)),
+                ('measuretype', models.SmallIntegerField(blank=True, null=True, verbose_name='Type aanpassing', choices=[(0, b'Onbekend'), (1, b'Algemene Maatregel'), (255, b'Ongedefineerd')])),
+                ('submeasuretype', models.CharField(blank=True, max_length=10, verbose_name='Aanpassing', choices=[(b'0', b'extra vervoer'), (b'1', b'vervallen halte(n)'), (b'2', b'vervangende halte(n)'), (b'3', b'rijden via omweg'), (b'4_1', b'geen businzet'), (b'4_2', b'beperkte businzet'), (b'4_3', b'businzet'), (b'5_1', b'geen treinen'), (b'5_2', b'minder treinen'), (b'5_3', b'treinen rijden via'), (b'6', b'geen'), (b'7', b'route aangepast')])),
+                ('measurecontent', models.CharField(max_length=255, verbose_name='Uitleg aanpassing', blank=True)),
+                ('advicetype', models.SmallIntegerField(blank=True, null=True, verbose_name='Type advies', choices=[(0, b'Onbekend'), (1, b'Algemeen Advies'), (255, b'Ongedefineerd')])),
+                ('subadvicetype', models.CharField(blank=True, max_length=10, verbose_name='Advies', choices=[(b'0', b'geen'), (b'1', b'niet reizen'), (b'2', b'reizen met ander ov'), (b'3_1', b'overstappen in'), (b'3_2', b'reizen via'), (b'3_3', b'in-/uitstappen')])),
+                ('advicecontent', models.CharField(max_length=255, verbose_name='Uitleg advies', blank=True)),
+                ('updated', models.DateTimeField(auto_now=True)),
+                ('scenario', models.ForeignKey(related_name='messages', to='openebs.Kv15Scenario')),
+            ],
+            options={
+                'verbose_name': 'Scenario bericht',
+                'verbose_name_plural': 'Scenario berichten',
+            },
+        ),
+        migrations.CreateModel(
+            name='Kv15ScenarioStop',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('message', models.ForeignKey(related_name='stops', to='openebs.Kv15ScenarioMessage')),
+                ('stop', models.ForeignKey(to='kv1.Kv1Stop')),
+            ],
+        ),
+        migrations.CreateModel(
+            name='Kv15Schedule',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('messagestarttime', models.DateTimeField(null=True, blank=True)),
+                ('messageendtime', models.DateTimeField(null=True, blank=True)),
+                ('weekdays', models.SmallIntegerField(null=True, blank=True)),
+            ],
+        ),
+        migrations.CreateModel(
+            name='Kv15Stopmessage',
+            fields=[
+                ('id', models.AutoField(serialize=False, primary_key=True)),
+                ('dataownercode', models.CharField(max_length=10, verbose_name='Vervoerder', choices=[(b'ARR', b'Arriva'), (b'VTN', b'Veolia'), (b'CXX', b'Connexxion'), (b'EBS', b'EBS'), (b'GVB', b'GVB'), (b'HTM', b'HTM'), (b'NS', b'Nederlandse Spoorwegen'), (b'RET', b'RET'), (b'SYNTUS', b'Syntus'), (b'QBUZZ', b'Qbuzz'), (b'TCR', b'Taxi Centrale Renesse'), (b'GOVI', b'GOVI')])),
+                ('messagecodedate', models.DateField(default=django.utils.timezone.now, verbose_name='Datum')),
+                ('messagecodenumber', models.IntegerField(verbose_name='Volgnummer')),
+                ('messagepriority', models.CharField(default='PTPROCESS', max_length=10, verbose_name='Prioriteit', choices=[(b'CALAMITY', b'Calamiteit'), (b'PTPROCESS', b'OV'), (b'COMMERCIAL', b'Commercieel'), (b'MISC', b'Overig')])),
+                ('messagetype', models.CharField(default='GENERAL', max_length=10, verbose_name='Type bericht', choices=[(b'GENERAL', b'Algemeen'), (b'ADDITIONAL', b'Extra'), (b'OVERRULE', b'Overschrijf'), (b'BOTTOMLINE', b'Onderaan')])),
+                ('messagedurationtype', models.CharField(default='ENDTIME', max_length=10, verbose_name='Type tijdsrooster', choices=[(b'REMOVE', b'Verwijder'), (b'FIRSTVEJO', b'Volgende rit'), (b'ENDTIME', b'Eind Tijd')])),
+                ('messagestarttime', models.DateTimeField(default=django.utils.timezone.now, null=True, verbose_name='Begintijd', blank=True)),
+                ('messageendtime', models.DateTimeField(default=openebs.models.get_end_service, null=True, verbose_name='Eindtijd', blank=True)),
+                ('messagecontent', models.CharField(max_length=255, null=True, verbose_name='Bericht', blank=True)),
+                ('reasontype', models.SmallIntegerField(blank=True, null=True, verbose_name='Type oorzaak', choices=[(0, b'Onbekend'), (1, b'Overig'), (2, b'Personeel'), (3, b'Materieel'), (4, b'Omgeving'), (255, b'Ongedefinieerd')])),
+                ('subreasontype', models.CharField(blank=True, max_length=10, verbose_name='Oorzaak', choices=[(b'0_1', b'Eerdere verstoring'), (b'11', b'Herstel werkzaamheden'), (b'11_2', b'Uitloop herstelwerkzaamheden'), (b'12', b'Stroomstoring'), (b'12_1', b'Defecte bovenleiding'), (b'12_2', b'Uitloop werkzaamheden'), (b'14', b'Defecte brug'), (b'14', b'Wateroverlast'), (b'14_1', b'Defect viaduct'), (b'15', b'File'), (b'16', b'Route versperd'), (b'16', b'Stremming'), (b'17', b'Mensen op de route'), (b'18', b'Auto in spoor'), (b'19_1', b'Omgevallen bomen'), (b'20', b'Vee op de route'), (b'23', b'Werkzaamheden'), (b'23_1', b'Rioleringswerkzaamheden'), (b'23_2', b'Wegwerkzaamheden'), (b'23_3', b'Asfalteringswerkzaamheden'), (b'23_4', b'Bestratingswerkzaamheden'), (b'24_1', b'Optocht'), (b'24_10', b'Kermis'), (b'24_11', b'Koniginnedag'), (b'24_12', b'Marathon'), (b'24_13', b'Wielerronde'), (b'24_14', b'Voetbalwedstrijd'), (b'24_15', b'Herdenking'), (b'24_16', b'Avondvierdaagse'), (b'24_6', b'Bloemencorso'), (b'24_7', b'Braderie'), (b'24_8', b'Carnaval'), (b'24_9', b'Jaarmarkt'), (b'255', b'Onbekend'), (b'255', b'Weersomstandigheden'), (b'255_1', b'Blikeminslag'), (b'26_1', b'Snelheidsbeperkingen'), (b'26_2', b'Logistieke problemen'), (b'3', b'Sneeuw'), (b'3_1', b'Op last van de politie'), (b'3_11', b'Ontruiming'), (b'3_15', b'Ruimen WO II bom'), (b'3_17', b'Op last van de brandweer'), (b'3_9', b'Bommelding'), (b'4', b'Brand'), (b'4', b'Seinstoring'), (b'4', b'Tekort aan personeel'), (b'4_1', b'Sein en wisselstoring'), (b'5', b'Ontsporing'), (b'5', b'Staking'), (b'5', b'Storm'), (b'5', b'Vakbondsacties'), (b'5_1', b'Mogelijke staking'), (b'6', b'Ongeval'), (b'6', b'Stiptheidsactie'), (b'6_2', b'Defecte trein'), (b'6_3', b'Aanrijding met een persoon'), (b'6_4', b'Passagier onwel'), (b'6_6', b'Aanrijding'), (b'7', b'Defect materieel'), (b'7', b'Extreme drukte'), (b'8_1', b'Defect spoor'), (b'8_10', b'Wisselstoring'), (b'8_11', b'Overwegstoring'), (b'8_12', b'Storing in verkeersleidingsysteem'), (b'8_13', b'Gladde sporen'), (b'8_4', b'Tekort aan materieel'), (b'9', b'Herstelwerkzaamheden'), (b'9_1', b'Gladheid'), (b'9_2', b'IJsgang'), (b'9_2', b'IJzel')])),
+                ('reasoncontent', models.CharField(max_length=255, verbose_name='Uitleg oorzaak', blank=True)),
+                ('effecttype', models.SmallIntegerField(blank=True, null=True, verbose_name='Type gevolg', choices=[(0, b'Onbekend'), (1, b'Algemeen Effect'), (255, b'Ongedefineerd')])),
+                ('subeffecttype', models.CharField(blank=True, max_length=10, verbose_name='Gevolg', choices=[(b'0', b'onbekend'), (b'11', b'minder vervoer'), (b'5', b'geen vervoer'), (b'6', b'vervoer ontregeld'), (b'5', b'geen treinen'), (b'4', b'omleiding'), (b'4_1', b'omleiding met vertraging'), (b'3_1', b'vertraging onbekend'), (b'3_2', b'vertraging 5 min.'), (b'3_3', b'vertraging 10 min.'), (b'3_4', b'vertraging 15 min.'), (b'3_5', b'vertraging 30 min.'), (b'3_6', b'vertraging 45 min.'), (b'3_7', b'vertraging 60 min.'), (b'3_8', b'vertraging 60 min. en meer'), (b'3_9', b'vertraging 5 tot 10 min.'), (b'3_10', b'vertraging 10 tot 15 min.'), (b'3_11', b'vertraging 15 tot 30 min.'), (b'3_12', b'vertraging 30 tot 60 min.'), (b'5_1', b'vervallen halte(n)'), (b'5_2', b'traject vervallen')])),
+                ('effectcontent', models.CharField(max_length=255, verbose_name='Uitleg gevolg', blank=True)),
+                ('measuretype', models.SmallIntegerField(blank=True, null=True, verbose_name='Type aanpassing', choices=[(0, b'Onbekend'), (1, b'Algemene Maatregel'), (255, b'Ongedefineerd')])),
+                ('submeasuretype', models.CharField(blank=True, max_length=10, verbose_name='Aanpassing', choices=[(b'0', b'extra vervoer'), (b'1', b'vervallen halte(n)'), (b'2', b'vervangende halte(n)'), (b'3', b'rijden via omweg'), (b'4_1', b'geen businzet'), (b'4_2', b'beperkte businzet'), (b'4_3', b'businzet'), (b'5_1', b'geen treinen'), (b'5_2', b'minder treinen'), (b'5_3', b'treinen rijden via'), (b'6', b'geen'), (b'7', b'route aangepast')])),
+                ('measurecontent', models.CharField(max_length=255, verbose_name='Uitleg aanpassing', blank=True)),
+                ('advicetype', models.SmallIntegerField(blank=True, null=True, verbose_name='Type advies', choices=[(0, b'Onbekend'), (1, b'Algemeen Advies'), (255, b'Ongedefineerd')])),
+                ('subadvicetype', models.CharField(blank=True, max_length=10, verbose_name='Advies', choices=[(b'0', b'geen'), (b'1', b'niet reizen'), (b'2', b'reizen met ander ov'), (b'3_1', b'overstappen in'), (b'3_2', b'reizen via'), (b'3_3', b'in-/uitstappen')])),
+                ('advicecontent', models.CharField(max_length=255, verbose_name='Uitleg advies', blank=True)),
+                ('messagetimestamp', models.DateTimeField(auto_now_add=True)),
+                ('isdeleted', models.BooleanField(default=False, verbose_name='Verwijderd?')),
+                ('status', models.SmallIntegerField(default=0, verbose_name='Status', choices=[(0, 'Opgeslagen'), (1, 'Verstuurd'), (2, 'Teruggemeld'), (5, 'Verwijderd'), (6, 'Verwijdering verstuurd'), (7, 'Verwijdering teruggemeld'), (11, 'Fout bij versturen'), (12, 'Fout bij versturen verwijdering')])),
+                ('stops', models.ManyToManyField(to='kv1.Kv1Stop', through='openebs.Kv15MessageStop')),
+                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+                'verbose_name': 'KV15 Bericht',
+                'verbose_name_plural': 'KV15 Berichten',
+                'permissions': (('view_messages', 'Berichten bekijken'), ('add_messages', 'Berichten toevoegen, aanpassen of verwijderen'), ('view_all', 'Alle berichten inzien'), ('edit_all', 'Alle berichten bewerken')),
+            },
+        ),
+        migrations.CreateModel(
+            name='Kv17Change',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('dataownercode', models.CharField(max_length=10, verbose_name='Vervoerder', choices=[(b'ARR', b'Arriva'), (b'VTN', b'Veolia'), (b'CXX', b'Connexxion'), (b'EBS', b'EBS'), (b'GVB', b'GVB'), (b'HTM', b'HTM'), (b'NS', b'Nederlandse Spoorwegen'), (b'RET', b'RET'), (b'SYNTUS', b'Syntus'), (b'QBUZZ', b'Qbuzz'), (b'TCR', b'Taxi Centrale Renesse'), (b'GOVI', b'GOVI')])),
+                ('operatingday', models.DateField(verbose_name='Datum')),
+                ('reinforcement', models.IntegerField(default=0, verbose_name='Versterkingsnummer')),
+                ('is_recovered', models.BooleanField(default=False, verbose_name='Teruggedraaid?')),
+                ('created', models.DateTimeField(auto_now_add=True)),
+                ('recovered', models.DateTimeField(null=True, blank=True)),
+                ('journey', models.ForeignKey(related_name='changes', verbose_name='Rit', to='kv1.Kv1Journey')),
+                ('line', models.ForeignKey(verbose_name='Lijn', to='kv1.Kv1Line')),
+            ],
+            options={
+                'verbose_name': 'Ritaanpassing',
+                'verbose_name_plural': 'Ritaanpassingen',
+                'permissions': (('view_change', 'Ritaanpassingen bekijken'), ('add_change', 'Ritaanpassingen aanmaken')),
+            },
+        ),
+        migrations.CreateModel(
+            name='Kv17JourneyChange',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('reasontype', models.SmallIntegerField(blank=True, null=True, verbose_name='Type oorzaak', choices=[(0, b'Onbekend'), (1, b'Overig'), (2, b'Personeel'), (3, b'Materieel'), (4, b'Omgeving'), (255, b'Ongedefinieerd')])),
+                ('subreasontype', models.CharField(blank=True, max_length=10, verbose_name='Oorzaak', choices=[(b'0_1', b'Eerdere verstoring'), (b'11', b'Herstel werkzaamheden'), (b'11_2', b'Uitloop herstelwerkzaamheden'), (b'12', b'Stroomstoring'), (b'12_1', b'Defecte bovenleiding'), (b'12_2', b'Uitloop werkzaamheden'), (b'14', b'Defecte brug'), (b'14', b'Wateroverlast'), (b'14_1', b'Defect viaduct'), (b'15', b'File'), (b'16', b'Route versperd'), (b'16', b'Stremming'), (b'17', b'Mensen op de route'), (b'18', b'Auto in spoor'), (b'19_1', b'Omgevallen bomen'), (b'20', b'Vee op de route'), (b'23', b'Werkzaamheden'), (b'23_1', b'Rioleringswerkzaamheden'), (b'23_2', b'Wegwerkzaamheden'), (b'23_3', b'Asfalteringswerkzaamheden'), (b'23_4', b'Bestratingswerkzaamheden'), (b'24_1', b'Optocht'), (b'24_10', b'Kermis'), (b'24_11', b'Koniginnedag'), (b'24_12', b'Marathon'), (b'24_13', b'Wielerronde'), (b'24_14', b'Voetbalwedstrijd'), (b'24_15', b'Herdenking'), (b'24_16', b'Avondvierdaagse'), (b'24_6', b'Bloemencorso'), (b'24_7', b'Braderie'), (b'24_8', b'Carnaval'), (b'24_9', b'Jaarmarkt'), (b'255', b'Onbekend'), (b'255', b'Weersomstandigheden'), (b'255_1', b'Blikeminslag'), (b'26_1', b'Snelheidsbeperkingen'), (b'26_2', b'Logistieke problemen'), (b'3', b'Sneeuw'), (b'3_1', b'Op last van de politie'), (b'3_11', b'Ontruiming'), (b'3_15', b'Ruimen WO II bom'), (b'3_17', b'Op last van de brandweer'), (b'3_9', b'Bommelding'), (b'4', b'Brand'), (b'4', b'Seinstoring'), (b'4', b'Tekort aan personeel'), (b'4_1', b'Sein en wisselstoring'), (b'5', b'Ontsporing'), (b'5', b'Staking'), (b'5', b'Storm'), (b'5', b'Vakbondsacties'), (b'5_1', b'Mogelijke staking'), (b'6', b'Ongeval'), (b'6', b'Stiptheidsactie'), (b'6_2', b'Defecte trein'), (b'6_3', b'Aanrijding met een persoon'), (b'6_4', b'Passagier onwel'), (b'6_6', b'Aanrijding'), (b'7', b'Defect materieel'), (b'7', b'Extreme drukte'), (b'8_1', b'Defect spoor'), (b'8_10', b'Wisselstoring'), (b'8_11', b'Overwegstoring'), (b'8_12', b'Storing in verkeersleidingsysteem'), (b'8_13', b'Gladde sporen'), (b'8_4', b'Tekort aan materieel'), (b'9', b'Herstelwerkzaamheden'), (b'9_1', b'Gladheid'), (b'9_2', b'IJsgang'), (b'9_2', b'IJzel')])),
+                ('reasoncontent', models.CharField(max_length=255, verbose_name='Uitleg oorzaak', blank=True)),
+                ('advicetype', models.SmallIntegerField(blank=True, null=True, verbose_name='Type advies', choices=[(0, b'Onbekend'), (1, b'Algemeen Advies'), (255, b'Ongedefineerd')])),
+                ('subadvicetype', models.CharField(blank=True, max_length=10, verbose_name='Advies', choices=[(b'0', b'geen'), (b'1', b'niet reizen'), (b'2', b'reizen met ander ov'), (b'3_1', b'overstappen in'), (b'3_2', b'reizen via'), (b'3_3', b'in-/uitstappen')])),
+                ('advicecontent', models.CharField(max_length=255, verbose_name='Uitleg advies', blank=True)),
+                ('change', models.ForeignKey(related_name='journey_details', to='openebs.Kv17Change')),
+            ],
+            options={
+                'verbose_name': 'Ritaanpassingsdetails',
+                'verbose_name_plural': 'Ritaanpassingendetails',
+            },
+        ),
+        migrations.CreateModel(
+            name='Kv17StopChange',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('type', models.PositiveSmallIntegerField(choices=[(1, 'SHORTEN'), (2, 'LAG'), (3, 'CHANGEPASSTIMES'), (4, 'CHANGEDESTINATION'), (5, 'MUTATIONMESSAGE')])),
+                ('stoporder', models.IntegerField()),
+                ('lag', models.IntegerField()),
+                ('targetarrival', models.DateTimeField()),
+                ('targetdeparture', models.DateTimeField()),
+                ('stoptype', models.CharField(default='INTERMEDIATE', max_length=12, choices=[(b'FIRST', b'Beginhalte'), (b'INTERMEDIATE', b'Tussenhalte'), (b'LAST', b'Eindhalte')])),
+                ('destinationcode', models.CharField(max_length=10, blank=True)),
+                ('destinationname50', models.CharField(max_length=50, blank=True)),
+                ('destinationname16', models.CharField(max_length=16, blank=True)),
+                ('destinationdetail16', models.CharField(max_length=16, blank=True)),
+                ('destinationdisplay16', models.CharField(max_length=16, blank=True)),
+                ('reasontype', models.SmallIntegerField(blank=True, null=True, verbose_name='Type oorzaak', choices=[(0, b'Onbekend'), (1, b'Overig'), (2, b'Personeel'), (3, b'Materieel'), (4, b'Omgeving'), (255, b'Ongedefinieerd')])),
+                ('subreasontype', models.CharField(blank=True, max_length=10, verbose_name='Oorzaak', choices=[(b'0_1', b'Eerdere verstoring'), (b'11', b'Herstel werkzaamheden'), (b'11_2', b'Uitloop herstelwerkzaamheden'), (b'12', b'Stroomstoring'), (b'12_1', b'Defecte bovenleiding'), (b'12_2', b'Uitloop werkzaamheden'), (b'14', b'Defecte brug'), (b'14', b'Wateroverlast'), (b'14_1', b'Defect viaduct'), (b'15', b'File'), (b'16', b'Route versperd'), (b'16', b'Stremming'), (b'17', b'Mensen op de route'), (b'18', b'Auto in spoor'), (b'19_1', b'Omgevallen bomen'), (b'20', b'Vee op de route'), (b'23', b'Werkzaamheden'), (b'23_1', b'Rioleringswerkzaamheden'), (b'23_2', b'Wegwerkzaamheden'), (b'23_3', b'Asfalteringswerkzaamheden'), (b'23_4', b'Bestratingswerkzaamheden'), (b'24_1', b'Optocht'), (b'24_10', b'Kermis'), (b'24_11', b'Koniginnedag'), (b'24_12', b'Marathon'), (b'24_13', b'Wielerronde'), (b'24_14', b'Voetbalwedstrijd'), (b'24_15', b'Herdenking'), (b'24_16', b'Avondvierdaagse'), (b'24_6', b'Bloemencorso'), (b'24_7', b'Braderie'), (b'24_8', b'Carnaval'), (b'24_9', b'Jaarmarkt'), (b'255', b'Onbekend'), (b'255', b'Weersomstandigheden'), (b'255_1', b'Blikeminslag'), (b'26_1', b'Snelheidsbeperkingen'), (b'26_2', b'Logistieke problemen'), (b'3', b'Sneeuw'), (b'3_1', b'Op last van de politie'), (b'3_11', b'Ontruiming'), (b'3_15', b'Ruimen WO II bom'), (b'3_17', b'Op last van de brandweer'), (b'3_9', b'Bommelding'), (b'4', b'Brand'), (b'4', b'Seinstoring'), (b'4', b'Tekort aan personeel'), (b'4_1', b'Sein en wisselstoring'), (b'5', b'Ontsporing'), (b'5', b'Staking'), (b'5', b'Storm'), (b'5', b'Vakbondsacties'), (b'5_1', b'Mogelijke staking'), (b'6', b'Ongeval'), (b'6', b'Stiptheidsactie'), (b'6_2', b'Defecte trein'), (b'6_3', b'Aanrijding met een persoon'), (b'6_4', b'Passagier onwel'), (b'6_6', b'Aanrijding'), (b'7', b'Defect materieel'), (b'7', b'Extreme drukte'), (b'8_1', b'Defect spoor'), (b'8_10', b'Wisselstoring'), (b'8_11', b'Overwegstoring'), (b'8_12', b'Storing in verkeersleidingsysteem'), (b'8_13', b'Gladde sporen'), (b'8_4', b'Tekort aan materieel'), (b'9', b'Herstelwerkzaamheden'), (b'9_1', b'Gladheid'), (b'9_2', b'IJsgang'), (b'9_2', b'IJzel')])),
+                ('reasoncontent', models.CharField(max_length=255, verbose_name='Uitleg oorzaak', blank=True)),
+                ('advicetype', models.SmallIntegerField(blank=True, null=True, verbose_name='Type advies', choices=[(0, b'Onbekend'), (1, b'Algemeen Advies'), (255, b'Ongedefineerd')])),
+                ('subadvicetype', models.CharField(blank=True, max_length=10, verbose_name='Advies', choices=[(b'0', b'geen'), (b'1', b'niet reizen'), (b'2', b'reizen met ander ov'), (b'3_1', b'overstappen in'), (b'3_2', b'reizen via'), (b'3_3', b'in-/uitstappen')])),
+                ('advicecontent', models.CharField(max_length=255, verbose_name='Uitleg advies', blank=True)),
+                ('change', models.ForeignKey(to='openebs.Kv17Change')),
+                ('stop', models.ForeignKey(to='kv1.Kv1Stop')),
+            ],
+            options={
+                'verbose_name': 'Halteaanpassing',
+                'verbose_name_plural': 'Halteaanpassingen',
+            },
+        ),
+        migrations.CreateModel(
+            name='Kv1StopFilter',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('name', models.CharField(max_length=25)),
+                ('description', models.TextField(max_length=200, null=True, blank=True)),
+                ('enabled', models.BooleanField(default=True)),
+            ],
+            options={
+                'verbose_name': 'Filter',
+                'verbose_name_plural': 'Filters',
+            },
+        ),
+        migrations.CreateModel(
+            name='Kv1StopFilterStop',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('filter', models.ForeignKey(related_name='stops', to='openebs.Kv1StopFilter')),
+                ('stop', models.ForeignKey(to='kv1.Kv1Stop')),
+            ],
+        ),
+        migrations.CreateModel(
+            name='UserProfile',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('company', models.CharField(max_length=10, verbose_name='Vervoerder', choices=[(b'ARR', b'Arriva'), (b'VTN', b'Veolia'), (b'CXX', b'Connexxion'), (b'EBS', b'EBS'), (b'GVB', b'GVB'), (b'HTM', b'HTM'), (b'NS', b'Nederlandse Spoorwegen'), (b'RET', b'RET'), (b'SYNTUS', b'Syntus'), (b'QBUZZ', b'Qbuzz'), (b'TCR', b'Taxi Centrale Renesse'), (b'GOVI', b'GOVI')])),
+                ('user', models.OneToOneField(to=settings.AUTH_USER_MODEL)),
+            ],
+        ),
+        migrations.AddField(
+            model_name='kv15schedule',
+            name='stopmessage',
+            field=models.ForeignKey(to='openebs.Kv15Stopmessage'),
+        ),
+        migrations.AddField(
+            model_name='kv15messagestop',
+            name='stopmessage',
+            field=models.ForeignKey(to='openebs.Kv15Stopmessage'),
+        ),
+        migrations.AddField(
+            model_name='kv15messageline',
+            name='stopmessage',
+            field=models.ForeignKey(to='openebs.Kv15Stopmessage'),
+        ),
+        migrations.AlterUniqueTogether(
+            name='kv17change',
+            unique_together=set([('operatingday', 'line', 'journey', 'reinforcement')]),
+        ),
+        migrations.AlterUniqueTogether(
+            name='kv15stopmessage',
+            unique_together=set([('dataownercode', 'messagecodedate', 'messagecodenumber')]),
+        ),
+        migrations.AlterUniqueTogether(
+            name='kv15messagestop',
+            unique_together=set([('stopmessage', 'stop')]),
+        ),
+        migrations.AlterUniqueTogether(
+            name='kv15messageline',
+            unique_together=set([('stopmessage', 'line')]),
+        ),
+    ]

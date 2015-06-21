@@ -1,7 +1,7 @@
-Django>=1.5.5,<1.5.99
-south
-psycopg2==2.4.5
-django-admin-bootstrapped==1.6.9
+Django>=1.8.1,<1.8.99
+south==1.0.2
+psycopg2==2.6.1
+django-admin-bootstrapped==2.5.1
 django-floppyforms
 django-crispy-forms
 django-guardian

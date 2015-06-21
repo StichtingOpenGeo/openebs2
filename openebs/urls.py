@@ -8,7 +8,7 @@ from openebs.views_scenario_msg import ScenarioMessageCreateView, ScenarioMessag
 
 urlpatterns = patterns('',
     # Onze Index
-    url(r'^$', RedirectView.as_view(url='/bericht'), name='index'),
+    url(r'^$', RedirectView.as_view(url='/bericht', permanent=True), name='index'),
 
     # Kaart views
     url(r'^kaart$', TemplateView.as_view(template_name='openebs/kv15stopmessage_map.html'), name="msg_map"),
