@@ -6,3 +6,4 @@ base.pp
 Vagrantfile
 local_settings.py
 openebs2/local_settings.py
+openebs2/static/bower_components/*

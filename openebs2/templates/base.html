@@ -4,28 +4,20 @@
 <head>
     <title> {% trans "OpenEBS" %} | {% block title %} {% endblock %}</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}" media="screen">
-    <link rel="stylesheet" href="{% static 'css/bootstrap-theme.min.css' %}">
+    <link rel="stylesheet" href="{% static 'bower_components/bootstrap/dist/css/bootstrap.min.css' %}" media="screen">
+    <link rel="stylesheet" href="{% static 'bower_components/bootstrap/dist/css/bootstrap-theme.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/site.css' %}">
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
-        <script src="{% static 'js/html5shiv.js' %}"></script>
-        <script src="{% static 'js/respond.min.js' %}"></script>
+        <script src="{% static 'bower_components/html5shiv/dist/html5shiv.min.js' %}"></script>
+        <script src="{% static 'bower_components/respond/dest/respond.min.js' %}"></script>
     <![endif]-->
     {% block extra_css %} {% endblock %}
     <link href='//fonts.googleapis.com/css?family=Roboto:400,400italic' rel='stylesheet' type='text/css'>
 
-    <script type="text/javascript">
-        {% block js %} {% endblock %}
-        function load_ebs() {
-            {% comment %}This works if URL matches IDs below{% endcomment %}
-            $('#nav-'+location.pathname.split("/")[1]).addClass('active')
-            {% block js_init %} {% endblock %}
-        }
-    </script>
 </head>
 <body>
     <nav class="navbar navbar-default" role="navigation">
@@ -125,13 +117,6 @@
                   <span class="glyphicon glyphicon-log-out"></span>&nbsp;{% trans "Uitloggen" %}
               </a></li>
             </ul>
-            {% else %}
-              {% comment %}
-                # We have no unauthorized views, leave blank for now
-                <a href="#">
-                    <span class="glyphicon glyphicon-log-in"></span>&nbsp;{% trans "Inloggen" %}
-                </a>
-              {% endcomment %}
             {% endif %}
           </li>
         </ul>
@@ -140,9 +125,16 @@
     <div class="container">
         {% block content %} {% endblock %}
     </div>
-    <script src="{% static 'js/jquery-1.10.2.min.js' %}"></script>
-    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'bower_components/jquery/dist/jquery.min.js' %}"></script>
+    <script src="{% static 'bower_components/bootstrap/dist/js/bootstrap.min.js' %}"></script>
     {% block extra_js %} {% endblock %}
-    <script type="text/javascript">$(document).ready(load_ebs);</script>
+    <script type="text/javascript">$(document).ready(load_ebs);
+        {% block js %} {% endblock %}
+        function load_ebs() {
+            {% comment %}This works if URL matches IDs below{% endcomment %}
+            $('#nav-'+location.pathname.split("/")[1]).addClass('active')
+            {% block js_init %} {% endblock %}
+        }
+    </script>
 </body>
 </html>

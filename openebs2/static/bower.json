@@ -1,0 +1,25 @@
+{
+  "name": "OpenEBS2",
+  "version": "1.0.0",
+  "homepage": "https://github.com/StichtingOpenGeo/openebs2",
+  "authors": [
+    "Joel Haasnoot <joelhaasnoot@gmail.com>"
+  ],
+  "description": "GUI system for transport use",
+  "moduleType": [
+    "globals"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "~3.3.5",
+    "html5shiv": "~3.7.2",
+    "respond": "~1.4.2"
+  }
+}
