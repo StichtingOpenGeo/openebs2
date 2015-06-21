@@ -15,7 +15,7 @@ from kv1.models import Kv1Stop
 from openebs.views_utils import FilterDataownerMixin, Kv15PushMixin
 from utils.client import get_client_ip
 from utils.views import JSONListResponseMixin, AccessMixin
-from openebs.models import Kv15Stopmessage, Kv15Log, MessageStatus
+from openebs.models import Kv15Stopmessage, Kv15Log, MessageStatus, Kv1StopFilter
 from openebs.form import Kv15StopMessageForm
 
 
@@ -29,11 +29,20 @@ class MessageListView(AccessMixin, ListView):
     def get_context_data(self, **kwargs):
         # context = super(MessageListView, self).get_context_data(**kwargs)
         context = {'view_all': self.is_view_all(),
-                   'edit_all': self.is_view_all() and self.request.user.has_perm("openebs.edit_all")}
+                   'edit_all': self.is_view_all() and self.request.user.has_perm("openebs.edit_all"),
+                   'filters': Kv1StopFilter.get_filters(),
+                   'filter': int(self.request.GET.get('filter', -1))}
+
+        # Setup filter
+        if context['filter'] != -1:
+            stop_list = Kv1StopFilter.objects.get(id=context['filter']).stops.values_list('stop')
 
         # Get the currently active messages
         active = self.model.objects.filter(messageendtime__gt=now, isdeleted=False)\
                                    .order_by('-messagetimestamp')
+        if context['filter'] != -1:
+            active = active.filter(kv15messagestop__stop__in=stop_list)
+
         if not context['view_all']:
             active = active.filter(dataownercode=self.request.user.userprofile.company)
         context['active_list'] = active
@@ -42,6 +51,9 @@ class MessageListView(AccessMixin, ListView):
         archive = self.model.objects.filter(Q(messageendtime__lt=now) | Q(isdeleted=True),
                                             messagestarttime__gt=now() - timedelta(days=3))\
                                     .order_by('-messagetimestamp')
+        if context['filter'] != -1:
+            archive = archive.filter(kv15messagestop__stop__in=stop_list)
+
         if not context['view_all']:
             archive = archive.filter(dataownercode=self.request.user.userprofile.company)
         context['archive_list'] = archive

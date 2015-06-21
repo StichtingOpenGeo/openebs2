@@ -7,6 +7,18 @@
 
   {% if view_all %}
       <h1>{% trans "Alle berichten" %}</h1>
+      <form class="form-inline pull-right" method="get" id="filter" role="form">
+          <div class="form-group">
+              <label for="filter">{% trans "Filter:" %}
+                  <select id="filter-select" name="filter" class="form-control">
+                    <option value="-1">{% trans "Geen" %}</option>
+                  {% for id, name in filters %}
+                      <option value="{% url 'msg_index' %}?all=true&filter={{ id }}"{% if id == filter %} selected{% endif %}>{{ name }}</option>
+                  {% endfor %}
+                  </select>
+              </label>
+        </div>
+      </form>
   {% else %}
       <h1>{% trans "Berichten" %}</h1>
   {% endif %}
@@ -100,4 +112,7 @@
 
 {% block js_init %}
     $('.halte-count').popover({trigger : 'hover'});
+    $('#filter-select').on('change', function(event) {
+        window.location.href = $('#filter-select').val();
+    });
 {% endblock %}

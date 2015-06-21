@@ -4,9 +4,10 @@ from django.contrib.auth.models import User, Permission, Group
 from django.contrib.sites.models import Site
 
 from django.utils.translation import ugettext_lazy as _
-from openebs.models import Kv15Stopmessage, Kv15Log, Kv15Scenario, UserProfile, Kv15MessageStop, Kv15ScenarioMessage, Kv17Change, Kv17JourneyChange
+from openebs.models import Kv15Stopmessage, Kv15Log, Kv15Scenario, UserProfile, Kv15MessageStop, Kv15ScenarioMessage, Kv17Change, Kv17JourneyChange, \
+    Kv1StopFilter, Kv1StopFilterStop
 
-
+# KV15 Default
 class MessageStopInline(admin.StackedInline):
     model = Kv15MessageStop
     verbose_name_plural = _("haltes")
@@ -19,6 +20,7 @@ class Kv15MessageAdmin(admin.ModelAdmin):
 
 admin.site.register(Kv15Stopmessage, Kv15MessageAdmin)
 
+# KV15 Scenarios
 class ScenarioMessageInline(admin.StackedInline):
     model = Kv15ScenarioMessage
     verbose_name = _("bericht")
@@ -32,9 +34,11 @@ class Kv15ScenarioAdmin(admin.ModelAdmin):
 admin.site.register(Kv15Scenario, Kv15ScenarioAdmin)
 admin.site.register(Kv15Log)
 
+# KV17
 class Kv17JourneyChangeInline(admin.StackedInline):
     model = Kv17JourneyChange
     extra = 0
+
 
 class Kv17ChangeAdmin(admin.ModelAdmin):
     model = Kv17Change
@@ -43,6 +47,18 @@ class Kv17ChangeAdmin(admin.ModelAdmin):
 
 admin.site.register(Kv17Change, Kv17ChangeAdmin)
 
+class Kv1StopFilterStopInline(admin.StackedInline):
+    model = Kv1StopFilterStop
+
+class Kv1StopFilterAdmin(admin.ModelAdmin):
+    model = Kv1StopFilter
+    verbose_name = _("filter")
+    inlines = [Kv1StopFilterStopInline, ]
+    extra = 3
+
+admin.site.register(Kv1StopFilter, Kv1StopFilterAdmin)
+
+# Hack...
 class PermissionFilterMixin(object):
     def formfield_for_manytomany(self, db_field, request=None, **kwargs):
         if db_field.name in ('permissions', 'user_permissions'):

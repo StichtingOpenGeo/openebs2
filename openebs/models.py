@@ -410,3 +410,24 @@ class Kv17StopChange(models.Model):
     class Meta:
         verbose_name = _('Halteaanpassing')
         verbose_name_plural = _("Halteaanpassingen")
+
+
+class Kv1StopFilter(models.Model):
+    name = models.CharField(max_length=25)
+    description = models.TextField(max_length=200, blank=True, null=True)
+    enabled = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = _('Filter')
+        verbose_name_plural = _("Filters")
+
+    def __unicode__(self):
+        return self.name
+
+    @staticmethod
+    def get_filters():
+        return Kv1StopFilter.objects.filter(enabled=True).values_list('id', 'name')
+
+class Kv1StopFilterStop(models.Model):
+    filter = models.ForeignKey(Kv1StopFilter, related_name="stops")
+    stop = models.ForeignKey(Kv1Stop)

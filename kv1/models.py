@@ -36,7 +36,10 @@ class Kv1Stop(models.Model):
         unique_together = ('dataownercode', 'userstopcode')
 
     def __unicode__(self):
-        return "%s - %s" % (self.dataownercode, self.name)
+        if self.timingpointcode and self.timingpointcode != "0":
+            return "%s - %s (TPC %s, #%s)" % (self.dataownercode, self.name, self.timingpointcode, self.userstopcode)
+        else:
+            return "%s - %s (#%s)" % (self.dataownercode, self.name, self.userstopcode)
 
     @staticmethod
     def find_stop(dataowner, stopcode):
