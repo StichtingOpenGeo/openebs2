@@ -20,6 +20,7 @@
   "dependencies": {
     "bootstrap": "~3.3.5",
     "html5shiv": "~3.7.2",
-    "respond": "~1.4.2"
+    "respond": "~1.4.2",
+    "jquery-ui": "~1.11.4"
   }
 }
