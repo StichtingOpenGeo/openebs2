@@ -19,7 +19,6 @@ from openebs.models import Kv15Stopmessage, MessageStatus, Kv15MessageStop
 class Command(BaseCommand):
     log = logging.getLogger('openebs.kv8verify')
 
-
     def handle(self, *args, **options):
         print 'Setting up a ZeroMQ SUB: %s\n' % (settings.GOVI_VERIFY_FEED)
         sub = Command.setup_subscription()
@@ -61,7 +60,7 @@ class Command(BaseCommand):
                 else:
                     self.log.warning("Don't have a handler for messages of type %s" % type)
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def process_message(self, row, deleted):
         msg, created = Kv15Stopmessage.objects.get_or_create(dataownercode=row['DataOwnerCode'],
                                                              messagecodedate=row['MessageCodeDate'],
@@ -127,7 +126,6 @@ class Command(BaseCommand):
         sub.connect(settings.GOVI_VERIFY_FEED)
         sub.setsockopt(zmq.SUBSCRIBE, settings.GOVI_VERIFY_SUB)
         return sub
-
 
     @staticmethod
     def get_user():
