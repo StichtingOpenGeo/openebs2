@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin, GroupAdmin
-from django.contrib.auth.models import User, Permission, Group
+from django.contrib.auth.models import User, Group
 from django.contrib.sites.models import Site
 
 from django.utils.translation import ugettext_lazy as _
@@ -47,8 +47,9 @@ class Kv17ChangeAdmin(admin.ModelAdmin):
 
 admin.site.register(Kv17Change, Kv17ChangeAdmin)
 
-class Kv1StopFilterStopInline(admin.StackedInline):
+class Kv1StopFilterStopInline(admin.TabularInline):
     model = Kv1StopFilterStop
+    raw_id_fields = ("stop",)
 
 class Kv1StopFilterAdmin(admin.ModelAdmin):
     model = Kv1StopFilter
