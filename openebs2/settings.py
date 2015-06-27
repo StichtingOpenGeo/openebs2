@@ -1,10 +1,11 @@
 # Django settings for openebs2 project.
 
-DEBUG = True
+DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
     ('Stefan de Konink', 'stefan@opengeo.nl'),
+    ('Joel Haasnoot', 'joelhaasnoot+openebs@gmail.com')
 )
 
 MANAGERS = ADMINS
@@ -20,9 +21,7 @@ DATABASES = {
     }
 }
 
-# Hosts/domain names that are valid for this site; required if DEBUG is False
-# See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '.openebs.nl']
 
 SITE_ID = 1
 
@@ -30,21 +29,10 @@ TIME_ZONE = 'Europe/Amsterdam'
 LANGUAGE_CODE = 'nl-nl'
 
 USE_I18N = True
-
-# If you set this to False, Django will not format dates, numbers and
-# calendars according to the current locale.
 USE_L10N = True
-
-# If you set this to False, Django will not use timezone-aware datetimes.
 USE_TZ = True
 
-# Absolute filesystem path to the directory that will hold user-uploaded files.
-# Example: "/var/www/example.com/media/"
 MEDIA_ROOT = ''
-
-# URL that handles the media served from MEDIA_ROOT. Make sure to use a
-# trailing slash.
-# Examples: "http://example.com/media/", "http://media.example.com/"
 MEDIA_URL = ''
 
 STATIC_ROOT = 'static/'
@@ -65,7 +53,7 @@ SECRET_KEY = 'rsy&8z9#0sr4_fpf!p1omymr(!*5upr%p4k7y#d9cz@^et+u)='
 
 LOGIN_URL = 'app_login'
 LOGOUT_URL = 'app_logout'
-LOGIN_REDIRECT_URL = 'msg_index' # This is temporary
+LOGIN_REDIRECT_URL = 'msg_index'  # This is temporary
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -74,6 +62,14 @@ TEMPLATE_LOADERS = (
         'django.template.loaders.app_directories.Loader',
     )),
 )
+
+TEMPLATE_DIRS = (
+    "openebs2/templates",
+)
+
+# Crispy = form addon
+CRISPY_TEMPLATE_PACK = 'bootstrap3'
+CRISPY_FAIL_SILENTLY = not DEBUG
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
@@ -89,10 +85,6 @@ ROOT_URLCONF = 'openebs2.urls'
 # Python dotted path to the WSGI application used by Django's runserver.
 WSGI_APPLICATION = 'openebs2.wsgi.application'
 
-TEMPLATE_DIRS = (
-    "openebs2/templates",
-)
-
 INSTALLED_APPS = (
     # Django pieces
     'django.contrib.auth',
@@ -105,9 +97,9 @@ INSTALLED_APPS = (
 
     # Our apps
     # Order matters for testing: openebs depends on kv1 not viceversa
-    'kv1', # Static data stuff
+    'kv1',  # Static data stuff
     'openebs',
-    'utils', # Load our custom filters
+    'utils',  # Load our custom filters
 
     # Libs
     'json_field',
@@ -152,7 +144,7 @@ LOGGING = {
     },
     'loggers': {
         'django.request': {
-            'handlers': ['mail_admins'],
+            'handlers': ['mail_admins', 'logfile'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -170,9 +162,7 @@ LEAFLET_CONFIG = {
     'RESET_VIEW': False
 }
 
-# Crispy = form addon
-CRISPY_TEMPLATE_PACK = 'bootstrap3'
-CRISPY_FAIL_SILENTLY = not DEBUG
+# APPLICATION SPECIFIC SETTINGS
 
 # Operator day
 CROSSOVER_HOUR = 4
