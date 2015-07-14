@@ -1,6 +1,7 @@
 import csv
 
 # Hack to disable logging for now
+# TODO: test if we can remove this
 from django.db import connection
 connection.use_debug_cursor = False
 
@@ -16,8 +17,11 @@ class Command(BaseCommand):
     """
     folder = ""
 
+    def add_arguments(self, parser):
+        parser.add_argument('folder', type=str)
+
     def handle(self, *args, **options):
-        self.folder = args[0]
+        self.folder = options.get('folder', '')
         print "STEP 1: Lines"
         self.do_lines()
         print "==========================\n\nSTEP 2: Stops"
@@ -53,6 +57,5 @@ class Command(BaseCommand):
                 if i % 100 == 0:
                     self.log("Did %s stops" % i)
 
-    @staticmethod
-    def log(text):
-        print "%s - import_rid: %s" % (datetime.now().isoformat(), text)
+    def log(self, text):
+        self.stdout.write("%s - import_rid: %s" % (datetime.now().isoformat(), text))
