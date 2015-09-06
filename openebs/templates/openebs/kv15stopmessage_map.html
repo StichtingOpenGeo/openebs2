@@ -24,13 +24,8 @@
     }
 {% endblock %}
 
-{% block js_init %}
-    $("#map").height($(window).height() - 90).width($(window).width() - 30);
-    $( window ).resize(function() {
-        $("#map").height($(window).height() - 90).width($(window).width() - 30);
-    });
-{% endblock %}
-
-{% block content %}
-  {% leaflet_map "map" callback="main_map_init" %}
+{% block content_full_page %}
+    <div class="container-fluid row">
+        {% leaflet_map "map" callback="main_map_init" %}
+    </div>
 {% endblock %}

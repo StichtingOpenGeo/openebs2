@@ -29,7 +29,10 @@ span.stop-selection,span.trip-selection{
 }
 
 #map {
-    height: 600px;
+    min-height: 800px;
+    height: inherit;
+    width: 100%;
+    top: -20px;
 }
 
 .container {
