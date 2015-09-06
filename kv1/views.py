@@ -58,7 +58,7 @@ class LineTripView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
 class ActiveStopListView(LoginRequiredMixin, GeoJSONLayerView):
     model = Kv1Stop
     geometry_field = 'location'
-    properties = ['name', 'userstopcode', 'dataownercode', 'messages']
+    properties = ['name', 'userstopcode', 'dataownercode']
     # Filter by active
     queryset = model.objects.filter(messages__stopmessage__messagestarttime__lte=now(),
                                     messages__stopmessage__messageendtime__gte=now())
