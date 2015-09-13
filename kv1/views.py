@@ -85,9 +85,8 @@ class ActiveMessagesForStopView(LoginRequiredMixin, JSONListResponseMixin, Detai
                                         timingpointcode=tpc).distinct('kv15stopmessage__id')
         if not self.request.user.has_perm("openebs.view_all"):
             qry = qry.filter(dataownercode=self.request.user.userprofile.company)
-        return qry.values('dataownercode', 'kv15stopmessage__messagecodenumber', 'kv15stopmessage__messagecodedate',
-                          'kv15stopmessage__messagecontent', 'kv15stopmessage__id', 'messages__stopmessage__messagestarttime',
-                          'messages__stopmessage__messageendtime')
+        return qry.values('dataownercode', 'kv15stopmessage__dataownercode', 'kv15stopmessage__messagecodenumber',
+                          'kv15stopmessage__messagecontent', 'kv15stopmessage__id')
 
     def get_object(self):
         # Note, can't set this on the view, because it triggers the queryset cache
