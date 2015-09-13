@@ -19,8 +19,8 @@
     });
 
     Handlebars.registerHelper('shorten', function(str) {
-        if (str.length > 50) {
-            str = str.substring(0, 50) + "...";
+        if (str.length > 75) {
+            str = str.substring(0, 75) + "...";
         }
         return str;
     });
