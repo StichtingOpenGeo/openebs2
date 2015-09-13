@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n leaflet_tags %}
+{% load i18n leaflet_tags static %}
 
 {% block title %}Berichten{% endblock %}
 
@@ -9,9 +9,49 @@
 
 {% block extra_js %}
     {% leaflet_js %}
-{% endblock %}
+    <script type="text/javascript" src="{% static 'bower_components/handlebars/handlebars.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'bower_components/lodash/lodash.min.js' %}"></script>
+    <script type="text/javascript">
+    var table_template;
 
-{% block js %}
+    Handlebars.registerHelper('toLowerCase', function(str) {
+        return str.toLowerCase();
+    });
+
+    Handlebars.registerHelper('shorten', function(str) {
+        if (str.length > 50) {
+            str = str.substring(0, 50) + "...";
+        }
+        return str;
+    });
+
+    Handlebars.registerHelper('makeStopMessageLink', function(num) {
+        return "{% url "msg_view" 999 %}".replace("999", num);
+    });
+
+    function onMapFeature(feature, layer) {
+        if (feature.properties && feature.properties.name) {
+            var popup = L.popup().setContent("<em>Data wordt geladen...</em>")
+            layer.bindPopup(popup);
+            layer.on('click', function(e) {
+                var popup = e.target._popup;
+                $.get("{% url "msg_stop_json" 999 %}".replace("999", feature.properties.timingpointcode)).done(function(data) {
+                    popup.setContent(table_template(_.merge(data, feature.properties)));
+                    popup.update();
+                });
+            });
+        }
+    }
+
+    var halteMarkerOptions = {
+        radius: 10,
+        fillColor: "#ff0000",
+        color: "#fff",
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.8
+    };
+
     function main_map_init (map, options) {
         map.setView(new L.LatLng(52.05, 4.32), 12);
 
@@ -19,9 +59,32 @@
         // Download GeoJSON via Ajax
         $.getJSON(dataurl, function (data) {
             // Add GeoJSON layer
-            L.geoJson(data).addTo(map);
+            L.geoJson(data, {
+                onEachFeature: onMapFeature,
+                pointToLayer: function (feature, latlng) {
+                    return L.circleMarker(latlng, halteMarkerOptions);
+                }
+            }).addTo(map);
         });
+
+        table_template = Handlebars.compile($("#table-template").html());
     }
+    </script>
+    {% verbatim %}
+    <script id="table-template" type="text/x-handlebars-template">
+        <h3>{{ name }}</h3>
+        <table class="table table-bordered table-striped">
+            <tr><th><strong>Volgnummer</strong></th><th><strong>Inhoud</strong></th></tr>
+            {{#each object}}
+            <tr>
+                <td><a href="{{ makeStopMessageLink kv15stopmessage__messagecodenumber }}"><img src="/static/img/logos/{{ toLowerCase dataownercode }}.png" class="icon_small" />
+                    - {{ kv15stopmessage__messagecodenumber }}</a>
+                </td>
+                <td>{{ shorten kv15stopmessage__messagecontent }}</td></tr>
+            {{/each}}
+        </table>
+    </script>
+    {% endverbatim %}
 {% endblock %}
 
 {% block content_full_page %}

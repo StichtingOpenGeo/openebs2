@@ -96,3 +96,7 @@ span.stop-selection,span.trip-selection{
 #calendar a {
     font-size: 10px;
 }
+
+.icon_small {
+    height: 16px;
+}

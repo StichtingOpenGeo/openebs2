@@ -6,6 +6,7 @@ from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from django.views.generic import ListView, DetailView
 from djgeojson.views import GeoJSONLayerView
+from openebs.models import Kv15Stopmessage
 from utils.calender import CountCalendar
 from utils.time import get_operator_date
 from utils.views import JSONListResponseMixin
@@ -58,14 +59,30 @@ class LineTripView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
 class ActiveStopListView(LoginRequiredMixin, GeoJSONLayerView):
     model = Kv1Stop
     geometry_field = 'location'
-    properties = ['name', 'userstopcode', 'dataownercode']
+    properties = ['name', 'userstopcode', 'dataownercode', 'timingpointcode']
     # Filter by active
     queryset = model.objects.filter(messages__stopmessage__messagestarttime__lte=now(),
-                                    messages__stopmessage__messageendtime__gte=now())
+                                    messages__stopmessage__messageendtime__gte=now(),
+                                    messages__stopmessage__isdeleted=False).distinct('timingpointcode')
 
     def get_queryset(self):
         qry = super(ActiveStopListView, self).get_queryset()
         return qry.filter(dataownercode=self.request.user.userprofile.company)
+
+class ActiveMessagesForStopView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+    model = Kv1Stop
+    render_object = 'object'
+
+    def get_object(self):
+        # Note, can't set this on the view, because it triggers the queryset cache
+        queryset = self.model.objects.filter(messages__stopmessage__messagestarttime__lte=now(),
+                                             messages__stopmessage__messageendtime__gte=now(),
+                                             messages__stopmessage__isdeleted=False,
+                                             timingpointcode=self.kwargs.get('tpc', None))
+        return list(queryset.values('dataownercode', 'kv15stopmessage__messagecodenumber', 'kv15stopmessage__messagecodedate',
+                                    'kv15stopmessage__messagecontent', 'kv15stopmessage__id', 'messages__stopmessage__messagestarttime',
+                                    'messages__stopmessage__messageendtime'))
+
 
 class DataImportView(LoginRequiredMixin, StaffuserRequiredMixin, ListView):
     '''
