@@ -77,7 +77,7 @@
             <tr><th><strong>Volgnummer</strong></th><th><strong>Inhoud</strong></th></tr>
             {{#each object}}
             <tr>
-                <td><a href="{{ makeStopMessageLink kv15stopmessage__messagecodenumber }}"><img src="/static/img/logos/{{ toLowerCase dataownercode }}.png" class="icon_small" />
+                <td><a href="{{ makeStopMessageLink kv15stopmessage__id }}"><img src="/static/img/logos/{{ toLowerCase dataownercode }}.png" class="icon_small" />
                     - {{ kv15stopmessage__messagecodenumber }}</a>
                 </td>
                 <td>{{ shorten kv15stopmessage__messagecontent }}</td></tr>

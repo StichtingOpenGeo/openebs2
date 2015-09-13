@@ -89,7 +89,6 @@ class ActiveMessagesForStopView(LoginRequiredMixin, JSONListResponseMixin, Detai
                           'kv15stopmessage__messagecontent', 'kv15stopmessage__id', 'messages__stopmessage__messagestarttime',
                           'messages__stopmessage__messageendtime')
 
-
     def get_object(self):
         # Note, can't set this on the view, because it triggers the queryset cache
         return list(self.get_queryset())
