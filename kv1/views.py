@@ -63,25 +63,36 @@ class ActiveStopListView(LoginRequiredMixin, GeoJSONLayerView):
     # Filter by active
     queryset = model.objects.filter(messages__stopmessage__messagestarttime__lte=now(),
                                     messages__stopmessage__messageendtime__gte=now(),
-                                    messages__stopmessage__isdeleted=False).distinct('timingpointcode')
+                                    messages__stopmessage__isdeleted=False).exclude(timingpointcode=0).distinct('timingpointcode')
 
     def get_queryset(self):
         qry = super(ActiveStopListView, self).get_queryset()
-        return qry.filter(dataownercode=self.request.user.userprofile.company)
+        if not self.request.user.has_perm("openebs.view_all"):
+            qry = qry.filter(dataownercode=self.request.user.userprofile.company)
+        return qry
 
 class ActiveMessagesForStopView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
     model = Kv1Stop
     render_object = 'object'
 
+    def get_queryset(self):
+        tpc = self.kwargs.get('tpc', None)
+        if tpc is None or tpc == '0':
+            return None
+        qry = self.model.objects.filter(messages__stopmessage__messagestarttime__lte=now(),
+                                        messages__stopmessage__messageendtime__gte=now(),
+                                        messages__stopmessage__isdeleted=False,
+                                        timingpointcode=tpc).distinct('kv15stopmessage__id')
+        if not self.request.user.has_perm("openebs.view_all"):
+            qry = qry.filter(dataownercode=self.request.user.userprofile.company)
+        return qry.values('dataownercode', 'kv15stopmessage__messagecodenumber', 'kv15stopmessage__messagecodedate',
+                          'kv15stopmessage__messagecontent', 'kv15stopmessage__id', 'messages__stopmessage__messagestarttime',
+                          'messages__stopmessage__messageendtime')
+
+
     def get_object(self):
         # Note, can't set this on the view, because it triggers the queryset cache
-        queryset = self.model.objects.filter(messages__stopmessage__messagestarttime__lte=now(),
-                                             messages__stopmessage__messageendtime__gte=now(),
-                                             messages__stopmessage__isdeleted=False,
-                                             timingpointcode=self.kwargs.get('tpc', None))
-        return list(queryset.values('dataownercode', 'kv15stopmessage__messagecodenumber', 'kv15stopmessage__messagecodedate',
-                                    'kv15stopmessage__messagecontent', 'kv15stopmessage__id', 'messages__stopmessage__messagestarttime',
-                                    'messages__stopmessage__messageendtime'))
+        return list(self.get_queryset())
 
 
 class DataImportView(LoginRequiredMixin, StaffuserRequiredMixin, ListView):
