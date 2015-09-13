@@ -12,6 +12,19 @@
     <script type="text/javascript" src="{% static 'bower_components/handlebars/handlebars.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'bower_components/lodash/lodash.min.js' %}"></script>
     <script type="text/javascript">
+    resize();
+    $(window).on("resize", resize);
+    var mapmargin = 0;
+    function resize(){
+        if($(window).width()>=980){
+            $('#map').css("height", ($(window).height() - mapmargin));
+            $('#map').css("margin-top", -20);
+        } else{
+            $('#map').css("height", ($(window).height() - (mapmargin+12)));
+            $('#map').css("margin-top",-21);
+        }
+    }
+
     var table_template;
 
     Handlebars.registerHelper('toLowerCase', function(str) {
