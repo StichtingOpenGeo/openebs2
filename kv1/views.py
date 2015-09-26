@@ -100,7 +100,7 @@ class StopAutocompleteView(LoginRequiredMixin, JSONListResponseMixin, DetailView
         qry = super(StopAutocompleteView, self).get_queryset()
         if not self.request.user.has_perm("openebs.view_all"):
             qry = qry.filter(dataownercode=self.request.user.userprofile.company)
-        result = qry.filter(Q(name__contains=term)).values('timingpointcode', 'userstopcode', 'name', 'location')
+        result = qry.filter(Q(name__icontains=term) | Q(timingpointcode_startswith=term)).values('timingpointcode', 'userstopcode', 'name', 'location')
         return result
 
     def get_object(self):

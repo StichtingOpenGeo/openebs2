@@ -38,7 +38,7 @@
                 }
             });
             {% verbatim %}
-            $('#autocomplete').typeahead({ minLength: 2, highlight: true},
+            $('#autocomplete').typeahead({ minLength: 2, limit: 10, highlight: true},
                     {
                         source: remote,
                         display: 'name',
