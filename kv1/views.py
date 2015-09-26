@@ -31,12 +31,12 @@ class LineStopView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
     render_object = 'object'
 
     def get_object(self, queryset=None):
-        '''
+        """
         This is a bit of a hack, but forces our JSON we get out of the db out as JSON again
-        '''
+        """
         obj = get_object_or_404(self.model, pk=self.kwargs.get('pk', None))
         if obj:
-            return { 'stop_map' : obj.stop_map }
+            return {'stop_map': obj.stop_map }
         return obj
 
 class LineTripView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
@@ -44,16 +44,16 @@ class LineTripView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
     render_object = 'object'
 
     def get_object(self, queryset=None):
-        '''
+        """
         Forces our output as json and do some queries
-        '''
+        """
         obj = get_object_or_404(self.model, pk=self.kwargs.get('pk', None))
         if obj:
             # Note, the list() is required to serialize correctly
             # We're filtering on todays trips #
             journeys = obj.journeys.filter(dates__date=get_operator_date()).order_by('departuretime')\
                                    .values('id', 'journeynumber', 'direction', 'departuretime')
-            return { 'trips_1' : list(journeys.filter(direction=1)), 'trips_2' : list(journeys.filter(direction=2)) }
+            return {'trips_1': list(journeys.filter(direction=1)), 'trips_2' : list(journeys.filter(direction=2)) }
         return obj
 
 class ActiveStopListView(LoginRequiredMixin, GeoJSONLayerView):
@@ -89,14 +89,32 @@ class ActiveMessagesForStopView(LoginRequiredMixin, JSONListResponseMixin, Detai
                           'kv15stopmessage__messagecontent', 'kv15stopmessage__id')
 
     def get_object(self):
-        # Note, can't set this on the view, because it triggers the queryset cache
         return list(self.get_queryset())
 
+class StopAutocompleteView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+    model = Kv1Stop
+    render_object = 'object'
+
+    def get_queryset(self):
+        term = self.request.GET.get('q', "").lower()
+        qry = super(StopAutocompleteView, self).get_queryset()
+        if not self.request.user.has_perm("openebs.view_all"):
+            qry = qry.filter(dataownercode=self.request.user.userprofile.company)
+        result = qry.filter(Q(name__contains=term)).values('timingpointcode', 'userstopcode', 'name', 'location')
+        return result
+
+    def get_object(self):
+        return list([StopAutocompleteView.fix_loc(stop) for stop in self.get_queryset()])
+
+    @staticmethod
+    def fix_loc(stop):
+        stop['location'] = [stop['location'].y, stop['location'].x]
+        return stop
 
 class DataImportView(LoginRequiredMixin, StaffuserRequiredMixin, ListView):
-    '''
+    """
     Show details about what data was or wasn't imported
-    '''
+    """
     model = Kv1JourneyDate
     template_name = 'kv1/importdata_list.html'
 
