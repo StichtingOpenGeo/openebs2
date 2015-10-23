@@ -26,7 +26,9 @@
       <h1>{% trans "Berichten" %}</h1>
   {% endif %}
 
+  <a name="active"></a>
   <h2>{% trans "Actieve berichten" %}
+      <a href="#deleted" class="title_link_small"><i class="glyphicon glyphicon-trash"></i> {% trans "Ga naar verlopen berichten" %}</a>
       {% if perms.openebs.add_messages and not view_all and not edit_all %}
       <a class="btn btn-success pull-right" href="{% url 'msg_add' %}">
         <span class="glyphicon glyphicon-plus-sign"></span> {% trans "Nieuw bericht" %}
@@ -85,7 +87,10 @@
     <p><small><i class="glyphicon glyphicon-time"></i> + geel: {% trans "toekomstig bericht" %}</small></p><br />
 
 
-  <h2>Verlopen berichten</h2>
+  <a name="deleted"></a>
+  <h2>Verlopen berichten
+      <a href="#active" class="title_link_small"><i class="glyphicon glyphicon-calendar"></i> {% trans "Ga naar actieve berichten" %}</a>
+  </h2>
   <table class="table table-bordered table-condensed">
   <tr>
       {% if view_all %}

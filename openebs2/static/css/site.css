@@ -98,6 +98,12 @@ span.stop-selection,span.trip-selection{
     height: 16px;
 }
 
+.title_link_small {
+    padding-top: 10px;
+    padding-left: 8px;
+    font-size: 40%;
+}
+
 /* Typeahead */
 #autocomplete_holder {
     position: absolute;
