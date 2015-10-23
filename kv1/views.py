@@ -1,5 +1,5 @@
 from braces.views import LoginRequiredMixin, StaffuserRequiredMixin
-from datetime import timedelta
+from datetime import timedelta, datetime
 from django.db.models import Q, Count
 from django.shortcuts import get_object_or_404
 from django.utils.safestring import mark_safe
@@ -123,8 +123,9 @@ class DataImportView(LoginRequiredMixin, StaffuserRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super(DataImportView, self).get_context_data(**kwargs)
         cal = CountCalendar(context['object_list'])
-        # TODO: this is hard coded :)
-        context['calendar'] = mark_safe(cal.formatmonth(2014, 1)+'<br />'+cal.formatmonth(2014, 2))
+        now = datetime.now()
+        next = now + timedelta(weeks=4)
+        context['calendar'] = mark_safe(cal.formatmonth(now.year, now.month)+'<br />'+cal.formatmonth(next.year, next.month))
         return context
 
     def get_queryset(self):

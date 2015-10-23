@@ -5,7 +5,7 @@ from django.utils.datetime_safe import date
 class CountCalendar(LocaleHTMLCalendar):
 
     def __init__(self, items):
-        super(CountCalendar, self).__init__(0, 'nl_NL.UTF8')
+        super(CountCalendar, self).__init__(0, 'nl_NL')
         self.counts = self.group_by_day(items)
 
     def formatday(self, day, weekday):
