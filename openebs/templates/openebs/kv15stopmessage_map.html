@@ -22,6 +22,22 @@
     <script type="text/javascript" src="{% static 'bower_components/lodash/lodash.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'bower_components/typeahead.js/dist/typeahead.bundle.min.js' %}"></script>
     <script type="text/javascript">
+        Handlebars.registerHelper('toLowerCase', function(str) {
+            return str.toLowerCase();
+        });
+
+        Handlebars.registerHelper('shorten', function(str) {
+            if (str.length > 65) {
+                str = str.substring(0, 65) + "...";
+            }
+            return str;
+        });
+
+        Handlebars.registerHelper('makeStopMessageLink', function(num) {
+            return "{% url "msg_view" 999 %}".replace("999", num);
+        });
+
+
         (function() {
             $('#map').css("height", ($(window).height() - $("nav.navbar").height()));
             resize();
@@ -38,15 +54,19 @@
                 }
             });
             {% verbatim %}
-            $('#autocomplete').typeahead({ minLength: 2, limit: 10, highlight: true},
-                    {
-                        source: remote,
-                        display: 'name',
-                        templates: {
-                            suggestion: Handlebars.compile('<div><strong>{{name}}</strong><br />' +
-                                '<small>{{#if timingpointcode}} TPC {{timingpointcode}} {{/if}}' +
-                                    '</small></div>')
-                    }});
+            $('#autocomplete').typeahead({ minLength: 2,
+                            limit: 10,
+                            highlight: true
+                        },
+                        {
+                            source: remote,
+                            display: 'name',
+                            templates: {
+                                suggestion: Handlebars.compile('<div><strong>{{name}}</strong><br />' +
+                                    '<small>{{#if timingpointcode}} TPC {{timingpointcode}} {{/if}}' +
+                                        '</small></div>')
+                            }
+                        });
             {% endverbatim %}
             $('#autocomplete').bind('typeahead:select', function(ev, suggestion) {
                 var dest;
@@ -72,6 +92,7 @@
         })();
 
         var mapmargin = 0;
+        var table_template;
 
         function resize(){
             if($(window).width()>=980){
@@ -82,23 +103,6 @@
                 $('#map').css("margin-top",-21);
             }
         }
-
-        var table_template;
-
-        Handlebars.registerHelper('toLowerCase', function(str) {
-            return str.toLowerCase();
-        });
-
-        Handlebars.registerHelper('shorten', function(str) {
-            if (str.length > 65) {
-                str = str.substring(0, 65) + "...";
-            }
-            return str;
-        });
-
-        Handlebars.registerHelper('makeStopMessageLink', function(num) {
-            return "{% url "msg_view" 999 %}".replace("999", num);
-        });
 
         function onMapFeature(feature, layer) {
             if (feature.properties && feature.properties.name) {
@@ -117,8 +121,6 @@
 
         var halteMarkerOptions = {
             radius: 10,
-            fillColor: "#ffff00",
-            color: "#000",
             weight: 2,
             opacity: 1,
             fillOpacity: 0.8
@@ -127,17 +129,45 @@
         var leafletMap;
         var markerIndex = {}
 
+        function getColorsForDataownercode(dataownercode) {
+            switch (dataownercode) {
+                case "HTM":
+                    return ['#FF0000', '#000'];
+                case "VTN":
+                    return ['#FFF', '#E40E26'];
+                case "ARR":
+                    return ['#42AEB6', '#000'];
+                case "EBS":
+                    return ['#16C1F3', '#6CBD45'];
+                case "CXX":
+                    return ['#005758', '#C3F321'];
+                case "GVB":
+                    return ['#000', '#2569B3'];
+                case "RET":
+                    return ['#FF0000', '#00477F'];
+                case "QBUZZ":
+                    return ['#FF7C00', '#000'];
+                case "SYNTUS":
+                    return ['#FF9700', '#000066'];
+                default:
+                    return ["#FFFF00", "#000"];
+            }
+        }
+
+
         function main_map_init (map, options) {
             leafletMap = map;
             map.setView(new L.LatLng(52.05, 4.32), 12);
 
-            var dataurl = "{% url 'msg_geojson' %}";
             // Download GeoJSON via Ajax
-            $.getJSON(dataurl, function (data) {
+            $.getJSON("{% url 'msg_geojson' %}", function (data) {
                 // Add GeoJSON layer
                 L.geoJson(data, {
                     onEachFeature: onMapFeature,
                     pointToLayer: function (feature, latlng) {
+                        var colors = getColorsForDataownercode(feature.properties.dataownercode);
+                        halteMarkerOptions.fillColor = colors[0];
+                        halteMarkerOptions.color = colors[1];
                         return L.circleMarker(latlng, halteMarkerOptions);
                     }
                 }).addTo(map);
