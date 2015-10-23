@@ -76,16 +76,6 @@
                 </div>
             </div>
         </div>
-        <div class="col-sm-6 col-lg-6">
-            <div class="panel panel-primary">
-                <div class="panel-heading">
-                    <h3 class="panel-title">{% trans "Kaart" %}</h3>
-                </div>
-                <div class="panel-body">
-                    {% leaflet_map "detail_map" callback="main_map_init" %}
-                </div>
-            </div>
-        </div>
     </div>
 
     <h3>{% trans "Haltes" %} <span style="font-weight: normal;">({{ object.kv15messagestop_set.count }})</span></h3>
@@ -104,65 +94,6 @@
     {% endfor %}
     </table>
 
-    <h3>Overige informatie</h3>
-    {% if not object.reasontype and not object.effecttype and not object.measuretype and not object.advicetype %}
-        <p><em>Geen</em></p><br />
-    {% endif %}
-    {% if object.reasontype %}
-        <div class="control-group row">
-            <label class="col-lg-4">{% trans "Oorzaak" %}</label>
-            <p class="form-control-static col-lg-8">
-                <em>{{ object.get_reasontype_display }} - {{ object.get_subreasontype_display }}</em><br />
-                {{ object.reasoncontent}}
-            </p>
-        </div>
-    {% endif %}
-    {% if object.reasontype %}
-        <div class="control-group row">
-            <label class="col-lg-4">{% trans "Gevolg" %}</label>
-            <p class="form-control-static col-lg-8">
-                <em>{{ object.get_effecttype_display }} - {{ object.get_subeffecttype_display }}</em><br />
-                {{ object.effectcontent}}
-            </p>
-        </div>
-    {% endif %}
-    {% if object.measuretype %}
-        <div class="control-group row">
-            <label class="col-lg-4">{% trans "Aanpassing" %}</label>
-            <p class="form-control-static col-lg-8">
-                <em>{{ object.get_measuretype_display }} - {{ object.get_submeasuretype_display }}</em><br />
-                {{ object.measurecontent}}
-            </p>
-        </div>
-    {% endif %}
-    {% if object.advicetype %}
-        <div class="control-group row">
-            <label class="col-lg-4">{% trans "Advies" %}</label>
-            <p class="form-control-static col-lg-8">
-                <em>{{ object.get_advicetype_display }} - {{ object.get_subadvicetype_display }}</em><br />
-                {{ object.advicecontent}}
-            </p>
-        </div>
-    {% endif %}
+
 </div>
-{% endblock %}
-
-{% block extra_css %}
-    {% leaflet_css %}
-{% endblock %}
-
-{% block extra_js %}
-    {% leaflet_js %}
-{% endblock %}
-
-{% block js %}
-    function main_map_init (map, options) {
-        map.setView(new L.LatLng(52.05, 4.32), 12);
-        var dataurl = "{% url 'msg_stops_ajax' object.id %}";
-        $.getJSON(dataurl, function (data) {
-            group = L.geoJson(data);
-            group.addTo(map);
-            map.fitBounds(group.getBounds());
-        });
-    }
 {% endblock %}
