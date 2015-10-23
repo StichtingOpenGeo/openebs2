@@ -75,6 +75,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -106,6 +107,7 @@ INSTALLED_APPS = (
     'floppyforms',
     'crispy_forms',
     'leaflet',
+    'debug_toolbar',
 
     # Admin & tools
     'django_admin_bootstrapped',
@@ -170,6 +172,8 @@ CROSSOVER_HOUR = 4
 # Verification feed settings
 GOVI_VERIFY_FEED = 'tcp://192.168.33.1:8001' #'tcp://node02.kv7.openov.nl:7817'
 GOVI_VERIFY_SUB =  "/InTraffic/KV8gen"
+
+EXTERNAL_MESSAGE_USER_ID = None # Set in local_settings
 
 # Push settings
 try:

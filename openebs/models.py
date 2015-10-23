@@ -19,6 +19,7 @@ from django.utils.timezone import now, datetime, get_current_timezone
 from kv1.models import Kv1Stop, Kv1Line, Kv1Journey
 
 from kv15.enum import *
+from openebs2.settings import EXTERNAL_MESSAGE_USER_ID
 
 log = logging.getLogger('openebs.views')
 
@@ -181,7 +182,7 @@ class Kv15Stopmessage(models.Model):
         return self.messageendtime > now() and self.isdeleted == False
 
     def is_external(self):
-        return self.user.username == "kv8update"
+        return self.user_id == Kv15Stopmessage.get_external_user_id()
 
     def get_distinct_stop_names(self, number=15):
         ''' Get a unique sample of stop names to use when we've got too many'''
@@ -201,6 +202,14 @@ class Kv15Stopmessage(models.Model):
     def get_max_end_time():
         ''' Get the maximum end time, to use when we use messagedurationtype 'REMOVE' '''
         return datetime(year=2099, month=12, day=31, tzinfo=get_current_timezone())
+
+    @staticmethod
+    def get_external_user_id():
+        if EXTERNAL_MESSAGE_USER_ID:
+            return EXTERNAL_MESSAGE_USER_ID
+        else:
+            # TODO: Cache this a day
+            return User.objects.get(username="kv8update")
 
 class Kv15Schedule(models.Model):
     stopmessage = models.ForeignKey(Kv15Stopmessage)

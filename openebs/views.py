@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from braces.views import LoginRequiredMixin
 from django.core.urlresolvers import reverse_lazy
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.views.generic import ListView, UpdateView, DetailView
 from django.views.generic.edit import CreateView, DeleteView
 from django.utils.timezone import now
@@ -38,8 +38,9 @@ class MessageListView(AccessMixin, ListView):
             stop_list = Kv1StopFilter.objects.get(id=context['filter']).stops.values_list('stop')
 
         # Get the currently active messages
-        active = self.model.objects.filter(messageendtime__gt=now, isdeleted=False)\
-                                   .order_by('-messagetimestamp')
+        active = self.model.objects.filter(messageendtime__gt=now, isdeleted=False) \
+                                    .annotate(Count('stops'))\
+                                    .order_by('-messagetimestamp')
         if context['filter'] != -1:
             active = active.filter(kv15messagestop__stop__in=stop_list)
 
@@ -49,8 +50,10 @@ class MessageListView(AccessMixin, ListView):
 
         # Add the no longer active messages
         archive = self.model.objects.filter(Q(messageendtime__lt=now) | Q(isdeleted=True),
-                                            messagestarttime__gt=now() - timedelta(days=3))\
+                                            messagestarttime__gt=now() - timedelta(days=3)) \
+                                    .annotate(Count('stops'))\
                                     .order_by('-messagetimestamp')
+
         if context['filter'] != -1:
             archive = archive.filter(kv15messagestop__stop__in=stop_list)
 
