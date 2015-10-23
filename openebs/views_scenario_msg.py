@@ -11,6 +11,7 @@ from openebs.views_utils import FilterDataownerMixin
 
 log = logging.getLogger('openebs.views.scenario_message')
 
+
 class ScenarioContentMixin(BaseFormView):
     """  Overide a few defaults used by scenario messages  """
     def get_context_data(self, **kwargs):

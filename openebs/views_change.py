@@ -14,10 +14,12 @@ from utils.views import AccessMixin, ExternalMessagePushMixin, JSONListResponseM
 
 log = logging.getLogger('openebs.views.changes')
 
+
 class Kv17PushMixin(ExternalMessagePushMixin):
     message_type = 'KV17'
     namespace = 'http://bison.connekt.nl/tmi8/kv17/msg'
     dossier = 'KV17cvlinfo'
+
 
 class ChangeListView(AccessMixin, ListView):
     permission_required = 'openebs.view_change'
@@ -89,6 +91,7 @@ class ChangeDeleteView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteV
             obj.save() # Note, this won't work locally!
         return ret
 
+
 class ChangeUpdateView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteView):
     """ This is a really weird view - it's redoing a change that you deleted   """
     permission_required = 'openebs.add_change'
@@ -115,9 +118,9 @@ class ChangeUpdateView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteV
             obj.save() # Note, this won't work locally!
         return HttpResponseRedirect(self.get_success_url())
 
-'''
+"""
 TODO : This is a big red button view allowing you to cancel all active trips if you so wish.
-'''
+"""
 # class CancelLinesView(AccessMixin, Kv17PushMixin, FormView):
 #
 #     permission_required = 'openebs.add_change'

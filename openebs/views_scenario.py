@@ -13,6 +13,7 @@ from utils.views import AccessMixin
 
 log = logging.getLogger('openebs.views.scenario')
 
+
 # SCENARIO VIEWS
 class PlanScenarioView(AccessMixin, Kv15PushMixin, FormView):
     permission_required = 'openebs.view_scenario'  # TODO Also add message!
@@ -58,6 +59,7 @@ class ScenarioListView(AccessMixin, FilterDataownerListMixin, ListView):
 
     def get_queryset(self):
         return super(ScenarioListView, self).get_queryset().order_by('name').annotate(Count('messages'));
+
 
 class ScenarioCreateView(AccessMixin, CreateView):
     permission_required = 'openebs.add_scenario'

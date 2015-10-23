@@ -7,6 +7,7 @@ from kv15.enum import DATAOWNERCODE
 
 log = logging.getLogger('openebs.views.scenario')
 
+
 class ChangeCompanyView(LoginRequiredMixin, SuperuserRequiredMixin, RedirectView):
     '''
     Allow superusers (and only superusers) to easily change the company they're currently logged in as.
