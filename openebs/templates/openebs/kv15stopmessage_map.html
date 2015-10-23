@@ -55,12 +55,12 @@
             });
             {% verbatim %}
             $('#autocomplete').typeahead({ minLength: 2,
-                            limit: 10,
                             highlight: true
                         },
                         {
                             source: remote,
                             display: 'name',
+                            limit: 10,
                             templates: {
                                 suggestion: Handlebars.compile('<div><strong>{{name}}</strong><br />' +
                                     '<small>{{#if timingpointcode}} TPC {{timingpointcode}} {{/if}}' +
@@ -79,7 +79,7 @@
                     dest = suggestion.location
                     L.circleMarker(dest, {
                         radius: 10,
-                        fillColor: "#ff0000",
+                        fillColor: "#000",
                         color: "#fff",
                         weight: 2,
                         opacity: 1,

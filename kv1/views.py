@@ -91,6 +91,7 @@ class ActiveMessagesForStopView(LoginRequiredMixin, JSONListResponseMixin, Detai
     def get_object(self):
         return list(self.get_queryset())
 
+
 class StopAutocompleteView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
     model = Kv1Stop
     render_object = 'object'
@@ -111,6 +112,7 @@ class StopAutocompleteView(LoginRequiredMixin, JSONListResponseMixin, DetailView
         stop['location'] = [stop['location'].y, stop['location'].x]
         return stop
 
+
 class DataImportView(LoginRequiredMixin, StaffuserRequiredMixin, ListView):
     """
     Show details about what data was or wasn't imported
@@ -121,6 +123,7 @@ class DataImportView(LoginRequiredMixin, StaffuserRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super(DataImportView, self).get_context_data(**kwargs)
         cal = CountCalendar(context['object_list'])
+        # TODO: this is hard coded :)
         context['calendar'] = mark_safe(cal.formatmonth(2014, 1)+'<br />'+cal.formatmonth(2014, 2))
         return context
 
