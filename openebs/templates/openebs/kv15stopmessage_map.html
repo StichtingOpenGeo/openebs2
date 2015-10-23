@@ -37,7 +37,6 @@
             return "{% url "msg_view" 999 %}".replace("999", num);
         });
 
-
         (function() {
             $('#map').css("height", ($(window).height() - $("nav.navbar").height()));
             resize();
@@ -69,15 +68,12 @@
                         });
             {% endverbatim %}
             $('#autocomplete').bind('typeahead:select', function(ev, suggestion) {
-                var dest;
+                leafletMap.setView(suggestion.location, 16, {animate: true});
                 if (suggestion.timingpointcode in markerIndex) {
-                    var feature = markerIndex[suggestion.timingpointcode];
-                    var point = feature.geometry.coordinates
-                    dest = [point[1], point[0]]
-                    feature.openPopup();
+                    var popup = markerIndex[suggestion.timingpointcode];
+                    {# leafletMap.openPopup(popup)#}
                 } else {
-                    dest = suggestion.location
-                    L.circleMarker(dest, {
+                    L.circleMarker(suggestion.location, {
                         radius: 10,
                         fillColor: "#000",
                         color: "#fff",
@@ -86,7 +82,6 @@
                         fillOpacity: 0.8
                     }).addTo(leafletMap);
                 }
-                leafletMap.setView(dest, 16);
                 $('#autocomplete').typeahead('val', '');
             });
         })();
@@ -115,7 +110,7 @@
                         popup.update();
                     });
                 });
-                markerIndex[feature.properties.timingpointcode] = feature
+                markerIndex[feature.properties.timingpointcode] = popup;
             }
         }
 
