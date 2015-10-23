@@ -33,6 +33,7 @@
       </a>
       {% endif %}
   </h2>
+
   <table class="table table-bordered table-condensed">
   <tr>
         {% if view_all %}
@@ -40,7 +41,7 @@
         {% endif %}
         <th class="col-lg-1">{% trans "Volgnummer"%}</th>
         <th class="col-lg-6">{% trans "Bericht" %}</th>
-        <th class="col-lg-1">{% trans "Haltes" %}</th>
+        <th class="col-lg-1">{% trans "Aantal haltes" %}</th>
         <th class="col-lg-2">{% trans "Tijden" %}</th>
         <th class="col-lg-3">&nbsp;</th>
   </tr>
@@ -51,6 +52,9 @@
         {% endif %}
         <td>{{ msg.messagecodenumber }}
             {% include "openebs/snippet_message-external.html" with msg=msg only %}
+            {% if msg.is_future %}
+                <i class="glyphicon glyphicon-time" title="{% trans 'Toekomstig bericht' %}"></i>
+            {% endif %}
             </td>
         <td>{{ msg.messagecontent|default_if_none:"[geen of overschrijf bericht]" }} {% include "openebs/snippet_status.html" with status=msg.status only %}</td>
         <td class="text-center">
@@ -76,7 +80,8 @@
       <tr><td {% if view_all %}colspan="6"{% else %}colspan="5"{% endif %} class="text-center"><em>{% trans "Geen berichten gevonden" %}</em></td></tr>
   {% endfor %}
   </table>
-  <p><small>{% trans "Geel = toekomstig bericht" %}</small></p>
+    <p><small><i class="glyphicon glyphicon-time"></i> + geel: {% trans "toekomstig bericht" %}</small></p><br />
+
 
   <h2>Verlopen berichten</h2>
   <table class="table table-bordered table-condensed">
@@ -96,6 +101,7 @@
         {% endif %}
         <td>{{ msg.messagecodenumber }}
             {% include "openebs/snippet_message-external.html" with msg=msg only %}
+            {% if msg.isdeleted %}<i class="glyphicon glyphicon-trash" title="{% trans "Verwijderd bericht" %}"></i>{% endif %}
         </td>
         <td>{{ msg.messagecontent|default:"<em>[geen of overschrijf bericht]</em>"|default_if_none:"<em>[geen of overschrijf bericht]</em>" }} {% include "openebs/snippet_status.html" with status=msg.status only %}</td>
         <td class="text-center">
@@ -110,7 +116,7 @@
       <tr><td colspan="5" class="text-center"><em>{% trans "Geen berichten gevonden" %}</em></td></tr>
   {% endfor %}
   </table>
-  <p><small>{% trans "Rood = verwijderd bericht" %}</small></p>
+  <p><small><i class="glyphicon glyphicon-trash"></i> + rood: {% trans "verwijderd bericht" %}</small></p>
 {% endblock %}
 
 {% block js_init %}
