@@ -50,15 +50,16 @@
                     var popup = markerIndex[suggestion.timingpointcode];
                     {# leafletMap.openPopup(popup)#}
                 } else {
+                    var colors = getColorsForDataownercode(suggestion.dataownercode);
                     var marker = L.circleMarker(suggestion.location, {
-                        radius: 10,
-                        fillColor: "#000",
-                        color: "#fff",
+                        radius: 5,
+                        fillColor: colors[0],
+                        color: colors[1],
                         weight: 2,
                         opacity: 1,
                         fillOpacity: 0.8
                     });
-                    marker.bindPopup(button_template({ id: suggestion.id }))
+                    marker.bindPopup(button_template(suggestion))
                     marker.addTo(leafletMap);
                 }
                 $('#autocomplete').typeahead('val', '');
@@ -170,6 +171,8 @@
         <a class="btn btn-xs btn-link" href="{% endverbatim %}{% url 'msg_add' %}{% verbatim %}?id={{ id }}"><i class="glyphicon glyphicon-plus"></i> Plaats bericht op deze halte</a>
     </script>
     <script id="button-template" type="text/x-handlebars-template">
+        <h3>{{ name }}</h3>
+        <strong>TPC:</strong> {{ timingpointcode }}<br />
         <a class="btn btn-xs btn-link" href="{% endverbatim %}{% url 'msg_add' %}{% verbatim %}?id={{ id }}"><i class="glyphicon glyphicon-plus"></i> Plaats bericht op deze halte</a>
     </script>
     {% endverbatim %}
