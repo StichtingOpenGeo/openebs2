@@ -147,6 +147,7 @@ TODO : This is a big red button view allowing you to cancel all active trips if 
 #             log.error("Failed to communicate planned messages to subscribers: %s")
 #         return ret
 
+
 class ActiveJourneysAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
     model = Kv1Journey
     render_object = 'object'

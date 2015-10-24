@@ -136,9 +136,9 @@ class DataImportView(LoginRequiredMixin, StaffuserRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super(DataImportView, self).get_context_data(**kwargs)
         cal = CountCalendar(context['object_list'])
-        now = datetime.now()
-        next = now + timedelta(weeks=4)
-        context['calendar'] = mark_safe(cal.formatmonth(now.year, now.month)+'<br />'+cal.formatmonth(next.year, next.month))
+        date_now = datetime.now()
+        date_next = date_now + timedelta(weeks=4)
+        context['calendar'] = mark_safe(cal.formatmonth(date_now.year, date_now.month)+'<br />'+cal.formatmonth(date_next.year, date_next.month))
         return context
 
     def get_queryset(self):

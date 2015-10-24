@@ -185,6 +185,7 @@ class MessageDeleteView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, Delete
             log.error("Failed to send delete request to subscribers: %s" % msg)
         return ret
 
+
 class MessageDetailsView(AccessMixin, FilterDataownerMixin, DetailView):
     permission_required = 'openebs.view_messages'
     permission_level = 'read'
