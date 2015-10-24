@@ -422,13 +422,16 @@ class Kv17StopChange(models.Model):
 
 
 class Kv1StopFilter(models.Model):
-    name = models.CharField(max_length=25)
+    name = models.CharField(_("Naam"), max_length=25)
     description = models.TextField(max_length=200, blank=True, null=True)
     enabled = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = _('Filter')
         verbose_name_plural = _("Filters")
+        permissions = (
+            ("edit_filters", _("Filters bewerken")),
+        )
 
     def __unicode__(self):
         return self.name
@@ -440,3 +443,9 @@ class Kv1StopFilter(models.Model):
 class Kv1StopFilterStop(models.Model):
     filter = models.ForeignKey(Kv1StopFilter, related_name="stops")
     stop = models.ForeignKey(Kv1Stop)
+
+    class Meta:
+        verbose_name = _('Filter halte')
+        verbose_name_plural = _("Filter haltes")
+        unique_together = ('filter', 'stop')
+        ordering = ['stop__name', 'stop__timingpointcode']

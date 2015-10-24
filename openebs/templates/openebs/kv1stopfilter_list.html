@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}Filters{% endblock %}
+
+{% block content %}
+
+  <h1>{% trans "Filters" %}</h1>
+  <table class="table table-bordered table-condensed">
+  <tr>
+        <th class="col-lg-4">{% trans "Naam"%}</th>
+        <th class="col-lg-6">&nbsp;</th>
+  </tr>
+  {% for filter in object_list %}
+      <tr>
+        <td>{{ filter.name }}</td>
+        <td class="text-right">
+            <form method="post" action="{% url "filter_delete" filter.pk %}">
+                {% csrf_token %}
+                <button class="btn btn-danger pull-right">
+                    <span class="glyphicon glyphicon-trash"></span> {% trans "Verwijder" %}
+                </button>
+            </form>
+            <a href="{% url "filter_edit" filter.pk %}" class="btn btn-link pull-right">
+                <span class="glyphicon glyphicon-edit"></span> {% trans "Bewerk" %}&nbsp;
+            </a>
+        </td>
+    </tr>
+  {% endfor %}
+  <tr>
+      <td colspan="2"><form method="post" action="{% url "filter_add" %}">
+          {% csrf_token %}
+          <div class="controls">
+            <input name="name" placeholder="Nieuwe filter" class="form-control short">
+            <input type="submit" value="{% trans 'Toevoegen' %}" class="btn btn-success pull-right">
+          </div>
+          </form>
+      </td>
+  </tr>
+  </table>
+
+{% endblock %}

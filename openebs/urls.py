@@ -2,6 +2,8 @@ from django.conf.urls import patterns, url
 from django.views.generic import RedirectView, TemplateView
 from openebs.views import MessageListView, MessageCreateView, MessageDeleteView, MessageUpdateView, ActiveStopsAjaxView, MessageDetailsView, MessageStopsAjaxView
 from openebs.views_change import ChangeListView, ChangeCreateView, ChangeDeleteView, ActiveJourneysAjaxView, ChangeUpdateView
+from openebs.views_filters import FilterListView, FilterDeleteView, FilterUpdateView, FilterCreateView, \
+    FilterStopCreateView, FilterStopDeleteView
 from openebs.views_generic import ChangeCompanyView
 from openebs.views_scenario import ScenarioListView, ScenarioCreateView, ScenarioUpdateView, ScenarioDeleteView, PlanScenarioView, ScenarioStopsAjaxView
 from openebs.views_scenario_msg import ScenarioMessageCreateView, ScenarioMessageUpdateView, ScenarioMessageDeleteView
@@ -42,5 +44,11 @@ urlpatterns = patterns('',
     url(r'^ritaanpassing/(?P<pk>\d+)/herstellen', ChangeUpdateView.as_view(), name="change_redo"),
     url(r'^ritaanpassing/ritten.json$', ActiveJourneysAjaxView.as_view(), name="active_journeys_ajax"),
 
-    url(r'^vervoerder/wijzig', ChangeCompanyView.as_view(), name="company_change")
+    url(r'^vervoerder/wijzig', ChangeCompanyView.as_view(), name="company_change"),
+    url(r'^vervoerder/filter/halte/nieuw', FilterStopCreateView.as_view(), name="filter_stop_add"),
+    url(r'^vervoerder/filter/halte/(?P<pk>\d+)/verwijderen', FilterStopDeleteView.as_view(), name="filter_stop_delete"),
+    url(r'^vervoerder/filter/nieuw', FilterCreateView.as_view(), name="filter_add"),
+    url(r'^vervoerder/filter/(?P<pk>\d+)/bewerk', FilterUpdateView.as_view(), name="filter_edit"),
+    url(r'^vervoerder/filter/(?P<pk>\d+)/verwijderen$', FilterDeleteView.as_view(), name="filter_delete"),
+    url(r'^vervoerder/filter', FilterListView.as_view(), name="filter_list"),
 )

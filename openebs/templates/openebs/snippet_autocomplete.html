@@ -1,0 +1,35 @@
+<script type="text/javascript">
+    selected = [];
+    var remote = new Bloodhound({
+        datumTokenizer: Bloodhound.tokenizers.obj.whitespace('value'),
+        queryTokenizer: Bloodhound.tokenizers.whitespace,
+        remote: {
+            url: '{% url 'stop_search_json' %}?q=%QUERY',
+            wildcard: '%QUERY',
+            filter: function (parsedResponse) {
+                var out = [];
+                $.each(parsedResponse.object, function(i, val) {
+                    if ($.inArray( val.id, selected ) == -1) {
+                        out.push(val);
+                    }
+                });
+                return out;
+            }
+        }
+    });
+    {% verbatim %}
+    $('#autocomplete').typeahead({ minLength: 2,
+                highlight: true
+            },
+            {
+                source: remote,
+                display: 'name',
+                limit: 10,
+                templates: {
+                    suggestion: Handlebars.compile('<div><strong>{{name}}</strong><br />' +
+                            '<small>{{#if timingpointcode}} TPC {{timingpointcode}} {{/if}}' +
+                            '</small></div>')
+                }
+            });
+    {% endverbatim %}
+</script>

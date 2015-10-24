@@ -89,7 +89,7 @@
                 </ul>
               </li>
           {% endif %}
-          <li class="dropdown">
+        <li class="dropdown">
             {% if user and not user.is_anonymous %}
             <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                 {{ user.get_full_name }}
@@ -97,19 +97,25 @@
                 <b class="caret"></b>
             </a>
             <ul class="dropdown-menu">
-              {% if user.is_staff %}
-                <li><a href="{% url 'msg_index' %}?all=true" title="Bekijk alle berichten">
-                      <span class="glyphicon glyphicon-th-list"></span>&nbsp;{% trans "Bekijk alle berichten" %}
-                  </a></li>
-                  <li class="divider"></li>
+                {% if user.is_staff %}
+                    <li><a href="{% url 'msg_index' %}?all=true" title="Bekijk alle berichten">
+                          <span class="glyphicon glyphicon-th-list"></span>&nbsp;{% trans "Bekijk alle berichten" %}
+                      </a></li>
+                      <li class="divider"></li>
+                {% endif %}
+                {% if perms.openebs.edit_filter %}
+                    <li><a href="{% url 'filter_list' %}"><span class="glyphicon glyphicon-search"></span>&nbsp;{% trans "Filters" %}</a></li>
+                {% endif %}
+                {% if user.is_staff %}
+                <li><a href="{% url 'kv1_imports' %}" title="Import status">
+                    <span class="glyphicon glyphicon-calendar"></span>&nbsp;{% trans "Import status" %}
+                </a></li>
                 <li><a href="{% url 'admin:index' %}" target="_new" title="Backoffice">
                     <span class="glyphicon glyphicon-wrench"></span>&nbsp;{% trans "Backoffice" %}
                     </a></li>
-                <li><a href="{% url 'kv1_imports' %}" title="Import status">
-                    <span class="glyphicon glyphicon-calendar"></span>&nbsp;{% trans "Import status" %}
-                    </a></li>
                 <li class="divider"></li>
               {%  endif %}
+
               <li><a href="{% url 'app_password_change' %}">
                   <span class="glyphicon glyphicon-user"></span>&nbsp;{% trans "Wachtwoord wijzigen" %}
               </a></li>

@@ -104,6 +104,8 @@ span.stop-selection,span.trip-selection{
     font-size: 40%;
 }
 
+.short { width: 300px; display: inline; }
+
 /* Typeahead */
 #autocomplete_holder {
     position: absolute;
