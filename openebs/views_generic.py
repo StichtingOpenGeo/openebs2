@@ -1,18 +1,17 @@
 import logging
-from braces.views import SuperuserRequiredMixin, LoginRequiredMixin, StaffuserRequiredMixin
+from braces.views import SuperuserRequiredMixin, LoginRequiredMixin
 from django.core.urlresolvers import reverse_lazy
-from django.views.generic import RedirectView, ListView
-from kv1.models import Kv1Journey
+from django.views.generic import RedirectView
 from kv15.enum import DATAOWNERCODE
 
 log = logging.getLogger('openebs.views.scenario')
 
 
 class ChangeCompanyView(LoginRequiredMixin, SuperuserRequiredMixin, RedirectView):
-    '''
+    """
     Allow superusers (and only superusers) to easily change the company they're currently logged in as.
     We use the time before redirect to set the new company
-    '''
+    """
     permanent = False
     url = reverse_lazy('index')
 
@@ -25,3 +24,4 @@ class ChangeCompanyView(LoginRequiredMixin, SuperuserRequiredMixin, RedirectView
                 self.request.user.userprofile.company = company
                 self.request.user.userprofile.save()
         return super(ChangeCompanyView, self).get_redirect_url()
+

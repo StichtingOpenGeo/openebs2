@@ -1,6 +1,8 @@
 import logging
 import re
 # TODO: Figure out which mixin we really need
+from django.views.generic import TemplateView
+
 try:
     from braces.views import AccessMixin
 except:
@@ -122,3 +124,14 @@ class AccessMixin(AccessMixin):
 
         return super(AccessMixin, self).dispatch(
             request, *args, **kwargs)
+
+
+class ErrorView(TemplateView):
+    """
+    This fixes an issue in Django - https://code.djangoproject.com/ticket/24829
+    TODO - This is fixed in 1.9, remove it then
+    """
+    def dispatch(self, request, *args, **kwargs):
+        response = super(ErrorView, self).dispatch(request, *args, **kwargs)
+        response.render()
+        return response
