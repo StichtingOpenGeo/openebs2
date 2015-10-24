@@ -16,6 +16,7 @@ class FilterCreateView(LoginRequiredMixin, CreateView):
     fields = ['name']
 
 
+# TODO: Make this JSON
 class FilterStopCreateView(LoginRequiredMixin, CreateView):
     permission_required = 'openebs.edit_filters'
     model = Kv1StopFilterStop
@@ -23,6 +24,7 @@ class FilterStopCreateView(LoginRequiredMixin, CreateView):
     fields = ['filter', 'stop']
 
 
+# TODO: Make this JSON
 class FilterStopDeleteView(LoginRequiredMixin, DeleteView):
     permission_required = 'openebs.edit_filters'
     model = Kv1StopFilterStop
@@ -39,3 +41,7 @@ class FilterUpdateView(LoginRequiredMixin, UpdateView):
     permission_required = 'openebs.edit_filters'
     model = Kv1StopFilter
     fields = ['name']
+
+    def get_success_url(self):
+        return reverse_lazy('filter_edit', args=(self.object.id, ))
+

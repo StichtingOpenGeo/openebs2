@@ -5,16 +5,26 @@
 
 {% block content %}
     <h1>{% trans "Bewerk filter" %}</h1>
-    <form>
-        {% crispy form %}
-        <input type="submit" value="{% trans 'Opslaan' %}" class="btn btn-primary pull-right">
+    <form method="post" class="form-horizontal" action="{% url 'filter_edit' object.id %}">
+        {% csrf_token %}
+        <div class="form-group">
+            <label class="col-md-2 control-label" for="field_name">Naam</label>
+            <div class="col-md-3">
+                <input name="name" id="field_name" class="form-control" maxlength="25" value="{{ object.name }}">
+            </div>
+        </div>
+        <input type="submit" value="{% trans 'Opslaan' %}" class="btn btn-primary pull-right" />
     </form>
 
     <h2>{% trans "Haltes" %}</h2>
-    <div class="controls">
-        <label>Voeg een halte toe: </label>
-        <input id="autocomplete" class="form-control short" placeholder="Haltenaam of TPC" >
-    </div><br />
+    <form class="form-horizontal">
+        <div class="form-group">
+            <label for="autocomplete" class="col-md-2 control-label">Voeg een halte toe: </label>
+            <div class="col-md-3">
+                <input id="autocomplete" class="form-control" placeholder="Haltenaam of TPC" >
+            </div>
+        </div>
+    </form><br />
     <table class="table table-striped table-bordered" id="stops">
         <tr><th>Vervoerder</th><th>Haltenaam</th><th>TPC</th><th>&nbsp;</th></tr>
             {% for filter_stop in object.stops.filter %}
