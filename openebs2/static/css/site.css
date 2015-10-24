@@ -31,6 +31,9 @@ span.stop-selection,span.trip-selection{
 #map {
     width: 100%;
 }
+.leaflet-container a.btn-success {
+    color: #fff;
+}
 
 .container {
     max-width: none;

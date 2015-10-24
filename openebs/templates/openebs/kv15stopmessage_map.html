@@ -50,21 +50,23 @@
                     var popup = markerIndex[suggestion.timingpointcode];
                     {# leafletMap.openPopup(popup)#}
                 } else {
-                    L.circleMarker(suggestion.location, {
+                    var marker = L.circleMarker(suggestion.location, {
                         radius: 10,
                         fillColor: "#000",
                         color: "#fff",
                         weight: 2,
                         opacity: 1,
                         fillOpacity: 0.8
-                    }).addTo(leafletMap);
+                    });
+                    marker.bindPopup(button_template({ id: suggestion.id }))
+                    marker.addTo(leafletMap);
                 }
                 $('#autocomplete').typeahead('val', '');
             });
         })();
 
         var mapmargin = 0;
-        var table_template;
+        var table_template, button_template;
 
         function resize(){
             if($(window).width()>=980){
@@ -148,6 +150,7 @@
             });
 
             table_template = Handlebars.compile($("#table-template").html());
+            button_template = Handlebars.compile($("#button-template").html());
         }
     </script>
     {% verbatim %}
@@ -164,6 +167,10 @@
                 <td>{{ shorten kv15stopmessage__messagecontent }}</td></tr>
             {{/each}}
         </table>
+        <a class="btn btn-xs btn-link" href="{% endverbatim %}{% url 'msg_add' %}{% verbatim %}?id={{ id }}"><i class="glyphicon glyphicon-plus"></i> Plaats bericht op deze halte</a>
+    </script>
+    <script id="button-template" type="text/x-handlebars-template">
+        <a class="btn btn-xs btn-link" href="{% endverbatim %}{% url 'msg_add' %}{% verbatim %}?id={{ id }}"><i class="glyphicon glyphicon-plus"></i> Plaats bericht op deze halte</a>
     </script>
     {% endverbatim %}
 {% endblock %}

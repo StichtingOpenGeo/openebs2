@@ -26,6 +26,7 @@ class LineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
         qry = qry.filter(Q(headsign__icontains=needle) | Q(publiclinenumber__startswith=needle))
         return qry
 
+
 class LineStopView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
     model = Kv1Line
     render_object = 'object'
@@ -38,6 +39,7 @@ class LineStopView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
         if obj:
             return {'stop_map': obj.stop_map }
         return obj
+
 
 class LineTripView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
     model = Kv1Line
@@ -56,10 +58,14 @@ class LineTripView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
             return {'trips_1': list(journeys.filter(direction=1)), 'trips_2' : list(journeys.filter(direction=2)) }
         return obj
 
+
 class ActiveStopListView(LoginRequiredMixin, GeoJSONLayerView):
+    """
+    Show stops with active messages on the map, creates GeoJSON
+    """
     model = Kv1Stop
     geometry_field = 'location'
-    properties = ['name', 'userstopcode', 'dataownercode', 'timingpointcode']
+    properties = ['id', 'name', 'userstopcode', 'dataownercode', 'timingpointcode']
     # Filter by active
     queryset = model.objects.filter(messages__stopmessage__messagestarttime__lte=now(),
                                     messages__stopmessage__messageendtime__gte=now(),
@@ -71,7 +77,11 @@ class ActiveStopListView(LoginRequiredMixin, GeoJSONLayerView):
             qry = qry.filter(dataownercode=self.request.user.userprofile.company)
         return qry
 
+
 class ActiveMessagesForStopView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+    """
+    Show active messages on an active stop on the map, creates JSON
+    """
     model = Kv1Stop
     render_object = 'object'
 
@@ -85,7 +95,7 @@ class ActiveMessagesForStopView(LoginRequiredMixin, JSONListResponseMixin, Detai
                                         timingpointcode=tpc).distinct('kv15stopmessage__id')
         if not self.request.user.has_perm("openebs.view_all"):
             qry = qry.filter(dataownercode=self.request.user.userprofile.company)
-        return qry.values('dataownercode', 'kv15stopmessage__dataownercode', 'kv15stopmessage__messagecodenumber',
+        return qry.values('id', 'dataownercode', 'kv15stopmessage__dataownercode', 'kv15stopmessage__messagecodenumber',
                           'kv15stopmessage__messagecontent', 'kv15stopmessage__id')
 
     def get_object(self):
@@ -93,6 +103,9 @@ class ActiveMessagesForStopView(LoginRequiredMixin, JSONListResponseMixin, Detai
 
 
 class StopAutocompleteView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+    """
+    Search for stops, creates JSON. Used by autocomplete on map and filter creation
+    """
     model = Kv1Stop
     render_object = 'object'
 
@@ -115,7 +128,7 @@ class StopAutocompleteView(LoginRequiredMixin, JSONListResponseMixin, DetailView
 
 class DataImportView(LoginRequiredMixin, StaffuserRequiredMixin, ListView):
     """
-    Show details about what data was or wasn't imported
+    Show details about what trips currently in the database
     """
     model = Kv1JourneyDate
     template_name = 'kv1/importdata_list.html'

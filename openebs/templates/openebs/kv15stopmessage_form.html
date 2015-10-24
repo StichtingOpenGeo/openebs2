@@ -12,7 +12,9 @@
             <div class="control-group">
                 <label>{% trans "Haltes" %}</label>
                 <p class="form-control-static" id="halte-list">
-                    {% if object.kv15messagestop_set.count > 0 %}
+                    {% if prefilled_stop %}
+                        <span class="stop-selection pull-left label label-primary" id="ss{{ prefilled_stop.dataownercode }}_{{ prefilled_stop.userstopcode }}">{{ prefilled_stop.name }} (?)<span class="stop-remove glyphicon glyphicon-remove"></span></span>
+                    {% elif object.kv15messagestop_set.count > 0 %}
                         {% for halte in object.kv15messagestop_set.all %}
                             <span class="stop-selection pull-left label label-primary" id="ss{{ halte.stop.dataownercode }}_{{ halte.stop.userstopcode }}">{{ halte.stop.name }} (?)<span class="stop-remove glyphicon glyphicon-remove"></span></span>
                         {% endfor %}
@@ -20,8 +22,12 @@
                         <em class="help">{% trans "Klik haltenamen om een selectie te maken" %}</em>
                     {% endif %}
                 </p><br />
-                <input type="hidden" id="haltes" name="haltes"
+                {% if prefilled_stop %}
+                    <input type="hidden" id="haltes" name="haltes" value="{{ prefilled_stop.dataownercode }}_{{ prefilled_stop.userstopcode }}," />
+                {% else %}
+                    <input type="hidden" id="haltes" name="haltes"
                        value="{% for halte in object.kv15messagestop_set.all %}{{ halte.stop.dataownercode }}_{{ halte.stop.userstopcode }},{% endfor %}" />
+                {% endif %}
             </div>
             <div class="clearfix"></div>
             {% crispy form form.helper %}

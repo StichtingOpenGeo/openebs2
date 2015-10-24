@@ -21,6 +21,7 @@ from openebs.form import Kv15StopMessageForm
 
 log = logging.getLogger('openebs.views')
 
+
 # MESSAGE VIEWS
 class MessageListView(AccessMixin, ListView):
     permission_required = 'openebs.view_messages'
@@ -69,11 +70,25 @@ class MessageListView(AccessMixin, ListView):
         return (user.is_superuser and has_query_all) or \
                (not user.is_superuser and (user.has_perm("openebs.view_all") or user.has_perm("openebs.edit_all")))
 
+
 class MessageCreateView(AccessMixin, Kv15PushMixin, CreateView):
     permission_required = 'openebs.add_messages'
     model = Kv15Stopmessage
     form_class = Kv15StopMessageForm
     success_url = reverse_lazy('msg_index')
+
+    def get_context_data(self, **kwargs):
+        context = super(MessageCreateView, self).get_context_data(**kwargs)
+        prefilled_id = self.request.GET.get('id', None)
+        if prefilled_id and prefilled_id.isdigit():
+            try:
+                stop = Kv1Stop.objects.get(id=prefilled_id)
+                if not self.request.user.has_perm("openebs.edit_all") and stop.dataownercode != self.request.user.userprofile.company:
+                    stop = None
+                context['prefilled_stop'] = stop
+            except Kv1Stop.DoesNotExist:
+                pass
+        return context
 
     def form_valid(self, form):
         if self.request.user:
@@ -175,6 +190,7 @@ class MessageDetailsView(AccessMixin, FilterDataownerMixin, DetailView):
     permission_level = 'read'
     model = Kv15Stopmessage
 
+
 # AJAX Views
 class ActiveStopsAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
     model = Kv1Stop
@@ -189,6 +205,7 @@ class ActiveStopsAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView)
                                              messages__stopmessage__dataownercode=self.request.user.userprofile.company,
                                              dataownercode=self.request.user.userprofile.company).distinct()
         return list(queryset.values('dataownercode', 'userstopcode'))
+
 
 class MessageStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
     model = Kv1Stop
