@@ -12,7 +12,7 @@ from utils.time import get_operator_date
 from utils.views import JSONListResponseMixin
 from kv1.models import Kv1Line, Kv1Stop, Kv1Journey, Kv1JourneyDate
 
-
+# Views for adding messages and related lookups
 class LineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
     model = Kv1Line
     render_object = 'object_list'
@@ -59,6 +59,7 @@ class LineTripView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
         return obj
 
 
+# Map views
 class ActiveStopListView(LoginRequiredMixin, GeoJSONLayerView):
     """
     Show stops with active messages on the map, creates GeoJSON
@@ -128,7 +129,7 @@ class StopAutocompleteView(LoginRequiredMixin, JSONListResponseMixin, DetailView
         stop['location'] = [stop['location'].y, stop['location'].x]
         return stop
 
-
+# Data import details
 class DataImportView(LoginRequiredMixin, StaffuserRequiredMixin, ListView):
     """
     Show details about what trips currently in the database
