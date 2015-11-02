@@ -215,6 +215,28 @@ class MessageStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
 
     def get_queryset(self):
         qry = super(MessageStopsAjaxView, self).get_queryset()
-        qry = qry.filter(kv15stopmessage__id=self.kwargs.get('pk', None),
-                         kv15stopmessage__dataownercode=self.request.user.userprofile.company)
+        qry = qry.filter(kv15stopmessage__id=self.kwargs.get('pk', None))
+
+        if not (self.request.user.has_perm("openebs.view_all") or self.request.user.has_perm("openebs.edit_all")):
+            qry = qry.filter(kv15stopmessage__dataownercode=self.request.user.userprofile.company)
+
         return qry
+
+
+class MessageStopsBoundAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+    model = Kv1Stop
+    render_object = 'object'
+
+    def get_object(self):
+        qry = self.get_queryset()
+        return {'extent': qry.extent()}
+
+    def get_queryset(self):
+        qry = super(MessageStopsBoundAjaxView, self).get_queryset()
+        qry = qry.filter(kv15stopmessage__id=self.kwargs.get('pk', None))
+
+        if not (self.request.user.has_perm("openebs.view_all") or self.request.user.has_perm("openebs.edit_all")):
+            qry = qry.filter(kv15stopmessage__dataownercode=self.request.user.userprofile.company)
+
+        return qry
+

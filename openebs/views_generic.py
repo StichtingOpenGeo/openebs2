@@ -1,7 +1,7 @@
 import logging
 from braces.views import SuperuserRequiredMixin, LoginRequiredMixin
 from django.core.urlresolvers import reverse_lazy
-from django.views.generic import RedirectView
+from django.views.generic import RedirectView, TemplateView
 from kv15.enum import DATAOWNERCODE
 
 log = logging.getLogger('openebs.views.scenario')
@@ -25,3 +25,10 @@ class ChangeCompanyView(LoginRequiredMixin, SuperuserRequiredMixin, RedirectView
                 self.request.user.userprofile.save()
         return super(ChangeCompanyView, self).get_redirect_url()
 
+
+class TemplateRequestView(TemplateView):
+
+    def get_context_data(self, **kwargs):
+        context = super(TemplateRequestView, self).get_context_data(**kwargs)
+        context['request'] = self.request
+        return context

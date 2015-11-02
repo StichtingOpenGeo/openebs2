@@ -64,6 +64,7 @@
                 }
                 $('#autocomplete').typeahead('val', '');
             });
+
         })();
 
         var mapmargin = 0;
@@ -149,6 +150,22 @@
                     }
                 }).addTo(map);
             });
+
+        {% if request.GET.message %}
+            $.ajax("{% url 'msg_bounds_ajax' request.GET.message %}", {
+                success : function(data, err, xhr) {
+                    var array = data.object.extent,
+                            south = [array[1], array[0]],
+                            north = [array[3], array[2]];
+                    /* Extent of one point = point, therefore zoom close to it if just one point */
+                    if (south[0] === north[0] && south[1] === north[1]) {
+                        map.setView(new L.LatLng(south[0], south[1]), 18);
+                    } else {
+                        map.fitBounds([south, north]);
+                    }
+                }
+            })
+        {% endif %}
 
             table_template = Handlebars.compile($("#table-template").html());
             button_template = Handlebars.compile($("#button-template").html());

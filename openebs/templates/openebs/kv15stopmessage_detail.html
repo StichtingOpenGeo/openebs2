@@ -78,7 +78,9 @@
         </div>
     </div>
 
-    <h3>{% trans "Haltes" %} <span style="font-weight: normal;">({{ object.kv15messagestop_set.count }})</span></h3>
+    <h3>{% trans "Haltes" %} <span style="font-weight: normal;">({{ object.kv15messagestop_set.count }})</span>
+        <a class="btn btn-link pull-right" href="{% url 'msg_map' %}?message={{ object.id }}"><i class="glyphicon glyphicon-screenshot"></i> {% trans "Bekijk op kaart" %}</a>
+    </h3>
     <table class="table table-bordered table-condensed">
     <tr>
         <th class="col-lg-1">{% trans "Vervoerder" %}</th>

@@ -12,6 +12,7 @@ from utils.time import get_operator_date
 from utils.views import JSONListResponseMixin
 from kv1.models import Kv1Line, Kv1Stop, Kv1Journey, Kv1JourneyDate
 
+
 # Views for adding messages and related lookups
 class LineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
     model = Kv1Line
