@@ -1,11 +1,13 @@
 from calendar import LocaleHTMLCalendar
 from itertools import groupby
 from django.utils.datetime_safe import date
+from openebs2.settings import CALENDAR_LOCALE
+
 
 class CountCalendar(LocaleHTMLCalendar):
 
     def __init__(self, items):
-        super(CountCalendar, self).__init__(0, 'nl_NL.UTF-8')
+        super(CountCalendar, self).__init__(0, CALENDAR_LOCALE)
         self.counts = self.group_by_day(items)
 
     def formatday(self, day, weekday):
