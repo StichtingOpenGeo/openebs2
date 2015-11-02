@@ -37,7 +37,7 @@ class LineStopView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
         """
         obj = get_object_or_404(self.model, pk=self.kwargs.get('pk', None))
         if obj:
-            return {'stop_map': obj.stop_map }
+            return {'stop_map': obj.stop_map}
         return obj
 
 
@@ -53,9 +53,9 @@ class LineTripView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
         if obj:
             # Note, the list() is required to serialize correctly
             # We're filtering on todays trips #
-            journeys = obj.journeys.filter(dates__date=get_operator_date()).order_by('departuretime')\
-                                   .values('id', 'journeynumber', 'direction', 'departuretime')
-            return {'trips_1': list(journeys.filter(direction=1)), 'trips_2' : list(journeys.filter(direction=2)) }
+            journeys = obj.journeys.filter(dates__date=get_operator_date()).order_by('departuretime') \
+                .values('id', 'journeynumber', 'direction', 'departuretime')
+            return {'trips_1': list(journeys.filter(direction=1)), 'trips_2': list(journeys.filter(direction=2))}
         return obj
 
 
@@ -66,13 +66,13 @@ class ActiveStopListView(LoginRequiredMixin, GeoJSONLayerView):
     model = Kv1Stop
     geometry_field = 'location'
     properties = ['id', 'name', 'userstopcode', 'dataownercode', 'timingpointcode']
-    # Filter by active
-    queryset = model.objects.filter(messages__stopmessage__messagestarttime__lte=now(),
-                                    messages__stopmessage__messageendtime__gte=now(),
-                                    messages__stopmessage__isdeleted=False).exclude(timingpointcode=0).distinct('timingpointcode')
 
     def get_queryset(self):
-        qry = super(ActiveStopListView, self).get_queryset()
+        qry = self.model.objects.filter(messages__stopmessage__messagestarttime__lte=now(),
+                                        messages__stopmessage__messageendtime__gte=now(),
+                                        messages__stopmessage__isdeleted=False)\
+                                .exclude(timingpointcode=0)\
+                                .distinct('timingpointcode')
         if not self.request.user.has_perm("openebs.view_all"):
             qry = qry.filter(dataownercode=self.request.user.userprofile.company)
         return qry
@@ -114,7 +114,10 @@ class StopAutocompleteView(LoginRequiredMixin, JSONListResponseMixin, DetailView
         qry = super(StopAutocompleteView, self).get_queryset()
         if not self.request.user.has_perm("openebs.view_all"):
             qry = qry.filter(dataownercode=self.request.user.userprofile.company)
-        result = qry.filter(Q(name__icontains=term) | Q(timingpointcode__startswith=term)).values('id', 'dataownercode', 'timingpointcode', 'userstopcode', 'name', 'location')
+        result = qry.filter(Q(name__icontains=term) | Q(timingpointcode__startswith=term)).values('id', 'dataownercode',
+                                                                                                  'timingpointcode',
+                                                                                                  'userstopcode',
+                                                                                                  'name', 'location')
         return result
 
     def get_object(self):
@@ -138,7 +141,9 @@ class DataImportView(LoginRequiredMixin, StaffuserRequiredMixin, ListView):
         cal = CountCalendar(context['object_list'])
         date_now = datetime.now()
         date_next = date_now + timedelta(weeks=4)
-        context['calendar'] = mark_safe(cal.formatmonth(date_now.year, date_now.month)+'<br />'+cal.formatmonth(date_next.year, date_next.month))
+        context['calendar'] = mark_safe(
+            cal.formatmonth(date_now.year, date_now.month) + '<br />' + cal.formatmonth(date_next.year,
+                                                                                        date_next.month))
         return context
 
     def get_queryset(self):
