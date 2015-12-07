@@ -193,7 +193,10 @@ class Kv15Stopmessage(models.Model):
         num = Kv15Stopmessage.objects.filter(dataownercode=self.dataownercode, messagecodedate=self.messagecodedate).aggregate(models.Max('messagecodenumber'))
         if num['messagecodenumber__max'] == 9999:
             raise IntegrityError(ugettext("Teveel berichten vestuurd - probeer het morgen weer"))
-        return num['messagecodenumber__max'] + 1 if num['messagecodenumber__max'] else 1
+        result = num['messagecodenumber__max'] + 1 if num['messagecodenumber__max'] else 1
+        if self.dataownercode == 'HTM' and result < 5000:
+            result = 5000
+        return result
 
     def get_message_duration(self):
         return (self.messageendtime.date() - self.messagestarttime.date()).days
