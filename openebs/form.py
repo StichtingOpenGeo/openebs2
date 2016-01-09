@@ -225,8 +225,11 @@ class Kv17ChangeForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super(Kv17ChangeForm, self).clean()
+        if 'journeys' not in self.data:
+            raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
+
         for journey in self.data['journeys'].split(',')[0:-1]:
-            journey_qry =  Kv1Journey.objects.filter(pk=journey, dates__date=get_operator_date())
+            journey_qry = Kv1Journey.objects.filter(pk=journey, dates__date=get_operator_date())
             if journey_qry.count() == 0:
                 raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
             if Kv17Change.objects.filter(journey__pk=journey, line=journey_qry[0].line, operatingday=get_operator_date()).count() != 0:

@@ -57,6 +57,10 @@
                 <p class="form-control-static" id="rit-list">
                     {% if form.instance.journey %}
                         <span class="label label-danger rit-recover" id="l{{form.instance.line.publiclinenumber}}">Rit {{ form.instance.journey.journeynumber }}</span>
+                    {% elif journeys %}
+                        {% for j in journeys %}
+                            <span class="label label-danger rit-preload" id="st{{j.pk}}">Rit {{ j.journeynumber }} <span class="trip-remove glyphicon glyphicon-remove"></span></span>
+                        {% endfor %}
                     {% else %}
                         <em class="help">{% trans "Klik een rit om een selectie te maken" %}</em>
                     {% endif %}
@@ -84,6 +88,7 @@
 {% endblock %}
 {% block js_init %}
     getActiveJourneys();
+    loadPreselectedJourneys();
     $('#line_search').on('keyup', changeSearch);
     $( "body" ).on('click', ".line", showTrips);
     $("#trips").selectable({

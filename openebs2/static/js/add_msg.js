@@ -274,6 +274,13 @@ function showTrips(event) {
     $(this).addClass('success')
 }
 
+function loadPreselectedJourneys() {
+    $(".rit-preload").each(function(id, val) {
+        selectedTrips.push($(val).attr('id').substring(2));
+    });
+    writeTripList();
+}
+
 function selectTrip(event, ui) {
     var ritnr = $(ui.selected).attr('id').substring(1);
     if ($.inArray(parseInt(ritnr), activeJourneys) != -1) /* Note our array stores numbers, so convert */

@@ -3,6 +3,8 @@ from json_field import JSONField
 from kv15.enum import DATAOWNERCODE, STOPTYPES
 from django.utils.translation import ugettext_lazy as _
 
+from utils.time import get_operator_date
+
 
 class Kv1Line(models.Model):
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
@@ -68,6 +70,21 @@ class Kv1Journey(models.Model):
 
     def __unicode__(self):
         return "%s%s - %s" % (self.dataownercode, self.line.publiclinenumber, self.journeynumber)
+
+    @staticmethod
+    def find_from_realtime(dataowner, realtime_id):
+        j = realtime_id.split(':')
+        if len(j) == 3:
+            line = Kv1Line.objects.filter(dataownercode=dataowner,
+                                          lineplanningnumber=j[1])
+            if line.count() == 1:
+                journey_pk = Kv1Journey.objects.filter(dataownercode=dataowner,
+                                                       line=line[0].pk,
+                                                       journeynumber=int(j[2]),
+                                                       dates__date=get_operator_date())
+                if journey_pk.count() == 1:
+                    return journey_pk[0]
+        return None
 
     class Meta:
         verbose_name = _("Rit")

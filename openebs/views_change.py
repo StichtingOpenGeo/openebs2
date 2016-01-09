@@ -5,7 +5,7 @@ from django.core.urlresolvers import reverse_lazy
 from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.views.generic import ListView, CreateView, DeleteView, DetailView
-from kv1.models import Kv1Journey
+from kv1.models import Kv1Journey, Kv1Line
 from openebs.form import Kv17ChangeForm
 from openebs.models import Kv17Change
 from openebs.views_utils import FilterDataownerMixin
@@ -50,12 +50,18 @@ class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
     def get_context_data(self, **kwargs):
         data = super(ChangeCreateView, self).get_context_data(**kwargs)
         data['operator_date'] = get_operator_date()
+        if 'journey' in self.request.GET:
+            journeys = []
+            for journey in self.request.GET['journey'].split(','):
+                j = Kv1Journey.find_from_realtime(self.request.user.userprofile.company, journey)
+                if j:
+                    journeys.append(j)
+            data['journeys'] = journeys
         return data
 
     def form_invalid(self, form):
         log.error("Form invalid!")
         return super(ChangeCreateView, self).form_invalid(form)
-
 
     def form_valid(self, form):
         form.instance.dataownercode = self.request.user.userprofile.company
