@@ -5,6 +5,7 @@ from datetime import timedelta
 from braces.views import LoginRequiredMixin
 from django.core.urlresolvers import reverse_lazy
 from django.db.models import Q, Count
+from django.shortcuts import redirect
 from django.views.generic import ListView, UpdateView, DetailView
 from django.views.generic.edit import CreateView, DeleteView
 from django.utils.timezone import now
@@ -162,6 +163,23 @@ class MessageUpdateView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, Update
             if old_msg_stop.stop not in new_stops: # Removed stop, delete it
                 old_msg_stop.delete()
 
+
+class MessageResendView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, DetailView):
+    #http_method_names = ['POST']
+    permission_required = 'openebs.add_messages'
+    permission_level = 'write'
+    model = Kv15Stopmessage
+    template_name_suffix = '_resend'
+    success_url = reverse_lazy('msg_index')
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        log.info("Resent message to subscribers: %s" % (self.object))
+        if MessageStatus.is_deleted(self.object.status):
+            self.push_message(self.object.to_xml_delete())
+        else:
+            self.push_message(self.object.to_xml())
+        return redirect(self.success_url)
 
 class MessageDeleteView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, DeleteView):
     permission_required = 'openebs.add_messages'

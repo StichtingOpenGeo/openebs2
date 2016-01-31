@@ -42,10 +42,10 @@
             <th>{% trans "Vervoerder"%}</th>
         {% endif %}
         <th class="col-lg-1">{% trans "Volgnummer"%}</th>
-        <th class="col-lg-6">{% trans "Bericht" %}</th>
+        <th class="col-lg-5">{% trans "Bericht" %}</th>
         <th class="col-lg-1">{% trans "Aantal haltes" %}</th>
         <th class="col-lg-2">{% trans "Tijden" %}</th>
-        <th class="col-lg-3">&nbsp;</th>
+        <th class="col-lg-4">&nbsp;</th>
   </tr>
   {% for msg in active_list %}
       <tr class="{% if msg.is_future %}warning{% endif %}">
@@ -74,10 +74,21 @@
                         <span class="glyphicon glyphicon-trash"></span>
                     </button>
                 </form>
+            {% endif %}
+            {% if edit_all %}
+                <form method="post" class="pull-right" action="{% url 'msg_resend' msg.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-warning" style="margin-right: 4px;">
+                        <span class="glyphicon glyphicon-refresh"></span>
+                    </button>
+                </form>
+            {% endif %}
+            {% if not view_all or edit_all %}
                 <a href="{% url 'msg_edit' msg.pk %}" class="btn btn-link pull-right">
                     <span class="glyphicon glyphicon-edit"></span> {% trans "Bewerk" %}&nbsp;
-                </a>&nbsp;
+                </a>
             {% endif %}
+
         </td>
     </tr>
   {% empty %}
@@ -119,6 +130,14 @@
         </td>
         <td>
             {% include "openebs/snippet_message-duration.html" with msg=msg only %}
+            {% if edit_all %}
+                <form method="post" action="{% url 'msg_resend' msg.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-warning pull-right">
+                        <span class="glyphicon glyphicon-refresh"></span>
+                    </button>
+                </form>
+            {% endif %}
         </td>
     </tr>
   {% empty %}

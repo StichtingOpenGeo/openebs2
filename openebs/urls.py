@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, url
 from django.views.generic import RedirectView
 from openebs.views import MessageListView, MessageCreateView, MessageDeleteView, MessageUpdateView, ActiveStopsAjaxView, MessageDetailsView, MessageStopsAjaxView, \
-    MessageStopsBoundAjaxView
+    MessageStopsBoundAjaxView, MessageResendView
 from openebs.views_change import ChangeListView, ChangeCreateView, ChangeDeleteView, ActiveJourneysAjaxView, ChangeUpdateView
 from openebs.views_filters import FilterListView, FilterDeleteView, FilterUpdateView, FilterCreateView, \
     FilterStopCreateView, FilterStopDeleteView
@@ -22,6 +22,7 @@ urlpatterns = patterns('',
     url(r'^bericht/nieuw$', MessageCreateView.as_view(), name="msg_add"),
     url(r'^bericht/(?P<pk>\d+)/bekijken', MessageDetailsView.as_view(), name="msg_view"),
     url(r'^bericht/(?P<pk>\d+)/bewerken$', MessageUpdateView.as_view(), name="msg_edit"),
+    url(r'^bericht/(?P<pk>\d+)/herhaal', MessageResendView.as_view(), name="msg_resend"),
     url(r'^bericht/(?P<pk>\d+)/verwijderen$', MessageDeleteView.as_view(), name="msg_delete"),
     url(r'^bericht/(?P<pk>\d+)/haltes.geojson', MessageStopsAjaxView.as_view(), name="msg_stops_ajax"), # LEGACY: map
     url(r'^bericht/(?P<pk>\d+)/halte_bereik.geojson', MessageStopsBoundAjaxView.as_view(), name="msg_bounds_ajax"), # Map bounds to zoom

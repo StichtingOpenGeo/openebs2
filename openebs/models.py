@@ -85,6 +85,10 @@ class MessageStatus(object):
                 (ERROR_SEND_DELETE, _("Fout bij versturen verwijdering")),
                 )
 
+    @staticmethod
+    def is_deleted(status):
+        return status == MessageStatus.DELETED or status == MessageStatus.DELETE_SENT \
+               or status == MessageStatus.DELETE_CONFIRMED or status == MessageStatus.ERROR_SEND_DELETE
 
 class Kv15Stopmessage(models.Model):
     id = models.AutoField(primary_key=True)
