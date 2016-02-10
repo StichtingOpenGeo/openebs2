@@ -169,7 +169,7 @@ class Kv15Stopmessage(models.Model):
             # Never send XML if we have no stops
             log.error("We tried to send a message with no stops. This should never happen!")
             return ""
-        return render_to_string('xml/kv15stopmessage.xml', {'object': self }).replace(os.linesep, '')
+        return render_to_string('xml/kv15stopmessage.xml', {'object': self }).replace(os.linesep, '').encode('utf8')
 
     def to_xml_delete(self):
         """

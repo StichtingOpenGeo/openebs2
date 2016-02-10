@@ -54,10 +54,11 @@ class Push:
 
     def push(self, content):
         # Add content
+        # TODO What this do?
         self.content = content
 
         # Calculate XML with wrapper/header
-        content = str(self)
+        content = self.__str__()
         if self.debug:
             self.log.debug(content)
 
@@ -85,4 +86,4 @@ class Push:
             if self.debug:
                 self.log.debug("Connecting to %s and got response code %s and content: %s" % (self.alias, response_code, response_content))
 
-        return (response_code,response_content)
+        return (response_code, response_content)
