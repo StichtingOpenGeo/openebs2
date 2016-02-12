@@ -22,6 +22,5 @@ urlpatterns = patterns('',
     url(r'^wachtwoord/gewijzigd$', 'django.contrib.auth.views.password_change_done', {'template_name': 'users/password_change_done.html'}, name="password_change_done"),
     url(r'^geweigerd/$', TemplateView.as_view(template_name="openebs/templates/openebs/nopermission.html"), name="app_nopermission"),
 
-    # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
 )
