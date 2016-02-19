@@ -15,6 +15,7 @@ handler500 = ErrorView.as_view(template_name="openebs/servererror.html")
 urlpatterns = patterns('',
     url(r'^', include('openebs.urls')),
     url(r'^', include('kv1.urls')),
+    url(r'^', include('ferry.urls')),
 
     url(r'^inloggen/$', 'django.contrib.auth.views.login', {'template_name': 'users/login.html'}, name="app_login"),
     url(r'^uitloggen/$', 'django.contrib.auth.views.logout_then_login', name="app_logout"),

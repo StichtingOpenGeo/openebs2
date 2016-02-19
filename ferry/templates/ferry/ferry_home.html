@@ -1,0 +1,83 @@
+{% include "base.html" %}
+{% load i18n static %}
+
+{% block title %}Veerboot{% endblock %}
+
+{% block content %}
+        <h1>Veerboot</h1>
+        <select>
+        {% for line in lines %}
+            <option>{{ line.publiclinenumber }} - {{ line.headsign }}</option>
+        {% endfor %}
+        </select>
+
+        <div class="row">
+
+            <div class="col-lg-6">
+                <h2>Ritten <span title="Dienstregelingsdatum">{{ operator_date|date:"d-m-Y" }}</span> </h2>
+                <div id="line_cancel_box" class="text-center" style="display: none;">
+                    <a id="line_cancel" class="btn btn-danger">{% trans "Alle ritten opheffen" %}</a>
+                </div>
+                <table class="table openebs-trips" id="trips">
+                    <thead>
+                    <tr>
+                        <th>{% trans "Heen" %}</th>
+                        <th>{% trans "Terug" %}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr class="help text-center"><td colspan="2"><em>Klik een lijn om ritten hier te zien</em></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-lg-2">
+                <div class="panel panel-default clearfix">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><i class="glyphicon glyphicon-arrow-right"></i>&nbsp;Vertrek</h3>
+                    </div>
+                    <div class="panel-body">
+                        <a href="#" class="btn btn-success btn-ferry"><i class="glyphicon glyphicon-ok"></i> Boot vertrekt</a> <br/>
+                        <a href="#" class="btn btn-warning btn-ferry"><i class="glyphicon glyphicon-time"></i> Boot vertraagd</a> <br/>
+
+                    </div>
+                </div>
+
+                <div class="panel panel-default clearfix">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><i class="glyphicon glyphicon-pencil"></i>&nbsp;Rit wijzigen</h3>
+                    </div>
+                    <div class="panel-body">
+                        <a href="#" class="btn btn-primary btn-ferry"><i class="glyphicon glyphicon-exclamation-sign"></i> Boot vol</a> <br/>
+                        <a href="#" class="btn btn-danger btn-ferry"><i class="glyphicon glyphicon-remove"></i> Boot/rit valt uit</a> <br/>
+                    </div>
+                </div>
+                <div class="panel panel-default clearfix">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><i class="glyphicon glyphicon-home"></i>&nbsp;Uit de vaart</h3>
+                    </div>
+                    <div class="panel-body">
+                        <a href="#" class="btn btn-danger btn-ferry"><i class="glyphicon glyphicon-trash"></i> Uit vaart</a> <br/>
+                        <a href="#" class="btn btn-success btn-ferry"><i class="glyphicon glyphicon-share-alt"></i>Herstel dienst</a> <br/>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'bower_components/jquery-ui/ui/minified/core.min.js' %}"></script>
+    <script src="{% static 'bower_components/jquery-ui/ui/minified/widget.min.js' %}"></script>
+    <script src="{% static 'bower_components/jquery-ui/ui/minified/mouse.min.js' %}"></script>
+    <script src="{% static 'bower_components/jquery-ui/ui/minified/selectable.min.js' %}"></script>
+    <script src="{% static 'js/ferry.js' %}"></script>
+{% endblock %}
+{% block js_init %}
+    getActiveJourneys();
+    $("#trips").selectable({
+        filter:'td.trip',
+        selected: selectTrip
+    });
+{% endblock %}

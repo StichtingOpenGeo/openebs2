@@ -169,3 +169,7 @@ span.stop-selection,span.trip-selection{
 .tt-suggestion p {
     margin: 0;
 }
+.btn-ferry {
+    margin-bottom: 8px;
+    width: 95%;
+}
