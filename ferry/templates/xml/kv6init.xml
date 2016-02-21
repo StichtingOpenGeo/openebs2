@@ -1,0 +1,15 @@
+<INIT>
+    <dataownercode>{{ line.dataownercode }}</dataownercode>
+    <lineplanningnumber>{{ line.lineplanningnumber }}</lineplanningnumber>
+    <operatingday>{{ operatingday }}</operatingday>
+    <journeynumber>{{ journeynumber }}</journeynumber>
+    <reinforcementnumber>0</reinforcementnumber>
+    <timestamp>{{ created|date:"c" }}</timestamp>
+    <source>SERVER</source>
+    <userstopcode>String</userstopcode>
+    <passagesequencenumber>1234</passagesequencenumber>
+    <vehiclenumber>123456</vehiclenumber>
+    <blockcode>0</blockcode>
+    <wheelchairaccessible>ACCESSIBLE</wheelchairaccessible>
+    <numberofcoaches>0</numberofcoaches>
+</INIT>

@@ -8,17 +8,12 @@ from django.views.generic import ListView, CreateView, DeleteView, DetailView
 from kv1.models import Kv1Journey, Kv1Line
 from openebs.form import Kv17ChangeForm
 from openebs.models import Kv17Change
+from openebs.views_push import Kv17PushMixin
 from openebs.views_utils import FilterDataownerMixin
 from utils.time import get_operator_date
 from utils.views import AccessMixin, ExternalMessagePushMixin, JSONListResponseMixin
 
 log = logging.getLogger('openebs.views.changes')
-
-
-class Kv17PushMixin(ExternalMessagePushMixin):
-    message_type = 'KV17'
-    namespace = 'http://bison.connekt.nl/tmi8/kv17/msg'
-    dossier = 'KV17cvlinfo'
 
 
 class ChangeListView(AccessMixin, ListView):

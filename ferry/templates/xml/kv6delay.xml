@@ -1,0 +1,10 @@
+<DELAY>
+    <dataownercode>{{ line.dataownercode }}</dataownercode>
+    <lineplanningnumber>{{ line.lineplanningnumber }}</lineplanningnumber>
+    <operatingday>{{ operatingday }}</operatingday>
+    <journeynumber>{{ journeynumber }}</journeynumber>
+    <reinforcementnumber>0</reinforcementnumber>
+    <timestamp>{{ created|date:"c" }}</timestamp>
+    <source>SERVER</source>
+    <punctuality>{{ delay }}</punctuality>
+</DELAY>

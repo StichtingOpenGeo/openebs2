@@ -78,7 +78,6 @@ span.stop-selection,span.trip-selection{
     text-align: center;
     padding: 0;
     margin: 0;
-    text-style:
 }
 
 #calendar td.noday {
@@ -171,5 +170,23 @@ span.stop-selection,span.trip-selection{
 }
 .btn-ferry {
     margin-bottom: 8px;
-    width: 95%;
+    width: 90%;
+    margin-left: auto;
+    text-align: center;
+    margin-right: auto;
+}
+.trip_header {
+    font-size: 105%;
+    font-weight: bold;
+    text-align: center;
+    border-bottom: 2px solid #666;
+}
+.trip {
+    height: 28px;
+    text-align: center;
+    padding: 4px;
+    margin: 4px 0;
+}
+.trip_plain {
+    background-color: #f9f9f9;;
 }

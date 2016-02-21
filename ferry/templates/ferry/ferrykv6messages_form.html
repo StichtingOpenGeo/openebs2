@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load i18n crispy_forms_tags static %}
+
+{% block title %}Bewerk rit{% endblock %}
+
+{% block content %}
+    <h1>{% trans "Bewerk rit" %}</h1>
+    <form method="post" class="form-horizontal" action="{% url 'ferry_cancel' %}">
+        {% csrf_token %}
+       {{ form }}
+        <input type="submit" value="{% trans 'Opslaan' %}" class="btn btn-primary pull-right" />
+    </form>
+
+{% endblock %}

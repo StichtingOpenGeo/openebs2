@@ -188,6 +188,7 @@ class Kv15Stopmessage(models.Model):
         (because we can't push without stops, and stops are a submodel, requiring the main object to be saved)
         Idealy you would only allow this to be called on update (which is delete+add) or if object is deleted
         """
+        # TODO Check this
         return render_to_string('xml/kv15deletemessage.xml', {'object': self, 'messagecodenumber': messagecodenumber}).replace(os.linesep, '')
 
     def is_future(self):
@@ -200,11 +201,11 @@ class Kv15Stopmessage(models.Model):
         return self.user_id == Kv15Stopmessage.get_external_user_id()
 
     def get_distinct_stop_names(self, number=15):
-        ''' Get a unique sample of stop names to use when we've got too many'''
+        """ Get a unique sample of stop names to use when we've got too many """
         return self.kv15messagestop_set.distinct('stop__name').order_by('stop__name')[0:number]
 
     def get_latest_number(self):
-        '''Get the currently highest number and add one if found or start with 1  '''
+        """ Get the currently highest number and add one if found or start with 1  """
         num = Kv15Stopmessage.objects.filter(dataownercode=self.dataownercode, messagecodedate=self.messagecodedate).aggregate(models.Max('messagecodenumber'))
         if num['messagecodenumber__max'] == 9999:
             raise IntegrityError(ugettext("Teveel berichten vestuurd - probeer het morgen weer"))
@@ -218,7 +219,7 @@ class Kv15Stopmessage(models.Model):
 
     @staticmethod
     def get_max_end_time():
-        ''' Get the maximum end time, to use when we use messagedurationtype 'REMOVE' '''
+        """ Get the maximum end time, to use when we use messagedurationtype 'REMOVE' """
         return datetime(year=2099, month=12, day=31, tzinfo=get_current_timezone())
 
     @staticmethod
@@ -229,11 +230,13 @@ class Kv15Stopmessage(models.Model):
             # TODO: Cache this a day
             return User.objects.get(username="kv8update")
 
+
 class Kv15Schedule(models.Model):
     stopmessage = models.ForeignKey(Kv15Stopmessage)
     messagestarttime = models.DateTimeField(null=True, blank=True)
     messageendtime = models.DateTimeField(null=True, blank=True)
     weekdays = models.SmallIntegerField(null=True, blank=True)
+
 
 class Kv15MessageLine(models.Model):
     stopmessage = models.ForeignKey(Kv15Stopmessage)
@@ -242,12 +245,14 @@ class Kv15MessageLine(models.Model):
     class Meta:
         unique_together = ['stopmessage', 'line']
 
+
 class Kv15MessageStop(models.Model):
     stopmessage = models.ForeignKey(Kv15Stopmessage)
     stop = models.ForeignKey(Kv1Stop, related_name="messages") # Stop to messages relation = messages
 
     class Meta:
         unique_together = ['stopmessage', 'stop']
+
 
 class Kv15Scenario(models.Model):
     name = models.CharField(max_length=50, blank=True, verbose_name=_("Naam scenario"))

@@ -35,14 +35,3 @@ def filter_user(perm_level, user, qry):
         qry = qry.filter(dataownercode=user.userprofile.company)
 
     return qry
-
-#
-# Sending messages
-#
-
-
-class Kv15PushMixin(ExternalMessagePushMixin):
-    message_type = 'KV15'
-    dossier = 'KV15messages'
-    namespace = 'http://bison.connekt.nl/tmi8/kv15/msg'
-

@@ -13,7 +13,8 @@ from django.utils.timezone import now
 from djgeojson.views import GeoJSONLayerView
 
 from kv1.models import Kv1Stop
-from openebs.views_utils import FilterDataownerMixin, Kv15PushMixin
+from openebs.views_push import Kv15PushMixin
+from openebs.views_utils import FilterDataownerMixin
 from utils.client import get_client_ip
 from utils.views import JSONListResponseMixin, AccessMixin
 from openebs.models import Kv15Stopmessage, Kv15Log, MessageStatus, Kv1StopFilter
@@ -184,6 +185,7 @@ class MessageResendView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, Detail
         else:
             self.push_message(self.object.to_xml())
         return redirect(self.success_url)
+
 
 class MessageDeleteView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, DeleteView):
     permission_required = 'openebs.add_messages'

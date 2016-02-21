@@ -61,11 +61,12 @@ class Kv1Stop(models.Model):
                     out.append(stop)
         return out
 
+
 class Kv1Journey(models.Model):
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
     line = models.ForeignKey(Kv1Line, related_name="journeys")  # Represent lineplanningnumber\
     journeynumber = models.PositiveIntegerField()  # 0 - 999999
-    scheduleref = models.PositiveIntegerField() # Field 'availabilityconditionref'
+    scheduleref = models.PositiveIntegerField()  # Field 'availabilityconditionref'
     departuretime = models.PositiveIntegerField()
     direction = models.PositiveSmallIntegerField()
 
@@ -86,6 +87,14 @@ class Kv1Journey(models.Model):
                 if journey_pk.count() == 1:
                     return journey_pk[0]
         return None
+
+    @staticmethod
+    def find_from_journeynumber(line, journeynumber, date):
+        journeys = Kv1Journey.objects.filter(dataownercode=line.dataownercode,
+                                               line=line.pk,
+                                               journeynumber=journeynumber,
+                                               dates__date=date)
+        return journeys[0] if journeys.count() == 1 else None
 
     class Meta:
         verbose_name = _("Rit")

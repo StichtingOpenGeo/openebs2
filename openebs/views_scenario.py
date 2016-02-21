@@ -8,7 +8,8 @@ from djgeojson.views import GeoJSONLayerView
 from kv1.models import Kv1Stop
 from openebs.form import PlanScenarioForm, Kv15ScenarioForm
 from openebs.models import Kv15Scenario, MessageStatus
-from openebs.views_utils import FilterDataownerMixin, FilterDataownerListMixin, Kv15PushMixin
+from openebs.views_push import Kv15PushMixin
+from openebs.views_utils import FilterDataownerMixin, FilterDataownerListMixin
 from utils.views import AccessMixin
 
 log = logging.getLogger('openebs.views.scenario')
