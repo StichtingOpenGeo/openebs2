@@ -49,6 +49,11 @@
                   <span class="glyphicon glyphicon-road"></span> {% trans "Ritaanpassingen" %}
               </a></li>
           {% endif %}
+          {% if perms.ferry.add_ferrykv6messages %}
+          <li id="nav-ferry"><a href="{% url 'ferry_home' %}">
+              <span class="glyphicon glyphicon-tint"></span> {% trans "Veerboot" %}
+          </a></li>
+            {% endif %}
         </ul>
         <ul class="nav navbar-nav navbar-right">
           {% if user.is_superuser %}
