@@ -43,6 +43,18 @@ class FerryKv6Messages(models.Model):
             return change.to_xml()
         return None
 
+    def to_kv17recover(self):
+        self.cancelled = False
+        self.save()
+        journey = Kv1Journey.find_from_journeynumber(self.line, self.journeynumber, self.operatingday)
+        if journey:
+            changes = Kv17Change.objects.filter(dataownercode=self.line.dataownercode, operatingday=self.operatingday,
+                       line=self.line, journey=journey)
+            if changes.count() > 0:
+                change = changes[0]
+                change.delete()
+                return change.to_xml()
+
     @staticmethod
     def cancel_all(line_pk):
         date = get_operator_date()
@@ -61,8 +73,3 @@ class FerryKv6Messages(models.Model):
                     xml_out.append(m.to_kv17change())
             return xml_out
         return []
-
-
-    @staticmethod
-    def recover_all(line, operatingday, list):
-        pass

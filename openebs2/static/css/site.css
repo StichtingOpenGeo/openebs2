@@ -187,6 +187,15 @@ span.stop-selection,span.trip-selection{
     padding: 4px;
     margin: 4px 0;
 }
-.trip_plain {
-    background-color: #f9f9f9;;
+.trip-plain {
+    background-color: #f9f9f9;
+}
+.trip-departed {
+    background-color: #dff0d8 !important;
+}
+.trip-selected {
+    background-color: #b2dba1
+}
+.label-padded {
+    margin-left: 4px;
 }

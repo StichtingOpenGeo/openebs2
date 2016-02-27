@@ -5,7 +5,11 @@ ferryApp.controller('TripListCtrl', ['$scope', 'tripService', function ($scope, 
     $scope.trips = [];
     $scope.selected = 0;
     ctrl.select = function(trip) {
-        $scope.selected = trip;
+        if ( $scope.selected != trip) {
+            $scope.selected = trip;
+        } else {
+            $scope.selected = null;
+        }
     }
     ctrl.getTrips = function() {
         tripService.getTrips(362, function(data) {
@@ -23,7 +27,7 @@ ferryApp.controller('TripListCtrl', ['$scope', 'tripService', function ($scope, 
 //}]);
 
 ferryApp.service('tripService', ['$resource', function($resource) {
-    var blockResource = $resource(baseUrl+"/line/:id/ritten");
+    var blockResource = $resource(baseUrl+"/ferry/:id/trips.json");
     this.getTrips = function(line, callback) {
         return blockResource.get({ id: line }).$promise.then(function(data) {
             callback(data.object);
