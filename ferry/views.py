@@ -2,7 +2,7 @@ import logging
 
 from django.core.urlresolvers import reverse_lazy
 from django.views.generic import RedirectView, ListView
-from django.views.generic.edit import CreateView
+from django.views.generic.edit import CreateView, UpdateView
 
 from ferry.models import FerryKv6Messages
 from kv1.models import Kv1Line
@@ -41,9 +41,18 @@ class FerryDepartedView(AccessMixin, Kv6PushMixin, CreateView):
         return resp
 
 
-class FerryCancelledView(AccessMixin, Kv17PushMixin, CreateView):
-    permission_required = 'openebs.add_change'
+class FerryUpdateView(UpdateView):
     model = FerryKv6Messages
+
+    def get_object(self, queryset=None):
+        obj, created = self.model.objects.get_or_create(line=self.request.POST.get('line', None),
+                          operatingday=get_operator_date(),
+                          journeynumber=self.request.POST.get('journeynumber', None))
+        return obj
+
+
+class FerryCancelledView(AccessMixin, Kv17PushMixin, FerryUpdateView):
+    permission_required = 'openebs.add_change'
     success_url = reverse_lazy('ferry_home')
     fields = ['line', 'journeynumber']
 
@@ -135,5 +144,6 @@ class FerryTripJsonView(AccessMixin, JSONListResponseMixin, ListView):
                 journey['delay'] = ferry_trips[journey['journeynumber']].delay
             if journey['journeynumber'] in changed_trips:
                 journey['recovered'] = changed_trips[journey['journeynumber']].is_recovered
-                journey['cancelled_date'] = changed_trips[journey['journeynumber']].created  # Date/time the cancel was created
+                journey['cancelled_date'] = changed_trips[
+                    journey['journeynumber']].created  # Date/time the cancel was created
         return lst

@@ -22,19 +22,17 @@
                 </div>
                 <div class="col-lg-6">
                     <div class="trip_header">Terug</div>
-                    <div ng-repeat="trip in trips.return" ng-include="'/trip_cell.html'">
-                        BLA
-                    </div>
+                    <div ng-repeat="trip in trips.return" ng-include="'/trip_cell.html'"></div>
                 </div>
             </div>
             {% endverbatim %}
             <div class="col-lg-3">
                 <div class="panel panel-default clearfix">
                     <div class="panel-heading">
-                        <h3 class="panel-title"><i class="glyphicon glyphicon-arrow-right"></i>&nbsp;Vertrek</h3>
+                        <h3 class="panel-title"><i class="glyphicon glyphicon-arrow-right"></i>&nbsp;{% trans "Vertrek" %}</h3>
                     </div>
                     <div class="panel-body">
-                        <span ng-if="!selected">{% trans "Choose a trip" %}</span>
+                        <span ng-if="!selected">{% trans "Kies een rit" %}</span>
                         <form method="post" action="{% url 'ferry_depart' %}">
                             {% csrf_token %}
                             <input type="hidden" name="line" value="362" />

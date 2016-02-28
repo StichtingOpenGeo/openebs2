@@ -57,6 +57,8 @@ class FerryKv6Messages(models.Model):
                 change = changes[0]
                 change.delete()
                 return change.to_xml()
+            else:
+                return None
 
     @staticmethod
     def cancel_all(line_pk):
