@@ -159,7 +159,7 @@ LOGGING = {
         'openebs': {
             'handlers': ['logfile'],
             'level': 'DEBUG',
-            'propogate' : True
+            'propagate': True
         },
         'django.security.DisallowedHost': {
             'handlers': ['spoof_logfile'],
