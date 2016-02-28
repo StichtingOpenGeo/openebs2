@@ -37,8 +37,11 @@ class FerryKv6Messages(models.Model):
     def to_kv17change(self):
         journey = Kv1Journey.find_from_journeynumber(self.line, self.journeynumber, self.operatingday)
         if journey:
-            change = Kv17Change(dataownercode=self.line.dataownercode, operatingday=self.operatingday,
-                                line=self.line, journey=journey)
+            change, created = Kv17Change.objects.get_or_create(dataownercode=self.line.dataownercode,
+                                                               operatingday=self.operatingday,
+                                                               line=self.line, journey=journey)
+            change.is_recovered = False  # Clear this
+            change.recovered = None
             change.save()
             return change.to_xml()
         return None
@@ -49,7 +52,7 @@ class FerryKv6Messages(models.Model):
         journey = Kv1Journey.find_from_journeynumber(self.line, self.journeynumber, self.operatingday)
         if journey:
             changes = Kv17Change.objects.filter(dataownercode=self.line.dataownercode, operatingday=self.operatingday,
-                       line=self.line, journey=journey)
+                                                line=self.line, journey=journey)
             if changes.count() > 0:
                 change = changes[0]
                 change.delete()
@@ -65,11 +68,11 @@ class FerryKv6Messages(models.Model):
         if line:
             xml_out = []
             journeys = line.journeys.filter(dates__date=date)
-            ferry_journeys = FerryKv6Messages.objects.filter(line=line_pk, operatingday=date).values_list('journeynumber', flat=True)
             for j in journeys:
-                if j.journeynumber not in ferry_journeys:  # We're checking same base, so
-                    m = FerryKv6Messages(line=line, journeynumber=j.journeynumber, operatingday=date, cancelled=True)
-                    m.save()
-                    xml_out.append(m.to_kv17change())
+                m, created = FerryKv6Messages.objects.get_or_create(line=line, journeynumber=j.journeynumber,
+                                                                    operatingday=date)
+                m.cancelled = True
+                m.save()
+                xml_out.append(m.to_kv17change())
             return xml_out
         return []

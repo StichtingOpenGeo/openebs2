@@ -6,6 +6,7 @@ from django.views.generic.edit import CreateView
 
 from ferry.models import FerryKv6Messages
 from kv1.models import Kv1Line
+from openebs.models import Kv17Change
 from openebs.views_generic import TemplateRequestView
 from openebs.views_push import Kv6PushMixin, Kv17PushMixin
 from utils.time import get_operator_date
@@ -113,22 +114,26 @@ class FerryTripJsonView(AccessMixin, JSONListResponseMixin, ListView):
         """
         obj = self.get_queryset().get(pk=self.kwargs.get('pk', None))
         if obj:
+            # TODO : This is a slight hacky way to join three tables
+            changes = Kv17Change.objects.filter(line=obj, operatingday=get_operator_date())
+            changed_trips = {t.journey.journeynumber: t for t in changes}
             ferry = FerryKv6Messages.objects.filter(line=obj, operatingday=get_operator_date())
-            ferrytrips = {t.journeynumber: t for t in ferry}
-            # Note, the list() is required to serialize correctly
-            # We're filtering on todays trips #
+            ferry_trips = {t.journeynumber: t for t in ferry}
+
             journeys = obj.journeys.filter(dates__date=get_operator_date()).order_by('departuretime') \
-                .values('id', 'journeynumber', 'direction', 'departuretime', 'changes__created',
-                        'changes__is_recovered')
-            return {'outward': self.merge_filter_direction(journeys, 1, ferrytrips),
-                    'return': self.merge_filter_direction(journeys, 2, ferrytrips)}
+                .values('id', 'journeynumber', 'direction', 'departuretime')
+            return {'outward': self.merge_filter_direction(journeys, 1, ferry_trips, changed_trips),
+                    'return': self.merge_filter_direction(journeys, 2, ferry_trips, changed_trips)}
 
     @staticmethod
-    def merge_filter_direction(journeys, direction, ferrytrips):
+    def merge_filter_direction(journeys, direction, ferry_trips, changed_trips):
         lst = list(journeys.filter(direction=direction))
         for journey in lst:
-            if journey['journeynumber'] in ferrytrips:
-                journey['departed'] = ferrytrips[journey['journeynumber']].departed
-                journey['cancelled'] = ferrytrips[journey['journeynumber']].cancelled
-                journey['delay'] = ferrytrips[journey['journeynumber']].delay
+            if journey['journeynumber'] in ferry_trips:
+                journey['departed'] = ferry_trips[journey['journeynumber']].departed
+                journey['cancelled'] = ferry_trips[journey['journeynumber']].cancelled
+                journey['delay'] = ferry_trips[journey['journeynumber']].delay
+            if journey['journeynumber'] in changed_trips:
+                journey['recovered'] = changed_trips[journey['journeynumber']].is_recovered
+                journey['cancelled_date'] = changed_trips[journey['journeynumber']].created  # Date/time the cancel was created
         return lst

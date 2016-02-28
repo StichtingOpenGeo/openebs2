@@ -88,14 +88,14 @@
         <script type="text/ng-template" id="/trip_cell.html">
             <div class="trip" ng-click="ctrl.select(trip.journeynumber)"
                  ng-class="{ 'trip-departed': trip.departed,
-                        'bg-danger' : trip.changes__created != null && !trip.changes__is_recovered,
+                        'bg-danger' : trip.cancelled_date != null && !trip.recovered,
                         'trip-selected' : trip.journeynumber == selected,
-                         'trip-plain': trip.journeynumber != selected && (!trip.changes__created || trip.changes__is_recovered ) }">
+                         'trip-plain': trip.journeynumber != selected && (!trip.cancelled_date || trip.recovered ) }">
                 <strong>Rit {{ trip.journeynumber }}</strong> - {{ trip.departuretime|formatTime }}
                 <span class="label label-success label-padded" ng-if="trip.departed">
                     <i class="glyphicon glyphicon-ok"></i>
                 </span>
-                <span class="label label-danger label-padded" ng-if="trip.changes__created != null && !trip.changes__is_recovered">
+                <span class="label label-danger label-padded" ng-if="trip.cancelled_date != null && !trip.recovered">
                     <i class="glyphicon glyphicon-remove"></i>
                 </span>
                 <span class="label label-danger label-padded" ng-if="trip.delay">
