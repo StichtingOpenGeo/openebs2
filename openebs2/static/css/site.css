@@ -194,7 +194,7 @@ span.stop-selection,span.trip-selection{
     background-color: #dff0d8 !important;
 }
 .trip-selected {
-    background-color: #b2dba1
+    background-color: #b2dba1;
 }
 .label-padded {
     margin-left: 4px;

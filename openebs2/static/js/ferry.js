@@ -3,7 +3,7 @@ var baseUrl = "http://127.0.0.1:8000"
 ferryApp.controller('TripListCtrl', ['$scope', '$uibModal', 'tripService', function ($scope, $uibModal, tripService) {
     var ctrl = this;
     $scope.trips = [];
-    $scope.selected = 0;
+    $scope.selected = null;
     ctrl.select = function(trip) {
         if ( $scope.selected != trip) {
             $scope.selected = trip;

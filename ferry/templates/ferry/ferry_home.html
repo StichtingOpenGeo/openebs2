@@ -27,21 +27,20 @@
             </div>
             {% endverbatim %}
             <div class="col-lg-3">
-                <div class="panel panel-default clearfix">
+                <div class="alert alert-info" ng-if="!selected">{% trans "Kies eerst een rit" %}</div>
+                <div class="panel panel-default clearfix" ng-if="selected && !selected.departed && !selected.cancelled">
                     <div class="panel-heading">
                         <h3 class="panel-title"><i class="glyphicon glyphicon-arrow-right"></i>&nbsp;{% trans "Vertrek" %}</h3>
                     </div>
                     <div class="panel-body">
-                        <span ng-if="!selected">{% trans "Kies een rit" %}</span>
                         <form method="post" action="{% url 'ferry_depart' %}">
                             {% csrf_token %}
                             <input type="hidden" name="line" value="362" />
-                            <input type="hidden" name="journeynumber" ng-value="selected" />
+                            <input type="hidden" name="journeynumber" ng-value="selected.journeynumber" />
                             <input type="hidden" name="departed" value="1" />
                             <input type="submit" ng-if="selected" class="btn btn-success btn-ferry" value="Boot vertrekt" /> <br/>
                         </form>
-                        <a href="#" ng-if="selected" ng-click="openDelay()" class="btn btn-warning btn-ferry"><i class="glyphicon glyphicon-time"></i> Boot vertraagd</a> <br/>
-
+                        <a href="#" ng-click="openDelay()" class="btn btn-warning btn-ferry"><i class="glyphicon glyphicon-time"></i> Vertrek vertraagd</a> <br/>
                     </div>
                 </div>
 
@@ -54,7 +53,7 @@
                         <form method="post" action="{% url 'ferry_cancel' %}">
                             {% csrf_token %}
                             <input type="hidden" name="line" value="362" />
-                            <input type="hidden" name="journeynumber" ng-value="selected" />
+                            <input type="hidden" name="journeynumber" ng-value="selected.journeynumber" />
                             <input type="hidden" name="departed" value="1" />
                             <input type="submit" ng-if="selected" class="btn btn-danger btn-ferry" value="Boot/rit valt uit" />
                         </form>
@@ -70,10 +69,10 @@
                             <input type="hidden" name="line" value="362" />
                             <input type="submit" class="btn btn-danger btn-ferry" value="Uit vaart" />
                         </form>
-                        <form method="post" action="{% url 'ferry_recover' %}">
+                        <form ng-if="selected.cancelled" method="post" action="{% url 'ferry_recover' %}">
                             {% csrf_token %}
                             <input type="hidden" name="line" value="362" />
-                            <input type="hidden" name="journeynumber" ng-value="selected" />
+                            <input type="hidden" name="journeynumber" ng-value="selected.journeynumber" />
                             <input type="submit" class="btn btn-success btn-ferry" value="Herstel dienst" />
                         </form>
                     </div>
@@ -84,11 +83,11 @@
 
         {% verbatim %}
         <script type="text/ng-template" id="trip_cell.html">
-            <div class="trip" ng-click="ctrl.select(trip.journeynumber)"
-                 ng-class="{ 'trip-departed': trip.departed,
+            <div class="trip" ng-click="ctrl.select(trip)"
+                 ng-class="{ 'trip-departed': trip.departed && !trip.selected,
                         'bg-danger' : trip.cancelled_date != null && !trip.recovered,
-                        'trip-selected' : trip.journeynumber == selected,
-                         'trip-plain': trip.journeynumber != selected && (!trip.cancelled_date || trip.recovered ) }">
+                        'trip-selected' : trip == selected,
+                         'trip-plain': trip != selected && (!trip.cancelled_date || trip.recovered ) }">
                 <strong>Rit {{ trip.journeynumber }}</strong> - {{ trip.departuretime|formatTime }}
                 <span class="label label-success label-padded" ng-if="trip.departed">
                     <i class="glyphicon glyphicon-ok"></i>
@@ -106,21 +105,28 @@
         <script type="text/ng-template" id="modal_delay.html">
             <form method="post" class="form form-horizontal" action="{% url 'ferry_delay' %}">
                 <div class="modal-header">
-                    <h3 class="modal-title">Vertraging</h3>
+                    <h3 class="modal-title">{% trans "Vertraging" %}</h3>
                 </div>
                 <div class="modal-body">
                     {% csrf_token %}
                     <input type="hidden" name="line" value="362" />
-                    <input type="hidden" name="journeynumber" ng-value="selected" />
+                    <input type="hidden" name="journeynumber" ng-value="selected.journeynumber" />
                     <div class="form-group">
-                        <label for="delay" class="col-sm-2 control-label">Vertraging</label>
+                        <label for="delay" class="col-sm-2 control-label">{% trans "Rit" %}</label>
                         <div class="col-sm-10">
-                            <input type="input" class="form-control" name="delay">
+                            <p class="form-control-static">{% verbatim %}{{ selected.journeynumber }} (Vertrek {{ selected.departuretime|formatTime }}){% endverbatim %}</p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="delay" class="col-sm-2 control-label">{% trans "Vertraging" %}</label>
+                        <div class="col-sm-6">
+                            <input type="input" class="form-control" name="delay" ng-value="selected.delay">
+                            <span class="help-block">{% trans "vertrekvertraging in seconden" %}</span>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <input type="submit" class="btn btn-primary" value="Opslaan" />
+                    <input type="submit" class="btn btn-primary" value="{% trans "Verstuur" %}" />
                 </div>
             </form>
         </script>
