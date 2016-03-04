@@ -64,11 +64,7 @@
                         <h3 class="panel-title"><i class="glyphicon glyphicon-home"></i>&nbsp;Uit de vaart</h3>
                     </div>
                     <div class="panel-body">
-                        <form method="post" action="{% url 'ferry_suspend' %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="line" value="362" />
-                            <input type="submit" class="btn btn-danger btn-ferry" value="Uit vaart" />
-                        </form>
+                        <a ng-click="openSuspend()" class="btn btn-danger btn-ferry"><i class="glyphicon glyphicon-trash"></i> Uit vaart</a> <br/>
                         <form ng-if="!selected.departed && selected.cancelled" method="post" action="{% url 'ferry_recover' %}">
                             {% csrf_token %}
                             <input type="hidden" name="line" value="362" />
@@ -130,6 +126,22 @@
                     <input type="submit" class="btn btn-primary" value="{% trans "Verstuur" %}" />
                 </div>
             </form>
+        </script>
+
+        <script type="text/ng-template" id="modal_suspend.html">
+            <div class="modal-header">
+                <h3 class="modal-title">{% trans "Boot uit de vaart" %}</h3>
+            </div>
+            <div class="modal-body">
+                <p>Weet je zeker dat je alle resterende ritten wilt opheffen?</p>
+            </div>
+            <div class="modal-footer">
+                <form method="post" action="{% url 'ferry_suspend' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="line" value="362" />
+                    <input type="submit" class="btn btn-danger" value="Hef ritten op" />
+                </form>
+            </div>
         </script>
     </div>
 

@@ -22,6 +22,17 @@ ferryApp.controller('TripListCtrl', ['$scope', '$uibModal', 'tripService', funct
         });
     };
 
+    $scope.openSuspend = function () {
+        $uibModal.open({
+            animation: true,
+            templateUrl: 'modal_suspend.html',
+            controller: 'SuspendModalCtrl',
+            resolve: {
+                selected: function () { return $scope.selected; }
+            }
+        });
+    };
+
     ctrl.getTrips = function() {
         tripService.getTrips(362, function(data) {
             $scope.trips = data;
@@ -33,7 +44,10 @@ ferryApp.controller('TripListCtrl', ['$scope', '$uibModal', 'tripService', funct
 
 ferryApp.controller('DelayModalCtrl', function($scope, selected) {
     $scope.selected = selected;
+});
 
+ferryApp.controller('SuspendModalCtrl', function($scope, selected) {
+    $scope.selected = selected;
 });
 //ferryApp.controller('FormCtrl', ['$scope', function($scope) {
 //    $scope.on('trip-selected', function(args) {
