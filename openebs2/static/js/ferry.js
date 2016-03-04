@@ -33,8 +33,14 @@ ferryApp.controller('TripListCtrl', ['$scope', '$uibModal', 'tripService', funct
         });
     };
 
+    $scope.$watch("ferry", function(oldVal, newVal) {
+        console.log("Changed to "+newVal);
+        if (newVal !== oldVal) {
+            ctrl.getTrips();
+        }
+    });
     ctrl.getTrips = function() {
-        tripService.getTrips(362, function(data) {
+        tripService.getTrips($scope.ferry, function(data) {
             $scope.trips = data;
         })
     }

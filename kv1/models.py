@@ -11,7 +11,6 @@ class Kv1Line(models.Model):
     lineplanningnumber = models.CharField(max_length=10)
     publiclinenumber = models.CharField(max_length=10)
     headsign = models.CharField(max_length=100)
-    is_ferry = models.BooleanField(default=False)
     stop_map = JSONField()
 
     class Meta:

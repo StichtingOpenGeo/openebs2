@@ -5,15 +5,14 @@
 
 {% block content %}
     <div ng-app="ferryApp">
-        <h1>Veerboot
-        <select class="pull-right">
-        {% for line in lines %}
-            <option value="{{ line.pk }}">{{ line.publiclinenumber }} - {{ line.headsign }}</option>
-        {% endfor %}
-        </select>
-        </h1>
+        <h1>Veerboot</h1>
 
         <div class="row" ng-controller="TripListCtrl as ctrl">
+            <select class="pull-right" ng-model="ferry">
+                {% for line in lines %}
+                    <option value="{{ line.pk }}">{{ line.line.publiclinenumber }} - {{ line.line.headsign }}</option>
+                {% endfor %}
+            </select>
             {% verbatim %}
             <div class="col-lg-6">
                 <div class="col-lg-6">
@@ -35,7 +34,7 @@
                     <div class="panel-body">
                         <form method="post" action="{% url 'ferry_depart' %}">
                             {% csrf_token %}
-                            <input type="hidden" name="line" value="362" />
+                            <input type="hidden" name="ferry" ng-value="ferry" />
                             <input type="hidden" name="journeynumber" ng-value="selected.journeynumber" />
                             <input type="hidden" name="departed" value="1" />
                             <input type="submit" ng-if="selected" class="btn btn-success btn-ferry" value="Boot vertrekt" /> <br/>
@@ -52,7 +51,7 @@
                         <a href="#" class="btn btn-primary btn-ferry"><i class="glyphicon glyphicon-exclamation-sign"></i> Boot vol</a> <br/>
                         <form method="post" ng-if="!selected.departed" action="{% url 'ferry_cancel' %}">
                             {% csrf_token %}
-                            <input type="hidden" name="line" value="362" />
+                            <input type="hidden" name="ferry" ng-value="ferry" />
                             <input type="hidden" name="journeynumber" ng-value="selected.journeynumber" />
                             <input type="hidden" name="departed" value="1" />
                             <input type="submit" ng-if="selected" class="btn btn-danger btn-ferry" value="Boot/rit valt uit" />
@@ -67,7 +66,7 @@
                         <a ng-click="openSuspend()" class="btn btn-danger btn-ferry"><i class="glyphicon glyphicon-trash"></i> Uit vaart</a> <br/>
                         <form ng-if="!selected.departed && selected.cancelled" method="post" action="{% url 'ferry_recover' %}">
                             {% csrf_token %}
-                            <input type="hidden" name="line" value="362" />
+                            <input type="hidden" name="ferry" ng-value="ferry" />
                             <input type="hidden" name="journeynumber" ng-value="selected.journeynumber" />
                             <input type="submit" class="btn btn-success btn-ferry" value="Herstel dienst" />
                         </form>
@@ -106,7 +105,7 @@
                 </div>
                 <div class="modal-body">
                     {% csrf_token %}
-                    <input type="hidden" name="line" value="362" />
+                    <input type="hidden" name="ferry" ng-value="ferry" />
                     <input type="hidden" name="journeynumber" ng-value="selected.journeynumber" />
                     <div class="form-group">
                         <label for="delay" class="col-sm-2 control-label">{% trans "Rit" %}</label>
@@ -138,7 +137,7 @@
             <div class="modal-footer">
                 <form method="post" action="{% url 'ferry_suspend' %}">
                     {% csrf_token %}
-                    <input type="hidden" name="line" value="362" />
+                    <input type="hidden" name="ferry" ng-value="ferry" />
                     <input type="submit" class="btn btn-danger" value="Hef ritten op" />
                 </form>
             </div>

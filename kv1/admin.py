@@ -5,8 +5,9 @@ from kv1.models import *
 
 class LineAdmin(admin.ModelAdmin):
     model = Kv1Line
-    list_display = ('lineplanningnumber', 'headsign', 'dataownercode')
-    list_filter = ('dataownercode', )
+    list_display = ('lineplanningnumber', 'publiclinenumber', 'headsign', 'dataownercode')
+    list_filter = ('dataownercode', 'publiclinenumber')
+    search_fields = ('headsign',)
 
 admin.site.register(Kv1Line, LineAdmin)
 
@@ -14,7 +15,8 @@ admin.site.register(Kv1Line, LineAdmin)
 class StopAdmin(OSMGeoAdmin):
     model = Kv1Stop
     list_display = ('name', 'userstopcode', 'dataownercode')
-    list_filter = ('dataownercode', )
+    list_filter = ('dataownercode',)
+    search_fields = ('name', 'userstopcode',)
     default_zoom = 30
 
 admin.site.register(Kv1Stop, StopAdmin)

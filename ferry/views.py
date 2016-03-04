@@ -4,7 +4,7 @@ from django.core.urlresolvers import reverse_lazy
 from django.views.generic import RedirectView, ListView
 from django.views.generic.edit import CreateView, UpdateView
 
-from ferry.models import FerryKv6Messages
+from ferry.models import FerryKv6Messages, FerryLine
 from kv1.models import Kv1Line
 from openebs.models import Kv17Change
 from openebs.views_generic import TemplateRequestView
@@ -21,7 +21,7 @@ class FerryHomeView(AccessMixin, TemplateRequestView):
 
     def get_context_data(self, **kwargs):
         ctx = super(FerryHomeView, self).get_context_data(**kwargs)
-        ctx['lines'] = Kv1Line.objects.filter(is_ferry=True, dataownercode=self.request.user.userprofile.company)
+        ctx['lines'] = FerryLine.objects.filter(line__dataownercode=self.request.user.userprofile.company)
         return ctx
 
 
@@ -31,8 +31,8 @@ class FerryUpdateView(UpdateView):
     model = FerryKv6Messages
 
     def get_object(self, queryset=None):
-        line = Kv1Line.objects.get(pk=self.request.POST.get('line', None))
-        obj, created = self.model.objects.get_or_create(line=line,
+        line = FerryLine.objects.get(pk=self.request.POST.get('ferry', None))
+        obj, created = self.model.objects.get_or_create(ferry=line,
                                                         operatingday=get_operator_date(),
                                                         journeynumber=self.request.POST.get('journeynumber', None))
         return obj
@@ -42,7 +42,7 @@ class FerryDepartedView(AccessMixin, Kv6PushMixin, FerryUpdateView):
     permission_required = 'openebs.add_messages'
     model = FerryKv6Messages
     success_url = reverse_lazy('ferry_home')
-    fields = ['line', 'journeynumber', 'departed']
+    fields = ['ferry', 'journeynumber', 'departed']
 
     def form_valid(self, form):
         # TODO Can't do this if cancelled -> add validation rule
@@ -59,7 +59,7 @@ class FerryDelayedView(AccessMixin, Kv6PushMixin, FerryUpdateView):
     permission_required = 'openebs.add_messages'
     model = FerryKv6Messages
     success_url = reverse_lazy('ferry_home')
-    fields = ['line', 'journeynumber', 'delay']
+    fields = ['ferry', 'journeynumber', 'delay']
 
     def form_valid(self, form):
         resp = super(FerryDelayedView, self).form_valid(form)
@@ -74,7 +74,7 @@ class FerryDelayedView(AccessMixin, Kv6PushMixin, FerryUpdateView):
 class FerryCancelledView(AccessMixin, Kv17PushMixin, FerryUpdateView):
     permission_required = 'openebs.add_change'
     success_url = reverse_lazy('ferry_home')
-    fields = ['line', 'journeynumber']
+    fields = ['ferry', 'journeynumber']
 
     def form_valid(self, form):
         resp = super(FerryCancelledView, self).form_valid(form)
@@ -93,7 +93,7 @@ class FerrySuspendedView(AccessMixin, Kv17PushMixin, RedirectView):
 
     def get(self, request, *args, **kwargs):
         resp = super(FerrySuspendedView, self).get(request, *args, **kwargs)
-        xml = FerryKv6Messages.cancel_all(self.request.POST.get('line', None))
+        xml = FerryKv6Messages.cancel_all(self.request.POST.get('ferry', None))
         if len(xml) > 0 and self.push_message(''.join(xml)):
             log.info("Sent KV17 ferry journey cancelled message to subscribers: %s" % self.object.journeynumber)
         else:
@@ -109,7 +109,7 @@ class FerryRecoveredView(AccessMixin, Kv17PushMixin, RedirectView):
 
     def post(self, request, *args, **kwargs):
         resp = super(FerryRecoveredView, self).get(request, *args, **kwargs)
-        messages = FerryKv6Messages.objects.filter(line=self.request.POST.get('line', None),
+        messages = FerryKv6Messages.objects.filter(line=self.request.POST.get('ferry', None),
                                                    operatingday=get_operator_date(),
                                                    journeynumber=self.request.POST.get('journeynumber', None))
         xml = []
@@ -129,7 +129,7 @@ class FerryRecoveredView(AccessMixin, Kv17PushMixin, RedirectView):
 
 class FerryTripJsonView(AccessMixin, JSONListResponseMixin, ListView):
     permission_required = 'ferry.add_ferrykv6messages'
-    model = Kv1Line
+    model = FerryLine
     render_object = 'object'
 
     def get_context_data(self, **kwargs):
@@ -144,12 +144,12 @@ class FerryTripJsonView(AccessMixin, JSONListResponseMixin, ListView):
         obj = self.get_queryset().get(pk=self.kwargs.get('pk', None))
         if obj:
             # TODO : This is a slight hacky way to join three tables
-            changes = Kv17Change.objects.filter(line=obj, operatingday=get_operator_date())
+            changes = Kv17Change.objects.filter(line=obj.line, operatingday=get_operator_date())
             changed_trips = {t.journey.journeynumber: t for t in changes}
-            ferry = FerryKv6Messages.objects.filter(line=obj, operatingday=get_operator_date())
+            ferry = FerryKv6Messages.objects.filter(ferry=obj, operatingday=get_operator_date())
             ferry_trips = {t.journeynumber: t for t in ferry}
 
-            journeys = obj.journeys.filter(dates__date=get_operator_date()).order_by('departuretime') \
+            journeys = obj.line.journeys.filter(dates__date=get_operator_date()).order_by('departuretime') \
                 .values('id', 'journeynumber', 'direction', 'departuretime')
             return {'outward': self.merge_filter_direction(journeys, 1, ferry_trips, changed_trips),
                     'return': self.merge_filter_direction(journeys, 2, ferry_trips, changed_trips)}
