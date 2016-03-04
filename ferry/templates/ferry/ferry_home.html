@@ -18,11 +18,11 @@
             <div class="col-lg-6">
                 <div class="col-lg-6">
                     <div class="trip_header">Heen</div>
-                    <div ng-repeat="trip in trips.outward" ng-include="'/trip_cell.html'"></div>
+                    <div ng-repeat="trip in trips.outward" ng-include="'trip_cell.html'"></div>
                 </div>
                 <div class="col-lg-6">
                     <div class="trip_header">Terug</div>
-                    <div ng-repeat="trip in trips.return" ng-include="'/trip_cell.html'"></div>
+                    <div ng-repeat="trip in trips.return" ng-include="'trip_cell.html'"></div>
                 </div>
             </div>
             {% endverbatim %}
@@ -40,7 +40,7 @@
                             <input type="hidden" name="departed" value="1" />
                             <input type="submit" ng-if="selected" class="btn btn-success btn-ferry" value="Boot vertrekt" /> <br/>
                         </form>
-                        <a href="#" ng-if="selected" class="btn btn-warning btn-ferry"><i class="glyphicon glyphicon-time"></i> Boot vertraagd</a> <br/>
+                        <a href="#" ng-if="selected" ng-click="openDelay()" class="btn btn-warning btn-ferry"><i class="glyphicon glyphicon-time"></i> Boot vertraagd</a> <br/>
 
                     </div>
                 </div>
@@ -83,7 +83,7 @@
         </div>
 
         {% verbatim %}
-        <script type="text/ng-template" id="/trip_cell.html">
+        <script type="text/ng-template" id="trip_cell.html">
             <div class="trip" ng-click="ctrl.select(trip.journeynumber)"
                  ng-class="{ 'trip-departed': trip.departed,
                         'bg-danger' : trip.cancelled_date != null && !trip.recovered,
@@ -102,6 +102,28 @@
             </div>
         </script>
         {% endverbatim %}
+
+        <script type="text/ng-template" id="modal_delay.html">
+            <form method="post" class="form form-horizontal" action="{% url 'ferry_delay' %}">
+                <div class="modal-header">
+                    <h3 class="modal-title">Vertraging</h3>
+                </div>
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <input type="hidden" name="line" value="362" />
+                    <input type="hidden" name="journeynumber" ng-value="selected" />
+                    <div class="form-group">
+                        <label for="delay" class="col-sm-2 control-label">Vertraging</label>
+                        <div class="col-sm-10">
+                            <input type="input" class="form-control" name="delay">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <input type="submit" class="btn btn-primary" value="Opslaan" />
+                </div>
+            </form>
+        </script>
     </div>
 
 {% endblock %}
@@ -114,6 +136,8 @@
     <script src="{% static 'bower_components/jquery-ui/ui/minified/selectable.min.js' %}"></script>
     <script src="{% static 'bower_components/angular/angular.min.js' %}"></script>
     <script src="{% static 'bower_components/angular-resource/angular-resource.min.js' %}"></script>
+    <script src="{% static 'bower_components/angular-bootstrap/ui-bootstrap.min.js' %}"></script>
+    <script src="{% static 'bower_components/angular-bootstrap/ui-bootstrap-tpls.min.js' %}"></script>
     <script src="{% static 'js/ferry.js' %}"></script>
 
 

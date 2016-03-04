@@ -1,6 +1,6 @@
-var ferryApp = angular.module('ferryApp', ['ngResource']);
+var ferryApp = angular.module('ferryApp', ['ngResource', 'ui.bootstrap']);
 var baseUrl = "http://127.0.0.1:8000"
-ferryApp.controller('TripListCtrl', ['$scope', 'tripService', function ($scope, tripService) {
+ferryApp.controller('TripListCtrl', ['$scope', '$uibModal', 'tripService', function ($scope, $uibModal, tripService) {
     var ctrl = this;
     $scope.trips = [];
     $scope.selected = 0;
@@ -11,15 +11,30 @@ ferryApp.controller('TripListCtrl', ['$scope', 'tripService', function ($scope, 
             $scope.selected = null;
         }
     }
+    $scope.openDelay = function () {
+        $uibModal.open({
+            animation: true,
+            templateUrl: 'modal_delay.html',
+            controller: 'DelayModalCtrl',
+            resolve: {
+                selected: function () { return $scope.selected; }
+            }
+        });
+    };
+
     ctrl.getTrips = function() {
         tripService.getTrips(362, function(data) {
             $scope.trips = data;
         })
     }
     ctrl.getTrips();
-
 }]);
 
+
+ferryApp.controller('DelayModalCtrl', function($scope, selected) {
+    $scope.selected = selected;
+
+});
 //ferryApp.controller('FormCtrl', ['$scope', function($scope) {
 //    $scope.on('trip-selected', function(args) {
 //        $scope.selected = args.trip;

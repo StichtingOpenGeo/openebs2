@@ -25,15 +25,29 @@ class FerryHomeView(AccessMixin, TemplateRequestView):
         return ctx
 
 
-class FerryDepartedView(AccessMixin, Kv6PushMixin, CreateView):
+class FerryUpdateView(UpdateView):
+    # Generic view for finding/creating a trip
+
+    model = FerryKv6Messages
+
+    def get_object(self, queryset=None):
+        line = Kv1Line.objects.get(pk=self.request.POST.get('line', None))
+        obj, created = self.model.objects.get_or_create(line=line,
+                                                        operatingday=get_operator_date(),
+                                                        journeynumber=self.request.POST.get('journeynumber', None))
+        return obj
+
+
+class FerryDepartedView(AccessMixin, Kv6PushMixin, FerryUpdateView):
     permission_required = 'openebs.add_messages'
     model = FerryKv6Messages
     success_url = reverse_lazy('ferry_home')
     fields = ['line', 'journeynumber', 'departed']
 
     def form_valid(self, form):
+        # TODO Can't do this if cancelled -> add validation rule
         resp = super(FerryDepartedView, self).form_valid(form)
-        xml = self.object.to_kv6_delay()
+        xml = self.object.to_kv6_init()
         if self.push_message(xml):
             log.info("Sent KV6 ferry departed message to subscribers: %s" % self.object.journeynumber)
         else:
@@ -41,14 +55,20 @@ class FerryDepartedView(AccessMixin, Kv6PushMixin, CreateView):
         return resp
 
 
-class FerryUpdateView(UpdateView):
+class FerryDelayedView(AccessMixin, Kv6PushMixin, FerryUpdateView):
+    permission_required = 'openebs.add_messages'
     model = FerryKv6Messages
+    success_url = reverse_lazy('ferry_home')
+    fields = ['line', 'journeynumber', 'delay']
 
-    def get_object(self, queryset=None):
-        obj, created = self.model.objects.get_or_create(line=self.request.POST.get('line', None),
-                          operatingday=get_operator_date(),
-                          journeynumber=self.request.POST.get('journeynumber', None))
-        return obj
+    def form_valid(self, form):
+        resp = super(FerryDelayedView, self).form_valid(form)
+        xml = self.object.to_kv6_delay()
+        if self.push_message(xml):
+            log.info("Sent KV6 ferry departed message to subscribers: %s" % self.object.journeynumber)
+        else:
+            log.error("Failed to communicate Kv6 departed to subscribers: %s" % xml)
+        return resp
 
 
 class FerryCancelledView(AccessMixin, Kv17PushMixin, FerryUpdateView):
