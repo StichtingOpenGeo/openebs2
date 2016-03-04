@@ -50,7 +50,7 @@
                     </div>
                     <div class="panel-body">
                         <a href="#" class="btn btn-primary btn-ferry"><i class="glyphicon glyphicon-exclamation-sign"></i> Boot vol</a> <br/>
-                        <form method="post" action="{% url 'ferry_cancel' %}">
+                        <form method="post" ng-if="!selected.departed" action="{% url 'ferry_cancel' %}">
                             {% csrf_token %}
                             <input type="hidden" name="line" value="362" />
                             <input type="hidden" name="journeynumber" ng-value="selected.journeynumber" />
@@ -69,7 +69,7 @@
                             <input type="hidden" name="line" value="362" />
                             <input type="submit" class="btn btn-danger btn-ferry" value="Uit vaart" />
                         </form>
-                        <form ng-if="selected.cancelled" method="post" action="{% url 'ferry_recover' %}">
+                        <form ng-if="!selected.departed && selected.cancelled" method="post" action="{% url 'ferry_recover' %}">
                             {% csrf_token %}
                             <input type="hidden" name="line" value="362" />
                             <input type="hidden" name="journeynumber" ng-value="selected.journeynumber" />
@@ -89,15 +89,16 @@
                         'trip-selected' : trip == selected,
                          'trip-plain': trip != selected && (!trip.cancelled_date || trip.recovered ) }">
                 <strong>Rit {{ trip.journeynumber }}</strong> - {{ trip.departuretime|formatTime }}
+                <span class="label label-danger label-padded" ng-if="trip.delay">
+                    <i class="glyphicon glyphicon-time"></i>&nbsp;+{{ trip.delay }}
+                </span>
                 <span class="label label-success label-padded" ng-if="trip.departed">
                     <i class="glyphicon glyphicon-ok"></i>
                 </span>
                 <span class="label label-danger label-padded" ng-if="trip.cancelled_date != null && !trip.recovered">
                     <i class="glyphicon glyphicon-remove"></i>
                 </span>
-                <span class="label label-danger label-padded" ng-if="trip.delay">
-                    <i class="glyphicon glyphicon-time"></i>&nbsp;+{{ trip.delay }}
-                </span>
+
             </div>
         </script>
         {% endverbatim %}

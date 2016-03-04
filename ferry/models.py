@@ -73,8 +73,9 @@ class FerryKv6Messages(models.Model):
             for j in journeys:
                 m, created = FerryKv6Messages.objects.get_or_create(line=line, journeynumber=j.journeynumber,
                                                                     operatingday=date)
-                m.cancelled = True
-                m.save()
-                xml_out.append(m.to_kv17change())
+                if not m.departed:
+                    m.cancelled = True
+                    m.save()
+                    xml_out.append(m.to_kv17change())
             return xml_out
         return []
