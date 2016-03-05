@@ -41,7 +41,7 @@ class FerryDepartedView(AccessMixin, Kv6PushMixin, FerryUpdateView):
     permission_required = 'openebs.add_messages'
     model = FerryKv6Messages
     success_url = reverse_lazy('ferry_home')
-    fields = ['ferry', 'journeynumber', 'departed']
+    fields = ['ferry', 'journeynumber', 'status']
 
     def form_valid(self, form):
         # TODO Can't do this if cancelled -> add validation rule

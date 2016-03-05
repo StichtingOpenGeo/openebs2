@@ -38,7 +38,7 @@
                             {% csrf_token %}
                             <input type="hidden" name="ferry" ng-value="ferry" />
                             <input type="hidden" name="journeynumber" ng-value="selected.journeynumber" />
-                            <input type="hidden" name="departed" value="1" />
+                            <input type="hidden" name="status" value="5" />
                             <input type="submit" ng-if="selected" class="btn btn-success btn-ferry" value="Boot vertrekt" /> <br/>
                         </form>
                         <a href="#" ng-click="openDelay()" class="btn btn-warning btn-ferry"><i class="glyphicon glyphicon-time"></i> Vertrek vertraagd</a> <br/>
@@ -95,11 +95,11 @@
                 <span class="label label-danger label-padded" ng-if="trip.delay">
                     <i class="glyphicon glyphicon-time"></i>&nbsp;+{{ trip.delay }}
                 </span>
-                <span class="label label-success label-padded" ng-if="trip.status > 5">
-                    <i class="glyphicon glyphicon-ok"></i>
-                </span>
                 <span class="label label-primary label-padded" alt="Boot vol" title="Boot vol" ng-if="trip.full">
                     <i class="glyphicon glyphicon-exclamation-sign"></i>
+                </span>
+                <span class="label label-success label-padded" ng-if="trip.status > 1">
+                    <i class="glyphicon glyphicon-ok"></i>
                 </span>
                 <span class="label label-danger label-padded" alt="Rit opgeheven" title="Rit opgeheven" ng-if="trip.cancelled && !trip.recovered">
                     <i class="glyphicon glyphicon-remove"></i>
