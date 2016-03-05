@@ -40,7 +40,8 @@ class TestKv17MessageXmlModel(XmlTest):
         journey = Kv1Journey(dataownercode='HTM', line=self.line, journeynumber=101, scheduleref=1, departuretime=905, direction=1)
         journey.save()
 
-        change = Kv17Change(dataownercode='HTM', line=self.line, journey=journey, operatingday=datetime(2016, 04, 01))
+        change = Kv17Change(dataownercode='HTM', line=self.line, journey=journey, operatingday=datetime(2016, 04, 01),
+                            is_cancel=False)
         change.save()
         stop_change = Kv17StopChange(change=change, type=5, stop=self.haltes[0], stoporder=1,
                        reasontype=3, subreasontype=7, reasoncontent="Boot is vol")

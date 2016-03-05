@@ -3,16 +3,18 @@ import os
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.timezone import now
+from django.utils.translation import ugettext_lazy as _
 
 from kv1.models import Kv1Line, Kv1Journey, Kv1Stop
-from openebs.models import Kv17Change
+from openebs.models import Kv17Change, Kv17StopChange
+from openebs2.settings import FERRY_FULL_REASONTYPE, FERRY_FULL_REASONCONTENT, FERRY_FULL_SUBREASONTYPE
 from utils.time import get_operator_date
 
 
 class FerryLine(models.Model):
-    line = models.ForeignKey(Kv1Line, unique=True)
-    stop_depart = models.ForeignKey(Kv1Stop, related_name="ferry_departure")
-    stop_arrival = models.ForeignKey(Kv1Stop, related_name="ferry_arrival")
+    line = models.ForeignKey(Kv1Line, verbose_name=_("Lijn"), unique=True)
+    stop_depart = models.ForeignKey(Kv1Stop, verbose_name=_("Vertrekpunt"), related_name="ferry_departure")
+    stop_arrival = models.ForeignKey(Kv1Stop, verbose_name=_("Aankomstpunt"), related_name="ferry_arrival")
 
     class Meta:
         verbose_name = "Ferry"
@@ -23,12 +25,24 @@ class FerryLine(models.Model):
 
 
 class FerryKv6Messages(models.Model):
-    ferry = models.ForeignKey(FerryLine)
-    operatingday = models.DateField(default=now)
-    journeynumber = models.PositiveIntegerField()  # 0 - 999999
-    delay = models.IntegerField(default=0)  # Delay in seconds
-    departed = models.BooleanField(default=False)
-    cancelled = models.BooleanField(default=False)
+    class Status:
+        READY = 1
+        DEPARTED = 5
+        ARRIVED = 10
+
+    STATUS = (
+        (Status.READY, _("Gereerd voor vertrek")),
+        (Status.DEPARTED, _("Vertrokken")),
+        (Status.ARRIVED, _("Aankomst")),
+    )
+
+    ferry = models.ForeignKey(FerryLine, verbose_name=_("Veerbootlijn"))
+    operatingday = models.DateField(default=now, verbose_name=_("Dienstregelingsdatum"))
+    journeynumber = models.PositiveIntegerField(verbose_name=_("Ritnummer"),)  # 0 - 999999
+    delay = models.IntegerField(blank=True, verbose_name=_("Vertraging"), help_text=_("In seconden"))  # Delay in seconds
+    status = models.PositiveSmallIntegerField(default=Status.READY, choices=STATUS, verbose_name=_("Status"))
+    cancelled = models.BooleanField(default=False, verbose_name=_("Opgeheven?"))
+    full = models.BooleanField(default=False, verbose_name=_("Is vol?"))
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -53,18 +67,45 @@ class FerryKv6Messages(models.Model):
             change, created = Kv17Change.objects.get_or_create(dataownercode=self.ferry.line.dataownercode,
                                                                operatingday=self.operatingday,
                                                                line=self.ferry.line, journey=journey)
+            return journey, change
+        return None, None
+
+    def to_cancel(self):
+        journey, change = self.to_kv17change()
+        if change:
+            change.is_cancel = True
             change.is_recovered = False  # Clear this
             change.recovered = None
             change.save()
             return change.to_xml()
         return None
 
-    def to_kv17recover(self):
+    def to_full(self):
+        journey, change = self.to_kv17change()
+        if change:
+            change.is_recovered = False
+            change.is_cancel = False
+            change.save()
+            stop = self.ferry.stop_arrival if journey.direction == 1 else self.ferry.stop_depart
+            stop_change = Kv17StopChange(change=change, type=5, stop=stop, stoporder=1,
+                                         reasontype=FERRY_FULL_REASONTYPE, subreasontype=FERRY_FULL_SUBREASONTYPE,
+                                         reasoncontent=FERRY_FULL_REASONCONTENT)
+            stop_change.save()
+
+            self.full = True
+            self.save()
+
+            return change.to_xml()
+        return None
+
+    def to_recover(self):
+        # Recover cancels and/or full
         self.cancelled = False
         self.save()
         journey = Kv1Journey.find_from_journeynumber(self.ferry.line, self.journeynumber, self.operatingday)
         if journey:
-            changes = Kv17Change.objects.filter(dataownercode=self.ferry.line.dataownercode, operatingday=self.operatingday,
+            changes = Kv17Change.objects.filter(dataownercode=self.ferry.line.dataownercode,
+                                                operatingday=self.operatingday,
                                                 line=self.ferry.line, journey=journey)
             if changes.count() > 0:
                 change = changes[0]

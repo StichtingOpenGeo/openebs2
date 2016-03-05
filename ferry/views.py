@@ -2,10 +2,9 @@ import logging
 
 from django.core.urlresolvers import reverse_lazy
 from django.views.generic import RedirectView, ListView
-from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic.edit import UpdateView
 
 from ferry.models import FerryKv6Messages, FerryLine
-from kv1.models import Kv1Line
 from openebs.models import Kv17Change
 from openebs.views_generic import TemplateRequestView
 from openebs.views_push import Kv6PushMixin, Kv17PushMixin
@@ -102,6 +101,22 @@ class FerrySuspendedView(AccessMixin, Kv17PushMixin, RedirectView):
         return resp
 
 
+class FerryFullView(AccessMixin, Kv6PushMixin, FerryUpdateView):
+    permission_required = 'openebs.add_messages'
+    model = FerryKv6Messages
+    success_url = reverse_lazy('ferry_home')
+    fields = ['ferry', 'journeynumber', 'full']
+
+    def form_valid(self, form):
+        resp = super(FerryFullView, self).form_valid(form)
+        xml = self.object.to_full()
+        if self.push_message(xml):
+            log.info("Sent KV17 MutationMessage to subscribers: %s" % self.object.journeynumber)
+        else:
+            log.error("Failed to communicate KV17 MutationMessage to subscribers: %s" % xml)
+        return resp
+
+
 class FerryRecoveredView(AccessMixin, Kv17PushMixin, RedirectView):
     permanent = False
     permission_required = 'openebs.add_change'
@@ -114,7 +129,7 @@ class FerryRecoveredView(AccessMixin, Kv17PushMixin, RedirectView):
                                                    journeynumber=self.request.POST.get('journeynumber', None))
         xml = []
         for message in messages:
-            output = message.to_kv17recover()
+            output = message.to_recover()
             if output:
                 xml.append(output)
             else:
@@ -159,11 +174,11 @@ class FerryTripJsonView(AccessMixin, JSONListResponseMixin, ListView):
         lst = list(journeys.filter(direction=direction))
         for journey in lst:
             if journey['journeynumber'] in ferry_trips:
-                journey['departed'] = ferry_trips[journey['journeynumber']].departed
+                journey['status'] = ferry_trips[journey['journeynumber']].status
                 journey['cancelled'] = ferry_trips[journey['journeynumber']].cancelled
+                journey['full'] = ferry_trips[journey['journeynumber']].full
                 journey['delay'] = ferry_trips[journey['journeynumber']].delay
             if journey['journeynumber'] in changed_trips:
                 journey['recovered'] = changed_trips[journey['journeynumber']].is_recovered
-                journey['cancelled_date'] = changed_trips[
-                    journey['journeynumber']].created  # Date/time the cancel was created
+                journey['cancelled_date'] = changed_trips[journey['journeynumber']].created  # Date/time the cancel was created
         return lst

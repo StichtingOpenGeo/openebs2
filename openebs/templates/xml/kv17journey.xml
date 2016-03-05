@@ -5,7 +5,7 @@
     <journeynumber>{{ object.journey.journeynumber }}</journeynumber>
     <reinforcementnumber>{{ object.reinforcement }}</reinforcementnumber>
 </KV17JOURNEY>
-{% if object.stop_change.count == 0 or object.is_recovered %}
+{% if object.is_cancel or object.is_recovered %}
 <KV17MUTATEJOURNEY>
     {% if object.is_recovered %}
         <timestamp>{{ object.recovered|date:"c" }}</timestamp>

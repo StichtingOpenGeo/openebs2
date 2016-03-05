@@ -188,6 +188,11 @@ GOVI_VERIFY_SUB =  "/InTraffic/KV8gen"
 
 EXTERNAL_MESSAGE_USER_ID = None # Set in local_settings
 
+FERRY_FULL_REASONTYPE=3
+FERRY_FULL_SUBREASONTYPE=7
+FERRY_FULL_REASONCONTENT="Boot is vol"
+
+
 # Push settings
 try:
     from settings_push import *

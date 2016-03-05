@@ -29,7 +29,7 @@
             {% endverbatim %}
             <div class="col-lg-3">
                 <div class="alert alert-info" ng-if="!selected">{% trans "Kies eerst een rit" %}</div>
-                <div class="panel panel-default clearfix" ng-if="selected && !selected.departed && !selected.cancelled">
+                <div class="panel panel-default clearfix" ng-if="selected && selected.status < 5 && !selected.cancelled">
                     <div class="panel-heading">
                         <h3 class="panel-title"><i class="glyphicon glyphicon-arrow-right"></i>&nbsp;{% trans "Vertrek" %}</h3>
                     </div>
@@ -45,13 +45,19 @@
                     </div>
                 </div>
 
-                <div class="panel panel-default clearfix">
+                <div class="panel panel-default clearfix" ng-if="selected && selected.status < 5">
                     <div class="panel-heading">
                         <h3 class="panel-title"><i class="glyphicon glyphicon-pencil"></i>&nbsp;Rit wijzigen</h3>
                     </div>
                     <div class="panel-body">
-                        <a href="#" class="btn btn-primary btn-ferry"><i class="glyphicon glyphicon-exclamation-sign"></i> Boot vol</a> <br/>
-                        <form method="post" ng-if="!selected.departed" action="{% url 'ferry_cancel' %}">
+                        <form method="post"  action="{% url 'ferry_full' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="ferry" ng-value="ferry" />
+                            <input type="hidden" name="journeynumber" ng-value="selected.journeynumber" />
+                            <input type="hidden" name="full" value="1" />
+                            <input type="submit" ng-if="selected" class="btn btn-primary btn-ferry" value="Boot vol" />
+                        </form>
+                        <form method="post" action="{% url 'ferry_cancel' %}">
                             {% csrf_token %}
                             <input type="hidden" name="ferry" ng-value="ferry" />
                             <input type="hidden" name="journeynumber" ng-value="selected.journeynumber" />
@@ -66,7 +72,7 @@
                     </div>
                     <div class="panel-body">
                         <a ng-click="openSuspend()" class="btn btn-danger btn-ferry"><i class="glyphicon glyphicon-trash"></i> Uit vaart</a> <br/>
-                        <form ng-if="!selected.departed && selected.cancelled" method="post" action="{% url 'ferry_recover' %}">
+                        <form ng-if="selected.status < 5 && selected.cancelled" method="post" action="{% url 'ferry_recover' %}">
                             {% csrf_token %}
                             <input type="hidden" name="ferry" ng-value="ferry" />
                             <input type="hidden" name="journeynumber" ng-value="selected.journeynumber" />
@@ -81,18 +87,21 @@
         {% verbatim %}
         <script type="text/ng-template" id="trip_cell.html">
             <div class="trip" ng-click="ctrl.select(trip)"
-                 ng-class="{ 'trip-departed': trip.departed && !trip.selected,
-                        'bg-danger' : trip.cancelled_date != null && !trip.recovered,
+                 ng-class="{ 'trip-departed': trip.status > 1 && !trip.selected,
+                        'bg-danger' : trip.cancelled && !trip.recovered,
                         'trip-selected' : trip == selected,
-                         'trip-plain': trip != selected && (!trip.cancelled_date || trip.recovered ) }">
+                         'trip-plain': trip != selected && (!trip.cancelled || trip.recovered ) }">
                 <strong>Rit {{ trip.journeynumber }}</strong> - {{ trip.departuretime|formatTime }}
                 <span class="label label-danger label-padded" ng-if="trip.delay">
                     <i class="glyphicon glyphicon-time"></i>&nbsp;+{{ trip.delay }}
                 </span>
-                <span class="label label-success label-padded" ng-if="trip.departed">
+                <span class="label label-success label-padded" ng-if="trip.status > 5">
                     <i class="glyphicon glyphicon-ok"></i>
                 </span>
-                <span class="label label-danger label-padded" ng-if="trip.cancelled_date != null && !trip.recovered">
+                <span class="label label-primary label-padded" alt="Boot vol" title="Boot vol" ng-if="trip.full">
+                    <i class="glyphicon glyphicon-exclamation-sign"></i>
+                </span>
+                <span class="label label-danger label-padded" alt="Rit opgeheven" title="Rit opgeheven" ng-if="trip.cancelled && !trip.recovered">
                     <i class="glyphicon glyphicon-remove"></i>
                 </span>
 
