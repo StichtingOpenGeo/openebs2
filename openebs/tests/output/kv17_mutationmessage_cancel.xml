@@ -1,0 +1,23 @@
+<DOSSIER>
+    <KV17JOURNEY>
+        <dataownercode>HTM</dataownercode>
+        <lineplanningnumber>1001</lineplanningnumber>
+        <operatingday>2016-04-01</operatingday>
+        <journeynumber>101</journeynumber>
+        <reinforcementnumber>0</reinforcementnumber>
+    </KV17JOURNEY>
+    <KV17MUTATEJOURNEY>
+        <timestamp>...</timestamp>
+        <CANCEL></CANCEL>
+    </KV17MUTATEJOURNEY>
+    <KV17MUTATEJOURNEYSTOP>
+        <timestamp>...</timestamp>
+        <MUTATIONMESSAGE>
+            <userstopcode>100</userstopcode>
+            <passagesequencenumber>1</passagesequencenumber>
+            <reasontype>3</reasontype>
+            <subreasontype>7</subreasontype>
+            <reasoncontent>Boot is vol en vaart niet</reasoncontent>
+        </MUTATIONMESSAGE>
+    </KV17MUTATEJOURNEYSTOP>
+</DOSSIER>

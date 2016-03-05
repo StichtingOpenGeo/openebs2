@@ -77,7 +77,7 @@ class FerryCancelledView(AccessMixin, Kv17PushMixin, FerryUpdateView):
 
     def form_valid(self, form):
         resp = super(FerryCancelledView, self).form_valid(form)
-        xml = self.object.to_kv17change()
+        xml = self.object.to_cancel()
         if xml and self.push_message(xml):
             log.info("Sent KV17 ferry journey cancelled message to subscribers: %s" % self.object.journeynumber)
         else:

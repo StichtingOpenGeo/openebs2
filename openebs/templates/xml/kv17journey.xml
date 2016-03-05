@@ -15,7 +15,8 @@
         <CANCEL></CANCEL>
     {% endif %}
 </KV17MUTATEJOURNEY>
-{% else %}
+{% endif %}
+{% if object.stop_change.count > 0 and not object.is_recovered %}
 <KV17MUTATEJOURNEYSTOP>
     <timestamp>{{ object.created|date:"c" }}</timestamp>
 {% for mutation in object.stop_change.all %}

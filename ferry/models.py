@@ -77,6 +77,10 @@ class FerryKv6Messages(models.Model):
             change.is_recovered = False  # Clear this
             change.recovered = None
             change.save()
+
+            self.cancelled = True
+            self.save()
+
             return change.to_xml()
         return None
 
@@ -101,6 +105,7 @@ class FerryKv6Messages(models.Model):
     def to_recover(self):
         # Recover cancels and/or full
         self.cancelled = False
+        self.full = False
         self.save()
         journey = Kv1Journey.find_from_journeynumber(self.ferry.line, self.journeynumber, self.operatingday)
         if journey:

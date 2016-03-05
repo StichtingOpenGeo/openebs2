@@ -61,3 +61,15 @@ class TestKv17MessageXmlModel(XmlTest):
         change.delete()
         self.assertXmlEqual( "<DOSSIER>%s</DOSSIER>" % change.to_xml(),
                              self.getCompareXML('openebs/tests/output/kv17_mutationmessage_recover.xml'))
+
+    def test_output_mutationmessage_and_cancel(self):
+        journey = Kv1Journey(dataownercode='HTM', line=self.line, journeynumber=101, scheduleref=1, departuretime=905, direction=1)
+        journey.save()
+
+        change = Kv17Change(dataownercode='HTM', line=self.line, journey=journey, operatingday=datetime(2016, 04, 01))
+        change.save()
+        stop_change = Kv17StopChange(change=change, type=5, stop=self.haltes[0], stoporder=1,
+                                     reasontype=3, subreasontype=7, reasoncontent="Boot is vol en vaart niet")
+        stop_change.save()
+        self.assertXmlEqual( "<DOSSIER>%s</DOSSIER>" % change.to_xml(),
+                             self.getCompareXML('openebs/tests/output/kv17_mutationmessage_cancel.xml'))
