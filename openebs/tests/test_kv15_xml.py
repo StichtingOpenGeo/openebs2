@@ -1,11 +1,10 @@
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
-from django.utils.datetime_safe import datetime, date
+from django.utils.datetime_safe import datetime
 from django.utils.timezone import make_aware, get_default_timezone
 from kv1.models import Kv1Stop
 from kv15.enum import *
 from openebs.models import Kv15Stopmessage, Kv15MessageStop
-
 from utils.xml_test import XmlTest
 
 

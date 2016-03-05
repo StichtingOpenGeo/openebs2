@@ -23,15 +23,18 @@ from openebs2.settings import EXTERNAL_MESSAGE_USER_ID
 
 log = logging.getLogger('openebs.views')
 
+
 # TODO Move this
 def get_end_service():
     # Hmm, this is GMT
     return (now()+timedelta(days=1)).replace(hour=2, minute=0, second=0, microsecond=0)
 
+
 class UserProfile(models.Model):
     """ Store additional user data as we don't really want a custom user model perse """
     user = models.OneToOneField(User)
     company = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
+
 
 class Kv15Log(models.Model):
     timestamp = models.DateTimeField(auto_now=True)
@@ -189,7 +192,8 @@ class Kv15Stopmessage(models.Model):
         Idealy you would only allow this to be called on update (which is delete+add) or if object is deleted
         """
         # TODO Check this
-        return render_to_string('xml/kv15deletemessage.xml', {'object': self, 'messagecodenumber': messagecodenumber}).replace(os.linesep, '')
+        return render_to_string('xml/kv15deletemessage.xml', {'object': self, 'messagecodenumber': messagecodenumber}).replace(os.linesep, '').encode('utf8')
+
 
     def is_future(self):
         return self.messagestarttime > now()
@@ -351,7 +355,7 @@ class Kv17Change(models.Model):
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
     operatingday = models.DateField(verbose_name=_("Datum"))
     line = models.ForeignKey(Kv1Line, verbose_name=_("Lijn"))
-    journey = models.ForeignKey(Kv1Journey, verbose_name=_("Rit"), related_name="changes") # "A journey has changes"
+    journey = models.ForeignKey(Kv1Journey, verbose_name=_("Rit"), related_name="changes")  # "A journey has changes"
     reinforcement = models.IntegerField(default=0, verbose_name=_("Versterkingsnummer"))  # Never fill this for now
     is_recovered = models.BooleanField(default=False, verbose_name=_("Teruggedraaid?"))
     created = models.DateTimeField(auto_now_add=True)
@@ -367,7 +371,7 @@ class Kv17Change(models.Model):
         """
         This xml will reflect the status of the object - wheter we've been canceled or recovered
         """
-        return render_to_string('xml/kv17journey.xml', {'object': self }).replace(os.linesep, '')
+        return render_to_string('xml/kv17journey.xml', {'object': self}).replace(os.linesep, '')
 
     class Meta:
         verbose_name = _('Ritaanpassing')
@@ -414,17 +418,17 @@ class Kv17StopChange(models.Model):
                          (5, "MUTATIONMESSAGE")
                         )
 
-    change = models.ForeignKey(Kv17Change)
+    change = models.ForeignKey(Kv17Change, related_name="stop_change")
     type = models.PositiveSmallIntegerField(null=False, choices=STOP_CHANGE_TYPES)
     # All messages
     stop = models.ForeignKey(Kv1Stop)
-    stoporder = models.IntegerField(null=False) # This is duplicate/can be easily derived
+    stoporder = models.IntegerField(null=False)  # This is duplicate/can be easily derived
     # Lag
-    lag = models.IntegerField()  # In seconds
+    lag = models.IntegerField(null=True, blank=True)  # In seconds
     # ChangePassTimes
-    targetarrival = models.DateTimeField()
-    targetdeparture = models.DateTimeField()
-    stoptype = models.CharField(choices=STOPTYPES, default="INTERMEDIATE", max_length=12)
+    targetarrival = models.DateTimeField(null=True, blank=True)
+    targetdeparture = models.DateTimeField(null=True, blank=True)
+    stoptype = models.CharField(choices=STOPTYPES, default="INTERMEDIATE", max_length=12, null=True, blank=True)
     # ChangeDestination
     destinationcode = models.CharField(max_length=10, blank=True)
     destinationname50 = models.CharField(max_length=50, blank=True)
@@ -462,6 +466,7 @@ class Kv1StopFilter(models.Model):
     @staticmethod
     def get_filters():
         return Kv1StopFilter.objects.filter(enabled=True).values_list('id', 'name')
+
 
 class Kv1StopFilterStop(models.Model):
     filter = models.ForeignKey(Kv1StopFilter, related_name="stops")

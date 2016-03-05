@@ -5,12 +5,34 @@
     <journeynumber>{{ object.journey.journeynumber }}</journeynumber>
     <reinforcementnumber>{{ object.reinforcement }}</reinforcementnumber>
 </KV17JOURNEY>
+{% if object.stop_change.count == 0 or object.is_recovered %}
 <KV17MUTATEJOURNEY>
-    {% if not object.is_recovered %}
-        <timestamp>{{ object.created|date:"c" }}</timestamp>
-        <CANCEL></CANCEL>
-    {% else %}
+    {% if object.is_recovered %}
         <timestamp>{{ object.recovered|date:"c" }}</timestamp>
         <RECOVER></RECOVER>
+    {% else %}
+        <timestamp>{{ object.created|date:"c" }}</timestamp>
+        <CANCEL></CANCEL>
     {% endif %}
 </KV17MUTATEJOURNEY>
+{% else %}
+<KV17MUTATEJOURNEYSTOP>
+    <timestamp>{{ object.created|date:"c" }}</timestamp>
+{% for mutation in object.stop_change.all %}
+    <MUTATIONMESSAGE>
+        <userstopcode>{{ mutation.stop.userstopcode }}</userstopcode>
+        <passagesequencenumber>{{ mutation.stoporder }}</passagesequencenumber>
+    {% if mutation.reasontype %}
+        <reasontype>{{mutation.reasontype }}</reasontype>
+        <subreasontype>{{ mutation.subreasontype }}</subreasontype>
+        <reasoncontent>{{ mutation.reasoncontent }}</reasoncontent>
+    {% endif %}
+    {% if mutation.advicetype %}
+        <advicetype>{{ mutation.advicetype }}</advicetype>
+        <subadvicetype>{{ mutation.subadvicetype }}</subadvicetype>
+        <advicecontent>{{ mutation.advicecontent }}</advicecontent>
+    {% endif %}
+    </MUTATIONMESSAGE>
+{% endfor %}
+</KV17MUTATEJOURNEYSTOP>
+{% endif %}

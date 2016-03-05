@@ -1,13 +1,11 @@
 from datetime import timedelta
-from unittest import TestCase
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
+from django.test import TestCase
 from django.utils.timezone import now
 from kv1.models import Kv1Stop
 from kv15.enum import *
 from openebs.models import Kv15Scenario, Kv15ScenarioMessage, Kv15ScenarioStop, Kv15Stopmessage
-
-__author__ = 'joel'
 
 
 class Kv15ScenarioModel(TestCase):

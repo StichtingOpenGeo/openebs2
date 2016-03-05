@@ -1,5 +1,5 @@
 from datetime import timedelta
-from django.contrib.auth.models import User, Group, Permission
+from django.contrib.auth.models import User, Permission
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.test import Client, TestCase
