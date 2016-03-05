@@ -109,7 +109,7 @@ class FerryRecoveredView(AccessMixin, Kv17PushMixin, RedirectView):
 
     def post(self, request, *args, **kwargs):
         resp = super(FerryRecoveredView, self).get(request, *args, **kwargs)
-        messages = FerryKv6Messages.objects.filter(line=self.request.POST.get('ferry', None),
+        messages = FerryKv6Messages.objects.filter(ferry=self.request.POST.get('ferry', None),
                                                    operatingday=get_operator_date(),
                                                    journeynumber=self.request.POST.get('journeynumber', None))
         xml = []

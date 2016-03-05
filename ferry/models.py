@@ -48,7 +48,7 @@ class FerryKv6Messages(models.Model):
         return render_to_string('xml/kv6delay.xml', {'object': self}).replace(os.linesep, '')
 
     def to_kv17change(self):
-        journey = Kv1Journey.find_from_journeynumber(self.line, self.journeynumber, self.operatingday)
+        journey = Kv1Journey.find_from_journeynumber(self.ferry.line, self.journeynumber, self.operatingday)
         if journey:
             change, created = Kv17Change.objects.get_or_create(dataownercode=self.ferry.line.dataownercode,
                                                                operatingday=self.operatingday,

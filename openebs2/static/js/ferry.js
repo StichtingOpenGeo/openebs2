@@ -1,6 +1,8 @@
-var ferryApp = angular.module('ferryApp', ['ngResource', 'ui.bootstrap']);
+var ferryApp = angular.module('ferryApp', ['ngResource', 'ngCookies', 'ui.bootstrap']);
 var baseUrl = "http://127.0.0.1:8000"
-ferryApp.controller('TripListCtrl', ['$scope', '$uibModal', 'tripService', function ($scope, $uibModal, tripService) {
+ferryApp.controller('TripListCtrl', ['$scope', '$cookies', '$uibModal', 'tripService',
+        function ($scope, $cookies, $uibModal, tripService) {
+
     var ctrl = this;
     $scope.trips = [];
     $scope.selected = null;
@@ -17,6 +19,7 @@ ferryApp.controller('TripListCtrl', ['$scope', '$uibModal', 'tripService', funct
             templateUrl: 'modal_delay.html',
             controller: 'DelayModalCtrl',
             resolve: {
+                ferry: function() { return $scope.ferry; },
                 selected: function () { return $scope.selected; }
             }
         });
@@ -28,31 +31,41 @@ ferryApp.controller('TripListCtrl', ['$scope', '$uibModal', 'tripService', funct
             templateUrl: 'modal_suspend.html',
             controller: 'SuspendModalCtrl',
             resolve: {
+                ferry: function() { return $scope.ferry; },
                 selected: function () { return $scope.selected; }
             }
         });
     };
-
-    $scope.$watch("ferry", function(oldVal, newVal) {
-        console.log("Changed to "+newVal);
-        if (newVal !== oldVal) {
-            ctrl.getTrips();
+    ctrl.restoreFerry = function() {
+        val = $cookies.get("openebs_ferry");
+        if (val == null) {
+            val = $("#selectFerry option:first").val();
         }
+        return val;
+    }
+    $scope.$watch("ferry", function(newVal, oldVal) {
+        ctrl.getTrips(newVal);
+        $cookies.put("openebs_ferry", newVal)
     });
-    ctrl.getTrips = function() {
-        tripService.getTrips($scope.ferry, function(data) {
+    ctrl.getTrips = function(ferry_line) {
+        if (ferry_line == null) {
+            return;
+        }
+        tripService.getTrips(ferry_line, function(data) {
             $scope.trips = data;
         })
     }
-    ctrl.getTrips();
+    ctrl.getTrips($scope.ferry);
 }]);
 
 
-ferryApp.controller('DelayModalCtrl', function($scope, selected) {
+ferryApp.controller('DelayModalCtrl', function($scope, ferry, selected) {
+    $scope.ferry = ferry;
     $scope.selected = selected;
 });
 
-ferryApp.controller('SuspendModalCtrl', function($scope, selected) {
+ferryApp.controller('SuspendModalCtrl', function($scope, ferry, selected) {
+    $scope.ferry = ferry;
     $scope.selected = selected;
 });
 //ferryApp.controller('FormCtrl', ['$scope', function($scope) {
