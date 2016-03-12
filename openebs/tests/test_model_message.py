@@ -3,6 +3,8 @@ from django.test import TestCase
 from django.db import IntegrityError
 from django.utils.timezone import now
 from django.contrib.auth.models import User
+
+from openebs.models import MessageStatus, Kv15Stopmessage
 from openebs.tests.utils_test import TestUtils
 
 
@@ -76,3 +78,9 @@ class TestKv15MessageModel(TestCase):
         msg.save()
         self.assertEqual(initial+1, msg.messagecodenumber)
         self.assertEqual(initial_pk+1, msg.pk)
+        self.assertEqual(MessageStatus.SAVED, msg.status)
+
+        # Fake this, the view does this after pushing
+        # TODO Just test the view, remove this
+        Kv15Stopmessage.objects.get(pk=initial_pk).set_status(MessageStatus.DELETED)
+        self.assertEqual(MessageStatus.DELETED, Kv15Stopmessage.objects.get(pk=initial_pk).status)

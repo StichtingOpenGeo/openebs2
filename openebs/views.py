@@ -145,7 +145,9 @@ class MessageUpdateView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, Update
         # Push a delete, then a create, but the previous one has a different message id
         if self.push_message(form.instance.to_xml_delete(original_messagecode)+form.instance.to_xml()):
             form.instance.set_status(MessageStatus.SENT)
-            log.info("Sent message to subscribers: %s" % (form.instance))
+            # The original instance needs to be marked deleted
+            self.model.objects.get(pk=original_messagecode).set_status(MessageStatus.DELETED)
+            log.info("Sent updated message to subßscribers: %s" % (form.instance))
         else:
             form.instance.set_status(MessageStatus.ERROR_SEND)
             log.error("Failed to send updated message to subscribers: %s" % (form.instance))
