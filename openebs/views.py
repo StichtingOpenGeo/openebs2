@@ -147,7 +147,7 @@ class MessageUpdateView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, Update
             form.instance.set_status(MessageStatus.SENT)
             # The original instance needs to be marked deleted
             self.model.objects.get(pk=original_messagecode).set_status(MessageStatus.DELETED)
-            log.info("Sent updated message to subßscribers: %s" % (form.instance))
+            log.info("Sent updated message to subscribers: %s" % (form.instance))
         else:
             form.instance.set_status(MessageStatus.ERROR_SEND)
             log.error("Failed to send updated message to subscribers: %s" % (form.instance))
