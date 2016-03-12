@@ -1,3 +1,5 @@
+from datetime import time
+
 from django.contrib.gis.db import models
 from json_field import JSONField
 from kv15.enum import DATAOWNERCODE, STOPTYPES
@@ -25,7 +27,7 @@ class Kv1Line(models.Model):
 class Kv1Stop(models.Model):
     userstopcode = models.CharField(max_length=10)
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
-    timingpointcode = models.CharField(max_length=10) # Note, unique, but not per stop
+    timingpointcode = models.CharField(max_length=10)  # Note, unique, but not per stop
     name = models.CharField(max_length=50)
     location = models.PointField()
 
@@ -90,10 +92,14 @@ class Kv1Journey(models.Model):
     @staticmethod
     def find_from_journeynumber(line, journeynumber, date):
         journeys = Kv1Journey.objects.filter(dataownercode=line.dataownercode,
-                                               line=line.pk,
-                                               journeynumber=journeynumber,
-                                               dates__date=date)
+                                             line=line.pk,
+                                             journeynumber=journeynumber,
+                                             dates__date=date)
         return journeys[0] if journeys.count() == 1 else None
+
+    def departuretime_as_time(self):
+        total_minutes = self.departuretime / 60
+        return time(hour=total_minutes / 60, minute=total_minutes % 60)
 
     class Meta:
         verbose_name = _("Rit")
@@ -129,4 +135,3 @@ class Kv1JourneyDate(models.Model):
         verbose_name = _("Ritdag")
         verbose_name_plural = _("Ritdag")
         unique_together = (('journey', 'date'))
-
