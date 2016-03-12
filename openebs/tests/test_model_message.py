@@ -1,15 +1,10 @@
-"""
-This file demonstrates writing tests using the unittest module. These will pass
-when you run "manage.py test".
-
-Replace this with more appropriate tests for your application.
-"""
 from datetime import timedelta
 from django.test import TestCase
 from django.db import IntegrityError
 from django.utils.timezone import now
 from django.contrib.auth.models import User
 from openebs.tests.utils_test import TestUtils
+
 
 class TestKv15MessageModel(TestCase):
     user = None
@@ -71,3 +66,13 @@ class TestKv15MessageModel(TestCase):
 
         # Force delete should actually remove the object
         self.assertEqual(msg.pk, None)
+
+    def test_update(self):
+        msg = TestUtils.create_message_default(self.user)
+        msg.save()
+        initial = msg.messagecodenumber
+        initial_pk = msg.pk
+
+        msg.save()
+        self.assertEqual(initial+1, msg.messagecodenumber)
+        self.assertEqual(initial_pk+1, msg.pk)

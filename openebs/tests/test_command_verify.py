@@ -414,8 +414,9 @@ class TestKv8Verify(TestCase):
         a = Kv15Stopmessage.objects.get(pk=a.pk) # Get latest from db
         self.assertEqual(a.status, MessageStatus.CONFIRMED)
         self.assertEqual(a.isdeleted, False)
-        self.assertEqual(a.messagestarttime, add_row['MessageStartTime'])
-        self.assertEqual(a.messageendtime, add_row['MessageEndTime'])
+
+        self.assertLess(add_row['MessageStartTime']-a.messagestarttime, timedelta(seconds=240))
+        self.assertLess(add_row['MessageEndTime']-a.messageendtime, timedelta(seconds=240))
 
     def test_message_overrule_message(self):
         """

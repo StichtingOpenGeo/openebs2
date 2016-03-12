@@ -86,7 +86,7 @@ class Command(BaseCommand):
             msg.messageendtime = now()
             msg.isdeleted = True
 
-        msg.save()
+        msg.save(significant=False)
 
         # Handle stop
         self.add_stop_for_message(msg, row)

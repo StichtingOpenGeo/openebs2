@@ -145,15 +145,21 @@ class Kv15Stopmessage(models.Model):
             raise ValidationError(_("Eindtijd moet na begintijd zijn"))
 
     def save(self, *args, **kwargs):
-        # Set the messagecodenumber to the latest highest number for new messages
-        # But don't get the latest number if already set/updating
-        if self.messagecodenumber is None:
+        # When creating or updating assign a new messagecodenumber
+        # But not when it's not significant or when it's new and already set (we use this in tests)
+        # New objects can be distinguished from saved ones by checking self.pk
+        significant = True
+        if 'significant' in kwargs:
+            significant = kwargs.pop('significant')
+        if (self.messagecodenumber is None and self.pk is None) or (self.pk is not None and significant):
             self.messagecodenumber = self.get_latest_number()
+        if significant:
+            self.pk = None
         super(Kv15Stopmessage, self).save(*args, **kwargs)
 
     def delete(self):
         self.isdeleted = True
-        self.save()
+        self.save(significant=False)
         # Warning: Don't perform the actual delete here!
 
     # This method actually deletes the object - mostly we won't want this however
@@ -162,7 +168,7 @@ class Kv15Stopmessage(models.Model):
 
     def set_status(self, status):
         self.status = status
-        self.save()
+        self.save(significant=False)
 
     def to_xml(self):
         if self.stops.count() == 0:
