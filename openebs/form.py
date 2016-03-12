@@ -14,6 +14,7 @@ from utils.time import get_operator_date
 
 log = logging.getLogger('openebs.forms')
 
+
 class Kv15StopMessageForm(forms.ModelForm):
     def clean(self):
         # TODO Move _all_ halte parsing here!
@@ -26,7 +27,6 @@ class Kv15StopMessageForm(forms.ModelForm):
                     ids.append(stop.pk)
                 else:
                     raise ValidationError(_("Datafout: halte niet gevonden in database. Meld dit bij een beheerder."))
-                    break
         if len(ids) == 0:
             raise ValidationError(_("Selecteer minimaal een halte"))
         else:

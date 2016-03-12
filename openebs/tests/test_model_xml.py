@@ -85,3 +85,25 @@ class TestKv15MessageXmlModel(XmlTest):
         Kv15MessageStop(stopmessage=m1, stop=self.haltes[1]).save()
 
         self.assertXmlEqual(m1.to_xml_delete(), self.getCompareXML('openebs/tests/output/delete.xml'))
+
+    def test_output_update(self):
+        m1 = Kv15Stopmessage(dataownercode='HTM', user=self.user)
+        m1.messagecodedate = datetime.strptime("2013-11-16", "%Y-%m-%d").date()
+        m1.messagecodenumber = 5012
+        start = make_aware(datetime.strptime("2013-11-16T14:09:35.161617", "%Y-%m-%dT%H:%M:%S.%f"), get_default_timezone())
+        end = make_aware(datetime.strptime("2013-11-17T03:00:00", "%Y-%m-%dT%H:%M:%S"), get_default_timezone())
+        m1.messagestarttime = start
+        m1.messageendtime = end
+        m1.messagecontent = "Bla!"
+        m1.save()
+        Kv15MessageStop(stopmessage=m1, stop=self.haltes[0]).save()
+        Kv15MessageStop(stopmessage=m1, stop=self.haltes[1]).save()
+        initial = m1.messagecodenumber
+
+        m1.messagecontent = "Dit bericht is geupdate!"
+        m1.save()
+        # This gets done by our form/model when we use the normal view, need to fake this here and repeat it
+        Kv15MessageStop(stopmessage=m1, stop=self.haltes[0]).save()
+
+        xml = "<DOSSIER>%s</DOSSIER>" % (m1.to_xml_delete(initial)+m1.to_xml())
+        self.assertXmlEqual(xml, self.getCompareXML('openebs/tests/output/update.xml'))

@@ -160,7 +160,7 @@ class Kv15Stopmessage(models.Model):
         super(Kv15Stopmessage, self).save(*args, **kwargs)
         if previous_pk:
             prev = Kv15Stopmessage.objects.get(pk=previous_pk)
-            prev.delete()
+            prev.delete()  # This sets the status of the old version to deleted
 
     def delete(self):
         self.isdeleted = True
@@ -180,15 +180,15 @@ class Kv15Stopmessage(models.Model):
             # Never send XML if we have no stops
             log.error("We tried to send a message with no stops. This should never happen!")
             return ""
-        return render_to_string('xml/kv15stopmessage.xml', {'object': self }).replace(os.linesep, '').encode('utf8')
+        return render_to_string('xml/kv15stopmessage.xml', {'object': self}).replace(os.linesep, '').encode('utf8')
 
-    def to_xml_delete(self):
+    def to_xml_delete(self, messagecodenumber=None):
         """
         This is slightly weird - the logic for keeping the status in sync can't be in the model unfortunately.
         (because we can't push without stops, and stops are a submodel, requiring the main object to be saved)
         Idealy you would only allow this to be called on update (which is delete+add) or if object is deleted
         """
-        return render_to_string('xml/kv15deletemessage.xml', {'object': self }).replace(os.linesep, '')
+        return render_to_string('xml/kv15deletemessage.xml', {'object': self, 'messagecodenumber': messagecodenumber}).replace(os.linesep, '')
 
     def is_future(self):
         return self.messagestarttime > now()

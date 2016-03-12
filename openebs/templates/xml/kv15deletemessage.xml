@@ -1,5 +1,5 @@
 <DELETEMESSAGE>
     <dataownercode>{{ object.dataownercode }}</dataownercode>
     <messagecodedate>{{ object.messagecodedate|date:"Y-m-d" }}</messagecodedate>
-    <messagecodenumber>{{ object.messagecodenumber }}</messagecodenumber>
+    <messagecodenumber>{{ messagecodenumber|default_if_none:object.messagecodenumber }}</messagecodenumber>
 </DELETEMESSAGE>

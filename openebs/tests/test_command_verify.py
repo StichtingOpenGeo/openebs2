@@ -388,10 +388,12 @@ class TestKv8Verify(TestCase):
         a.messagecontent = "Bla!"
         a.status = MessageStatus.CONFIRMED
         a.save()
+        initial_messagecode = a.messagecodenumber
 
         # Update it!
         a.messagecontent = "Bla!"
         a.save()
+        self.assertNotEqual(initial_messagecode, a.messagecodenumber)
 
         delete_row = {
             'DataOwnerCode': 'HTM',

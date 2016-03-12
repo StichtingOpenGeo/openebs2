@@ -1,0 +1,22 @@
+<DOSSIER>
+    <DELETEMESSAGE>
+        <dataownercode>HTM</dataownercode>
+        <messagecodedate>2013-11-16</messagecodedate>
+        <messagecodenumber>5012</messagecodenumber>
+    </DELETEMESSAGE>
+    <STOPMESSAGE>
+        <dataownercode>HTM</dataownercode>
+        <messagecodedate>2013-11-16</messagecodedate>
+        <messagecodenumber>5013</messagecodenumber>
+        <userstopcodes>
+                <userstopcode>100</userstopcode>
+        </userstopcodes>
+        <messagepriority>PTPROCESS</messagepriority>
+        <messagetype>GENERAL</messagetype>
+        <messagedurationtype>ENDTIME</messagedurationtype>
+        <messagestarttime>2013-11-16T14:09:35.161617+01:00</messagestarttime>
+        <messageendtime>2013-11-17T03:00:00+01:00</messageendtime>
+        <messagecontent>Dit bericht is geupdate!</messagecontent>
+        <messagetimestamp>...</messagetimestamp>
+    </STOPMESSAGE>
+</DOSSIER>

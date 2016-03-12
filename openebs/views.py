@@ -133,6 +133,7 @@ class MessageUpdateView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, Update
             form.instance.user = self.request.user
 
         # Save and then log
+        original_messagecode = form.instance.messagecodenumber
         ret = super(MessageUpdateView, self).form_valid(form)
         # TODO figure out edit logs
         # Kv15Log.create_log_entry(form.instance, get_client_ip(self.request))
@@ -141,8 +142,8 @@ class MessageUpdateView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, Update
         haltes = self.request.POST.get('haltes', None)
         self.process_new_old_haltes(form.instance, form.instance.kv15messagestop_set, haltes if haltes else "")
 
-        # Push a delete, then a create, but we can use the same message id
-        if self.push_message(form.instance.to_xml_delete()+form.instance.to_xml()):
+        # Push a delete, then a create, but the previous one has a different message id
+        if self.push_message(form.instance.to_xml_delete(original_messagecode)+form.instance.to_xml()):
             form.instance.set_status(MessageStatus.SENT)
             log.info("Sent message to subscribers: %s" % (form.instance))
         else:
