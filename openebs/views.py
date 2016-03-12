@@ -191,7 +191,7 @@ class MessageDeleteView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, Delete
         # Ensure we update the user
         msg = self.get_object()
         msg.user = request.user
-        msg.save()
+        msg.save(significant=False)
 
         ret = super(MessageDeleteView, self).delete(request, *args, **kwargs)
         msg = self.get_object()

@@ -149,13 +149,18 @@ class Kv15Stopmessage(models.Model):
         # But not when it's not significant or when it's new and already set (we use this in tests)
         # New objects can be distinguished from saved ones by checking self.pk
         significant = True
+        previous_pk = None
         if 'significant' in kwargs:
             significant = kwargs.pop('significant')
         if (self.messagecodenumber is None and self.pk is None) or (self.pk is not None and significant):
             self.messagecodenumber = self.get_latest_number()
         if significant:
+            previous_pk = self.pk
             self.pk = None
         super(Kv15Stopmessage, self).save(*args, **kwargs)
+        if previous_pk:
+            prev = Kv15Stopmessage.objects.get(pk=previous_pk)
+            prev.delete()
 
     def delete(self):
         self.isdeleted = True
