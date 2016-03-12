@@ -1,8 +1,8 @@
 from datetime import timedelta, datetime
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
+from django.test import TestCase
 from django.utils.timezone import now
-from django.utils.unittest.case import TestCase
 from kv1.models import Kv1Stop
 from openebs.management.commands.verify_messages import Command as VerifyCommand
 from openebs.models import Kv15Stopmessage, MessageStatus, Kv15MessageStop
@@ -11,9 +11,10 @@ from openebs.models import Kv15Stopmessage, MessageStatus, Kv15MessageStop
 class TestKv8Verify(TestCase):
 
     @classmethod
-    def setUpClass(self):
-        self.testClass = VerifyCommand()
-        self.user = User.objects.create_user("test_kv8")
+    def setUpClass(cls):
+        super(TestKv8Verify, cls).setUpClass()
+        cls.testClass = VerifyCommand()
+        cls.user = User.objects.create_user("test_kv8")
 
         # Create two fake sotps
         stop_a = Kv1Stop(userstopcode=400, dataownercode='HTM', timingpointcode=400, name="Om de ene hoek", location=Point(1, 1))

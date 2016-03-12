@@ -8,18 +8,20 @@ from openebs.models import Kv15Stopmessage, Kv15MessageStop
 
 from utils.xml_test import XmlTest
 
+
 class TestKv15MessageXmlModel(XmlTest):
     @classmethod
-    def setUpClass(self):
-        self.user = User.objects.create_user("test")
+    def setUpClass(cls):
+        super(TestKv15MessageXmlModel, cls).setUpClass()
+        cls.user = User.objects.create_user("test")
 
-        self.haltes = []
+        cls.haltes = []
         halte_a = Kv1Stop(userstopcode=100, dataownercode='HTM', name="Om de hoek", location=Point(1, 1))
         halte_b = Kv1Stop(userstopcode=101, dataownercode='HTM', name="De andere hoek", location=Point(1, 10))
         halte_a.save()
         halte_b.save()
-        self.haltes.append(halte_a)
-        self.haltes.append(halte_b)
+        cls.haltes.append(halte_a)
+        cls.haltes.append(halte_b)
 
     def test_output_basic(self):
 

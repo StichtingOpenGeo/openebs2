@@ -2,12 +2,9 @@ import json
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
 from django.core.urlresolvers import reverse
-from django.db import transaction
-from django.test import Client
-from django.utils.unittest.case import TestCase
+from django.test import Client, TestCase
 from kv1.models import Kv1Stop
-from openebs.models import Kv15MessageStop, UserProfile
-from openebs.tests.utils import TestUtils
+from openebs.models import UserProfile
 
 
 class TestAjaxViews(TestCase):

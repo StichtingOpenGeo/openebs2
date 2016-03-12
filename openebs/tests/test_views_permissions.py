@@ -2,11 +2,10 @@ from datetime import timedelta
 from django.contrib.auth.models import User, Group, Permission
 from django.core.urlresolvers import reverse
 from django.db.models import Q
-from django.test import Client
+from django.test import Client, TestCase
 from django.utils.timezone import now
-from django.utils.unittest.case import TestCase
 from openebs.models import UserProfile, Kv15Stopmessage
-from openebs.tests.utils import TestUtils
+from openebs.tests.utils_test import TestUtils
 
 
 class TestViewPermissions(TestCase):
@@ -15,6 +14,8 @@ class TestViewPermissions(TestCase):
     """
     @classmethod
     def setUpClass(cls):
+        super(TestViewPermissions, cls).setUpClass()
+
         # Setup user and assign company
         cls.user = User.objects.create_user(username="test_permission", password="test")
         cls.user.user_permissions.add(Permission.objects.get(codename='view_messages'))

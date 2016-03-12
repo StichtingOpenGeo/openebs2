@@ -1,5 +1,6 @@
 from doctest import Example
-from django.utils.unittest.case import TestCase
+
+from django.test import TestCase
 from lxml.doctestcompare import LXMLOutputChecker
 
 __author__ = 'joel'

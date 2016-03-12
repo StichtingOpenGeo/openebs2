@@ -1,7 +1,8 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
 from openebs.models import Kv15Log
-from openebs.tests.utils import TestUtils
+from openebs.tests.utils_test import TestUtils
+
 
 class TestKv15LogModel(TestCase):
 
