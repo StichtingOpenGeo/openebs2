@@ -1,0 +1,28 @@
+<INIT>
+    <dataownercode>{{ ferry.line.dataownercode }}</dataownercode>
+    <lineplanningnumber>{{ ferry.line.lineplanningnumber }}</lineplanningnumber>
+    <operatingday>{{ operatingday }}</operatingday>
+    <journeynumber>{{ journeynumber }}</journeynumber>
+    <reinforcementnumber>0</reinforcementnumber>
+    <timestamp>{{ created|date:"c" }}</timestamp>
+    <source>SERVER</source>
+    <userstopcode>String</userstopcode>
+    <passagesequencenumber>1</passagesequencenumber>
+    <vehiclenumber>123456</vehiclenumber>
+    <blockcode>0</blockcode>
+    <wheelchairaccessible>ACCESSIBLE</wheelchairaccessible>
+    <numberofcoaches>0</numberofcoaches>
+</INIT>
+<ARRIVAL>
+    <dataownercode>{{ ferry.line.dataownercode }}</dataownercode>
+    <lineplanningnumber>{{ ferry.line.lineplanningnumber }}</lineplanningnumber>
+    <operatingday>{{ operatingday }}</operatingday>
+    <journeynumber>{{ journeynumber }}</journeynumber>
+    <reinforcementnumber>0</reinforcementnumber>
+    <userstopcode>{% if direction == '1' %}{{ ferry.line.stop_arrival }}{% else %}{{ ferry.line.stop_depart }}{% endif %}</userstopcode>
+    <passagesequencenumber>1</passagesequencenumber>
+    <timestamp>{{ created|date:"c" }}</timestamp>
+    <source>SERVER</source>
+    <vehiclenumber>0</vehiclenumber>
+    <punctuality>{{ delay }}</punctuality>
+</ARRIVAL>

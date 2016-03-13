@@ -190,12 +190,23 @@ span.stop-selection,span.trip-selection{
 .trip-plain {
     background-color: #f9f9f9;
 }
+.trip-arrived {
+    color: #ccc;
+}
 .trip-departed {
-    background-color: #dff0d8 !important;
+    /*background-color: #dff0d8 !important;*/
+    color: #5cb85c;
 }
 .trip-selected {
     background-color: #b2dba1;
 }
+.trip-selected.trip-departed {
+    color: #fff;
+}
+.trip-ready {
+    color: #00b3ee;
+}
+
 .label-padded {
     margin-left: 4px;
 }

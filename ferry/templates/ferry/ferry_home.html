@@ -87,7 +87,10 @@
         {% verbatim %}
         <script type="text/ng-template" id="trip_cell.html">
             <div class="trip" ng-click="ctrl.select(trip)"
-                 ng-class="{ 'trip-departed': trip.status > 1 && !trip.selected,
+                 ng-class="{
+                        'trip-arrived': trip.status == 10,
+                        'trip-departed': trip.status == 5,
+                        'trip-ready': trip.status == 1,
                         'bg-danger' : trip.cancelled && !trip.recovered,
                         'trip-selected' : trip == selected,
                          'trip-plain': trip != selected && (!trip.cancelled || trip.recovered ) }">

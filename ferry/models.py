@@ -12,7 +12,7 @@ from utils.time import get_operator_date
 
 
 class FerryLine(models.Model):
-    line = models.ForeignKey(Kv1Line, verbose_name=_("Lijn"), unique=True)
+    line = models.OneToOneField(Kv1Line, verbose_name=_("Lijn"))
     stop_depart = models.ForeignKey(Kv1Stop, verbose_name=_("Vertrekpunt"), related_name="ferry_departure")
     stop_arrival = models.ForeignKey(Kv1Stop, verbose_name=_("Aankomstpunt"), related_name="ferry_arrival")
 
@@ -26,6 +26,7 @@ class FerryLine(models.Model):
 
 class FerryKv6Messages(models.Model):
     class Status:
+        INITIALIZED = 0
         READY = 1
         DEPARTED = 5
         ARRIVED = 10
@@ -39,8 +40,8 @@ class FerryKv6Messages(models.Model):
     ferry = models.ForeignKey(FerryLine, verbose_name=_("Veerbootlijn"))
     operatingday = models.DateField(default=now, verbose_name=_("Dienstregelingsdatum"))
     journeynumber = models.PositiveIntegerField(verbose_name=_("Ritnummer"),)  # 0 - 999999
-    delay = models.IntegerField(blank=True, verbose_name=_("Vertraging"), help_text=_("In seconden"))  # Delay in seconds
-    status = models.PositiveSmallIntegerField(default=Status.READY, choices=STATUS, verbose_name=_("Status"))
+    delay = models.IntegerField(blank=True, null=True, verbose_name=_("Vertraging"), help_text=_("In seconden"))  # Delay in seconds
+    status = models.PositiveSmallIntegerField(default=Status.INITIALIZED, choices=STATUS, verbose_name=_("Status"))
     cancelled = models.BooleanField(default=False, verbose_name=_("Opgeheven?"))
     full = models.BooleanField(default=False, verbose_name=_("Is vol?"))
 
@@ -55,11 +56,21 @@ class FerryKv6Messages(models.Model):
     def __str__(self):
         return "%s - Rit %s (Lijn %s)" % (self.operatingday, self.journeynumber, self.ferry)
 
-    def to_kv6_init(self):
-        return render_to_string('xml/kv6init.xml', {'object': self}).replace(os.linesep, '')
+    def to_kv6_ready(self, direction=None):
+        return render_to_string('xml/kv6ready.xml', {'object': self, 'direction': direction}).replace(os.linesep, '')
 
     def to_kv6_delay(self):
         return render_to_string('xml/kv6delay.xml', {'object': self}).replace(os.linesep, '')
+
+    def to_kv6_departed(self, direction=None):
+        if direction is None:
+            # TODO: Fix this
+            # direction = self.get_direction()
+            pass
+        return render_to_string('xml/kv6departed.xml', {'object': self, 'direction': direction}).replace(os.linesep, '')
+
+    def to_kv6_arrived(self, direction=None):
+        return render_to_string('xml/kv6arrived.xml', {'object': self, 'direction': direction}).replace(os.linesep, '')
 
     def to_kv17change(self):
         journey = Kv1Journey.find_from_journeynumber(self.ferry.line, self.journeynumber, self.operatingday)

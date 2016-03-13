@@ -46,7 +46,7 @@ class FerryDepartedView(AccessMixin, Kv6PushMixin, FerryUpdateView):
     def form_valid(self, form):
         # TODO Can't do this if cancelled -> add validation rule
         resp = super(FerryDepartedView, self).form_valid(form)
-        xml = self.object.to_kv6_init()
+        xml = self.object.to_kv6_departed()
         if self.push_message(xml):
             log.info("Sent KV6 ferry departed message to subscribers: %s" % self.object.journeynumber)
         else:
