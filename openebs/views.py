@@ -146,6 +146,7 @@ class MessageUpdateView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, Update
         if self.push_message(form.instance.to_xml_delete(original_messagecode)+form.instance.to_xml()):
             form.instance.set_status(MessageStatus.SENT)
             # The original instance needs to be marked deleted
+            # TODO: write a test for this
             self.model.objects.get(pk=original_messagecode).set_status(MessageStatus.DELETED)
             log.info("Sent updated message to subscribers: %s" % (form.instance))
         else:
