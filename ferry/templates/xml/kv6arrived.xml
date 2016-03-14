@@ -1,12 +1,12 @@
 <ARRIVAL>
-    <dataownercode>{{ ferry.line.dataownercode }}</dataownercode>
-    <lineplanningnumber>{{ ferry.line.lineplanningnumber }}</lineplanningnumber>
-    <operatingday>{{ operatingday }}</operatingday>
-    <journeynumber>{{ journeynumber }}</journeynumber>
+    <dataownercode>{{ object.ferry.line.dataownercode }}</dataownercode>
+    <lineplanningnumber>{{ object.ferry.line.lineplanningnumber }}</lineplanningnumber>
+    <operatingday>{{ object.operatingday|date:"Y-m-d" }}</operatingday>
+    <journeynumber>{{ object.journeynumber }}</journeynumber>
     <reinforcementnumber>0</reinforcementnumber>
-    <timestamp>{{ created|date:"c" }}</timestamp>
+    <timestamp>{{ object.updated|date:"c" }}</timestamp>
     <source>SERVER</source>
-    <userstopcode>{% if direction == '1' %}{{ ferry.line.stop_arrival }}{% else %}{{ ferry.line.stop_depart }}{% endif %}</userstopcode>
+    <userstopcode>{% if direction == 1 %}{{ object.ferry.stop_arrival.userstopcode }}{% else %}{{ object.ferry.stop_depart.userstopcode }}{% endif %}</userstopcode>
     <passagesequencenumber>2</passagesequencenumber>
     <vehiclenumber>0</vehiclenumber>
     <blockcode>0</blockcode>

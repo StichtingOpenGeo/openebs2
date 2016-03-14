@@ -57,6 +57,8 @@ class FerryKv6Messages(models.Model):
         return "%s - Rit %s (Lijn %s)" % (self.operatingday, self.journeynumber, self.ferry)
 
     def to_kv6_ready(self, direction=None):
+        if direction is None:
+            direction = self.get_direction()
         return render_to_string('xml/kv6ready.xml', {'object': self, 'direction': direction}).replace(os.linesep, '')
 
     def to_kv6_delay(self):
@@ -64,12 +66,12 @@ class FerryKv6Messages(models.Model):
 
     def to_kv6_departed(self, direction=None):
         if direction is None:
-            # TODO: Fix this
-            # direction = self.get_direction()
-            pass
+            direction = self.get_direction()
         return render_to_string('xml/kv6departed.xml', {'object': self, 'direction': direction}).replace(os.linesep, '')
 
     def to_kv6_arrived(self, direction=None):
+        if direction is None:
+            direction = self.get_direction()
         return render_to_string('xml/kv6arrived.xml', {'object': self, 'direction': direction}).replace(os.linesep, '')
 
     def to_kv17change(self):
@@ -129,6 +131,13 @@ class FerryKv6Messages(models.Model):
                 return change.to_xml()
             else:
                 return None
+
+    def get_direction(self):
+        journey = Kv1Journey.find_from_journeynumber(self.ferry.line, self.journeynumber, self.operatingday)
+        if journey:
+            return journey.direction
+        else:
+            raise Kv1Journey.DoesNotExist()
 
     @staticmethod
     def cancel_all(line_pk):

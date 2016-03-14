@@ -29,7 +29,7 @@
             {% endverbatim %}
             <div class="col-lg-3">
                 <div class="alert alert-info" ng-if="!selected">{% trans "Kies eerst een rit" %}</div>
-                <div class="panel panel-default clearfix" ng-if="selected && selected.status < 5 && !selected.cancelled">
+                <div class="panel panel-default clearfix" ng-if="selected && (!selected.status || selected.status < 10) && !selected.cancelled">
                     <div class="panel-heading">
                         <h3 class="panel-title"><i class="glyphicon glyphicon-arrow-right"></i>&nbsp;{% trans "Vertrek" %}</h3>
                     </div>
@@ -45,7 +45,7 @@
                     </div>
                 </div>
 
-                <div class="panel panel-default clearfix" ng-if="selected && selected.status < 5">
+                <div class="panel panel-default clearfix" ng-if="selected && (!selected.status || selected.status < 10)">
                     <div class="panel-heading">
                         <h3 class="panel-title"><i class="glyphicon glyphicon-pencil"></i>&nbsp;Rit wijzigen</h3>
                     </div>

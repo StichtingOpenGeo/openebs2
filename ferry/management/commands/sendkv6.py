@@ -63,17 +63,14 @@ class Command(BaseCommand):
 
                 msg.status = FerryKv6Messages.Status.ARRIVED
                 msg.save()
+
+                if self.pusher.push_message(msg.to_kv6_arrived(journey.direction)):
+                    self.log('info', "Sent KV6 arrival message for %s" % msg)
+                else:
+                    self.log('error', "Failed to send KV6 arrival message for %s" % msg)
+
             except FerryKv6Messages.DoesNotExist:
                 self.log('debug', "Skip for arrived")
-
-            if self.pusher.push_message(msg.to_kv6_arrived(journey.direction)):
-                self.log('info', "Sent KV6 arrival message for %s" % msg)
-            else:
-                self.log('error', "Failed to send KV6 arrival message for %s" % msg)
-            # Check not cancelled
-            # Check not delayed
-            # Else: Send messages
-            # print "%s:%02d" % (hours, minutes)
 
     @staticmethod
     def get_target_time(minutes):
