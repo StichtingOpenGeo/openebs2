@@ -30,7 +30,8 @@ def filter_user(perm_level, user, qry):
         raise PermissionDenied("Je account is nog niet gelinkt aan een vervoerder")
 
     if (perm_level == 'read' and not user.has_perm('openebs.view_all')) or \
-            (perm_level == 'write' and not user.has_perm('openebs.edit_all')):
+            (perm_level == 'write' and not user.has_perm('openebs.edit_all')) \
+            or perm_level is None:
         qry = qry.filter(dataownercode=user.userprofile.company)
 
     return qry
