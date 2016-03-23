@@ -1,5 +1,6 @@
 import os
 
+import datetime
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.timezone import now
@@ -46,6 +47,7 @@ class FerryKv6Messages(models.Model):
     full = models.BooleanField(default=False, verbose_name=_("Is vol?"))
 
     created = models.DateTimeField(auto_now_add=True)
+    status_updated = models.DateTimeField(blank=True, null=True)
     updated = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -55,6 +57,11 @@ class FerryKv6Messages(models.Model):
 
     def __str__(self):
         return "%s - Rit %s (Lijn %s)" % (self.operatingday, self.journeynumber, self.ferry)
+
+    def set_status(self, status):
+        self.status = status
+        self.status_updated = datetime.now()
+        self.save()
 
     def to_kv6_ready(self, direction=None):
         if direction is None:
