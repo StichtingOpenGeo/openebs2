@@ -143,6 +143,11 @@ LOGGING = {
             'backupCount': 5,
             'formatter': 'standard',
         },
+        'spoof_logfile': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': '/tmp/spoofed_requests.log',
+        },
     },
     'loggers': {
         'django.request': {
@@ -155,6 +160,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propogate' : True
         },
+        'django.security.DisallowedHost': {
+            'handlers': ['spoof_logfile'],
+            'level': 'ERROR',
+            'propagate': False,
+        }
     }
 }
 
