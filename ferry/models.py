@@ -1,14 +1,15 @@
-import os
+import os, datetime
+from datetime import datetime as dt
 
-import datetime
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 
 from kv1.models import Kv1Line, Kv1Journey, Kv1Stop
-from openebs.models import Kv17Change, Kv17StopChange
-from openebs2.settings import FERRY_FULL_REASONTYPE, FERRY_FULL_REASONCONTENT, FERRY_FULL_SUBREASONTYPE
+from openebs.models import Kv17Change, Kv17StopChange, Kv15Scenario
+from openebs2.settings import FERRY_FULL_REASONTYPE, FERRY_FULL_REASONCONTENT, FERRY_FULL_SUBREASONTYPE, CROSSOVER_HOUR
 from utils.time import get_operator_date
 
 
@@ -16,6 +17,7 @@ class FerryLine(models.Model):
     line = models.OneToOneField(Kv1Line, verbose_name=_("Lijn"))
     stop_depart = models.ForeignKey(Kv1Stop, verbose_name=_("Vertrekpunt"), related_name="ferry_departure")
     stop_arrival = models.ForeignKey(Kv1Stop, verbose_name=_("Aankomstpunt"), related_name="ferry_arrival")
+    scenario_cancelled = models.ForeignKey(Kv15Scenario, verbose_name=_("Scenario 'Dienst uit vaart'"), blank=True, null=True)
 
     class Meta:
         verbose_name = "Ferry"
@@ -23,6 +25,11 @@ class FerryLine(models.Model):
 
     def __str__(self):
         return "Veerboot %s" % (self.line)
+
+    def clean(self):
+        super(FerryLine, self).clean()
+        if self.scenario_cancelled is not None and self.scenario_cancelled.dataownercode != self.line.dataownercode:
+            raise ValidationError({'scenario_cancelled': _('Scenario moet voor zelfde vervoerder als lijn zijn')})
 
 
 class FerryKv6Messages(models.Model):
@@ -60,7 +67,7 @@ class FerryKv6Messages(models.Model):
 
     def set_status(self, status):
         self.status = status
-        self.status_updated = datetime.now()
+        self.status_updated = dt.now()
         self.save()
 
     def to_kv6_ready(self, direction=None):
@@ -147,6 +154,18 @@ class FerryKv6Messages(models.Model):
             raise Kv1Journey.DoesNotExist()
 
     @staticmethod
+    def send_cancel_scenario(ferry_pk, user):
+        try:
+            ferry = FerryLine.objects.get(pk=ferry_pk)
+        except FerryLine.DoesNotExist:
+            ferry = None
+        if ferry and ferry.scenario_cancelled:
+            tomorrow = (dt.now() + datetime.timedelta(days=1)).replace(hour=CROSSOVER_HOUR, minute=0, second=0)
+            msgs = ferry.scenario_cancelled.plan_messages(user, dt.now(), tomorrow)
+            return [m.to_xml() for m in msgs]
+        return []
+
+    @staticmethod
     def cancel_all(line_pk):
         date = get_operator_date()
         try:
@@ -159,9 +178,11 @@ class FerryKv6Messages(models.Model):
             for j in journeys:
                 m, created = FerryKv6Messages.objects.get_or_create(ferry=ferry, journeynumber=j.journeynumber,
                                                                     operatingday=date)
-                if not m.departed:
-                    m.cancelled = True
-                    m.save()
-                    xml_out.append(m.to_kv17change())
+                if m.status < FerryKv6Messages.Status.DEPARTED and not m.cancelled:
+                    msg = m.to_cancel()
+                    if msg:
+                        xml_out.append(msg)
             return xml_out
         return []
+
+

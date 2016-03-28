@@ -91,15 +91,21 @@ class FerrySuspendedView(AccessMixin, Kv17PushMixin, RedirectView):
     permanent = False
     permission_required = 'openebs.add_change'
     url = reverse_lazy('ferry_home')
+    kv15_push = Kv6PushMixin()
 
     def get(self, request, *args, **kwargs):
         resp = super(FerrySuspendedView, self).get(request, *args, **kwargs)
-        xml = FerryKv6Messages.cancel_all(self.request.POST.get('ferry', None))
-        if len(xml) > 0 and self.push_message(''.join(xml)):
+        ferry_pk = self.request.POST.get('ferry', None)
+        kv17_xml = FerryKv6Messages.cancel_all(ferry_pk)
+        if len(kv17_xml) > 0 and self.push_message(''.join(kv17_xml)):
             log.info("Sent KV17 ferry journey cancelled message to subscribers: %s" % self.object.journeynumber)
         else:
-            log.error("Failed to communicate KV17 ferry journey cancelled to subscribers: %s" % xml)
-
+            log.error("Failed to communicate KV17 ferry journey cancelled to subscribers: %s" % kv17_xml)
+        kv15_xml = FerryKv6Messages.send_cancel_scenario(ferry_pk, self.request.user)
+        if len(kv15_xml) > 0 and self.kv15_push.push_message(''.join(kv15_xml)):
+            log.info("Sent KV15 ferries cancelled stop scenario to subscribers: %s" % self.object.journeynumber)
+        else:
+            log.error("Failed to communicate KV15 ferries cancelled stop scenario to subscribers: %s" % kv15_xml)
         return resp
 
 
