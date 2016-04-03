@@ -162,3 +162,27 @@ class Kv15ScenarioModel(TestCase):
 
         self.assertEqual(1, Kv15Stopmessage.objects.filter(dataownercode='WSF', isdeleted=False).count())
         self.assertEqual(1, Kv15ScenarioInstance.objects.filter(message__isdeleted=False).count())
+
+    def test_delete_scenario(self):
+        # Ensure deleting a scenario doesn't delete messages
+        a = Kv15Scenario(name="Test scenario and deletion")
+        a.save()
+
+        m1 = Kv15ScenarioMessage(scenario=a, dataownercode='WSF', messagecontent='Minder boten ivm storm!')
+        m1.save()
+
+        Kv15ScenarioStop(message=m1, stop=self.haltes[0]).save()
+
+        start = now()
+        a.plan_messages(self.user, start-timedelta(hours=5), start-timedelta(hours=3))
+        msgs = Kv15Stopmessage.objects.filter(dataownercode='WSF')
+        self.assertEqual(msgs[0].messagepriority, m1.messagepriority)
+
+        self.assertEqual(1, Kv15Stopmessage.objects.filter(dataownercode='WSF', isdeleted=False).count())
+        a.delete()
+
+        self.assertEqual(0, Kv15ScenarioInstance.objects.count())  # Lose the association, but doesn't matter
+        self.assertEqual(1, Kv15Stopmessage.objects.filter(dataownercode='WSF', isdeleted=False).count())
+        self.assertEqual(0, Kv15Scenario.objects.count())
+        self.assertEqual(0, Kv15ScenarioMessage.objects.count())
+        self.assertEqual(0, Kv15ScenarioStop.objects.count())
