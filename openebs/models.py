@@ -304,10 +304,19 @@ class Kv15Scenario(models.Model):
             for msg_stop in msg.stops.all():
                 Kv15MessageStop(stopmessage=a, stop=msg_stop.stop).save()
 
+            Kv15ScenarioInstance(scenario=self, message=a).save()
             saved_messages.append(a)
 
         return saved_messages
 
+    def delete_all(self):
+        # TODO: Only delete messages that are still active
+        msgs = []
+        for inst in Kv15ScenarioInstance.objects.filter(scenario=self):
+            inst.message.delete()
+            msgs.append(inst.message.to_xml_delete())
+
+        return msgs
 
 class Kv15ScenarioMessage(models.Model):
     """ This stores a 'template' to be used for easily constructing normal KV15 messages """
@@ -346,6 +355,12 @@ class Kv15ScenarioStop(models.Model):
     """ For the template, this links a stop """
     message = models.ForeignKey(Kv15ScenarioMessage, related_name='stops')
     stop = models.ForeignKey(Kv1Stop)
+
+
+class Kv15ScenarioInstance(models.Model):
+    """ This keeps track of instances of scenarios to be able to easily clean them up """
+    scenario = models.ForeignKey(Kv15Scenario)
+    message = models.ForeignKey(Kv15Stopmessage)
 
 
 class Kv17Change(models.Model):

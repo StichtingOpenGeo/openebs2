@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.utils.timezone import now
 from kv1.models import Kv1Stop
 from kv15.enum import *
-from openebs.models import Kv15Scenario, Kv15ScenarioMessage, Kv15ScenarioStop, Kv15Stopmessage
+from openebs.models import Kv15Scenario, Kv15ScenarioMessage, Kv15ScenarioStop, Kv15Stopmessage, Kv15ScenarioInstance
 
 
 class Kv15ScenarioModel(TestCase):
@@ -82,6 +82,7 @@ class Kv15ScenarioModel(TestCase):
         self.assertEqual(msgs[2].stops.all()[0].userstopcode, self.haltes[3].userstopcode)
         self.assertEqual(msgs[2].stops.all()[1].userstopcode, self.haltes[4].userstopcode)
 
+        self.assertEqual(3, Kv15ScenarioInstance.objects.count())
 
     def test_plan_scenario_complete(self):
         a = Kv15Scenario(name="Test complete scenario with all fields")
@@ -111,3 +112,32 @@ class Kv15ScenarioModel(TestCase):
         a.plan_messages(self.user, start, start+timedelta(hours=5))
         msgs = Kv15Stopmessage.objects.filter(dataownercode='CXX')
         self.assertEqual(msgs[0].messagepriority, m1.messagepriority)
+
+        self.assertEqual(1, Kv15ScenarioInstance.objects.count())
+
+    def test_plan_scenario_delete(self):
+        a = Kv15Scenario(name="Test scenario and deletion")
+        a.save()
+
+        m1 = Kv15ScenarioMessage(scenario=a, dataownercode='WSF', messagecontent='Minder boten ivm storm!')
+        m1.save()
+
+        Kv15ScenarioStop(message=m1, stop=self.haltes[0]).save()
+
+        start = now()
+        a.plan_messages(self.user, start, start+timedelta(hours=5))
+        msgs = Kv15Stopmessage.objects.filter(dataownercode='WSF')
+        self.assertEqual(msgs[0].messagepriority, m1.messagepriority)
+
+        self.assertEqual(1, Kv15ScenarioInstance.objects.count())
+
+        a.delete_all()
+
+        self.assertEqual(0, Kv15Stopmessage.objects.filter(dataownercode='WSF', isdeleted=False).count())
+        self.assertEqual(0, Kv15ScenarioInstance.objects.filter(message__isdeleted=False).count())
+
+        # Check we can still force delete and the scenario instance object is cleaned up
+        msgs[0].force_delete()
+
+        self.assertEqual(0, Kv15Stopmessage.objects.filter(dataownercode='WSF').count())
+        self.assertEqual(0, Kv15ScenarioInstance.objects.count())

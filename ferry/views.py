@@ -7,7 +7,7 @@ from django.views.generic.edit import UpdateView
 from ferry.models import FerryKv6Messages, FerryLine
 from openebs.models import Kv17Change
 from openebs.views_generic import TemplateRequestView
-from openebs.views_push import Kv6PushMixin, Kv17PushMixin
+from openebs.views_push import Kv6PushMixin, Kv17PushMixin, Kv15PushMixin
 from utils.time import get_operator_date
 from utils.views import AccessMixin, JSONListResponseMixin
 
@@ -46,7 +46,7 @@ class FerryDepartedView(AccessMixin, Kv6PushMixin, FerryUpdateView):
     def form_valid(self, form):
         # TODO Can't do this if cancelled -> add validation rule
         # TODO Check if we've already sent init/arrived messages, if not, send it first (or all three)
-        resp = super(FerryDepartedView, self).form_valid(form)
+        resp = super(FerryDepartedViepw, self).form_valid(form)
         self.set_status(FerryKv6Messages.Status.DEPARTED)
         xml = self.object.to_kv6_departed()
         if self.push_message(xml):
@@ -91,7 +91,7 @@ class FerrySuspendedView(AccessMixin, Kv17PushMixin, RedirectView):
     permanent = False
     permission_required = 'openebs.add_change'
     url = reverse_lazy('ferry_home')
-    kv15_push = Kv6PushMixin()
+    kv15_push = Kv15PushMixin()
 
     def get(self, request, *args, **kwargs):
         resp = super(FerrySuspendedView, self).get(request, *args, **kwargs)
@@ -129,6 +129,7 @@ class FerryRecoveredView(AccessMixin, Kv17PushMixin, RedirectView):
     permanent = False
     permission_required = 'openebs.add_change'
     url = reverse_lazy('ferry_home')
+    kv15_push = Kv15PushMixin()
 
     def post(self, request, *args, **kwargs):
         resp = super(FerryRecoveredView, self).get(request, *args, **kwargs)
@@ -143,9 +144,17 @@ class FerryRecoveredView(AccessMixin, Kv17PushMixin, RedirectView):
             else:
                 log.info("Couldn't delete message %s" % self.message)
         if len(xml) > 0 and self.push_message(''.join(xml)):
-            log.info("Sent KV17 ferry journey cancelled message to subscribers: %s" % self.object.journeynumber)
+            log.info("Sent KV17 ferry journey recovered message to subscribers: %s" % self.request.POST.get('journeynumber', None))
         else:
             log.error("Failed to communicate KV17 ferry journey cancelled to subscribers: %s" % xml)
+
+        # Try to delete any KV15 message about less ferries
+        if messages[0].ferry and messages[0].ferry.scenario_cancelled:
+            kv15_xml = messages[0].ferry.scenario_cancelled.delete_all()
+            if len(kv15_xml) > 0 and self.kv15_push.push_message(kv15_xml):
+                log.info("Sent KV15 delete for cancellation message: %s" % self.request.POST.get('journeynumber', None))
+            else:
+                log.info("Failed to send KV15 delete for cancellation message: %s" % self.request.POST.get('journeynumber', None))
 
         return resp
 
