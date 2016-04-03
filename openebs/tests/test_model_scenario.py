@@ -141,3 +141,24 @@ class Kv15ScenarioModel(TestCase):
 
         self.assertEqual(0, Kv15Stopmessage.objects.filter(dataownercode='WSF').count())
         self.assertEqual(0, Kv15ScenarioInstance.objects.count())
+
+    def test_plan_scenario_delete_active(self):
+        a = Kv15Scenario(name="Test scenario and deletion")
+        a.save()
+
+        m1 = Kv15ScenarioMessage(scenario=a, dataownercode='WSF', messagecontent='Minder boten ivm storm!')
+        m1.save()
+
+        Kv15ScenarioStop(message=m1, stop=self.haltes[0]).save()
+
+        start = now()
+        a.plan_messages(self.user, start-timedelta(hours=5), start-timedelta(hours=3))
+        msgs = Kv15Stopmessage.objects.filter(dataownercode='WSF')
+        self.assertEqual(msgs[0].messagepriority, m1.messagepriority)
+
+        self.assertEqual(1, Kv15ScenarioInstance.objects.count())
+
+        a.delete_all()
+
+        self.assertEqual(1, Kv15Stopmessage.objects.filter(dataownercode='WSF', isdeleted=False).count())
+        self.assertEqual(1, Kv15ScenarioInstance.objects.filter(message__isdeleted=False).count())

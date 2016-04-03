@@ -310,13 +310,13 @@ class Kv15Scenario(models.Model):
         return saved_messages
 
     def delete_all(self):
-        # TODO: Only delete messages that are still active
         msgs = []
-        for inst in Kv15ScenarioInstance.objects.filter(scenario=self):
+        for inst in Kv15ScenarioInstance.objects.filter(scenario=self, message__messageendtime__gt=now):
             inst.message.delete()
             msgs.append(inst.message.to_xml_delete())
 
         return msgs
+
 
 class Kv15ScenarioMessage(models.Model):
     """ This stores a 'template' to be used for easily constructing normal KV15 messages """
