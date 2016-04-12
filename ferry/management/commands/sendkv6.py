@@ -16,30 +16,30 @@ class Command(BaseCommand):
     debug = True
 
     def handle(self, *args, **options):
-        for ferry in FerryLine.objects.all():
+        for ferry in FerryLine.objects.filter(enable_auto_messages=True):
             self.handle_ferry(ferry)
 
     def handle_ferry(self, ferry):
         date = get_operator_date()
+        journeys = ferry.line.journeys.filter(dates__date=date).order_by('departuretime')
         print "Checking ferry: %s" % ferry.line
         ## READY: Init + Arrive
-        for journey in ferry.line.journeys.filter(dates__date=date,
-                                                  departuretime__lte=self.get_target_time(5)).order_by('departuretime'):
+        for journey in journeys.filter(departuretime__lte=self.get_target_time(5)):
             msg, created = FerryKv6Messages.objects.get_or_create(operatingday=date, ferry=ferry,
                                                                   journeynumber=journey.journeynumber)
             if created or (msg.status == FerryKv6Messages.Status.INITIALIZED and not msg.cancelled):
                 msg.status = FerryKv6Messages.Status.READY
                 msg.save()
                 if self.pusher.push_message(msg.to_kv6_ready(journey.direction)):
-                    self.log('info', "Sent KV6 ready message for %s" % msg)
+                    self.log('info', "Sent KV6 init & arrival message for %s" % msg)
                 else:
-                    self.log('error', "Failed to send KV6 ready message for %s" % msg)
+                    self.log('error', "Failed to send KV6 init & arrival message for %s" % msg)
             else:
                 self.log('debug', "Already sent for %s" % journey.departuretime_as_time())
 
         ## DEPARTED: Depart
         # TODO: Fix delayed
-        for journey in ferry.line.journeys.filter(dates__date=date, departuretime__lte=self.get_target_time(0)).order_by('departuretime'):
+        for journey in journeys.filter(departuretime__lte=self.get_target_time(0)):
             try:
                 msg = FerryKv6Messages.objects.get(operatingday=date, ferry=ferry, journeynumber=journey.journeynumber,
                                                    status=FerryKv6Messages.Status.READY, cancelled=False)
@@ -47,16 +47,16 @@ class Command(BaseCommand):
                 msg.save()
 
                 if self.pusher.push_message(msg.to_kv6_departed(journey.direction)):
-                    self.log('info', "Sent KV6 ready message for %s" % msg)
+                    self.log('info', "Sent KV6 depart message for %s" % msg)
                 else:
-                    self.log('error', "Failed to send KV6 ready message for %s" % msg)
+                    self.log('error', "Failed to send KV6 depart message for %s" % msg)
 
             except FerryKv6Messages.DoesNotExist:
                 self.log('debug', "Skip for departed")
 
         ## ARRIVED: Arrive
         # TODO: Fix delayed
-        for journey in ferry.line.journeys.filter(dates__date=date, departuretime__gte=self.get_target_time(20)).order_by('departuretime'):
+        for journey in journeys.filter(departuretime__lte=self.get_target_time(-20)):
             try:
                 msg = FerryKv6Messages.objects.get(operatingday=date, ferry=ferry, journeynumber=journey.journeynumber,
                                                    status=FerryKv6Messages.Status.DEPARTED, cancelled=False)

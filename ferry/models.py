@@ -18,6 +18,7 @@ class FerryLine(models.Model):
     stop_depart = models.ForeignKey(Kv1Stop, verbose_name=_("Vertrekpunt"), related_name="ferry_departure")
     stop_arrival = models.ForeignKey(Kv1Stop, verbose_name=_("Aankomstpunt"), related_name="ferry_arrival")
     scenario_cancelled = models.ForeignKey(Kv15Scenario, verbose_name=_("Scenario 'Dienst uit vaart'"), blank=True, null=True)
+    enable_auto_messages = models.BooleanField(verbose_name=_("Verstuur automatisch KV6 berichten"), default=False)
 
     class Meta:
         verbose_name = "Ferry"
