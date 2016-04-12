@@ -29,7 +29,7 @@ def get_end_service():
     return (now()+timedelta(days=1)).replace(hour=2, minute=0, second=0, microsecond=0)
 
 class UserProfile(models.Model):
-    ''' Store additional user data as we don't really want a custom user model perse '''
+    """ Store additional user data as we don't really want a custom user model perse """
     user = models.OneToOneField(User)
     company = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
 
