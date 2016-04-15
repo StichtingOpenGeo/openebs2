@@ -1,6 +1,7 @@
 import logging
 
 from django.core.urlresolvers import reverse_lazy
+from django.shortcuts import redirect
 from django.views.generic import RedirectView, ListView
 from django.views.generic.edit import UpdateView
 
@@ -44,7 +45,7 @@ class FerryDepartedView(AccessMixin, Kv6PushMixin, FerryUpdateView):
     fields = ['ferry', 'journeynumber', 'status']
 
     def form_valid(self, form):
-        # TODO Can't do this if cancelled -> add validation rule
+        # TODO Add validation for cancelled somehow. Hard because FerryUpdateView already creates
         resp = super(FerryDepartedView, self).form_valid(form)
         xml = []
         self.object.set_status(FerryKv6Messages.Status.DEPARTED)

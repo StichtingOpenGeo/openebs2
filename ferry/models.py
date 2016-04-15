@@ -169,14 +169,8 @@ class FerryKv6Messages(models.Model):
 
     @staticmethod
     def recover_cancel_scenario(ferry_pk):
-        try:
-            ferry = FerryLine.objects.get(pk=ferry_pk)
-        except FerryLine.DoesNotExist:
-            ferry = None
-        if ferry and ferry.scenario_cancelled:
-            ferry.scenario_cancelled
-            return [m.to_xml() for m in msgs]
-        return []
+        # TODO: figure out if implementing this has any use, currently done in the view
+        pass
 
     @staticmethod
     def cancel_all(line_pk):
