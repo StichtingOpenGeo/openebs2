@@ -1,15 +1,13 @@
-from datetime import time
-from django.utils.unittest.case import TestCase
+from unittest.test.test_case import Test
+
+from django.core.management import call_command
+from django.test import TestCase
+
 from kv1.management.commands.import_rid import Command as ImportCommand
 from kv1.models import Kv1Line, Kv1Stop, Kv1Journey
 
 
 class TestRidImporter(TestCase):
-
-    @classmethod
-    def setUpClass(self):
-        self.testClass = ImportCommand()
-        self.testClass.folder = "/tmp/"
 
 
     #def testLinesSimple(self):
@@ -44,32 +42,30 @@ class TestRidImporter(TestCase):
 
         num_lines = Kv1Line.objects.count()
         num_stops = Kv1Stop.objects.count()
-        print list(Kv1Stop.objects.filter())
-        print l_a.stop_map
+
         # Data
         lines = [
             ['operator_id','publiccode','name'],
             ['VTN:1049','62','Gulpen - Vaals'],
         ]
         stops = [
-            ['operator_id','name','longitude','latitude'],
-            ['VTN:15023014','Busstation Perron C', '1', '2'] # Load an updated name
+            ['operator_id','name','longitude','latitude','timingpointcode',],
+            ['VTN:15023014','Busstation Perron C', '1', '2','15023014']  # Load an updated name
         ]
-        self.createTestFile('lines.csv', lines)
-        self.createTestFile('stops.csv', stops)
-        self.createTestFile('journey_stops.csv', [])
-        self.createTestFile('journey_dates.csv', [])
+        self.createTestFile('openebs_lines.csv', lines)
+        self.createTestFile('openebs_stops.csv', stops)
+        self.createTestFile('openebs_journey_stops.csv', [])
+        self.createTestFile('openebs_journey_dates.csv', [])
 
-        self.testClass.handle('/tmp')
+        call_command('import_rid', '/tmp')
 
         line = Kv1Line.objects.get(dataownercode='VTN', lineplanningnumber=1049)
         self.assertEqual(Kv1Line.objects.count(), num_lines)
         self.assertEqual(line.publiclinenumber, lines[1][1])
         self.assertEqual(line.headsign, lines[1][2])
 
-        print list(Kv1Stop.objects.filter())
         self.assertEqual(Kv1Stop.objects.count(), num_stops+1)
-        stop = Kv1Stop.objects.filter(dataownercode=15023014, userstopcode='15023014')[0]
+        stop = Kv1Stop.objects.filter(dataownercode='VTN', userstopcode='15023014')[0]
         self.assertEqual(stop.name, stops[1][1])
         self.assertEqual(stop.location.x, float(stops[1][2]))
         self.assertEqual(stop.location.y, float(stops[1][3]))
