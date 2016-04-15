@@ -191,7 +191,6 @@ class Kv15Stopmessage(models.Model):
         (because we can't push without stops, and stops are a submodel, requiring the main object to be saved)
         Idealy you would only allow this to be called on update (which is delete+add) or if object is deleted
         """
-        # TODO Check this
         return render_to_string('xml/kv15deletemessage.xml', {'object': self, 'messagecodenumber': messagecodenumber}).replace(os.linesep, '').encode('utf8')
 
 
