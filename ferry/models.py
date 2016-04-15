@@ -21,8 +21,8 @@ class FerryLine(models.Model):
     enable_auto_messages = models.BooleanField(verbose_name=_("Verstuur automatisch KV6 berichten"), default=False)
 
     class Meta:
-        verbose_name = "Ferry"
-        verbose_name_plural = "Ferries"
+        verbose_name = "Veerboot"
+        verbose_name_plural = "Veerboten"
 
     def __str__(self):
         return "Veerboot %s" % (self.line)
@@ -59,8 +59,8 @@ class FerryKv6Messages(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Ferry journey"
-        verbose_name_plural = "Ferry journeys"
+        verbose_name = _("Afvaart")
+        verbose_name_plural = _("Afvaarten")
         unique_together = ('ferry', 'journeynumber', 'operatingday')
 
     def __str__(self):
