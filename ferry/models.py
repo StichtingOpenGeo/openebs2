@@ -132,6 +132,7 @@ class FerryKv6Messages(models.Model):
 
     def to_recover(self):
         # Recover cancels and/or full
+        # TODO: Check KV6 flow and status
         self.cancelled = False
         self.full = False
         self.save()

@@ -45,10 +45,12 @@ class FerryDepartedView(AccessMixin, Kv6PushMixin, FerryUpdateView):
 
     def form_valid(self, form):
         # TODO Can't do this if cancelled -> add validation rule
-        # TODO Check if we've already sent init/arrived messages, if not, send it first (or all three)
-        resp = super(FerryDepartedViepw, self).form_valid(form)
-        self.set_status(FerryKv6Messages.Status.DEPARTED)
-        xml = self.object.to_kv6_departed()
+        resp = super(FerryDepartedView, self).form_valid(form)
+        xml = []
+        self.object.set_status(FerryKv6Messages.Status.DEPARTED)
+        # TODO: Figure out if this is valid kv6
+        xml.append(self.object.to_kv6_ready())
+        xml.append(self.object.to_kv6_departed())
         if self.push_message(xml):
             log.info("Sent KV6 ferry departed message to subscribers: %s" % self.object.journeynumber)
         else:
