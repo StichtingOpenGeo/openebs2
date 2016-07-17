@@ -1,6 +1,9 @@
 import logging
 import re
 # TODO: Figure out which mixin we really need
+from django.http import HttpResponseNotAllowed
+from django.template import RequestContext
+from django.template import loader
 from django.views.generic import TemplateView
 
 try:
@@ -133,5 +136,9 @@ class ErrorView(TemplateView):
     """
     def dispatch(self, request, *args, **kwargs):
         response = super(ErrorView, self).dispatch(request, *args, **kwargs)
-        response.render()
+        if isinstance(response, HttpResponseNotAllowed):
+            context = RequestContext(request)
+            response.content = loader.render_to_string("openebs/notfound.html", context_instance=context)
+        else:
+            response.render()
         return response
