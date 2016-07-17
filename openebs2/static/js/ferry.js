@@ -1,5 +1,6 @@
 var ferryApp = angular.module('ferryApp', ['ngResource', 'ngCookies', 'ui.bootstrap']);
-var baseUrl = "http://127.0.0.1:8000"
+/*var baseUrl = "http://127.0.0.1:8000"*/
+var baseUrl = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '')
 ferryApp.controller('TripListCtrl', ['$scope', '$cookies', '$uibModal', 'tripService',
         function ($scope, $cookies, $uibModal, tripService) {
 
