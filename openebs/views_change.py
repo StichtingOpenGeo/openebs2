@@ -107,16 +107,16 @@ class ChangeUpdateView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteV
         return obj
 
     def delete(self, request, *args, **kwargs):
-        orig = self.get_object() # Store an original to undo our redo
+        self.object = self.get_object()  # Store an original to undo our redo
         obj = self.update_object()
         if self.push_message(obj.to_xml()):
             log.error("Redo line cancel succesfully communicated to subscribers: %s" % obj)
         else:
             log.error("Failed to send redo request to subscribers: %s" % obj)
             # We failed to push, recover our redo operation by restoring previous state
-            obj.is_recovered = orig.is_recovered
-            obj.recovered = orig.recovered
-            obj.save() # Note, this won't work locally!
+            obj.is_recovered = self.get_object.is_recovered
+            obj.recovered = self.get_object.recovered
+            obj.save()  # Note, this won't work locally!
         return HttpResponseRedirect(self.get_success_url())
 
 """
