@@ -248,6 +248,8 @@ class Kv17ChangeForm(forms.ModelForm):
                 self.instance.journey = qry[0]
                 self.instance.line = qry[0].line
                 self.instance.operatingday = get_operator_date()
+                self.instance.is_cancel = True
+
                 # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
                 if self.instance.journey.dataownercode == self.instance.dataownercode:
                     self.instance.save()
