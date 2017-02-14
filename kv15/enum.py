@@ -109,6 +109,7 @@ REASONTYPE = (
 )
 
 SUBREASONTYPE = (
+    ('255', 'Onbekend'),
     ('0_1', 'Eerdere verstoring'),
     ('11', 'Herstel werkzaamheden'),
     ('11_2', 'Uitloop herstelwerkzaamheden'),
@@ -142,9 +143,6 @@ SUBREASONTYPE = (
     ('24_7', 'Braderie'),
     ('24_8', 'Carnaval'),
     ('24_9', 'Jaarmarkt'),
-    ('255', 'Onbekend'),
-    ('255', 'Weersomstandigheden'),
-    ('255_1', 'Blikeminslag'),
     ('26_1', 'Snelheidsbeperkingen'),
     ('26_2', 'Logistieke problemen'),
     ('3', 'Sneeuw'),
@@ -171,15 +169,17 @@ SUBREASONTYPE = (
     ('7', 'Defect materieel'),
     ('7', 'Extreme drukte'),
     ('8_1', 'Defect spoor'),
+    ('8_4', 'Tekort aan materieel'),
     ('8_10', 'Wisselstoring'),
     ('8_11', 'Overwegstoring'),
     ('8_12', 'Storing in verkeersleidingsysteem'),
     ('8_13', 'Gladde sporen'),
-    ('8_4', 'Tekort aan materieel'),
     ('9', 'Herstelwerkzaamheden'),
     ('9_1', 'Gladheid'),
     ('9_2', 'IJsgang'),
     ('9_2', 'IJzel'),
+    ('255', 'Weersomstandigheden'),
+    ('255_1', 'Blikeminslag'),
 )
 
 # KV17
