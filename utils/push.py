@@ -66,7 +66,7 @@ class Push:
         response_content = None
         error = False
         if self.enabled:
-            self.log.debug("Posting to %s (%s/%s)" % (self.alias, self.host, self.endpoint))
+            self.log.debug("Posting to %s (%s%s)" % (self.alias, self.host, self.endpoint))
             try:
                 conn = httplib.HTTPConnection(self.host, timeout=self.timeout)
                 conn.request("POST", self.endpoint, content, {"Content-type": "application/xml"})

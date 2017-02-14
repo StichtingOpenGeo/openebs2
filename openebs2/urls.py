@@ -21,7 +21,7 @@ urlpatterns = patterns('',
     url(r'^uitloggen/$', 'django.contrib.auth.views.logout_then_login', name="app_logout"),
     url(r'^wachtwoord/wijzigen$', 'django.contrib.auth.views.password_change', {'template_name': 'users/password_change_form.html'}, name="app_password_change"),
     url(r'^wachtwoord/gewijzigd$', 'django.contrib.auth.views.password_change_done', {'template_name': 'users/password_change_done.html'}, name="password_change_done"),
-    url(r'^geweigerd/$', TemplateView.as_view(template_name="openebs/templates/openebs/nopermission.html"), name="app_nopermission"),
+    url(r'^geweigerd/$', TemplateView.as_view(template_name="openebs/nopermission.html"), name="app_nopermission"),
 
     url(r'^admin/', include(admin.site.urls)),
 )
