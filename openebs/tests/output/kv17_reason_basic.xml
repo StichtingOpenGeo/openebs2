@@ -1,0 +1,18 @@
+<DOSSIER>
+    <KV17JOURNEY>
+        <dataownercode>HTM</dataownercode>
+        <lineplanningnumber>1001</lineplanningnumber>
+        <operatingday>2016-04-01</operatingday>
+        <journeynumber>100</journeynumber>
+        <reinforcementnumber>0</reinforcementnumber>
+    </KV17JOURNEY>
+    <KV17MUTATEJOURNEY>
+        <timestamp>...</timestamp>
+        <CANCEL>
+            <reasontype>1</reasontype>
+            <subreasontype>24_13</subreasontype>
+            <advicetype>1</advicetype>
+            <subadvicetype>3_1</subadvicetype>
+        </CANCEL>
+    </KV17MUTATEJOURNEY>
+</DOSSIER>

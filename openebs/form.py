@@ -250,7 +250,17 @@ class Kv17ChangeForm(forms.ModelForm):
                 self.instance.operatingday = get_operator_date()
                 # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
                 if self.instance.journey.dataownercode == self.instance.dataownercode:
-                    self.object = self.instance.save()
+                    self.instance.save()
+
+                    # Add details
+                    if self.data['reasontype'] != '0' or self.data['advicetype'] != '0':
+                        Kv17JourneyChange(change=self.instance, reasontype=self.data['reasontype'],
+                                          subreasontype=self.data['subreasontype'],
+                                          reasoncontent=self.data['reasoncontent'],
+                                          advicetype=self.data['advicetype'],
+                                          subadvicetype=self.data['subadvicetype'],
+                                          advicecontent=self.data['advicecontent']).save()
+
                     xml_output.append(self.instance.to_xml())
                 else:
                     log.error("Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
@@ -258,23 +268,6 @@ class Kv17ChangeForm(forms.ModelForm):
             else:
                 log.error("Failed to find journey %s" % journey)
         return xml_output
-
-
-    def form_valid(self, form):
-        ret = super(Kv17ChangeForm, self).form_valid(form)
-        self.create_journeychange(form)
-        return ret
-
-    def create_journeychange(self, form):
-        # TODO: Fix this!
-        change = Kv17JourneyChange(change=form.instance)
-        change.reasontype = self.cleaned_data['reasontype']
-        change.subreasontype = self.cleaned_data['subreasontype']
-        change.reasoncontent = self.cleaned_data['reasoncontent']
-        change.advicetype = self.cleaned_data['advicetype']
-        change.subadvicetype = self.cleaned_data['subadvicetype']
-        change.advicecontent = self.cleaned_data['advicecontent']
-        change.save()
 
     class Meta:
         model = Kv17Change

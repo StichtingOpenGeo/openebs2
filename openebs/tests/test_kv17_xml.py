@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
 
 from kv1.models import Kv1Stop, Kv1Line, Kv1Journey
-from openebs.models import Kv17Change, Kv17StopChange
+from openebs.models import Kv17Change, Kv17StopChange, Kv17JourneyChange
 from utils.xml_test import XmlTest
 
 
@@ -35,6 +35,24 @@ class TestKv17MessageXmlModel(XmlTest):
 
         change.delete()
         self.assertXmlEqual("<DOSSIER>%s</DOSSIER>" % change.to_xml(), self.getCompareXML('openebs/tests/output/kv17_recover.xml'))
+
+    def test_output_reasons(self):
+        change = Kv17Change(dataownercode='HTM', line=self.line, journey=self.journey, operatingday=datetime(2016, 04, 01))
+        change.save()
+        Kv17JourneyChange(change=change, reasontype="1", subreasontype="24_13", advicetype="1", subadvicetype="3_1").save()
+
+        # Have to pad with "DOSSIER" since otherwise we have invalid XML
+        self.assertXmlEqual("<DOSSIER>%s</DOSSIER>" % change.to_xml(), self.getCompareXML('openebs/tests/output/kv17_reason_basic.xml'))
+
+    def test_output_reasons_full(self):
+        change = Kv17Change(dataownercode='HTM', line=self.line, journey=self.journey, operatingday=datetime(2016, 04, 01))
+        change.save()
+        Kv17JourneyChange(change=change, reasontype="1", subreasontype="24_13", reasoncontent="Er stond een paard in de gang...",
+                          advicetype="1", subadvicetype="3_1", advicecontent="Kom na carnaval maar terug: Ole!")\
+            .save()
+
+        # Have to pad with "DOSSIER" since otherwise we have invalid XML
+        self.assertXmlEqual("<DOSSIER>%s</DOSSIER>" % change.to_xml(), self.getCompareXML('openebs/tests/output/kv17_reason_full.xml'))
 
     def test_output_mutationmessage(self):
         journey = Kv1Journey(dataownercode='HTM', line=self.line, journeynumber=101, scheduleref=1, departuretime=905, direction=1)

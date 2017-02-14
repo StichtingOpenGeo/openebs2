@@ -12,7 +12,14 @@
         <RECOVER></RECOVER>
     {% else %}
         <timestamp>{{ object.created|date:"c" }}</timestamp>
-        <CANCEL></CANCEL>
+        <CANCEL>{% if object.journey_details.count > 0 %}
+            <reasontype>{{ object.journey_details.all.0.reasontype }}</reasontype>
+            <subreasontype>{{ object.journey_details.all.0.subreasontype }}</subreasontype>
+            {% if object.journey_details.all.0.reasoncontent %}<reasoncontent>{{ object.journey_details.all.0.reasoncontent }}</reasoncontent>{% endif %}
+            <advicetype>{{ object.journey_details.all.0.advicetype }}</advicetype>
+            <subadvicetype>{{ object.journey_details.all.0.subadvicetype }}</subadvicetype>
+            {% if object.journey_details.all.0.advicecontent %}<advicecontent>{{ object.journey_details.all.0.advicecontent }}</advicecontent>{% endif %}
+        {% endif %}</CANCEL>
     {% endif %}
 </KV17MUTATEJOURNEY>
 {% endif %}
