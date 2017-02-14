@@ -68,7 +68,7 @@ class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
         if self.push_message(xml):
             log.info("Sent KV17 line change to subscribers: %s" % self.request.POST.get('journeys', "<unknown>"))
         else:
-            log.error("Failed to communicate KV17 line change to subscribers: %s" % xml)
+            log.error("Failed to communicate KV17 line change to subscribers")
 
         # Another hack to redirect correctly
         return HttpResponseRedirect(self.success_url)

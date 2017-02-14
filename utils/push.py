@@ -1,8 +1,10 @@
-import logging, socket
-from django.utils.timezone import now
-from django.conf import settings
 import httplib
-from xml.dom import minidom
+import logging
+import socket
+
+from django.utils.timezone import now
+from lxml import etree
+
 
 class Push:
     alias = None
@@ -50,7 +52,8 @@ class Push:
 %(content)s
 </VV_TM_PUSH>""" % data
 
-        return minidom.parseString(xml).toprettyxml()
+
+        return etree.tostring(etree.XML(xml), pretty_print=True)
 
     def push(self, content):
         # Add content
@@ -60,7 +63,7 @@ class Push:
         # Calculate XML with wrapper/header
         content = self.__str__()
         if self.debug:
-            self.log.debug(content)
+            self.log.debug("Pushing message:\n"+content)
 
         response_code = -1
         response_content = None
