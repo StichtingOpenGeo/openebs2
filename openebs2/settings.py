@@ -12,12 +12,12 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis', # GeoDjango
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',  # GeoDjango
         'NAME': 'openebs2',
         'USER': '',
         'PASSWORD': '',
-        'HOST': '',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
-        'PORT': '',                      # Set to empty string for default.
+        'HOST': '',  # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
+        'PORT': '',  # Set to empty string for default.
     }
 }
 
@@ -121,8 +121,8 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'standard': {
-            'format' : "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
-            'datefmt' : "%d/%b/%Y %H:%M:%S"
+            'format': "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+            'datefmt': "%d/%b/%Y %H:%M:%S"
         },
     },
     'filters': {
@@ -137,9 +137,17 @@ LOGGING = {
             'class': 'django.utils.log.AdminEmailHandler'
         },
         'logfile': {
-            'level':'DEBUG',
-            'class':'logging.handlers.RotatingFileHandler',
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': "/tmp/openebs.log",
+            'maxBytes': 5000000,
+            'backupCount': 5,
+            'formatter': 'standard',
+        },
+        'verify_logfile': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': "/tmp/openebs_verify.log",
             'maxBytes': 5000000,
             'backupCount': 5,
             'formatter': 'standard',
@@ -160,6 +168,11 @@ LOGGING = {
             'handlers': ['logfile'],
             'level': 'DEBUG',
             'propagate': True
+        },
+        'openebs.kv8verify': {
+            'handlers': ['verify_logfile'],
+            'level': 'DEBUG',
+            'propagate': False
         },
         'django.security.DisallowedHost': {
             'handlers': ['spoof_logfile'],
@@ -184,14 +197,13 @@ CROSSOVER_HOUR = 4
 
 # Verification feed settings
 GOVI_VERIFY_FEED = 'tcp://192.168.33.1:8001'  # 'tcp://node02.kv7.openov.nl:7817'
-GOVI_VERIFY_SUB =  "/InTraffic/KV8gen"
+GOVI_VERIFY_SUB = "/InTraffic/KV8gen"
 
-EXTERNAL_MESSAGE_USER_ID = None # Set in local_settings
+EXTERNAL_MESSAGE_USER_ID = None  # Set in local_settings
 
-FERRY_FULL_REASONTYPE=3
-FERRY_FULL_SUBREASONTYPE=7
-FERRY_FULL_REASONCONTENT="Boot is vol"
-
+FERRY_FULL_REASONTYPE = 3
+FERRY_FULL_SUBREASONTYPE = 7
+FERRY_FULL_REASONCONTENT = "Boot is vol"
 
 # Push settings
 try:

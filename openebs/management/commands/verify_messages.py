@@ -79,9 +79,9 @@ class Command(BaseCommand):
                 self.log.info("Message confirmed: %s (Stop/TPC %s)" % (msg, row['TimingPointCode']))
         else:
             if not created:
-                self.log.error("Message confirmed deleted: %s (Stop/TPC %s)" % (msg, row['TimingPointCode']))
+                self.log.info("Message confirmed deleted: %s (Stop/TPC %s)" % (msg, row['TimingPointCode']))
             else:
-                self.log.error("Message added and confirmed deleted: %s (Stop/TPC %s)" % (msg, row['TimingPointCode']))
+                self.log.info("Message added and confirmed deleted: %s (Stop/TPC %s)" % (msg, row['TimingPointCode']))
             msg.status = MessageStatus.DELETE_CONFIRMED
             msg.messageendtime = now()
             msg.isdeleted = True
