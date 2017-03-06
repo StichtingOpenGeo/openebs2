@@ -133,8 +133,8 @@ class MessageUpdateView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, Update
         if self.request.user:
             form.instance.user = self.request.user
 
-        # Save and then log
-        original_messagecode = form.instance.messagecodenumber
+        # Save and then log -'dataownercode', 'messagecodedate', 'messagecodenumber',
+        original_message = (form.instance.dataownercode, form.instance.messagecodedate, form.instance.messagecodenumber)
         ret = super(MessageUpdateView, self).form_valid(form)
         # TODO figure out edit logs
         # Kv15Log.create_log_entry(form.instance, get_client_ip(self.request))
@@ -144,11 +144,12 @@ class MessageUpdateView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, Update
         self.process_new_old_haltes(form.instance, form.instance.kv15messagestop_set, haltes if haltes else "")
 
         # Push a delete, then a create, but the previous one has a different message id
-        if self.push_message(form.instance.to_xml_delete(original_messagecode)+form.instance.to_xml()):
+        if self.push_message(form.instance.to_xml_delete(original_message[2])+form.instance.to_xml()):
             form.instance.set_status(MessageStatus.SENT)
             # The original instance needs to be marked deleted
             # TODO: write a test for this
-            self.model.objects.get(pk=original_messagecode).set_status(MessageStatus.DELETED)
+            self.model.objects.get(dataownercode=original_message[0], messagecodedate=original_message[1], messagecodenumber=original_message[2])\
+                .set_status(MessageStatus.DELETED)
             log.info("Sent updated message to subscribers: %s" % (form.instance))
         else:
             form.instance.set_status(MessageStatus.ERROR_SEND)
