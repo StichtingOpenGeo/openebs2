@@ -1,4 +1,5 @@
 # Hack to disable logging for now
+from datetime import datetime
 from django.db import connection
 from kv1.models import Kv1Stop
 
@@ -22,7 +23,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         print 'Setting up a ZeroMQ SUB: %s\n' % (settings.GOVI_VERIFY_FEED)
         sub = Command.setup_subscription()
-        print "Further messages are in your logfile"
+        print "Started at %s, further messages are in your logfile" % (datetime.now().isoformat('T'))
         while True:
             self.receive_message(sub)
 
