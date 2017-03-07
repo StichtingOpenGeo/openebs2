@@ -61,13 +61,13 @@ class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
                 journeys.append(j)
             else:
                 journey_errors += 1
-                log.error("User %s failed to find journey '%s' " % (self.request.user, journey))
+                log.error("User '%s' (%s) failed to find journey '%s' " % (self.request.user, self.request.user.userprofile.company, journey))
         data['journeys'] = journeys
         if journey_errors > 0:
             data['journey_errors'] = journey_errors
 
     def form_invalid(self, form):
-        log.error("Form invalid!")
+        log.error("Form for KV17 change invalid!")
         return super(ChangeCreateView, self).form_invalid(form)
 
     def form_valid(self, form):
