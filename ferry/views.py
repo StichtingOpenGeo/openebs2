@@ -21,6 +21,7 @@ class FerryHomeView(AccessMixin, TemplateRequestView):
 
     def get_context_data(self, **kwargs):
         ctx = super(FerryHomeView, self).get_context_data(**kwargs)
+        # TODO: This gets restored and messes with stuff
         ctx['lines'] = FerryLine.objects.filter(line__dataownercode=self.request.user.userprofile.company)
         return ctx
 

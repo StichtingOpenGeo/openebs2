@@ -44,6 +44,11 @@
     </div>
     <div class="col-lg-4">
         <h2>{% trans "Ritaanpassing" %}</h2>
+        {% if journey_errors > 0 %}
+            <div class="alert alert-warning">
+                <p><span class="glyphicon glyphicon-warning-sign"></span>&nbsp;{% blocktrans %}Let op, {{ journey_errors }} geselecteerde rit(ten) zijn niet gevonden. Controlleer of de juiste ritten geselecteerd zijn.{% endblocktrans %}</p>
+            </div>
+        {% endif %}
         <form method="post" class="form" action="{% url 'change_add' %}">
             <div class="control-group row">
                 <label class="col-lg-4">{% trans "Aanpassing" %}</label>

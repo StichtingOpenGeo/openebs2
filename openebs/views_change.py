@@ -46,13 +46,25 @@ class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
         data = super(ChangeCreateView, self).get_context_data(**kwargs)
         data['operator_date'] = get_operator_date()
         if 'journey' in self.request.GET:
-            journeys = []
-            for journey in self.request.GET['journey'].split(','):
-                j = Kv1Journey.find_from_realtime(self.request.user.userprofile.company, journey)
-                if j:
-                    journeys.append(j)
-            data['journeys'] = journeys
+            self.add_journeys_from_request(data)
         return data
+
+    def add_journeys_from_request(self, data):
+        journey_errors = 0
+        journeys = []
+        for journey in self.request.GET['journey'].split(','):
+            if journey == "":
+                continue
+
+            j = Kv1Journey.find_from_realtime(self.request.user.userprofile.company, journey)
+            if j:
+                journeys.append(j)
+            else:
+                journey_errors += 1
+                log.error("User %s failed to find journey '%s' " % (self.request.user, journey))
+        data['journeys'] = journeys
+        if journey_errors > 0:
+            data['journey_errors'] = journey_errors
 
     def form_invalid(self, form):
         log.error("Form invalid!")
@@ -63,6 +75,9 @@ class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
 
         # TODO this is a bad solution - totally gets rid of any benefit of Django's CBV and Forms
         xml = form.save()
+
+        if len(xml) == 0:
+            log.error("Tried to communicate KV17 empty line change, rejecting")
 
         # Push message to GOVI
         if self.push_message(xml):

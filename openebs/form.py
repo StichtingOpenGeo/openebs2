@@ -228,12 +228,17 @@ class Kv17ChangeForm(forms.ModelForm):
         if 'journeys' not in self.data:
             raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
 
+        valid_journeys = 0
         for journey in self.data['journeys'].split(',')[0:-1]:
             journey_qry = Kv1Journey.objects.filter(pk=journey, dates__date=get_operator_date())
             if journey_qry.count() == 0:
                 raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
             if Kv17Change.objects.filter(journey__pk=journey, line=journey_qry[0].line, operatingday=get_operator_date()).count() != 0:
                 raise ValidationError(_("Een of meer geselecteerde ritten zijn al aangepast"))
+            valid_journeys += 1
+
+        if valid_journeys == 0:
+            raise ValidationError(_("Er zijn geen ritten geselecteerd om op te heffen"))
 
         return cleaned_data
 
@@ -269,6 +274,7 @@ class Kv17ChangeForm(forms.ModelForm):
                               (self.instance.journey.dataownercode, self.instance.dataownercode))
             else:
                 log.error("Failed to find journey %s" % journey)
+
         return xml_output
 
     class Meta:
