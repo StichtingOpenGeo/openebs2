@@ -58,7 +58,7 @@
                 <i class="glyphicon glyphicon-time" title="{% trans 'Toekomstig bericht' %}"></i>
             {% endif %}
             </td>
-        <td>{{ msg.messagecontent|default_if_none:"[geen of overschrijf bericht]" }} {% include "openebs/snippet_status.html" with status=msg.status only %}</td>
+        <td>{{ msg.messagecontent|default_if_none:"[geen tekst of overschrijf bericht]" }} {% include "openebs/snippet_status.html" with status=msg.status only %}</td>
         <td class="text-center">
             <a class="halte-count btn btn-link" href="{% url 'msg_view' msg.id %}"
                {% if not view_all and not edit_all %} data-title="{% trans 'Haltes bij bericht' %}" data-html="true" data-content="{% include 'openebs/snippet_halte-list.html' %}"{% endif %} %}>
@@ -121,7 +121,7 @@
             {% include "openebs/snippet_message-external.html" with msg=msg only %}
             {% if msg.isdeleted %}<i class="glyphicon glyphicon-trash" title="{% trans "Verwijderd bericht" %}"></i>{% endif %}
         </td>
-        <td>{{ msg.messagecontent|default:"<em>[geen of overschrijf bericht]</em>"|default_if_none:"<em>[geen of overschrijf bericht]</em>" }} {% include "openebs/snippet_status.html" with status=msg.status only %}</td>
+        <td>{{ msg.messagecontent|default:"<em>[geen tekst of overschrijf bericht]</em>"|default_if_none:"<em>[geen of overschrijf bericht]</em>" }} {% include "openebs/snippet_status.html" with status=msg.status only %}</td>
         <td class="text-center">
             <a class="halte-count btn btn-link" href="{% url 'msg_view' msg.id %}"
                {% if not view_all and not edit_all %} data-title="{% trans 'Haltes bij bericht' %}" data-html="true" data-content="{% include 'openebs/snippet_halte-list.html' %}"{% endif %}>
