@@ -78,6 +78,8 @@ class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
 
         if len(xml) == 0:
             log.error("Tried to communicate KV17 empty line change, rejecting")
+            # This is kinda weird, but shouldn't happen, everything has validation
+            return HttpResponseRedirect(self.success_url)
 
         # Push message to GOVI
         if self.push_message(xml):
