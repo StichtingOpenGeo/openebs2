@@ -6,7 +6,6 @@ from django.db.models import F
 from ferry.models import FerryLine, FerryKv6Messages
 from openebs.views_push import Kv6PushMixin
 from utils.time import get_operator_date
-from utils.views import ExternalMessagePushMixin
 
 class Command(BaseCommand):
 

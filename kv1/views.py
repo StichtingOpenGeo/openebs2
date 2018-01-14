@@ -1,3 +1,5 @@
+import json
+
 from braces.views import LoginRequiredMixin, StaffuserRequiredMixin
 from datetime import timedelta, datetime
 from django.db.models import Q, Count
@@ -6,11 +8,10 @@ from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from django.views.generic import ListView, DetailView
 from djgeojson.views import GeoJSONLayerView
-from openebs.models import Kv15Stopmessage
 from utils.calender import CountCalendar
 from utils.time import get_operator_date
 from utils.views import JSONListResponseMixin
-from kv1.models import Kv1Line, Kv1Stop, Kv1Journey, Kv1JourneyDate
+from kv1.models import Kv1Line, Kv1Stop, Kv1JourneyDate
 
 
 # Views for adding messages and related lookups
@@ -38,8 +39,8 @@ class LineStopView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
         """
         obj = get_object_or_404(self.model, pk=self.kwargs.get('pk', None))
         if obj:
-            return {'stop_map': obj.stop_map}
-        return obj
+            return {'stop_map': json.loads(obj.stop_map)}
+        return obj # TODO?
 
 
 class LineTripView(LoginRequiredMixin, JSONListResponseMixin, DetailView):

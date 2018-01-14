@@ -41,7 +41,7 @@ class MessageListView(AccessMixin, ListView):
             stop_list = Kv1StopFilter.objects.get(id=context['filter']).stops.values_list('stop')
 
         # Get the currently active messages
-        active = self.model.objects.filter(messageendtime__gt=now, isdeleted=False) \
+        active = self.model.objects.filter(messageendtime__gt=now(), isdeleted=False) \
                                     .annotate(Count('stops'))\
                                     .order_by('-messagetimestamp')
         if context['filter'] != -1:
@@ -52,8 +52,8 @@ class MessageListView(AccessMixin, ListView):
         context['active_list'] = active
 
         # Add the no longer active messages
-        archive = self.model.objects.filter(Q(messageendtime__lt=now) | Q(isdeleted=True),
-                                            messagestarttime__gt=now() - timedelta(days=3)) \
+        archive = self.model.objects.filter(Q(messageendtime__lt=now()) | Q(isdeleted=True),
+                                            messagestarttime__gt=(now() - timedelta(days=3))) \
                                     .annotate(Count('stops'))\
                                     .order_by('-messagetimestamp')
 

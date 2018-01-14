@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from django.views.generic import RedirectView
 from openebs.views import MessageListView, MessageCreateView, MessageDeleteView, MessageUpdateView, ActiveStopsAjaxView, MessageDetailsView, MessageStopsAjaxView, \
     MessageStopsBoundAjaxView, MessageResendView
@@ -10,7 +10,7 @@ from openebs.views_scenario import ScenarioListView, ScenarioCreateView, Scenari
 from openebs.views_scenario_msg import ScenarioMessageCreateView, ScenarioMessageUpdateView, ScenarioMessageDeleteView
 
 
-urlpatterns = patterns('',
+urlpatterns = [
     # Onze Index
     url(r'^$', RedirectView.as_view(url='/bericht', permanent=True), name='index'),
 
@@ -56,4 +56,4 @@ urlpatterns = patterns('',
     url(r'^vervoerder/filter/(?P<pk>\d+)/bewerk', FilterUpdateView.as_view(), name="filter_edit"),
     url(r'^vervoerder/filter/(?P<pk>\d+)/verwijderen$', FilterDeleteView.as_view(), name="filter_delete"),
     url(r'^vervoerder/filter', FilterListView.as_view(), name="filter_list"),
-)
+]

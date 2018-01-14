@@ -1,7 +1,7 @@
 from datetime import time
 
 from django.contrib.gis.db import models
-from json_field import JSONField
+from jsonfield import JSONField
 from kv15.enum import DATAOWNERCODE, STOPTYPES
 from django.utils.translation import ugettext_lazy as _
 
@@ -75,7 +75,7 @@ class Kv1Journey(models.Model):
         return "%s%s - %s" % (self.dataownercode, self.line.publiclinenumber, self.journeynumber)
 
     @staticmethod
-    def find_from_realtime(dataowner, realtime_id):
+    def find_from_realtime(dataowner, realtime_id, date=get_operator_date()):
         j = realtime_id.split(':')
         if len(j) == 3:
             line = Kv1Line.objects.filter(dataownercode=dataowner,
@@ -84,7 +84,7 @@ class Kv1Journey(models.Model):
                 journey_pk = Kv1Journey.objects.filter(dataownercode=dataowner,
                                                        line=line[0].pk,
                                                        journeynumber=int(j[2]),
-                                                       dates__date=get_operator_date())
+                                                       dates__date=date)
                 if journey_pk.count() == 1:
                     return journey_pk[0]
         return None

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import jsonfield
 from django.db import models, migrations
-import json_field.fields
 import django.contrib.gis.db.models.fields
 
 
@@ -62,7 +62,7 @@ class Migration(migrations.Migration):
                 ('lineplanningnumber', models.CharField(max_length=10)),
                 ('publiclinenumber', models.CharField(max_length=10)),
                 ('headsign', models.CharField(max_length=100)),
-                ('stop_map', json_field.fields.JSONField(default='null', help_text='Enter a valid JSON object')),
+                ('stop_map', jsonfield.JSONField(default='null', help_text='Enter a valid JSON object')),
             ],
             options={
                 'verbose_name': 'Lijn',

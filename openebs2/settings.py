@@ -1,7 +1,6 @@
 # Django settings for openebs2 project.
 
 DEBUG = False
-TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
     ('Stefan de Konink', 'stefan@opengeo.nl'),
@@ -55,17 +54,22 @@ LOGIN_URL = 'app_login'
 LOGOUT_URL = 'app_logout'
 LOGIN_REDIRECT_URL = 'msg_index'  # This is temporary
 
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    ('django.template.loaders.cached.Loader', (
-        'django.template.loaders.filesystem.Loader',
-        'django.template.loaders.app_directories.Loader',
-    )),
-)
-
-TEMPLATE_DIRS = (
-    "openebs2/templates",
-)
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': ["openebs2/templates"],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'debug': DEBUG,
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
 
 # Crispy = form addon
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
@@ -104,7 +108,6 @@ INSTALLED_APPS = (
     'utils',  # Load our custom filters
 
     # Libs
-    'json_field',
     'floppyforms',
     'crispy_forms',
     'leaflet',

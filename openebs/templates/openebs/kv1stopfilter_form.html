@@ -29,7 +29,7 @@
         <tr><th>Vervoerder</th><th>Haltenaam</th><th>TPC</th><th>&nbsp;</th></tr>
             {% for filter_stop in object.stops.filter %}
                 <tr class="stoprow" data-id="{{ filter_stop.stop.id }}" data-filterstop="{{ filter_stop.id }}">
-                    <td><img class="user-icon" src="{{ STATIC_URL }}img/logos/{{ filter_stop.stop.dataownercode|lower }}.png" /></td>
+                    <td><img class="user-icon" src="{% get_static_prefix %}img/logos/{{ filter_stop.stop.dataownercode|lower }}.png" /></td>
                     <td>{{ filter_stop.stop.name }}</td>
                     <td>{{ filter_stop.stop.timingpointcode }}</td>
                     <td><button class="btn btn-del btn-danger pull-right"><i class="glyphicon glyphicon-trash"></i> Verwijderen</button></td>
@@ -101,7 +101,7 @@
         {% verbatim %}
         <tr class="stoprow" data-id="{{ id }}">
             <td>
-                <img class="user-icon" {% endverbatim %}src="{{ STATIC_URL }}img/logos/{% verbatim %}{{ toLowerCase dataownercode }}.png" /></td>
+                    <img class="user-icon" {% endverbatim %}src="{% get_static_prefix %}img/logos/{% verbatim %}{{ toLowerCase dataownercode }}.png" /></td>
             <td>{{ name }}</td>
             <td>{{ timingpointcode }}</td>{% endverbatim %}
             <td><small>Ververs pagina om te verwijderen</small></td>

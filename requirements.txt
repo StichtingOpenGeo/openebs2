@@ -1,11 +1,12 @@
-Django>=1.8.1,<1.8.99
+Django>=1.11.1,<1.11.99
 south==1.0.2
-psycopg2==2.6.1
+psycopg2
 django-admin-bootstrapped==2.5.1
-django-floppyforms
+#django-floppyforms
+git+https://github.com/reidransom/django-floppyforms.git
 django-crispy-forms
 django-guardian
-django-json-field
+jsonfield
 django-leaflet
 django-geojson
 pyzmq # Verification feed

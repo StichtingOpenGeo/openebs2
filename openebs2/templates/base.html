@@ -1,4 +1,4 @@
-{% load i18n staticfiles %}
+{% load i18n static %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -62,34 +62,34 @@
                 <ul class="dropdown-menu">
                     <li><a href="#"><span class="glyphicon glyphicon-lock"></span>&nbsp;<strong>{% trans "Wijzig vervoerder" %}:</strong></a></li>
                     <li><a href="{% url 'company_change' %}?company=HTM">
-                        <img src="{{ STATIC_URL }}img/logos/htm.png" class="user-icon"/> HTM
+                        <img src="{% static "img/logos/htm.png" %}" class="user-icon"/> HTM
                     </a></li>
                     <li><a href="{% url 'company_change' %}?company=VTN">
-                        <img src="{{ STATIC_URL }}img/logos/vtn.png" class="user-icon"/> Veolia
+                        <img src="{% static "img/logos/vtn.png" %}" class="user-icon"/> Veolia
                     </a></li>
                     <li><a href="{% url 'company_change' %}?company=ARR">
-                        <img src="{{ STATIC_URL }}img/logos/arr.png" class="user-icon"/> Arriva
+                        <img src="{% static "img/logos/arr.png" %}" class="user-icon"/> Arriva
                     </a></li>
                     <li><a href="{% url 'company_change' %}?company=EBS">
-                        <img src="{{ STATIC_URL }}img/logos/ebs.png" class="user-icon"/> EBS
+                        <img src="{% static "img/logos/ebs.png" %}" class="user-icon"/> EBS
                     </a></li>
                     <li><a href="{% url 'company_change' %}?company=CXX">
-                        <img src="{{ STATIC_URL }}img/logos/cxx.png" class="user-icon"/> Connexxion
+                        <img src="{% static "img/logos/cxx.png" %}" class="user-icon"/> Connexxion
                     </a></li>
                     <li><a href="{% url 'company_change' %}?company=GVB">
-                        <img src="{{ STATIC_URL }}img/logos/gvb.png" class="user-icon"/> GVB
+                        <img src="{% static "img/logos/gvb.png" %}" class="user-icon"/> GVB
                     </a></li>
                     <li><a href="{% url 'company_change' %}?company=RET">
-                        <img src="{{ STATIC_URL }}img/logos/ret.png" class="user-icon"/> RET
+                        <img src="{% static "img/logos/ret.png" %}" class="user-icon"/> RET
                     </a></li>
                     <li><a href="{% url 'company_change' %}?company=QBUZZ">
-                        <img src="{{ STATIC_URL }}img/logos/qbuzz.png" class="user-icon"/> QBuzz
+                        <img src="{% static "img/logos/qbuzz.png" %}" class="user-icon"/> QBuzz
                     </a></li>
                     <li><a href="{% url 'company_change' %}?company=SYNTUS">
-                        <img src="{{ STATIC_URL }}img/logos/syntus.png" class="user-icon"/> Syntus
+                        <img src="{% static "img/logos/syntus.png" %}" class="user-icon"/> Syntus
                     </a></li>
                     <li><a href="{% url 'company_change' %}?company=NS">
-                        <img src="{{ STATIC_URL }}img/logos/ns.png" class="user-icon"/> NS
+                        <img src="{% static "img/logos/ns.png" %}" class="user-icon"/> NS
                     </a></li>
                 </ul>
               </li>
@@ -98,7 +98,7 @@
             {% if user and not user.is_anonymous %}
             <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                 {{ user.get_full_name }}
-                <img src="{{ STATIC_URL }}img/logos/{{ user.userprofile.company|lower }}.png" class="user-icon"/>
+                <img src="{% get_static_prefix %}img/logos/{{ user.userprofile.company|lower }}.png" class="user-icon"/>
                 <b class="caret"></b>
             </a>
             <ul class="dropdown-menu">
