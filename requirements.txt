@@ -6,8 +6,8 @@ django-admin-bootstrapped==2.5.1
 git+https://github.com/reidransom/django-floppyforms.git
 django-crispy-forms
 django-guardian
-jsonfield=2.0.2
-django-leaflet=0.23.0
+jsonfield=-2.0.2
+django-leaflet==0.23.0
 django-geojson==2.11.0
 pyzmq # Verification feed
 django-braces
