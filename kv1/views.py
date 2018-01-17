@@ -39,7 +39,7 @@ class LineStopView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
         """
         obj = get_object_or_404(self.model, pk=self.kwargs.get('pk', None))
         if obj:
-            return {'stop_map': json.loads(obj.stop_map)}
+            return {'stop_map': obj.stop_map if isinstance(obj.stop_map, list) else json.loads(obj.stop_map)}
         return obj # TODO?
 
 
