@@ -3,6 +3,7 @@ import logging
 from datetime import timedelta
 
 from braces.views import LoginRequiredMixin
+from django.contrib.gis.db.models import Extent
 from django.core.urlresolvers import reverse_lazy
 from django.db.models import Q, Count
 from django.shortcuts import redirect
@@ -254,7 +255,7 @@ class MessageStopsBoundAjaxView(LoginRequiredMixin, JSONListResponseMixin, Detai
 
     def get_object(self):
         qry = self.get_queryset()
-        return {'extent': qry.extent()}
+        return {'extent': qry.aggregate(Extent('geometry')).get('geometry__extent')}
 
     def get_queryset(self):
         qry = super(MessageStopsBoundAjaxView, self).get_queryset()
