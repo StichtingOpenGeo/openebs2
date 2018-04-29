@@ -12,7 +12,7 @@ from utils.time import get_operator_date
 class Command(BaseCommand):
 
     pusher = Kv17PushMixin() # TODO: This defines a default timeout, we may want to/need to change this for batch operations
-    BATCH_SIZE = 50
+    BATCH_SIZE = 100
 
     last_row_date = ""
     date = get_operator_date()
