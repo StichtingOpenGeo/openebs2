@@ -12,7 +12,7 @@ from utils.time import get_operator_date
 class Command(BaseCommand):
 
     pusher = Kv17PushMixin() # TODO: This defines a default timeout, we may want to/need to change this for batch operations
-    BATCH_SIZE = 25
+    BATCH_SIZE = 50
 
     last_row_date = ""
     date = get_operator_date()
@@ -44,7 +44,7 @@ class Command(BaseCommand):
                             to_send.append(res)
                             to_send_trips.append(row[0])
                     if len(to_send) > 0 and len(to_send) % self.BATCH_SIZE == 0:
-                        self.stdout.write("Sending batch of 25")
+                        self.stdout.write("Sending batch of %s" % self.BATCH_SIZE)
                         success = self.pusher.push_message(to_send)
                         if not success:
                             self.stdout.write("Failed to send batch! %s" % to_send_trips)
