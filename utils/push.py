@@ -52,7 +52,6 @@ class Push:
 %(content)s
 </VV_TM_PUSH>""" % data
 
-
         return etree.tostring(etree.XML(xml), pretty_print=True)
 
     def push(self, content):
@@ -89,4 +88,4 @@ class Push:
             if self.debug:
                 self.log.debug("Connecting to %s and got response code %s and content: %s" % (self.alias, response_code, response_content))
 
-        return (response_code, response_content)
+        return response_code, response_content

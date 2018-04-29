@@ -28,6 +28,7 @@ class Command(BaseCommand):
                     first = False
                 else:
                     dataowner, lineplanningnumber, journeynumber = row[0].split(':')
+                    # TODO: Fix date here
                     cancelled = Kv17Change.objects.filter(dataownercode=dataowner, line__lineplanningnumber=lineplanningnumber, journey__journeynumber=journeynumber, journey__dates__date=get_operator_date())
                     if cancelled.count() == 1:
                         cancelled[0].delete()
