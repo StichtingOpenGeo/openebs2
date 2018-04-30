@@ -1,6 +1,6 @@
 import csv
 
-from datetime import date
+from datetime import date, datetime
 from django.core.management import BaseCommand
 
 from kv1.models import Kv1Journey
@@ -45,7 +45,9 @@ class Command(BaseCommand):
                             to_send_trips.append(row[0])
                     if len(to_send) > 0 and len(to_send) % self.BATCH_SIZE == 0:
                         self.stdout.write("Sending batch of %s" % self.BATCH_SIZE)
+                        start = datetime.now()
                         success = self.pusher.push_message(to_send)
+                        self.stdout.write("Took %s seconds" % (datetime.now()-start).seconds)
                         if not success:
                             self.stdout.write("Failed to send batch! %s" % to_send_trips)
                         to_send = []

@@ -32,7 +32,8 @@ class Command(BaseCommand):
                     cancelled = Kv17Change.objects.filter(dataownercode=dataowner, line__lineplanningnumber=lineplanningnumber, journey__journeynumber=journeynumber, journey__dates__date=get_operator_date())
                     if cancelled.count() == 1:
                         cancelled[0].delete()
-                        self.pusher.push_message(cancelled[0].to_xml())
+                        # TODO: Make this dynamic
+                        # self.pusher.push_message(cancelled[0].to_xml())
                         print ("Restored: %s:%s:%s on %s" % (cancelled[0].dataownercode, cancelled[0].line.lineplanningnumber,
                                                              cancelled[0].journey.journeynumber, cancelled[0].operatingday))
                     else:
