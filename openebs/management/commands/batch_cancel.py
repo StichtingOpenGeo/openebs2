@@ -44,16 +44,22 @@ class Command(BaseCommand):
                             to_send.append(res)
                             to_send_trips.append(row[0])
                     if len(to_send) > 0 and len(to_send) % self.BATCH_SIZE == 0:
-                        self.stdout.write("Sending batch of %s" % self.BATCH_SIZE)
-                        start = datetime.now()
-                        success = self.pusher.push_message(to_send)
-                        self.stdout.write("Took %s seconds" % (datetime.now()-start).seconds)
-                        if not success:
-                            self.stdout.write("Failed to send batch! %s" % to_send_trips)
-                        to_send = []
-                        to_send_trips = []
+                        to_send, to_send_trips = self.send(to_send, to_send_trips)
 
                     self.last_row_date = row[1]
+
+            self.send(to_send, to_send_trips)
+
+    def send(self, to_send, to_send_trips):
+        self.stdout.write("Sending batch of %s" % self.BATCH_SIZE)
+        start = datetime.now()
+        success = self.pusher.push_message(to_send)
+        self.stdout.write("Took %s seconds" % (datetime.now() - start).seconds)
+        if not success:
+            self.stdout.write("Failed to send batch! %s" % to_send_trips)
+        to_send = []
+        to_send_trips = []
+        return to_send, to_send_trips
 
     def cancel_trip(self, journey, date):
         if Kv17Change.objects.filter(dataownercode=journey.dataownercode,
