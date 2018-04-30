@@ -1,6 +1,6 @@
 import csv
 
-from datetime import date
+from datetime import date, datetime
 from django.core.management import BaseCommand
 
 from kv1.models import Kv1Journey
@@ -16,6 +16,7 @@ class Command(BaseCommand):
 
     last_row_date = ""
     date = get_operator_date()
+    BATCH_SIZE = 100
 
     def add_arguments(self, parser):
         parser.add_argument('filename', nargs='+', type=str)
@@ -24,6 +25,9 @@ class Command(BaseCommand):
         with open(options['filename'][0], 'rb') as csvfile:
             reader = csv.reader(csvfile, delimiter=',')
             first = True
+            to_send = []
+            to_send_trips = []
+
             for row in reader:
                 if first:
                     first = False
@@ -33,8 +37,19 @@ class Command(BaseCommand):
                     cancelled = Kv17Change.objects.filter(dataownercode=dataowner, line__lineplanningnumber=lineplanningnumber, journey__journeynumber=journeynumber, journey__dates__date=get_operator_date())
                     if cancelled.count() == 1:
                         cancelled[0].delete()
-                        self.pusher.push_message(cancelled[0].to_xml())
+                        to_send.append(cancelled[0].to_xml())
+                        to_send_trips.append(row[0])
                         print ("Restored: %s:%s:%s on %s" % (cancelled[0].dataownercode, cancelled[0].line.lineplanningnumber,
                                                              cancelled[0].journey.journeynumber, cancelled[0].operatingday))
                     else:
                         print ("Not found: %s on %s" % (row[0], row[1]))
+
+                    if len(to_send) > 0 and len(to_send) % self.BATCH_SIZE == 0:
+                        self.stdout.write("Sending batch of %s" % self.BATCH_SIZE)
+                        start = datetime.now()
+                        success = self.pusher.push_message(to_send)
+                        self.stdout.write("Took %s seconds" % (datetime.now()-start).seconds)
+                        if not success:
+                            self.stdout.write("Failed to send batch! %s" % to_send_trips)
+                        to_send = []
+                        to_send_trips = []
