@@ -383,6 +383,9 @@ class Kv17Change(models.Model):
         self.save()
         # Warning: Don't perform the actual delete here!
 
+    def force_delete(self):
+        super(Kv17Change, self).delete()
+
     def to_xml(self):
         """
         This xml will reflect the status of the object - wheter we've been canceled or recovered

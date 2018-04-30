@@ -31,10 +31,11 @@ class Command(BaseCommand):
                     # TODO: Fix date here
                     cancelled = Kv17Change.objects.filter(dataownercode=dataowner, line__lineplanningnumber=lineplanningnumber, journey__journeynumber=journeynumber, journey__dates__date=get_operator_date())
                     if cancelled.count() == 1:
-                        cancelled[0].delete()
+                        #cancelled[0].delete()
                         # TODO: Make this dynamic
                         # self.pusher.push_message(cancelled[0].to_xml())
                         print ("Restored: %s:%s:%s on %s" % (cancelled[0].dataownercode, cancelled[0].line.lineplanningnumber,
                                                              cancelled[0].journey.journeynumber, cancelled[0].operatingday))
+                        cancelled[0].force_delete()
                     else:
                         print ("Not found: %s on %s" % (row[0], row[1]))
