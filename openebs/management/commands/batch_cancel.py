@@ -47,11 +47,11 @@ class Command(BaseCommand):
                         to_send, to_send_trips = self.send(to_send, to_send_trips)
 
                     self.last_row_date = row[1]
-
-            self.send(to_send, to_send_trips)
+            if len(to_send) > 0:
+                self.send(to_send, to_send_trips)
 
     def send(self, to_send, to_send_trips):
-        self.stdout.write("Sending batch of %s" % self.BATCH_SIZE)
+        self.stdout.write("Sending batch of %s" % len(to_send))
         start = datetime.now()
         success = self.pusher.push_message(to_send)
         self.stdout.write("Took %s seconds" % (datetime.now() - start).seconds)
