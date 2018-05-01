@@ -44,6 +44,7 @@ class Kv17ChangeAdmin(admin.ModelAdmin):
     model = Kv17Change
     inlines = (Kv17JourneyChangeInline, )
     list_filter = ('dataownercode', 'operatingday')
+    list_per_page = 500
     raw_id_fields = ('line', 'journey')
 
 admin.site.register(Kv17Change, Kv17ChangeAdmin)
