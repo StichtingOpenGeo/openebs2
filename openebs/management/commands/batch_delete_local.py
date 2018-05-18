@@ -32,11 +32,15 @@ class Command(BaseCommand):
                     first = False
                 else:
                     dataowner, lineplanningnumber, journeynumber = row[0].split(':')
+                    if self.last_row_date != row[1]:
+                        split = row[1].split('-')
+                        self.date = date(int(split[0]), int(split[1]), int(split[2]))
                     # TODO: Fix date here
                     cancelled = Kv17Change.objects.filter(dataownercode=dataowner, line__lineplanningnumber=lineplanningnumber, journey__journeynumber=journeynumber, journey__dates__date=self.date)
                     if cancelled.count() == 1:
-                        print ("Restored: %s:%s:%s on %s" % (cancelled[0].dataownercode, cancelled[0].line.lineplanningnumber,
+                        print ("Deleted: %s:%s:%s on %s" % (cancelled[0].dataownercode, cancelled[0].line.lineplanningnumber,
                                                              cancelled[0].journey.journeynumber, cancelled[0].operatingday))
                         cancelled[0].force_delete()
                     else:
                         print ("Not found: %s on %s" % (row[0], self.date))
+                    self.last_row_date = row[1]
