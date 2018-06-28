@@ -39,7 +39,6 @@ class Command(BaseCommand):
                     if cancelled.count() == 1:
                         if cancelled[0].is_cancel:
                             res = cancelled[0].to_xml()
-                            print(res)
                             if res is not None:
                                 print ("Resending: %s on %s" % (row[0], self.date))
                                 to_send.append(res)
