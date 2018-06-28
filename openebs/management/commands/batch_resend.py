@@ -36,11 +36,11 @@ class Command(BaseCommand):
                         split = row[1].split('-')
                         self.date = date(int(split[0]), int(split[1]), int(split[2]))
                     cancelled = Kv17Change.objects.filter(dataownercode=dataowner, operatingday=self.date, line__lineplanningnumber=lineplanningnumber, journey__journeynumber=journeynumber)
-                    print(cancelled)
                     if cancelled.count() == 1:
                         if cancelled[0].is_cancel:
                             res = cancelled[0].to_xml()
                             if res is not None:
+                                print ("Resending: %s on %s" % (row[0], self.date))
                                 to_send.append(res)
                                 to_send_trips.append(row[0])
                         else:
