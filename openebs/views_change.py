@@ -26,7 +26,7 @@ class ChangeListView(AccessMixin, ListView):
         # Get the currently active changes
         context['active_list'] = self.model.objects.filter(operatingday=get_operator_date(), is_recovered=False,
                                                            dataownercode=self.request.user.userprofile.company)
-        context['active_list'] = context['active_list'].order_by('line__publiclinenumber', 'journey__departuretime', 'created')
+        context['active_list'] = context['active_list'].order_by('line__publiclinenumber', 'line__lineplanningnumber', 'journey__departuretime', 'created')
 
         # Add the no longer active changes
         context['archive_list'] = self.model.objects.filter(Q(operatingday__lt=get_operator_date()) | Q(is_recovered=True),

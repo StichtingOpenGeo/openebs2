@@ -404,6 +404,9 @@ class Kv17Change(models.Model):
     def __unicode__(self):
         return "%s Lijn %s Rit# %s" % (self.operatingday, self.line, self.journey.journeynumber)
 
+    def realtime_id(self):
+        return "%s:%s:%s" % (self.dataownercode, self.line.lineplanningnumber, self.journey.journeynumber)
+
 
 class Kv17JourneyChange(models.Model):
     """
