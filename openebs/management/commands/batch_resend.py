@@ -38,8 +38,8 @@ class Command(BaseCommand):
                     cancelled = Kv17Change.objects.filter(dataownercode=dataowner, operatingday=self.date, line__lineplanningnumber=lineplanningnumber, journey__journeynumber=journeynumber)
                     print(cancelled)
                     if cancelled.count() == 1:
-                        if cancelled.is_cancel:
-                            res = cancelled.to_xml()
+                        if cancelled[0].is_cancel:
+                            res = cancelled[0].to_xml()
                             if res is not None:
                                 to_send.append(res)
                                 to_send_trips.append(row[0])
