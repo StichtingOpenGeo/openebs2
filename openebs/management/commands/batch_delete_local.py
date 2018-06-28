@@ -35,8 +35,7 @@ class Command(BaseCommand):
                     if self.last_row_date != row[1]:
                         split = row[1].split('-')
                         self.date = date(int(split[0]), int(split[1]), int(split[2]))
-                    # TODO: Fix date here
-                    cancelled = Kv17Change.objects.filter(dataownercode=dataowner, line__lineplanningnumber=lineplanningnumber, journey__journeynumber=journeynumber, journey__dates__date=self.date)
+                    cancelled = Kv17Change.objects.filter(dataownercode=dataowner, operatingday=self.date, line__lineplanningnumber=lineplanningnumber, journey__journeynumber=journeynumber)
                     if cancelled.count() == 1:
                         print ("Deleted: %s:%s:%s on %s" % (cancelled[0].dataownercode, cancelled[0].line.lineplanningnumber,
                                                              cancelled[0].journey.journeynumber, cancelled[0].operatingday))

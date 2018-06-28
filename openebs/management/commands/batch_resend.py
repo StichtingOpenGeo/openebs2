@@ -35,13 +35,16 @@ class Command(BaseCommand):
                     if self.last_row_date != row[1]:
                         split = row[1].split('-')
                         self.date = date(int(split[0]), int(split[1]), int(split[2]))
-                    cancelled = Kv17Change.objects.filter(dataownercode=dataowner, line__lineplanningnumber=lineplanningnumber, journey__journeynumber=journeynumber, journey__dates__date=self.date)
+                    cancelled = Kv17Change.objects.filter(dataownercode=dataowner, operatingday=self.date, line__lineplanningnumber=lineplanningnumber, journey__journeynumber=journeynumber)
                     print(cancelled)
                     if cancelled.count() == 1:
-                        res = cancelled.to_xml()
-                        if res is not None:
-                            to_send.append(res)
-                            to_send_trips.append(row[0])
+                        if cancelled.is_cancel:
+                            res = cancelled.to_xml()
+                            if res is not None:
+                                to_send.append(res)
+                                to_send_trips.append(row[0])
+                        else:
+                            print ("Not cancelled: %s on %s" % (row[0], self.date))
                     else:
                         print ("Not found: %s on %s" % (row[0], self.date))
                     if len(to_send) > 0 and len(to_send) % self.BATCH_SIZE == 0:

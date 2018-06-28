@@ -34,7 +34,8 @@ class Command(BaseCommand):
                 else:
                     dataowner, lineplanningnumber, journeynumber = row[0].split(':')
                     # TODO: Fix date here
-                    cancelled = Kv17Change.objects.filter(dataownercode=dataowner, line__lineplanningnumber=lineplanningnumber, journey__journeynumber=journeynumber, journey__dates__date=get_operator_date())
+                    cancelled = Kv17Change.objects.filter(dataownercode=dataowner, operatingday=get_operator_date(), line__lineplanningnumber=lineplanningnumber, journey__journeynumber=journeynumber)
+                    print(cancelled)
                     if cancelled.count() == 1:
                         cancelled[0].delete()
                         to_send.append(cancelled[0].to_xml())
@@ -53,3 +54,5 @@ class Command(BaseCommand):
                             self.stdout.write("Failed to send batch! %s" % to_send_trips)
                         to_send = []
                         to_send_trips = []
+
+                # TODO: last
