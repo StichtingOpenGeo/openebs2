@@ -36,6 +36,7 @@ class Command(BaseCommand):
                         split = row[1].split('-')
                         self.date = date(int(split[0]), int(split[1]), int(split[2]))
                     cancelled = Kv17Change.objects.filter(dataownercode=dataowner, line__lineplanningnumber=lineplanningnumber, journey__journeynumber=journeynumber, journey__dates__date=self.date)
+                    print(cancelled)
                     if cancelled.count() == 1:
                         res = cancelled.to_xml()
                         if res is not None:
