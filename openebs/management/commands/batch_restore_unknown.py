@@ -40,7 +40,7 @@ class Command(BaseCommand):
                     if trip is None:
                         self.stdout.write("Not found: %s on %s " % (row[0], row[1]))
                     else:
-                        cancelled = Kv17Change(dataownercode=trip.dataownercode, operatingday=date, line=trip.line, journey=trip)
+                        cancelled = Kv17Change(dataownercode=trip.dataownercode, operatingday=self.date, line=trip.line, journey=trip)
                         cancelled.save()
                         cancelled.delete()
                         to_send.append(cancelled.to_xml())
