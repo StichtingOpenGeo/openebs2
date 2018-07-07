@@ -16,7 +16,7 @@ from django.conf import settings
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from push import Push
 from django.db.models.query import QuerySet
 
@@ -129,18 +129,19 @@ class AccessMixin(AccessMixin):
             request, *args, **kwargs)
 
 
-class NotFoundView(TemplateView):
-    template_name = "openebs/notfound.html"
+def handler403(request):
+    response = render(request, 'openebs/nopermission.html', {})
+    response.status_code = 404
+    return response
 
-    @classmethod
-    def get_rendered_view(cls):
-        as_view_fn = cls.as_view()
 
-        def view_fn(request):
-            response = as_view_fn(request)
-            # this is what was missing before
-            response.status_code = 404
-            response.render()
-            return response
+def handler404(request):
+    response = render(request, 'openebs/notfound.html', {})
+    response.status_code = 404
+    return response
 
-        return view_fn
+
+def handler500(request):
+    response = render(request, 'openebs/servererror.html', {})
+    response.status_code = 500
+    return response
