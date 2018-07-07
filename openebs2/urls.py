@@ -4,16 +4,15 @@ from django.contrib import admin
 from django.views.generic import TemplateView
 
 from openebs2 import settings
-from utils.views import ErrorView
 from django.contrib.auth import views as auth_views
 
 
 admin.autodiscover()
 
 # Custom error handlers
-handler403 = ErrorView.as_view(template_name="openebs/nopermission.html")
-handler404 = ErrorView.as_view(template_name="openebs/notfound.html")
-handler500 = ErrorView.as_view(template_name="openebs/servererror.html")
+handler403 = TemplateView.as_view(template_name="openebs/nopermission.html")
+handler404 = TemplateView.as_view(template_name="openebs/notfound.html")
+handler500 = TemplateView.as_view(template_name="openebs/servererror.html")
 
 urlpatterns = [
     url(r'^', include('openebs.urls')),
