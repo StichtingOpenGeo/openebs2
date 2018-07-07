@@ -127,3 +127,20 @@ class AccessMixin(AccessMixin):
 
         return super(AccessMixin, self).dispatch(
             request, *args, **kwargs)
+
+
+class NotFoundView(TemplateView):
+    template_name = "openebs/notfound.html"
+
+    @classmethod
+    def get_rendered_view(cls):
+        as_view_fn = cls.as_view()
+
+        def view_fn(request):
+            response = as_view_fn(request)
+            # this is what was missing before
+            response.status_code = 404
+            response.render()
+            return response
+
+        return view_fn

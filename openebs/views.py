@@ -223,7 +223,7 @@ class ActiveStopsAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView)
     model = Kv1Stop
     render_object = 'object'
 
-    def get_object(self):
+    def get_object(self, **kwargs):
         # Note, can't set this on the view, because it triggers the queryset cache
         queryset = self.model.objects.filter(messages__stopmessage__messagestarttime__lte=now(),
                                              messages__stopmessage__messageendtime__gte=now(),
@@ -253,9 +253,9 @@ class MessageStopsBoundAjaxView(LoginRequiredMixin, JSONListResponseMixin, Detai
     model = Kv1Stop
     render_object = 'object'
 
-    def get_object(self):
+    def get_object(self, **kwargs):
         qry = self.get_queryset()
-        return {'extent': qry.aggregate(Extent('geometry')).get('geometry__extent')}
+        return {'extent': qry.aggregate(Extent('location')).get('location__extent')}
 
     def get_queryset(self):
         qry = super(MessageStopsBoundAjaxView, self).get_queryset()
