@@ -89,7 +89,11 @@ class ExternalMessagePushMixin(object):
 
             endpoint = destination['endpoints'][self.message_type]
 
-            p = Push(destination['host'], endpoint['path'], self.namespace, self.dossier, destination['subscriberName'])
+            p = Push(destination['host'], endpoint['path'],
+                     self.namespace,
+                     self.dossier,
+                     destination['subscriberName'],
+                     destination['https'] if 'https' in destination else False)
             p.alias = destination.get('alias', destination['host'])
             p.fail_on_failure = destination.get('failOnFailure', True)
             p.debug = destination.get('debug', defaults.get('debug', False))

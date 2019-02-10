@@ -13,7 +13,7 @@ class Push:
     fail_on_failure = False
     debug = True
 
-    def __init__(self, host, endpoint, namespace, dossiername, subscriberid = 'openOV'):
+    def __init__(self, host, endpoint, namespace, dossiername, subscriberid = 'openOV', use_https = False):
         self.log = logging.getLogger("openebs.push")
         self.host = host
         self.endpoint = endpoint
@@ -21,6 +21,7 @@ class Push:
         self.namespace = namespace
         self.dossiername = dossiername
         self.timestamp = now()
+        self.use_https = use_https
 
     def __str__(self):
         data = {'namespace': self.namespace,
@@ -68,9 +69,13 @@ class Push:
         response_content = None
         error = False
         if self.enabled:
-            self.log.debug("Posting to %s (%s%s)" % (self.alias, self.host, self.endpoint))
+            self.log.debug("Posting to %s (%s://%s%s)" % (self.alias, 'https' if self.use_https else 'http', self.host, self.endpoint, ))
+            conn = None
             try:
-                conn = httplib.HTTPConnection(self.host, timeout=self.timeout)
+                if self.use_https:
+                    conn = httplib.HTTPSConnection(self.host, timeout=self.timeout, port=443)
+                else:
+                    conn = httplib.HTTPConnection(self.host, timeout=self.timeout)
                 conn.request("POST", self.endpoint, content, {"Content-type": "application/xml"})
             except socket.timeout:
                 error = True
@@ -79,7 +84,7 @@ class Push:
                 error = True
                 self.log.error("Got exception while connecting to %s: %s" % (self.alias, ex))
 
-            if not error:
+            if not error and conn is not None:
                 response = conn.getresponse()
                 response_code = response.status
                 response_content = response.read()

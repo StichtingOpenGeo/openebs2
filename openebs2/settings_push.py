@@ -10,6 +10,7 @@ PUSH_DEFAULTS = {
 #  'failOnFailure': True,
 #  'host': 'drisacc.transmodel.nl',
 #  'subscriberName': 'openov',
+#  'https': True,
 #  'endpoints': {
 #     'KV6': {'path': '/TMI_Post/KV6'},
 #     'KV15': {'path': '/TMI_Post/KV15'},
