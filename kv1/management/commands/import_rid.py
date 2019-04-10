@@ -2,10 +2,10 @@ import csv
 
 # Hack to disable logging for now
 # TODO: test if we can remove this
-from django.db import connection
+from django.db import connection, Error
+
 connection.use_debug_cursor = False
 
-from django.core.exceptions import FieldError
 from django.contrib.gis.geos import Point
 from django.core.management import BaseCommand
 from django.utils.datetime_safe import datetime
@@ -34,7 +34,7 @@ class Command(BaseCommand):
             for row in routes_reader:
                 try:
                     self.do_line(row)
-                except FieldError as error:
+                except Error as error:
                     self.log("Issue parsing line: %s (with row: %s)" % (error, row))
 
     def do_line(self, row):
@@ -58,7 +58,7 @@ class Command(BaseCommand):
                     i += 1
                     if i % 100 == 0:
                         self.log("Did %s stops" % i)
-                except FieldError as error:
+                except Error as error:
                     self.log("Issue parsing stop: %s (with row: %s)" % (error, row))
 
     def do_stop(self, row):
