@@ -49,4 +49,4 @@ class Command(BaseCommand):
         return to_send, to_send_trips
 
     def log(self, msg):
-        self.stdout.write("%s - %s", datetime.now().isoformat(), msg)
+        self.stdout.write("%s - %s" % (datetime.now().isoformat(), msg))
