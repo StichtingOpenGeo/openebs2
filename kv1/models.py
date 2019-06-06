@@ -1,3 +1,4 @@
+import logging
 from datetime import time
 
 from django.contrib.gis.db import models
@@ -7,6 +8,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from utils.time import get_operator_date
 
+log = logging.getLogger('openebs.models.kv1')
 
 class Kv1Line(models.Model):
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
@@ -77,6 +79,7 @@ class Kv1Journey(models.Model):
     @staticmethod
     def find_from_realtime(dataowner, realtime_id, date=get_operator_date()):
         j = realtime_id.split(':')
+        log.info("Got realtime trip id %s on date %s" % (j, date))
         if len(j) == 3:
             line = Kv1Line.objects.filter(dataownercode=dataowner,
                                           lineplanningnumber=j[1])
@@ -87,6 +90,12 @@ class Kv1Journey(models.Model):
                                                        dates__date=date)
                 if journey_pk.count() == 1:
                     return journey_pk[0]
+                else:
+                    log.warn("Realtime trip id '%s' has an journey count of %s (not exactly 1)" % (realtime_id, journey_pk))
+            else:
+                log.warn("Realtime trip id '%s' has an invalid line" % (realtime_id,))
+        else:
+            log.warn("Realtime trip id '%s' has incorrect # of arguments" % (realtime_id,))
         return None
 
     @staticmethod
