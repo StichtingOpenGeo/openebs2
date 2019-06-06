@@ -79,7 +79,7 @@ class Kv1Journey(models.Model):
     @staticmethod
     def find_from_realtime(dataowner, realtime_id, date=get_operator_date()):
         j = realtime_id.split(':')
-        log.info("Got realtime trip id %s on date %s" % (j, date))
+        log.info("Looking for realtime trip id %s on date %s" % (j, date))
         if len(j) == 3:
             line = Kv1Line.objects.filter(dataownercode=dataowner,
                                           lineplanningnumber=j[1])
