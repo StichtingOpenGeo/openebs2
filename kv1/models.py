@@ -89,6 +89,7 @@ class Kv1Journey(models.Model):
                                                        journeynumber=int(j[2]),
                                                        dates__date=date)
                 if journey_pk.count() == 1:
+                    log.info("Found journey with id '%s' for realtime_id %s" % (journey_pk[0].id, realtime_id))
                     return journey_pk[0]
                 else:
                     log.warn("Realtime trip id '%s' has an journey count of %s (not exactly 1)" % (realtime_id, journey_pk))
