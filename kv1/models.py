@@ -96,6 +96,7 @@ class Kv1Journey(models.Model):
                 log.warn("Realtime trip id '%s' has an invalid line" % (realtime_id,))
         else:
             log.warn("Realtime trip id '%s' has incorrect # of arguments" % (realtime_id,))
+        log.error("Couldn't find trip  %s on date %s :(" % (j, date))
         return None
 
     @staticmethod
