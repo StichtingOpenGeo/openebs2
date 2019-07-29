@@ -207,13 +207,15 @@ class Kv15Stopmessage(models.Model):
         """ Get a unique sample of stop names to use when we've got too many """
         return self.kv15messagestop_set.distinct('stop__name').order_by('stop__name')[0:number]
 
+    operators_with_other_systems = ["HTM", "SYNTUS"]
+
     def get_latest_number(self):
         """ Get the currently highest number and add one if found or start with 1  """
         num = Kv15Stopmessage.objects.filter(dataownercode=self.dataownercode, messagecodedate=self.messagecodedate).aggregate(models.Max('messagecodenumber'))
         if num['messagecodenumber__max'] == 9999:
             raise IntegrityError(ugettext("Teveel berichten vestuurd - probeer het morgen weer"))
         result = num['messagecodenumber__max'] + 1 if num['messagecodenumber__max'] else 1
-        if self.dataownercode == 'HTM' and result < 5000:
+        if self.dataownercode in self.operators_with_other_systems and result < 5000:
             result = 5000
         return result
 
