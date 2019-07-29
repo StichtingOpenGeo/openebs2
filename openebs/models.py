@@ -207,6 +207,7 @@ class Kv15Stopmessage(models.Model):
         """ Get a unique sample of stop names to use when we've got too many """
         return self.kv15messagestop_set.distinct('stop__name').order_by('stop__name')[0:number]
 
+    # TODO: Move to config
     operators_with_other_systems = ["HTM", "SYNTUS"]
 
     def get_latest_number(self):
