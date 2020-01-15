@@ -1,7 +1,7 @@
 Django>=2.2.9,<2.2.99
 south==1.0.2
 psycopg2==2.8.3
-django-admin-bootstrapped==2.5.1
+django-admin-bootstrapped==2.5.7
 #django-floppyforms
 git+https://github.com/reidransom/django-floppyforms.git
 django-crispy-forms==1.7.0
