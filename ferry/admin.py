@@ -1,7 +1,6 @@
 
 from django.contrib import admin
 from django.db.models import ForeignKey
-from django_admin_bootstrapped.widgets import GenericContentTypeSelect
 
 from ferry.models import FerryKv6Messages, FerryLine
 
