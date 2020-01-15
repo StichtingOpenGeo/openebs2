@@ -32,7 +32,7 @@ def get_end_service():
 
 class UserProfile(models.Model):
     """ Store additional user data as we don't really want a custom user model perse """
-    user = models.OneToOneField(User)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     company = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
 
 
@@ -41,7 +41,7 @@ class Kv15Log(models.Model):
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
     messagecodedate = models.DateField()
     messagecodenumber = models.IntegerField()
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     message = models.CharField(max_length=255)
     ipaddress = models.CharField(max_length=100)
 
@@ -95,7 +95,7 @@ class MessageStatus(object):
 
 class Kv15Stopmessage(models.Model):
     id = models.AutoField(primary_key=True)
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
     messagecodedate = models.DateField(verbose_name=_("Datum"), default=now)
     messagecodenumber = models.IntegerField(verbose_name=_("Volgnummer"))
@@ -238,23 +238,23 @@ class Kv15Stopmessage(models.Model):
 
 
 class Kv15Schedule(models.Model):
-    stopmessage = models.ForeignKey(Kv15Stopmessage)
+    stopmessage = models.ForeignKey(Kv15Stopmessage, on_delete=models.CASCADE)
     messagestarttime = models.DateTimeField(null=True, blank=True)
     messageendtime = models.DateTimeField(null=True, blank=True)
     weekdays = models.SmallIntegerField(null=True, blank=True)
 
 
 class Kv15MessageLine(models.Model):
-    stopmessage = models.ForeignKey(Kv15Stopmessage)
-    line = models.ForeignKey(Kv1Line)
+    stopmessage = models.ForeignKey(Kv15Stopmessage, on_delete=models.CASCADE)
+    line = models.ForeignKey(Kv1Line, on_delete=models.CASCADE)
 
     class Meta:
         unique_together = ['stopmessage', 'line']
 
 
 class Kv15MessageStop(models.Model):
-    stopmessage = models.ForeignKey(Kv15Stopmessage)
-    stop = models.ForeignKey(Kv1Stop, related_name="messages") # Stop to messages relation = messages
+    stopmessage = models.ForeignKey(Kv15Stopmessage, on_delete=models.CASCADE)
+    stop = models.ForeignKey(Kv1Stop, related_name="messages", on_delete=models.CASCADE) # Stop to messages relation = messages
 
     class Meta:
         unique_together = ['stopmessage', 'stop']
@@ -322,7 +322,7 @@ class Kv15Scenario(models.Model):
 
 class Kv15ScenarioMessage(models.Model):
     """ This stores a 'template' to be used for easily constructing normal KV15 messages """
-    scenario = models.ForeignKey(Kv15Scenario, related_name='messages')
+    scenario = models.ForeignKey(Kv15Scenario, related_name='messages', on_delete=models.CASCADE)
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
     messagepriority = models.CharField(max_length=10, choices=MESSAGEPRIORITY, default='PTPROCESS', verbose_name=_("Prioriteit"))
     messagetype = models.CharField(max_length=10, choices=MESSAGETYPE, default='GENERAL', verbose_name=_("Type bericht"))
@@ -355,14 +355,14 @@ class Kv15ScenarioMessage(models.Model):
 
 class Kv15ScenarioStop(models.Model):
     """ For the template, this links a stop """
-    message = models.ForeignKey(Kv15ScenarioMessage, related_name='stops')
-    stop = models.ForeignKey(Kv1Stop)
+    message = models.ForeignKey(Kv15ScenarioMessage, related_name='stops', on_delete=models.CASCADE)
+    stop = models.ForeignKey(Kv1Stop, on_delete=models.CASCADE)
 
 
 class Kv15ScenarioInstance(models.Model):
     """ This keeps track of instances of scenarios to be able to easily clean them up """
-    scenario = models.ForeignKey(Kv15Scenario)
-    message = models.ForeignKey(Kv15Stopmessage)
+    scenario = models.ForeignKey(Kv15Scenario, on_delete=models.CASCADE)
+    message = models.ForeignKey(Kv15Stopmessage, on_delete=models.CASCADE)
 
 
 class Kv17Change(models.Model):
@@ -371,8 +371,8 @@ class Kv17Change(models.Model):
     """
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
     operatingday = models.DateField(verbose_name=_("Datum"))
-    line = models.ForeignKey(Kv1Line, verbose_name=_("Lijn"))
-    journey = models.ForeignKey(Kv1Journey, verbose_name=_("Rit"), related_name="changes")  # "A journey has changes"
+    line = models.ForeignKey(Kv1Line, verbose_name=_("Lijn"), on_delete=models.CASCADE)
+    journey = models.ForeignKey(Kv1Journey, verbose_name=_("Rit"), related_name="changes", on_delete=models.CASCADE)  # "A journey has changes"
     reinforcement = models.IntegerField(default=0, verbose_name=_("Versterkingsnummer"))  # Never fill this for now
     is_cancel = models.BooleanField(default=True, verbose_name=_("Opgeheven?"),
                                     help_text=_("Rit kan ook een toelichting zijn voor een halte"))
@@ -416,7 +416,7 @@ class Kv17JourneyChange(models.Model):
     Store cancel and recover for a complete trip
     If is_recovered = False is a cancel, else it's no longer
     """
-    change = models.ForeignKey(Kv17Change, related_name="journey_details")
+    change = models.ForeignKey(Kv17Change, related_name="journey_details", on_delete=models.CASCADE)
     reasontype = models.SmallIntegerField(null=True, blank=True, choices=REASONTYPE, verbose_name=_("Type oorzaak"))
     subreasontype = models.CharField(max_length=10, blank=True, choices=SUBREASONTYPE, verbose_name=_("Oorzaak"))
     reasoncontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg oorzaak"))
@@ -443,10 +443,10 @@ class Kv17StopChange(models.Model):
                          (5, "MUTATIONMESSAGE")
                         )
 
-    change = models.ForeignKey(Kv17Change, related_name="stop_change")
+    change = models.ForeignKey(Kv17Change, related_name="stop_change", on_delete=models.CASCADE)
     type = models.PositiveSmallIntegerField(null=False, choices=STOP_CHANGE_TYPES)
     # All messages
-    stop = models.ForeignKey(Kv1Stop)
+    stop = models.ForeignKey(Kv1Stop, on_delete=models.CASCADE)
     stoporder = models.IntegerField(null=False)  # This is duplicate/can be easily derived
     # Lag
     lag = models.IntegerField(null=True, blank=True)  # In seconds
@@ -494,8 +494,8 @@ class Kv1StopFilter(models.Model):
 
 
 class Kv1StopFilterStop(models.Model):
-    filter = models.ForeignKey(Kv1StopFilter, related_name="stops")
-    stop = models.ForeignKey(Kv1Stop)
+    filter = models.ForeignKey(Kv1StopFilter, related_name="stops", on_delete=models.CASCADE)
+    stop = models.ForeignKey(Kv1Stop, on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = _('Filter halte')
