@@ -15,9 +15,9 @@ from braces.views import JSONResponseMixin
 from django.conf import settings
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ImproperlyConfigured
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.shortcuts import redirect, render
-from push import Push
+from utils.push import Push
 from django.db.models.query import QuerySet
 
 log = logging.getLogger('openebs.views.mixins')
