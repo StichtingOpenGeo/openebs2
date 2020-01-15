@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from braces.views import LoginRequiredMixin
 from django.contrib.gis.db.models import Extent
-from django.core.urlresolvers import reverse_lazy
+from django.urls import reverse_lazy
 from django.db.models import Q, Count
 from django.shortcuts import redirect
 from django.views.generic import ListView, UpdateView, DetailView
@@ -265,4 +265,3 @@ class MessageStopsBoundAjaxView(LoginRequiredMixin, JSONListResponseMixin, Detai
             qry = qry.filter(kv15stopmessage__dataownercode=self.request.user.userprofile.company)
 
         return qry
-
