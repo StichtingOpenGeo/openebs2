@@ -2,6 +2,7 @@ import logging
 from datetime import time
 
 from django.contrib.gis.db import models
+from django.db.models import Manager as GeoManager
 from jsonfield import JSONField
 from kv15.enum import DATAOWNERCODE, STOPTYPES
 from django.utils.translation import ugettext_lazy as _
@@ -34,7 +35,7 @@ class Kv1Stop(models.Model):
     location = models.PointField()
 
     # Custom manager for geomodels/searches
-    objects = models.GeoManager()
+    objects = GeoManager()
 
     class Meta:
         verbose_name = _("Halte")
@@ -67,7 +68,7 @@ class Kv1Stop(models.Model):
 
 class Kv1Journey(models.Model):
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
-    line = models.ForeignKey(Kv1Line, related_name="journeys")  # Represent lineplanningnumber\
+    line = models.ForeignKey(Kv1Line, related_name="journeys", on_delete=models.CASCADE)  # Represent lineplanningnumber\
     journeynumber = models.PositiveIntegerField()  # 0 - 999999
     scheduleref = models.PositiveIntegerField()  # Field 'availabilityconditionref'
     departuretime = models.PositiveIntegerField()
@@ -119,8 +120,8 @@ class Kv1Journey(models.Model):
 
 
 class Kv1JourneyStop(models.Model):
-    journey = models.ForeignKey(Kv1Journey, related_name="stops")
-    stop = models.ForeignKey(Kv1Stop)
+    journey = models.ForeignKey(Kv1Journey, related_name="stops", on_delete=models.CASCADE)
+    stop = models.ForeignKey(Kv1Stop, on_delete=models.CASCADE)
     stoporder = models.SmallIntegerField()
     stoptype = models.CharField(choices=STOPTYPES, default="INTERMEDIATE", max_length=12)
     targetarrival = models.TimeField()
@@ -136,7 +137,7 @@ class Kv1JourneyStop(models.Model):
 
 
 class Kv1JourneyDate(models.Model):
-    journey = models.ForeignKey(Kv1Journey, related_name='dates')  # A journey has dates
+    journey = models.ForeignKey(Kv1Journey, related_name='dates', on_delete=models.CASCADE)  # A journey has dates
     date = models.DateField()
 
     def __unicode__(self):
