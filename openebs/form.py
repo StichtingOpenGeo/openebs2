@@ -1,3 +1,4 @@
+from builtins import object
 import logging
 from crispy_forms.bootstrap import AccordionGroup, Accordion
 from crispy_forms.helper import FormHelper
@@ -39,7 +40,7 @@ class Kv15StopMessageForm(forms.ModelForm):
             raise ValidationError(_("Bericht mag niet leeg zijn"))
         return self.cleaned_data['messagecontent']
 
-    class Meta:
+    class Meta(object):
         model = Kv15Stopmessage
         exclude = ['messagecodenumber', 'status', 'stops', 'messagecodedate', 'isdeleted', 'id', 'dataownercode', 'user']
         widgets = {
@@ -106,7 +107,7 @@ class Kv15StopMessageForm(forms.ModelForm):
         )
 
 class Kv15ScenarioForm(forms.ModelForm):
-    class Meta:
+    class Meta(object):
         model = Kv15Scenario
         exclude = ['dataownercode']
         widgets = {
@@ -149,7 +150,7 @@ class Kv15ScenarioMessageForm(forms.ModelForm):
         else:
             return self.cleaned_data
 
-    class Meta:
+    class Meta(object):
         model = Kv15ScenarioMessage
         exclude = ['dataownercode']
         widgets = {
@@ -278,7 +279,7 @@ class Kv17ChangeForm(forms.ModelForm):
 
         return xml_output
 
-    class Meta:
+    class Meta(object):
         model = Kv17Change
         exclude = [ 'dataownercode', 'operatingday', 'line', 'journey', 'is_recovered', 'reinforcement']
 

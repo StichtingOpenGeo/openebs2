@@ -1,3 +1,4 @@
+from builtins import object
 import os, datetime
 from datetime import datetime as dt
 
@@ -20,7 +21,7 @@ class FerryLine(models.Model):
     scenario_cancelled = models.ForeignKey(Kv15Scenario, verbose_name=_("Scenario 'Dienst uit vaart'"), blank=True, null=True, on_delete=models.CASCADE)
     enable_auto_messages = models.BooleanField(verbose_name=_("Verstuur automatisch KV6 berichten"), default=False)
 
-    class Meta:
+    class Meta(object):
         verbose_name = "Veerboot"
         verbose_name_plural = "Veerboten"
 
@@ -34,7 +35,7 @@ class FerryLine(models.Model):
 
 
 class FerryKv6Messages(models.Model):
-    class Status:
+    class Status(object):
         INITIALIZED = 0
         READY = 1
         DEPARTED = 5
@@ -58,7 +59,7 @@ class FerryKv6Messages(models.Model):
     status_updated = models.DateTimeField(blank=True, null=True)
     updated = models.DateTimeField(auto_now=True)
 
-    class Meta:
+    class Meta(object):
         verbose_name = _("Afvaart")
         verbose_name_plural = _("Afvaarten")
         unique_together = ('ferry', 'journeynumber', 'operatingday')
