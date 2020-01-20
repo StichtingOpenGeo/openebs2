@@ -21,9 +21,9 @@ class Command(BaseCommand):
     log = logging.getLogger('openebs.kv8verify')
 
     def handle(self, *args, **options):
-        print 'Setting up a ZeroMQ SUB: %s\n' % (settings.GOVI_VERIFY_FEED)
+        print('Setting up a ZeroMQ SUB: %s\n' % (settings.GOVI_VERIFY_FEED))
         sub = Command.setup_subscription()
-        print "Started at %s, further messages are in your logfile" % (datetime.now().isoformat('T'))
+        print("Started at %s, further messages are in your logfile" % (datetime.now().isoformat('T')))
         while True:
             self.receive_message(sub)
 
