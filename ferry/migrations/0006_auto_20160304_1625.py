@@ -16,9 +16,9 @@ class Migration(migrations.Migration):
             name='FerryLine',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('line', models.ForeignKey(to='kv1.Kv1Line')),
-                ('stop_arrival', models.ForeignKey(related_name='ferry_arrival', to='kv1.Kv1Stop')),
-                ('stop_depart', models.ForeignKey(related_name='ferry_departure', to='kv1.Kv1Stop')),
+                ('line', models.ForeignKey(to='kv1.Kv1Line', on_delete=models.CASCADE)),
+                ('stop_arrival', models.ForeignKey(related_name='ferry_arrival', to='kv1.Kv1Stop', on_delete=models.CASCADE)),
+                ('stop_depart', models.ForeignKey(related_name='ferry_departure', to='kv1.Kv1Stop', on_delete=models.CASCADE)),
             ],
         ),
         migrations.AlterField(

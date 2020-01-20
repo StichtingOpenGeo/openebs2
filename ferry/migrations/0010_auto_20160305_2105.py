@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='ferrykv6messages',
             name='ferry',
-            field=models.ForeignKey(verbose_name='Veerbootlijn', to='ferry.FerryLine'),
+            field=models.ForeignKey(verbose_name='Veerbootlijn', to='ferry.FerryLine', on_delete=models.CASCADE),
         ),
         migrations.AlterField(
             model_name='ferrykv6messages',
@@ -50,16 +50,16 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='ferryline',
             name='line',
-            field=models.ForeignKey(verbose_name='Lijn', to='kv1.Kv1Line', unique=True),
+            field=models.ForeignKey(verbose_name='Lijn', to='kv1.Kv1Line', unique=True, on_delete=models.CASCADE),
         ),
         migrations.AlterField(
             model_name='ferryline',
             name='stop_arrival',
-            field=models.ForeignKey(related_name='ferry_arrival', verbose_name='Aankomstpunt', to='kv1.Kv1Stop'),
+            field=models.ForeignKey(related_name='ferry_arrival', verbose_name='Aankomstpunt', to='kv1.Kv1Stop', on_delete=models.CASCADE),
         ),
         migrations.AlterField(
             model_name='ferryline',
             name='stop_depart',
-            field=models.ForeignKey(related_name='ferry_departure', verbose_name='Vertrekpunt', to='kv1.Kv1Stop'),
+            field=models.ForeignKey(related_name='ferry_departure', verbose_name='Vertrekpunt', to='kv1.Kv1Stop', on_delete=models.CASCADE),
         ),
     ]
