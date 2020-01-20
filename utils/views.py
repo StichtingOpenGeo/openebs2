@@ -120,7 +120,7 @@ class AccessMixin(AccessMixin):
         # Check to see if the request's user has the required permission.
         has_permission = request.user.has_perm(self.permission_required)
 
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             if not has_permission:  # If the user lacks the permission
                 log.info("User %s requested %s but doesn't have permission" % (self.request.user, request.get_full_path()))
                 return redirect(reverse('app_nopermission'))
