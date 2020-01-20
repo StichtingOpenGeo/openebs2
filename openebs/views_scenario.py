@@ -1,3 +1,4 @@
+from builtins import str
 import logging
 from braces.views import LoginRequiredMixin
 from django.urls import reverse_lazy

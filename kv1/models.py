@@ -1,3 +1,6 @@
+from __future__ import division
+from past.utils import old_div
+from builtins import object
 import logging
 from datetime import time
 
@@ -18,7 +21,7 @@ class Kv1Line(models.Model):
     headsign = models.CharField(max_length=100)
     stop_map = JSONField()
 
-    class Meta:
+    class Meta(object):
         verbose_name = _("Lijn")
         verbose_name_plural = _("Lijninformatie")
         unique_together = ('dataownercode', 'lineplanningnumber')
@@ -37,7 +40,7 @@ class Kv1Stop(models.Model):
     # Custom manager for geomodels/searches
     objects = GeoManager()
 
-    class Meta:
+    class Meta(object):
         verbose_name = _("Halte")
         verbose_name_plural = _("Halteinformatie")
         unique_together = ('dataownercode', 'userstopcode')
@@ -110,10 +113,10 @@ class Kv1Journey(models.Model):
         return journeys[0] if journeys.count() == 1 else None
 
     def departuretime_as_time(self):
-        total_minutes = self.departuretime / 60
-        return time(hour=total_minutes / 60, minute=total_minutes % 60)
+        total_minutes = old_div(self.departuretime, 60)
+        return time(hour=old_div(total_minutes, 60), minute=total_minutes % 60)
 
-    class Meta:
+    class Meta(object):
         verbose_name = _("Rit")
         verbose_name_plural = _("Ritinformatie")
         unique_together = ('dataownercode', 'line', 'journeynumber', 'scheduleref')
@@ -130,7 +133,7 @@ class Kv1JourneyStop(models.Model):
     def __unicode__(self):
         return "%s - Stop #%s: %s" % (self.journey.journeynumber, self.stoporder, self.stop)
 
-    class Meta:
+    class Meta(object):
         verbose_name = _("Rithalte")
         verbose_name_plural = _("Rithaltes")
         unique_together = (('journey', 'stop'), ('journey', 'stoporder'))
@@ -143,7 +146,7 @@ class Kv1JourneyDate(models.Model):
     def __unicode__(self):
         return "%s (%s)" % (self.journey.journeynumber, self.date)
 
-    class Meta:
+    class Meta(object):
         verbose_name = _("Ritdag")
         verbose_name_plural = _("Ritdag")
         unique_together = (('journey', 'date'))

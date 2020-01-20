@@ -7,6 +7,7 @@
 # Also note: You'll have to insert the output of 'django-admin.py sqlcustom [appname]'
 # into your database.
 from __future__ import unicode_literals
+from builtins import object
 import logging
 import os
 from django.db import models, IntegrityError
@@ -45,7 +46,7 @@ class Kv15Log(models.Model):
     message = models.CharField(max_length=255)
     ipaddress = models.CharField(max_length=100)
 
-    class Meta:
+    class Meta(object):
         verbose_name = _('Logbericht')
         verbose_name_plural = _('Logberichten')
         permissions = (
@@ -122,7 +123,7 @@ class Kv15Stopmessage(models.Model):
     status = models.SmallIntegerField(choices=MessageStatus.STATUSES, default=0, verbose_name=_("Status"))
     stops = models.ManyToManyField(Kv1Stop, through='Kv15MessageStop')
 
-    class Meta:
+    class Meta(object):
         verbose_name = _('KV15 Bericht')
         verbose_name_plural = _('KV15 Berichten')
         unique_together = ('dataownercode', 'messagecodedate', 'messagecodenumber',)
@@ -248,7 +249,7 @@ class Kv15MessageLine(models.Model):
     stopmessage = models.ForeignKey(Kv15Stopmessage, on_delete=models.CASCADE)
     line = models.ForeignKey(Kv1Line, on_delete=models.CASCADE)
 
-    class Meta:
+    class Meta(object):
         unique_together = ['stopmessage', 'line']
 
 
@@ -256,7 +257,7 @@ class Kv15MessageStop(models.Model):
     stopmessage = models.ForeignKey(Kv15Stopmessage, on_delete=models.CASCADE)
     stop = models.ForeignKey(Kv1Stop, related_name="messages", on_delete=models.CASCADE) # Stop to messages relation = messages
 
-    class Meta:
+    class Meta(object):
         unique_together = ['stopmessage', 'stop']
 
 
@@ -268,7 +269,7 @@ class Kv15Scenario(models.Model):
     def __unicode__(self):
         return self.name
 
-    class Meta:
+    class Meta(object):
         verbose_name = _('Scenario')
         verbose_name_plural = _("Scenario's")
         permissions = (
@@ -348,7 +349,7 @@ class Kv15ScenarioMessage(models.Model):
             message = _("<geen bericht>")
         return "%s : %s" % (self.scenario.name, message)
 
-    class Meta:
+    class Meta(object):
         verbose_name = _('Scenario bericht')
         verbose_name_plural = _("Scenario berichten")
 
@@ -395,7 +396,7 @@ class Kv17Change(models.Model):
         """
         return render_to_string('xml/kv17journey.xml', {'object': self}).replace(os.linesep, '')
 
-    class Meta:
+    class Meta(object):
         verbose_name = _('Ritaanpassing')
         verbose_name_plural = _("Ritaanpassingen")
         unique_together = ('operatingday', 'line', 'journey', 'reinforcement')
@@ -424,7 +425,7 @@ class Kv17JourneyChange(models.Model):
     subadvicetype = models.CharField(max_length=10, blank=True, choices=SUBADVICETYPE, verbose_name=_("Advies"))
     advicecontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg advies"))
 
-    class Meta:
+    class Meta(object):
         verbose_name = _('Ritaanpassingsdetails')
         verbose_name_plural = _("Ritaanpassingendetails")
 
@@ -468,7 +469,7 @@ class Kv17StopChange(models.Model):
     subadvicetype = models.CharField(max_length=10, blank=True, choices=SUBADVICETYPE, verbose_name=_("Advies"))
     advicecontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg advies"))
 
-    class Meta:
+    class Meta(object):
         verbose_name = _('Halteaanpassing')
         verbose_name_plural = _("Halteaanpassingen")
 
@@ -478,7 +479,7 @@ class Kv1StopFilter(models.Model):
     description = models.TextField(max_length=200, blank=True, null=True)
     enabled = models.BooleanField(default=True)
 
-    class Meta:
+    class Meta(object):
         verbose_name = _('Filter')
         verbose_name_plural = _("Filters")
         permissions = (
@@ -497,7 +498,7 @@ class Kv1StopFilterStop(models.Model):
     filter = models.ForeignKey(Kv1StopFilter, related_name="stops", on_delete=models.CASCADE)
     stop = models.ForeignKey(Kv1Stop, on_delete=models.CASCADE)
 
-    class Meta:
+    class Meta(object):
         verbose_name = _('Filter halte')
         verbose_name_plural = _("Filter haltes")
         unique_together = ('filter', 'stop')
