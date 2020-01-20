@@ -75,7 +75,7 @@ TEMPLATES = [
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 CRISPY_FAIL_SILENTLY = not DEBUG
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -210,11 +210,12 @@ FERRY_FULL_REASONCONTENT = "Boot is vol"
 
 # Push settings
 try:
-    from settings_push import *
+    from openebs2.settings_push import *
 except ImportError:
     PUSH_SETTINGS = False
 
 try:
-    from local_settings import *
+    from openebs2.local_settings import *
 except ImportError:
+    raise
     pass
