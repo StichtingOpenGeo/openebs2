@@ -133,13 +133,13 @@ class AccessMixin(AccessMixin):
             request, *args, **kwargs)
 
 
-def handler403(request):
+def handler403(request, exception):
     response = render(request, 'openebs/nopermission.html', {})
     response.status_code = 404
     return response
 
 
-def handler404(request):
+def handler404(request, exception):
     response = render(request, 'openebs/notfound.html', {})
     response.status_code = 404
     return response
