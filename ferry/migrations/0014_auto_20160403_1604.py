@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='ferryline',
             name='scenario_cancelled',
-            field=models.ForeignKey(verbose_name="Scenario 'Dienst uit vaart'", blank=True, to='openebs.Kv15Scenario', null=True),
+            field=models.ForeignKey(verbose_name="Scenario 'Dienst uit vaart'", blank=True, to='openebs.Kv15Scenario', null=True, on_delete=models.CASCADE),
         ),
     ]

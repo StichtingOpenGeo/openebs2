@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ('journeynumber', models.PositiveIntegerField()),
                 ('delay', models.IntegerField()),
                 ('departed', models.BooleanField()),
-                ('line', models.ForeignKey(to='kv1.Kv1Line')),
+                ('line', models.ForeignKey(to='kv1.Kv1Line', on_delete=models.CASCADE)),
             ],
         ),
     ]

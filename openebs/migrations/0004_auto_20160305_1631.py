@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='kv17stopchange',
             name='change',
-            field=models.ForeignKey(related_name='stop_change', to='openebs.Kv17Change'),
+            field=models.ForeignKey(related_name='stop_change', to='openebs.Kv17Change', on_delete=models.CASCADE),
         ),
         migrations.AlterField(
             model_name='kv17stopchange',
