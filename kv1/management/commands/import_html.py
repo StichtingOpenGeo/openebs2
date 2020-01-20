@@ -71,6 +71,6 @@ class Command(BaseCommand):
             errors += 1
 
         if errors > 1:
-            print "Failed on file %s (%s x)" % (file.name, errors)
+            print("Failed on file %s (%s x)" % (file.name, errors))
 
         return json.dumps(output)

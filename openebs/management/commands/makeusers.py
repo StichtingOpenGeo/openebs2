@@ -13,7 +13,7 @@ class Command(BaseCommand):
         parser.add_argument('groupname', nargs='+', type=str)
 
     def handle(self, *args, **options):
-        print "Creating users"
+        print("Creating users")
         g = Group.objects.get(name=options['groupname'][0])
         with open(options['filename'][0], 'rb') as csvfile:
             reader = csv.reader(csvfile, delimiter=';', quotechar='|')
@@ -29,4 +29,4 @@ class Command(BaseCommand):
                                                  last_name=' '.join(row[1].split(' ')[1:]))
                     UserProfile(user=u, company="VTN").save()
                     g.user_set.add(u)
-                    print "%s;%s;%s" % (username, row[2].lower().rstrip(), password)
+                    print("%s;%s;%s" % (username, row[2].lower().rstrip(), password))

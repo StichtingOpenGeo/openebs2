@@ -22,7 +22,7 @@ class Command(BaseCommand):
     def handle_ferry(self, ferry):
         date = get_operator_date()
         journeys = ferry.line.journeys.filter(dates__date=date).order_by('departuretime')
-        print "Checking ferry: %s" % ferry.line
+        print("Checking ferry: %s" % ferry.line)
         ## READY: Init + Arrive
         init_target = self.get_target_time(5)
         for journey in journeys.filter(departuretime__lte=init_target):
@@ -87,6 +87,6 @@ class Command(BaseCommand):
 
     def log(self, level, text):
         if self.debug:
-            print "%s: %s" % (level, text)
+            print("%s: %s" % (level, text))
         else:
             self.log(level, text)
