@@ -49,6 +49,10 @@ class ExternalMessagePushMixin(object):
         """
         Push message _msg_ to GOVI and other subscribers, and return if it was successful
         """
+        if len(self.pushers) == 0:
+            log.warning("No pushers have been defined")
+            return True
+
         success = False
         for pusher in self.pushers:
             code, content = pusher.push(msg)
