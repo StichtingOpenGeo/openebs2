@@ -1,4 +1,4 @@
-import http.client
+import http.client as httplib
 import logging
 import socket
 
@@ -13,7 +13,7 @@ class Push:
     fail_on_failure = False
     debug = True
 
-    def __init__(self, host, endpoint, namespace, dossiername, subscriberid = 'openOV', use_https = False):
+    def __init__(self, host, endpoint, namespace, dossiername, subscriberid='openOV', use_https=False):
         self.log = logging.getLogger("openebs.push")
         self.host = host
         self.endpoint = endpoint
@@ -27,8 +27,8 @@ class Push:
         data = {'namespace': self.namespace,
                 'subscriberid': self.subscriberid,
                 'dossiername': self.dossiername,
-                'timestamp':self.timestamp.isoformat('T'),
-                'content' : self.content
+                'timestamp': self.timestamp.isoformat('T'),
+                'content': self.content
                 }
 
         wrapper = """<%(dossiername)s>
@@ -63,13 +63,14 @@ class Push:
         # Calculate XML with wrapper/header
         content = self.__str__()
         if self.debug:
-            self.log.debug("Pushing message:\n"+content)
+            self.log.debug("Pushing message:\n%s" % (content,))
 
         response_code = -1
         response_content = None
         error = False
         if self.enabled:
-            self.log.debug("Posting to %s (%s://%s%s)" % (self.alias, 'https' if self.use_https else 'http', self.host, self.endpoint, ))
+            self.log.debug("Posting to %s (%s://%s%s)" % (
+            self.alias, 'https' if self.use_https else 'http', self.host, self.endpoint,))
             conn = None
             try:
                 if self.use_https:
@@ -87,10 +88,11 @@ class Push:
             if not error and conn is not None:
                 response = conn.getresponse()
                 response_code = response.status
-                response_content = response.read()
+                response_content = response.read().decode('utf-8')
                 conn.close()
 
             if self.debug:
-                self.log.debug("Connecting to %s and got response code %s and content: %s" % (self.alias, response_code, response_content))
+                self.log.debug("Connecting to %s and got response code %s and content: %s" % (
+                self.alias, response_code, response_content))
 
         return response_code, response_content
