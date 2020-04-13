@@ -28,7 +28,7 @@ class CountCalendar(LocaleHTMLCalendar):
             return self.day_cell(cssclass, '<span class="day">%d</span>' % day)
         return self.day_cell('noday', '&nbsp;')
 
-    def formatmonth(self, year, month):
+    def formatmonth(self, year, month, **kwargs):
         self.year, self.month = year, month
         return super(CountCalendar, self).formatmonth(year, month)
 

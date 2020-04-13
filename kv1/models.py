@@ -13,6 +13,7 @@ from utils.time import get_operator_date
 
 log = logging.getLogger('openebs.models.kv1')
 
+
 class Kv1Line(models.Model):
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
     lineplanningnumber = models.CharField(max_length=10)
@@ -67,7 +68,8 @@ class Kv1Stop(models.Model):
 
 class Kv1Journey(models.Model):
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
-    line = models.ForeignKey(Kv1Line, related_name="journeys", on_delete=models.CASCADE)  # Represent lineplanningnumber\
+    line = models.ForeignKey(Kv1Line, related_name="journeys",
+                             on_delete=models.CASCADE)  # Represent lineplanningnumber\
     journeynumber = models.PositiveIntegerField()  # 0 - 999999
     scheduleref = models.PositiveIntegerField()  # Field 'availabilityconditionref'
     departuretime = models.PositiveIntegerField()
@@ -92,7 +94,8 @@ class Kv1Journey(models.Model):
                     log.info("Found journey with id '%s' for realtime_id %s" % (journey_pk[0].id, realtime_id))
                     return journey_pk[0]
                 else:
-                    log.warn("Realtime trip id '%s' has an journey count of %s (not exactly 1)" % (realtime_id, journey_pk))
+                    log.warn(
+                        "Realtime trip id '%s' has an journey count of %s (not exactly 1)" % (realtime_id, journey_pk))
             else:
                 log.warn("Realtime trip id '%s' has an invalid line" % (realtime_id,))
         else:

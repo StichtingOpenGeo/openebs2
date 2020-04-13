@@ -10,13 +10,12 @@ from utils.time import get_operator_date
 
 
 class Command(BaseCommand):
-
-    pusher = Kv17PushMixin() # TODO: This defines a default timeout, we may want to/need to change this for batch operations
+    # TODO: This defines a default timeout, we may want to/need to change this for batch operations
+    pusher = Kv17PushMixin()
     BATCH_SIZE = 100
 
     last_row_date = ""
     date = get_operator_date()
-
 
     def add_arguments(self, parser):
         parser.add_argument('filename', nargs='+', type=str)
@@ -66,10 +65,13 @@ class Command(BaseCommand):
                                      operatingday=date,
                                      line=journey.line,
                                      journey=journey).count() == 0:
-            self.stdout.write("Cancelling: %s:%s:%s on %s " % (journey.dataownercode, journey.line.lineplanningnumber, journey.journeynumber, date))
-            modification = Kv17Change(dataownercode=journey.dataownercode, operatingday=date, line=journey.line, journey=journey)
+            self.stdout.write("Cancelling: %s:%s:%s on %s " % (
+                journey.dataownercode, journey.line.lineplanningnumber, journey.journeynumber, date))
+            modification = Kv17Change(dataownercode=journey.dataownercode, operatingday=date, line=journey.line,
+                                      journey=journey)
             modification.save()
             return modification.to_xml()
         else:
-            self.stdout.write("Already cancelled: %s:%s:%s on %s " % (journey.dataownercode, journey.line.lineplanningnumber, journey.journeynumber, date))
+            self.stdout.write("Already cancelled: %s:%s:%s on %s " % (
+                journey.dataownercode, journey.line.lineplanningnumber, journey.journeynumber, date))
             return None

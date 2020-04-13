@@ -36,7 +36,7 @@ class ScenarioMessageCreateView(AccessMixin, ScenarioContentMixin, CreateView):
 
     def get_initial(self):
         init = super(ScenarioMessageCreateView, self).get_initial()
-        if self.kwargs.get('scenario', None): # This ensures the scenario can never be spoofed
+        if self.kwargs.get('scenario', None):  # This ensures the scenario can never be spoofed
             init['scenario'] = self.kwargs.get('scenario', None)
         return init
 
@@ -49,7 +49,7 @@ class ScenarioMessageCreateView(AccessMixin, ScenarioContentMixin, CreateView):
             form.instance.scenario = get_object_or_404(Kv15Scenario, pk=self.kwargs.get('scenario', None),
                                                               dataownercode=self.request.user.userprofile.company)
 
-        ret = super(CreateView, self).form_valid(form)
+        ret = super(ScenarioMessageCreateView, self).form_valid(form)
 
         # After saving, set the haltes and save them
         haltes = self.request.POST.get('haltes', None)

@@ -1,9 +1,8 @@
 import csv
+from django.db import connection, Error
 
 # Hack to disable logging for now
 # TODO: test if we can remove this
-from django.db import connection, Error
-
 connection.use_debug_cursor = False
 
 from django.contrib.gis.geos import Point
@@ -61,7 +60,8 @@ class Command(BaseCommand):
                 except Error as error:
                     self.log("Issue parsing stop: %s (with row: %s)" % (error, row))
 
-    def do_stop(self, row):
+    @staticmethod
+    def do_stop(row):
         stop_code = row['operator_id'].split(':')
         location = Point(float(row['longitude']), float(row['latitude']), srid=4326)
         s, created = Kv1Stop.objects.get_or_create(dataownercode=stop_code[0], userstopcode=stop_code[1],

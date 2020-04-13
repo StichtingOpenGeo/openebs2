@@ -7,9 +7,9 @@ from django.template import loader
 from django.views.generic import TemplateView
 
 try:
-    from braces.views import AccessMixin
+    from braces.views import AccessMixin as BracesAccessMixin
 except:
-    from braces.views._access import AccessMixin
+    from braces.views._access import AccessMixin as BracesAccessMixin
 
 from braces.views import JSONResponseMixin
 from django.conf import settings
@@ -37,7 +37,7 @@ class JSONListResponseMixin(JSONResponseMixin):
 
 
 class ExternalMessagePushMixin(object):
-    message_type = None # Abstract
+    message_type = None  # Abstract
     namespace = ''
     dossier = ''
     pushers = []
@@ -73,9 +73,9 @@ class ExternalMessagePushMixin(object):
         return "?"
 
     def get_pushers(self, settings, defaults):
-        '''
+        """
         Setup the push class - storage for all things related to a specific subscriber channel (meaning an endpoint)
-        '''
+        """
         push_list = []
         for destination in sorted(settings, key=lambda k: k['priority']):
             if not destination['enabled']:
@@ -102,7 +102,7 @@ class ExternalMessagePushMixin(object):
         return push_list
 
 
-class AccessMixin(AccessMixin):
+class AccessMixin(BracesAccessMixin):
     """
     This is based on the braces LoginRequiredMixin and PermissionRequiredMixin but will only raise the exception
     if the user is logged in

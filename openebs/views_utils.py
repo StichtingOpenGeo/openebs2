@@ -1,7 +1,6 @@
 from django.core.exceptions import PermissionDenied
 from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.list import MultipleObjectMixin
-from utils.views import ExternalMessagePushMixin
 
 
 #

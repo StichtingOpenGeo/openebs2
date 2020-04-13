@@ -1,5 +1,6 @@
 import floppyforms.__future__ as forms
 
+
 class DatePicker(forms.DateInput):
     # From the floppyforms example
     template_name = 'floppyforms/widgets/datepicker.html'

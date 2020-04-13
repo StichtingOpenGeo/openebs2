@@ -1,7 +1,5 @@
-import re, json
-from os import listdir
-from os.path import isfile, join, splitext, split
 from django.core.management import BaseCommand
+
 from kv1.models import Kv1Line, Kv1Stop
 
 
