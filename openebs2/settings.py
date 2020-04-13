@@ -114,7 +114,6 @@ INSTALLED_APPS = (
     # 'debug_toolbar',
 
     # Admin & tools
-    'django_admin_bootstrapped',
     'django.contrib.admin',
 )
 

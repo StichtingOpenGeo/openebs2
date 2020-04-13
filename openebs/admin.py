@@ -21,6 +21,8 @@ class MessageStopInline(admin.StackedInline):
 class Kv15MessageAdmin(admin.ModelAdmin):
     model = Kv15Stopmessage
     inlines = (MessageStopInline,)
+    list_display = ('dataownercode', 'messagecodedate', 'messagecodenumber', 'messagecontent', 'status')
+    list_filter = ['dataownercode', 'status', 'messagecodedate', 'messagetype', 'messagepriority']
 
 
 admin.site.register(Kv15Stopmessage, Kv15MessageAdmin)
@@ -52,6 +54,7 @@ class Kv17JourneyChangeInline(admin.StackedInline):
 class Kv17ChangeAdmin(admin.ModelAdmin):
     model = Kv17Change
     inlines = (Kv17JourneyChangeInline,)
+    list_display = ('dataownercode', 'operatingday', 'line', 'journey')
     list_filter = ('dataownercode', 'operatingday')
     list_per_page = 500
     raw_id_fields = ('line', 'journey')

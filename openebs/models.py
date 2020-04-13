@@ -28,7 +28,7 @@ log = logging.getLogger('openebs.views')
 # TODO Move this
 def get_end_service():
     # Hmm, this is GMT
-    return (now()+timedelta(days=1)).replace(hour=2, minute=0, second=0, microsecond=0)
+    return (now() + timedelta(days=1)).replace(hour=2, minute=0, second=0, microsecond=0)
 
 
 class UserProfile(models.Model):
@@ -54,19 +54,20 @@ class Kv15Log(models.Model):
         )
 
     @staticmethod
-    def create_log_entry(stop_message, ipaddress = None):
+    def create_log_entry(stop_message, ipaddress=None):
         log = Kv15Log()
         log.dataownercode = stop_message.dataownercode
         log.messagecodedate = stop_message.messagecodedate
         log.messagecodenumber = stop_message.messagecodenumber
         log.user = stop_message.user
-        if stop_message.messagecontent is not None: # Can happen with overrule
+        if stop_message.messagecontent is not None:  # Can happen with overrule
             log.message = stop_message.messagecontent
         else:
-            log.message = ugettext("<leeg of overschrijven>") # Default
+            log.message = ugettext("<leeg of overschrijven>")  # Default
         log.ipaddress = ipaddress
         log.save()
         return log
+
 
 class MessageStatus(object):
     # Status values
@@ -79,13 +80,13 @@ class MessageStatus(object):
     ERROR_SEND = 11
     ERROR_SEND_DELETE = 12
 
-    STATUSES = ((SAVED, _("Opgeslagen")), # In our database
-                (SENT, _("Verstuurd")), # Pushed to GOVI
-                (CONFIRMED, _("Teruggemeld")), # Received confirmation
-                (DELETED, _("Verwijderd")), # Received confirmation
-                (DELETE_SENT, _("Verwijdering verstuurd")), # Verwijderen succesvol
-                (DELETE_CONFIRMED, _("Verwijdering teruggemeld")), # Verwijderen teruggemeld
-                (ERROR_SEND, _("Fout bij versturen")), # Failed to push
+    STATUSES = ((SAVED, _("Opgeslagen")),  # In our database
+                (SENT, _("Verstuurd")),  # Pushed to GOVI
+                (CONFIRMED, _("Teruggemeld")),  # Received confirmation
+                (DELETED, _("Verwijderd")),  # Received confirmation
+                (DELETE_SENT, _("Verwijdering verstuurd")),  # Verwijderen succesvol
+                (DELETE_CONFIRMED, _("Verwijdering teruggemeld")),  # Verwijderen teruggemeld
+                (ERROR_SEND, _("Fout bij versturen")),  # Failed to push
                 (ERROR_SEND_DELETE, _("Fout bij versturen verwijdering")),
                 )
 
@@ -94,25 +95,30 @@ class MessageStatus(object):
         return status == MessageStatus.DELETED or status == MessageStatus.DELETE_SENT \
                or status == MessageStatus.DELETE_CONFIRMED or status == MessageStatus.ERROR_SEND_DELETE
 
+
 class Kv15Stopmessage(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
     messagecodedate = models.DateField(verbose_name=_("Datum"), default=now)
     messagecodenumber = models.IntegerField(verbose_name=_("Volgnummer"))
-    messagepriority = models.CharField(max_length=10, choices=MESSAGEPRIORITY, default='PTPROCESS', verbose_name=_("Prioriteit"))
-    messagetype = models.CharField(max_length=10, choices=MESSAGETYPE, default='GENERAL', verbose_name=_("Type bericht"))
-    messagedurationtype = models.CharField(max_length=10, choices=MESSAGEDURATIONTYPE, default='ENDTIME', verbose_name=_("Type tijdsrooster"))
+    messagepriority = models.CharField(max_length=10, choices=MESSAGEPRIORITY, default='PTPROCESS',
+                                       verbose_name=_("Prioriteit"))
+    messagetype = models.CharField(max_length=10, choices=MESSAGETYPE, default='GENERAL',
+                                   verbose_name=_("Type bericht"))
+    messagedurationtype = models.CharField(max_length=10, choices=MESSAGEDURATIONTYPE, default='ENDTIME',
+                                           verbose_name=_("Type tijdsrooster"))
     messagestarttime = models.DateTimeField(null=True, blank=True, default=now, verbose_name=_("Begintijd"))
     messageendtime = models.DateTimeField(null=True, blank=True, default=get_end_service, verbose_name=_("Eindtijd"))
     messagecontent = models.CharField(max_length=255, blank=True, null=True, verbose_name="Bericht")
     reasontype = models.SmallIntegerField(null=True, blank=True, choices=REASONTYPE, verbose_name=_("Type oorzaak"))
     subreasontype = models.CharField(max_length=10, blank=True, choices=SUBREASONTYPE, verbose_name=_("Oorzaak"))
     reasoncontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg oorzaak"))
-    effecttype = models.SmallIntegerField(null=True, blank=True, choices=EFFECTTYPE,  verbose_name=_("Type gevolg"))
+    effecttype = models.SmallIntegerField(null=True, blank=True, choices=EFFECTTYPE, verbose_name=_("Type gevolg"))
     subeffecttype = models.CharField(max_length=10, blank=True, choices=SUBEFFECTTYPE, verbose_name=_("Gevolg"))
     effectcontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg gevolg"))
-    measuretype = models.SmallIntegerField(null=True, blank=True, choices=MEASURETYPE, verbose_name=_("Type aanpassing"))
+    measuretype = models.SmallIntegerField(null=True, blank=True, choices=MEASURETYPE,
+                                           verbose_name=_("Type aanpassing"))
     submeasuretype = models.CharField(max_length=10, blank=True, choices=SUBMEASURETYPE, verbose_name=_("Aanpassing"))
     measurecontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg aanpassing"))
     advicetype = models.SmallIntegerField(null=True, blank=True, choices=ADVICETYPE, verbose_name=_("Type advies"))
@@ -134,7 +140,7 @@ class Kv15Stopmessage(models.Model):
             ("edit_all", _("Alle berichten bewerken")),
         )
 
-    def __unicode__(self):
+    def __str__(self):
         message = self.messagecontent
         if message == "":
             message = _("<geen bericht>")
@@ -192,8 +198,8 @@ class Kv15Stopmessage(models.Model):
         (because we can't push without stops, and stops are a submodel, requiring the main object to be saved)
         Idealy you would only allow this to be called on update (which is delete+add) or if object is deleted
         """
-        return render_to_string('xml/kv15deletemessage.xml', {'object': self, 'messagecodenumber': messagecodenumber}).replace(os.linesep, '')
-
+        return render_to_string('xml/kv15deletemessage.xml',
+                                {'object': self, 'messagecodenumber': messagecodenumber}).replace(os.linesep, '')
 
     def is_future(self):
         return self.messagestarttime > now()
@@ -213,7 +219,9 @@ class Kv15Stopmessage(models.Model):
 
     def get_latest_number(self):
         """ Get the currently highest number and add one if found or start with 1  """
-        num = Kv15Stopmessage.objects.filter(dataownercode=self.dataownercode, messagecodedate=self.messagecodedate).aggregate(models.Max('messagecodenumber'))
+        num = Kv15Stopmessage.objects.filter(dataownercode=self.dataownercode,
+                                             messagecodedate=self.messagecodedate).aggregate(
+            models.Max('messagecodenumber'))
         if num['messagecodenumber__max'] == 9999:
             raise IntegrityError(ugettext("Teveel berichten vestuurd - probeer het morgen weer"))
         result = num['messagecodenumber__max'] + 1 if num['messagecodenumber__max'] else 1
@@ -255,7 +263,8 @@ class Kv15MessageLine(models.Model):
 
 class Kv15MessageStop(models.Model):
     stopmessage = models.ForeignKey(Kv15Stopmessage, on_delete=models.CASCADE)
-    stop = models.ForeignKey(Kv1Stop, related_name="messages", on_delete=models.CASCADE) # Stop to messages relation = messages
+    stop = models.ForeignKey(Kv1Stop, related_name="messages",
+                             on_delete=models.CASCADE)  # Stop to messages relation = messages
 
     class Meta(object):
         unique_together = ['stopmessage', 'stop']
@@ -266,7 +275,7 @@ class Kv15Scenario(models.Model):
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
     description = models.CharField(max_length=255, blank=True, verbose_name=_("Omschrijving scenario"))
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     class Meta(object):
@@ -325,9 +334,12 @@ class Kv15ScenarioMessage(models.Model):
     """ This stores a 'template' to be used for easily constructing normal KV15 messages """
     scenario = models.ForeignKey(Kv15Scenario, related_name='messages', on_delete=models.CASCADE)
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
-    messagepriority = models.CharField(max_length=10, choices=MESSAGEPRIORITY, default='PTPROCESS', verbose_name=_("Prioriteit"))
-    messagetype = models.CharField(max_length=10, choices=MESSAGETYPE, default='GENERAL', verbose_name=_("Type bericht"))
-    messagedurationtype = models.CharField(max_length=10, choices=MESSAGEDURATIONTYPE, default='ENDTIME', verbose_name=_("Type tijdsrooster"))
+    messagepriority = models.CharField(max_length=10, choices=MESSAGEPRIORITY, default='PTPROCESS',
+                                       verbose_name=_("Prioriteit"))
+    messagetype = models.CharField(max_length=10, choices=MESSAGETYPE, default='GENERAL',
+                                   verbose_name=_("Type bericht"))
+    messagedurationtype = models.CharField(max_length=10, choices=MESSAGEDURATIONTYPE, default='ENDTIME',
+                                           verbose_name=_("Type tijdsrooster"))
     messagecontent = models.CharField(max_length=255, blank=True, verbose_name="Bericht")
     reasontype = models.SmallIntegerField(null=True, blank=True, choices=REASONTYPE, verbose_name=_("Type oorzaak"))
     subreasontype = models.CharField(max_length=10, blank=True, choices=SUBREASONTYPE, verbose_name=_("Oorzaak"))
@@ -335,7 +347,8 @@ class Kv15ScenarioMessage(models.Model):
     effecttype = models.SmallIntegerField(null=True, blank=True, choices=EFFECTTYPE, verbose_name=_("Type gevolg"))
     subeffecttype = models.CharField(max_length=10, blank=True, choices=SUBEFFECTTYPE, verbose_name=_("Gevolg"))
     effectcontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg gevolg"))
-    measuretype = models.SmallIntegerField(null=True, blank=True, choices=MEASURETYPE, verbose_name=_("Type aanpassing"))
+    measuretype = models.SmallIntegerField(null=True, blank=True, choices=MEASURETYPE,
+                                           verbose_name=_("Type aanpassing"))
     submeasuretype = models.CharField(max_length=10, blank=True, choices=SUBMEASURETYPE, verbose_name=_("Aanpassing"))
     measurecontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg aanpassing"))
     advicetype = models.SmallIntegerField(null=True, blank=True, choices=ADVICETYPE, verbose_name=_("Type advies"))
@@ -343,7 +356,7 @@ class Kv15ScenarioMessage(models.Model):
     advicecontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg advies"))
     updated = models.DateTimeField(auto_now=True)
 
-    def __unicode__(self):
+    def __str__(self):
         message = self.messagecontent
         if message == "":
             message = _("<geen bericht>")
@@ -373,7 +386,8 @@ class Kv17Change(models.Model):
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
     operatingday = models.DateField(verbose_name=_("Datum"))
     line = models.ForeignKey(Kv1Line, verbose_name=_("Lijn"), on_delete=models.CASCADE)
-    journey = models.ForeignKey(Kv1Journey, verbose_name=_("Rit"), related_name="changes", on_delete=models.CASCADE)  # "A journey has changes"
+    journey = models.ForeignKey(Kv1Journey, verbose_name=_("Rit"), related_name="changes",
+                                on_delete=models.CASCADE)  # "A journey has changes"
     reinforcement = models.IntegerField(default=0, verbose_name=_("Versterkingsnummer"))  # Never fill this for now
     is_cancel = models.BooleanField(default=True, verbose_name=_("Opgeheven?"),
                                     help_text=_("Rit kan ook een toelichting zijn voor een halte"))
@@ -405,7 +419,7 @@ class Kv17Change(models.Model):
             ("add_change", _("Ritaanpassingen aanmaken")),
         )
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s Lijn %s Rit# %s" % (self.operatingday, self.line, self.journey.journeynumber)
 
     def realtime_id(self):
@@ -429,7 +443,7 @@ class Kv17JourneyChange(models.Model):
         verbose_name = _('Ritaanpassingsdetails')
         verbose_name_plural = _("Ritaanpassingendetails")
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s Details" % self.change
 
 
@@ -442,7 +456,7 @@ class Kv17StopChange(models.Model):
                          (3, "CHANGEPASSTIMES"),
                          (4, "CHANGEDESTINATION"),
                          (5, "MUTATIONMESSAGE")
-                        )
+                         )
 
     change = models.ForeignKey(Kv17Change, related_name="stop_change", on_delete=models.CASCADE)
     type = models.PositiveSmallIntegerField(null=False, choices=STOP_CHANGE_TYPES)
@@ -486,7 +500,7 @@ class Kv1StopFilter(models.Model):
             ("edit_filters", _("Filters bewerken")),
         )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     @staticmethod

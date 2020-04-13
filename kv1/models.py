@@ -26,7 +26,7 @@ class Kv1Line(models.Model):
         verbose_name_plural = _("Lijninformatie")
         unique_together = ('dataownercode', 'lineplanningnumber')
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s - %s" % (self.dataownercode, self.headsign)
 
 
@@ -42,7 +42,7 @@ class Kv1Stop(models.Model):
         verbose_name_plural = _("Halteinformatie")
         unique_together = ('dataownercode', 'userstopcode')
 
-    def __unicode__(self):
+    def __str__(self):
         if self.timingpointcode and self.timingpointcode != "0":
             return "%s - %s (TPC %s, #%s)" % (self.dataownercode, self.name, self.timingpointcode, self.userstopcode)
         else:
@@ -75,7 +75,7 @@ class Kv1Journey(models.Model):
     departuretime = models.PositiveIntegerField()
     direction = models.PositiveSmallIntegerField()
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s%s - %s" % (self.dataownercode, self.line.publiclinenumber, self.journeynumber)
 
     @staticmethod
@@ -129,7 +129,7 @@ class Kv1JourneyStop(models.Model):
     targetarrival = models.TimeField()
     targetdeparture = models.TimeField()
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s - Stop #%s: %s" % (self.journey.journeynumber, self.stoporder, self.stop)
 
     class Meta(object):
@@ -142,7 +142,7 @@ class Kv1JourneyDate(models.Model):
     journey = models.ForeignKey(Kv1Journey, related_name='dates', on_delete=models.CASCADE)  # A journey has dates
     date = models.DateField()
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s (%s)" % (self.journey.journeynumber, self.date)
 
     class Meta(object):
