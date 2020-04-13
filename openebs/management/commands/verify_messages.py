@@ -53,7 +53,7 @@ class Command(BaseCommand):
                         row[k] = None
                     else:
                         row[k] = v
-                #self.log.debug("Got new message of type %s" % type)
+                # self.log.debug("Got new message of type %s" % type)
                 if type == 'GENERALMESSAGEUPDATE':
                     self.process_message(row, False)
                 elif type == 'GENERALMESSAGEDELETE':
@@ -115,10 +115,12 @@ class Command(BaseCommand):
         for stop in stops:
             message_stop, created = Kv15MessageStop.objects.get_or_create(stopmessage=msg, stop=stop)
             if created:
-                self.log.debug("Stop added to message: %s|%s#%s (Stop/TPC %s)" % (msg.dataownercode, msg.messagecodedate, msg.messagecodenumber, row['TimingPointCode']))
+                self.log.debug("Stop added to message: %s|%s#%s (Stop/TPC %s)" % (
+                msg.dataownercode, msg.messagecodedate, msg.messagecodenumber, row['TimingPointCode']))
                 message_stop.save()
         if len(stops) == 0:
-            self.log.error("Tried to add stops to message but couldn't find matching TPC: %s|%s#%s (Stop/TPC %s)" % (msg.dataownercode, msg.messagecodedate, msg.messagecodenumber, row['TimingPointCode']))
+            self.log.error("Tried to add stops to message but couldn't find matching TPC: %s|%s#%s (Stop/TPC %s)" % (
+            msg.dataownercode, msg.messagecodedate, msg.messagecodenumber, row['TimingPointCode']))
 
     @staticmethod
     def setup_subscription():
