@@ -42,7 +42,7 @@ class PlanScenarioView(AccessMixin, Kv15PushMixin, FormView):
             saved = scenario.plan_messages(self.request.user, form.cleaned_data['messagestarttime'],
                                            form.cleaned_data['messageendtime'])
             # Concatenate XML for a single request
-            message_string = b"".join([msg.to_xml() for msg in saved])
+            message_string = "".join([msg.to_xml() for msg in saved])
             if self.push_message(message_string):
                 for msg in saved:
                     msg.set_status(MessageStatus.SENT)
