@@ -67,7 +67,7 @@ class ExternalMessagePushMixin(object):
     @staticmethod
     def parse_error(content):
         if content is not None and content != "":
-            regex = re.compile("<tmi8:ResponseError>(.*)</tmi8:ResponseError>", re.MULTILINE | re.LOCALE | re.DOTALL)
+            regex = re.compile("<tmi8:ResponseError>(.*)</tmi8:ResponseError>", re.MULTILINE | re.DOTALL)
             r = regex.search(content)
             return r.groups()[0] if r is not None else ""
         return "?"
@@ -78,7 +78,7 @@ class ExternalMessagePushMixin(object):
         '''
         push_list = []
         for destination in sorted(settings, key=lambda k: k['priority']):
-            if destination['enabled'] == False:
+            if not destination['enabled']:
                 continue
             if self.message_type is None or self.message_type not in destination['endpoints']:
                 raise ImproperlyConfigured("Endpoint type isn't registered")

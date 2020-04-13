@@ -42,7 +42,7 @@ class PlanScenarioView(AccessMixin, Kv15PushMixin, FormView):
             saved = scenario.plan_messages(self.request.user, form.cleaned_data['messagestarttime'],
                                            form.cleaned_data['messageendtime'])
             # Concatenate XML for a single request
-            message_string = "".join([msg.to_xml() for msg in saved])
+            message_string = b"".join([msg.to_xml() for msg in saved])
             if self.push_message(message_string):
                 for msg in saved:
                     msg.set_status(MessageStatus.SENT)
@@ -72,7 +72,7 @@ class ScenarioCreateView(AccessMixin, CreateView):
         if self.request.user:  # TODO Improve this construct
             form.instance.dataownercode = self.request.user.userprofile.company
 
-        return super(CreateView, self).form_valid(form)
+        return super(ScenarioCreateView, self).form_valid(form)
 
     def get_success_url(self):
         return reverse_lazy('scenario_edit', args=[self.object.id])
