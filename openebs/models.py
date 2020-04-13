@@ -184,7 +184,7 @@ class Kv15Stopmessage(models.Model):
             # Never send XML if we have no stops
             log.error("We tried to send a message with no stops. This should never happen!")
             return ""
-        return render_to_string('xml/kv15stopmessage.xml', {'object': self}).replace(os.linesep, '').encode('utf8')
+        return render_to_string('xml/kv15stopmessage.xml', {'object': self}).replace(os.linesep, '')
 
     def to_xml_delete(self, messagecodenumber=None):
         """
@@ -192,7 +192,7 @@ class Kv15Stopmessage(models.Model):
         (because we can't push without stops, and stops are a submodel, requiring the main object to be saved)
         Idealy you would only allow this to be called on update (which is delete+add) or if object is deleted
         """
-        return render_to_string('xml/kv15deletemessage.xml', {'object': self, 'messagecodenumber': messagecodenumber}).replace(os.linesep, '').encode('utf8')
+        return render_to_string('xml/kv15deletemessage.xml', {'object': self, 'messagecodenumber': messagecodenumber}).replace(os.linesep, '')
 
 
     def is_future(self):

@@ -1,7 +1,7 @@
 import json
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.test import Client, TestCase
 from kv1.models import Kv1Stop
 from openebs.models import UserProfile

@@ -15,7 +15,7 @@ future==0.18.2
 #transitfeed # Read Write GTFS
 
 # Dev
-lxml # Tests - needs libxml2-dev libxslt-dev packages
+lxml==4.5.0 # Tests - needs libxml2-dev libxslt-dev packages
 
 
 

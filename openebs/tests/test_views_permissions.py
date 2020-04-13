@@ -1,6 +1,6 @@
 from datetime import timedelta
 from django.contrib.auth.models import User, Permission
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db.models import Q
 from django.test import Client, TestCase
 from django.utils.timezone import now
@@ -20,7 +20,7 @@ class TestViewPermissions(TestCase):
         cls.user = User.objects.create_user(username="test_permission", password="test")
         cls.user.user_permissions.add(Permission.objects.get(codename='view_messages'))
         cls.user.save()
-        p = UserProfile(user=cls.user, company='NS') # Creating messages for Veolia
+        p = UserProfile(user=cls.user, company='NS')  # Creating messages for Veolia
         p.save()
 
     def setUp(self):

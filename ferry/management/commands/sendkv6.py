@@ -7,8 +7,8 @@ from ferry.models import FerryLine, FerryKv6Messages
 from openebs.views_push import Kv6PushMixin
 from utils.time import get_operator_date
 
-class Command(BaseCommand):
 
+class Command(BaseCommand):
     help = 'Send KV6 messages as per schedule. Should be scheduled once a minute for correct accuracy'
 
     logger = logging.getLogger('openebs.sendkv6')
@@ -28,8 +28,9 @@ class Command(BaseCommand):
         for journey in journeys.filter(departuretime__lte=init_target):
             msg, created = FerryKv6Messages.objects.get_or_create(operatingday=date, ferry=ferry,
                                                                   journeynumber=journey.journeynumber)
-            if created or (msg.status == FerryKv6Messages.Status.INITIALIZED and not msg.cancelled and (msg.delay is None or
-                                   journey.departuretime+msg.delay <= init_target)):
+            if created or (
+                    msg.status == FerryKv6Messages.Status.INITIALIZED and not msg.cancelled and (msg.delay is None or
+                                                                                                 journey.departuretime + msg.delay <= init_target)):
                 msg.status = FerryKv6Messages.Status.READY
                 msg.save()
                 if self.pusher.push_message(msg.to_kv6_ready(journey.direction)):
@@ -45,7 +46,7 @@ class Command(BaseCommand):
             try:
                 msg = FerryKv6Messages.objects.get(operatingday=date, ferry=ferry, journeynumber=journey.journeynumber,
                                                    status=FerryKv6Messages.Status.READY, cancelled=False)
-                if msg.delay > 0 and journey.departuretime+msg.delay > depart_target:
+                if msg.delay > 0 and journey.departuretime + msg.delay > depart_target:
                     continue
 
                 msg.status = FerryKv6Messages.Status.DEPARTED
@@ -65,7 +66,7 @@ class Command(BaseCommand):
             try:
                 msg = FerryKv6Messages.objects.get(operatingday=date, ferry=ferry, journeynumber=journey.journeynumber,
                                                    status=FerryKv6Messages.Status.DEPARTED, cancelled=False)
-                if msg.delay > 0 and journey.departuretime+msg.delay > arrival_target:
+                if msg.delay > 0 and journey.departuretime + msg.delay > arrival_target:
                     continue
 
                 msg.status = FerryKv6Messages.Status.ARRIVED
