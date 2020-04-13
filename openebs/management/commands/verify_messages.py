@@ -6,7 +6,7 @@ from kv1.models import Kv1Stop
 connection.use_debug_cursor = False
 
 import logging
-from StringIO import StringIO
+from io import StringIO
 from gzip import GzipFile
 from django.contrib.auth.models import User
 from django.core.management import BaseCommand
