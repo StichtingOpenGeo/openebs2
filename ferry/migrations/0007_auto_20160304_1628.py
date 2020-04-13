@@ -18,6 +18,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='ferryline',
             name='line',
-            field=models.ForeignKey(to='kv1.Kv1Line', unique=True),
+            field=models.ForeignKey(to='kv1.Kv1Line', unique=True, on_delete=models.CASCADE),
         ),
     ]

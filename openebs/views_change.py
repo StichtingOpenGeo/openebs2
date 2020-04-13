@@ -1,7 +1,7 @@
 import logging
 from braces.views import LoginRequiredMixin
 from datetime import timedelta
-from django.core.urlresolvers import reverse_lazy
+from django.urls import reverse_lazy
 from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.views.generic import ListView, CreateView, DeleteView, DetailView

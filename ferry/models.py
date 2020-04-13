@@ -1,3 +1,4 @@
+from builtins import object
 import os, datetime
 from datetime import datetime as dt
 
@@ -14,13 +15,13 @@ from utils.time import get_operator_date
 
 
 class FerryLine(models.Model):
-    line = models.OneToOneField(Kv1Line, verbose_name=_("Lijn"))
-    stop_depart = models.ForeignKey(Kv1Stop, verbose_name=_("Vertrekpunt"), related_name="ferry_departure")
-    stop_arrival = models.ForeignKey(Kv1Stop, verbose_name=_("Aankomstpunt"), related_name="ferry_arrival")
-    scenario_cancelled = models.ForeignKey(Kv15Scenario, verbose_name=_("Scenario 'Dienst uit vaart'"), blank=True, null=True)
+    line = models.OneToOneField(Kv1Line, verbose_name=_("Lijn"), on_delete=models.CASCADE)
+    stop_depart = models.ForeignKey(Kv1Stop, verbose_name=_("Vertrekpunt"), related_name="ferry_departure", on_delete=models.CASCADE)
+    stop_arrival = models.ForeignKey(Kv1Stop, verbose_name=_("Aankomstpunt"), related_name="ferry_arrival", on_delete=models.CASCADE)
+    scenario_cancelled = models.ForeignKey(Kv15Scenario, verbose_name=_("Scenario 'Dienst uit vaart'"), blank=True, null=True, on_delete=models.CASCADE)
     enable_auto_messages = models.BooleanField(verbose_name=_("Verstuur automatisch KV6 berichten"), default=False)
 
-    class Meta:
+    class Meta(object):
         verbose_name = "Veerboot"
         verbose_name_plural = "Veerboten"
 
@@ -34,7 +35,7 @@ class FerryLine(models.Model):
 
 
 class FerryKv6Messages(models.Model):
-    class Status:
+    class Status(object):
         INITIALIZED = 0
         READY = 1
         DEPARTED = 5
@@ -46,7 +47,7 @@ class FerryKv6Messages(models.Model):
         (Status.ARRIVED, _("Aankomst")),
     )
 
-    ferry = models.ForeignKey(FerryLine, verbose_name=_("Veerbootlijn"))
+    ferry = models.ForeignKey(FerryLine, verbose_name=_("Veerbootlijn"), on_delete=models.CASCADE)
     operatingday = models.DateField(default=now, verbose_name=_("Dienstregelingsdatum"))
     journeynumber = models.PositiveIntegerField(verbose_name=_("Ritnummer"),)  # 0 - 999999
     delay = models.IntegerField(blank=True, null=True, verbose_name=_("Vertraging"), help_text=_("In seconden"))  # Delay in seconds
@@ -58,7 +59,7 @@ class FerryKv6Messages(models.Model):
     status_updated = models.DateTimeField(blank=True, null=True)
     updated = models.DateTimeField(auto_now=True)
 
-    class Meta:
+    class Meta(object):
         verbose_name = _("Afvaart")
         verbose_name_plural = _("Afvaarten")
         unique_together = ('ferry', 'journeynumber', 'operatingday')
@@ -191,5 +192,3 @@ class FerryKv6Messages(models.Model):
                         xml_out.append(msg)
             return xml_out
         return []
-
-

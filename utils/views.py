@@ -15,9 +15,9 @@ from braces.views import JSONResponseMixin
 from django.conf import settings
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ImproperlyConfigured
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.shortcuts import redirect, render
-from push import Push
+from utils.push import Push
 from django.db.models.query import QuerySet
 
 log = logging.getLogger('openebs.views.mixins')
@@ -120,7 +120,7 @@ class AccessMixin(AccessMixin):
         # Check to see if the request's user has the required permission.
         has_permission = request.user.has_perm(self.permission_required)
 
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             if not has_permission:  # If the user lacks the permission
                 log.info("User %s requested %s but doesn't have permission" % (self.request.user, request.get_full_path()))
                 return redirect(reverse('app_nopermission'))
@@ -133,13 +133,13 @@ class AccessMixin(AccessMixin):
             request, *args, **kwargs)
 
 
-def handler403(request):
+def handler403(request, exception):
     response = render(request, 'openebs/nopermission.html', {})
     response.status_code = 404
     return response
 
 
-def handler404(request):
+def handler404(request, exception):
     response = render(request, 'openebs/notfound.html', {})
     response.status_code = 404
     return response

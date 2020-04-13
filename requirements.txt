@@ -1,9 +1,9 @@
-Django>=1.11.1,<1.11.99
+Django>=2.2.9,<2.2.99
 south==1.0.2
-psycopg2==2.7.3.2
-django-admin-bootstrapped==2.5.1
+psycopg2==2.8.3
+django-admin-bootstrapped==2.5.7
 #django-floppyforms
-git+https://github.com/reidransom/django-floppyforms.git
+git+https://github.com/jazzband/django-floppyforms.git
 django-crispy-forms==1.7.0
 django-guardian==1.4.9
 jsonfield==2.0.2

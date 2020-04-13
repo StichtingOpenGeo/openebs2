@@ -1,3 +1,4 @@
+from builtins import object
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin, GroupAdmin
 from django.contrib.auth.models import User, Group
@@ -65,10 +66,10 @@ admin.site.register(Kv1StopFilter, Kv1StopFilterAdmin)
 class PermissionFilterMixin(object):
     def formfield_for_manytomany(self, db_field, request=None, **kwargs):
         if db_field.name in ('permissions', 'user_permissions'):
-            qs = kwargs.get('queryset', db_field.rel.to.objects)
-            if not request.user.is_superuser: # This hides all the other permissions if we're "just" staff
-                qs = qs.exclude(name__startswith="Can")
-            kwargs['queryset'] = qs
+           qs = kwargs.get('queryset', db_field.remote_field.model.objects)
+           if not request.user.is_superuser: # This hides all the other permissions if we're "just" staff
+              qs = qs.exclude(name__startswith="Can")
+           kwargs['queryset'] = qs
 
         return super(PermissionFilterMixin, self).formfield_for_manytomany(db_field, request, **kwargs)
 

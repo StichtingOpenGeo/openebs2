@@ -1,7 +1,11 @@
+from __future__ import division
+from past.utils import old_div
+from builtins import object
 import logging
 from datetime import time
 
 from django.contrib.gis.db import models
+from django.db.models import Manager as GeoManager
 from jsonfield import JSONField
 from kv15.enum import DATAOWNERCODE, STOPTYPES
 from django.utils.translation import ugettext_lazy as _
@@ -17,7 +21,7 @@ class Kv1Line(models.Model):
     headsign = models.CharField(max_length=100)
     stop_map = JSONField()
 
-    class Meta:
+    class Meta(object):
         verbose_name = _("Lijn")
         verbose_name_plural = _("Lijninformatie")
         unique_together = ('dataownercode', 'lineplanningnumber')
@@ -34,9 +38,9 @@ class Kv1Stop(models.Model):
     location = models.PointField()
 
     # Custom manager for geomodels/searches
-    objects = models.GeoManager()
+    objects = GeoManager()
 
-    class Meta:
+    class Meta(object):
         verbose_name = _("Halte")
         verbose_name_plural = _("Halteinformatie")
         unique_together = ('dataownercode', 'userstopcode')
@@ -67,7 +71,7 @@ class Kv1Stop(models.Model):
 
 class Kv1Journey(models.Model):
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
-    line = models.ForeignKey(Kv1Line, related_name="journeys")  # Represent lineplanningnumber\
+    line = models.ForeignKey(Kv1Line, related_name="journeys", on_delete=models.CASCADE)  # Represent lineplanningnumber\
     journeynumber = models.PositiveIntegerField()  # 0 - 999999
     scheduleref = models.PositiveIntegerField()  # Field 'availabilityconditionref'
     departuretime = models.PositiveIntegerField()
@@ -109,18 +113,18 @@ class Kv1Journey(models.Model):
         return journeys[0] if journeys.count() == 1 else None
 
     def departuretime_as_time(self):
-        total_minutes = self.departuretime / 60
-        return time(hour=total_minutes / 60, minute=total_minutes % 60)
+        total_minutes = old_div(self.departuretime, 60)
+        return time(hour=old_div(total_minutes, 60), minute=total_minutes % 60)
 
-    class Meta:
+    class Meta(object):
         verbose_name = _("Rit")
         verbose_name_plural = _("Ritinformatie")
         unique_together = ('dataownercode', 'line', 'journeynumber', 'scheduleref')
 
 
 class Kv1JourneyStop(models.Model):
-    journey = models.ForeignKey(Kv1Journey, related_name="stops")
-    stop = models.ForeignKey(Kv1Stop)
+    journey = models.ForeignKey(Kv1Journey, related_name="stops", on_delete=models.CASCADE)
+    stop = models.ForeignKey(Kv1Stop, on_delete=models.CASCADE)
     stoporder = models.SmallIntegerField()
     stoptype = models.CharField(choices=STOPTYPES, default="INTERMEDIATE", max_length=12)
     targetarrival = models.TimeField()
@@ -129,20 +133,20 @@ class Kv1JourneyStop(models.Model):
     def __unicode__(self):
         return "%s - Stop #%s: %s" % (self.journey.journeynumber, self.stoporder, self.stop)
 
-    class Meta:
+    class Meta(object):
         verbose_name = _("Rithalte")
         verbose_name_plural = _("Rithaltes")
         unique_together = (('journey', 'stop'), ('journey', 'stoporder'))
 
 
 class Kv1JourneyDate(models.Model):
-    journey = models.ForeignKey(Kv1Journey, related_name='dates')  # A journey has dates
+    journey = models.ForeignKey(Kv1Journey, related_name='dates', on_delete=models.CASCADE)  # A journey has dates
     date = models.DateField()
 
     def __unicode__(self):
         return "%s (%s)" % (self.journey.journeynumber, self.date)
 
-    class Meta:
+    class Meta(object):
         verbose_name = _("Ritdag")
         verbose_name_plural = _("Ritdag")
         unique_together = (('journey', 'date'))

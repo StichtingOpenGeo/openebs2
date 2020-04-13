@@ -19,6 +19,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='ferryline',
             name='line',
-            field=models.OneToOneField(verbose_name='Lijn', to='kv1.Kv1Line'),
+            field=models.OneToOneField(verbose_name='Lijn', to='kv1.Kv1Line', on_delete=models.CASCADE),
         ),
     ]

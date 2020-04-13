@@ -15,8 +15,8 @@ class Migration(migrations.Migration):
             name='Kv15ScenarioInstances',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('message', models.ForeignKey(to='openebs.Kv15Stopmessage')),
-                ('scenario', models.ForeignKey(to='openebs.Kv15Scenario')),
+                ('message', models.ForeignKey(to='openebs.Kv15Stopmessage', on_delete=models.CASCADE)),
+                ('scenario', models.ForeignKey(to='openebs.Kv15Scenario', on_delete=models.CASCADE)),
             ],
         ),
     ]

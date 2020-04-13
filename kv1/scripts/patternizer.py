@@ -21,7 +21,7 @@ def indexofterugorder(stops,terugorder):
         if stops[i]['terugorder'] < terugorder and  (stops[i+1]['terugorder'] is None or stops[i+1]['terugorder'] >= terugorder):
             return i
     for stop in stops:
-        print stop
+        print(stop)
     raise Exception('test')
     if terugorder <= 1:
         return len(stops)-1
@@ -39,7 +39,7 @@ rows = cur.fetchall()
 for row in rows:
     operator_id = row['operator_id']
     key = operator_id.replace(':','_')
-    print key
+    print(key)
     f = open(key+'.json','w')
     cur.execute("""
 SELECT

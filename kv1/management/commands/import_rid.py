@@ -23,9 +23,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.folder = options.get('folder', '')
-        print "STEP 1: Lines"
+        print("STEP 1: Lines")
         self.do_lines()
-        print "==========================\n\nSTEP 2: Stops"
+        print("==========================\n\nSTEP 2: Stops")
         self.do_stops()
 
     def do_lines(self):

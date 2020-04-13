@@ -1,14 +1,15 @@
+from builtins import object
 import logging
 from crispy_forms.bootstrap import AccordionGroup, Accordion
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, Field, HTML, Div, Hidden
 from django.utils.timezone import now
-import floppyforms as forms
+import floppyforms.__future__ as forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from kv1.models import Kv1Stop, Kv1Journey
 from kv15.enum import REASONTYPE, SUBREASONTYPE, ADVICETYPE, SUBADVICETYPE
-from models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, Kv17Change, get_end_service
+from openebs.models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, Kv17Change, get_end_service
 from openebs.models import Kv17JourneyChange
 from utils.time import get_operator_date
 
@@ -39,7 +40,7 @@ class Kv15StopMessageForm(forms.ModelForm):
             raise ValidationError(_("Bericht mag niet leeg zijn"))
         return self.cleaned_data['messagecontent']
 
-    class Meta:
+    class Meta(object):
         model = Kv15Stopmessage
         exclude = ['messagecodenumber', 'status', 'stops', 'messagecodedate', 'isdeleted', 'id', 'dataownercode', 'user']
         widgets = {
@@ -106,7 +107,7 @@ class Kv15StopMessageForm(forms.ModelForm):
         )
 
 class Kv15ScenarioForm(forms.ModelForm):
-    class Meta:
+    class Meta(object):
         model = Kv15Scenario
         exclude = ['dataownercode']
         widgets = {
@@ -149,7 +150,7 @@ class Kv15ScenarioMessageForm(forms.ModelForm):
         else:
             return self.cleaned_data
 
-    class Meta:
+    class Meta(object):
         model = Kv15ScenarioMessage
         exclude = ['dataownercode']
         widgets = {
@@ -278,7 +279,7 @@ class Kv17ChangeForm(forms.ModelForm):
 
         return xml_output
 
-    class Meta:
+    class Meta(object):
         model = Kv17Change
         exclude = [ 'dataownercode', 'operatingday', 'line', 'journey', 'is_recovered', 'reinforcement']
 
