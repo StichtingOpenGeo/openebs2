@@ -5,7 +5,6 @@ import logging
 from datetime import time
 
 from django.contrib.gis.db import models
-from django.db.models import Manager as GeoManager
 from jsonfield import JSONField
 from kv15.enum import DATAOWNERCODE, STOPTYPES
 from django.utils.translation import ugettext_lazy as _
@@ -36,9 +35,6 @@ class Kv1Stop(models.Model):
     timingpointcode = models.CharField(max_length=10)  # Note, unique, but not per stop
     name = models.CharField(max_length=50)
     location = models.PointField()
-
-    # Custom manager for geomodels/searches
-    objects = GeoManager()
 
     class Meta(object):
         verbose_name = _("Halte")
