@@ -127,7 +127,7 @@ class Command(BaseCommand):
         context = zmq.Context()
         sub = context.socket(zmq.SUB)
         sub.connect(settings.GOVI_VERIFY_FEED)
-        sub.setsockopt(zmq.SUBSCRIBE, settings.GOVI_VERIFY_SUB)
+        sub.setsockopt_string(zmq.SUBSCRIBE, settings.GOVI_VERIFY_SUB)
         return sub
 
     @staticmethod
