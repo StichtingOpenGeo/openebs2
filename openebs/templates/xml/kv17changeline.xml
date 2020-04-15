@@ -1,0 +1,41 @@
+<KV17JOURNEY>
+    <dataownercode>{{ object.dataownercode }}</dataownercode>
+    {% if object.line %}
+        <allJourneysOfLine />
+        <lineplanningnumber>{{ object.line.lineplanningnumber }}</lineplanningnumber>
+    {% else %}
+        <allLines/>
+    {% endif %}
+    <operatingday>{{ object.operatingday|date:"Y-m-d" }}</operatingday>
+    {% comment "Optional note" %}
+        Nadenken of hier ook 25:00 notatie in gezet kan worden.
+    {% endcomment %}
+    {% if begintime %}
+        <begintime>{{ begintime }}</begintime>
+    {% endif %}
+    {% if endtime %}
+        <endtime>{{ endtime }}</endtime>
+    {% endif %}
+</KV17JOURNEY>
+{% if object.is_cancel or object.is_recovered %}
+<KV17MUTATEJOURNEY>
+    {% if object.is_recovered %}
+        <timestamp>{{ object.recovered|date:"c" }}</timestamp>
+        <RECOVER></RECOVER>
+    {% else %}
+        <timestamp>{{ object.created|date:"c" }}</timestamp>
+        <CANCEL>{% if object.details.count > 0 %}
+            <reasontype>{{ object.details.all.0.reasontype }}</reasontype>
+            <subreasontype>{{ object.details.all.0.subreasontype }}</subreasontype>
+            {% if object.details.all.0.reasoncontent %}<reasoncontent>{{ object.details.all.0.reasoncontent }}</reasoncontent>{% endif %}
+            <advicetype>{{ object.details.all.0.advicetype }}</advicetype>
+            <subadvicetype>{{ object.details.all.0.subadvicetype }}</subadvicetype>
+            {% if object.details.all.0.advicecontent %}<advicecontent>{{ object.details.all.0.advicecontent }}</advicecontent>{% endif %}
+            {% comment "Controleer volgorde met XSD" %}
+            <showcancelledtrip>{{ object.showcancelledtrip }}</showcancelledtrip>
+            <autorecover>{{ object.autorecover }}</autorecover>
+            {% endcomment %}
+        {% endif %}</CANCEL>
+    {% endif %}
+</KV17MUTATEJOURNEY>
+{% endif %}

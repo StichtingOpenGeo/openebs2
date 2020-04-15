@@ -16,7 +16,7 @@ table.openebs-stops td.img{
 table.openebs-stops tr:hover td.img{
     border: 0px;
 }
-span.stop-selection,span.trip-selection{
+span.stop-selection,span.trip-selection,span.line-selection {
     margin: 0.1em;
 }
 .ui-selectable .ui-selecting { background: #fcf8e3; }
@@ -209,4 +209,56 @@ span.stop-selection,span.trip-selection{
 
 .label-padded {
     margin-left: 4px;
+}
+
+.lineblock {
+    background-color: white;
+    display: block;
+    width: 3em;
+    height: 3em;
+    line-height: 3em;
+    margin-left: 1em;
+    margin-top: 1em;
+    float: left;
+    border: 1px solid #000;
+    font-size: 13px;
+    vertical-align: middle;
+    text-align: center;
+}
+
+.ui-selectee.success {
+    background-color: #D9534F;
+    color: white;
+}
+
+.btn.btn-cancel {
+    background-color: #D9534F;
+    color: white;
+}
+
+#div_id_autorecover input {
+    height: 1.5em;
+}
+
+#div_id_showcancelledtrip input {
+    height: 1.5em;
+}
+
+.database {
+    color: #D9534F;
+    font-weight: 700;
+    font-size: 1em;
+}
+
+#highlight th {
+    background-color: #D3D1D0;
+}
+
+.empty_database {
+    color: #D9534F;
+    font-weight: 700;
+}
+
+.line_warning {
+    background-color: #def2f9;
 }

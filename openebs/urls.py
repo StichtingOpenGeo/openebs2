@@ -8,7 +8,8 @@ from openebs.views_filters import FilterListView, FilterDeleteView, FilterUpdate
 from openebs.views_generic import ChangeCompanyView, TemplateRequestView
 from openebs.views_scenario import ScenarioListView, ScenarioCreateView, ScenarioUpdateView, ScenarioDeleteView, PlanScenarioView, ScenarioStopsAjaxView
 from openebs.views_scenario_msg import ScenarioMessageCreateView, ScenarioMessageUpdateView, ScenarioMessageDeleteView
-
+from openebs.views_change_line_cancel import ChangeLineCancelListView, ChangeLineCancelCreateView, \
+    ChangeLineCancelDeleteView, ChangeLineCancelUpdateView, ActiveLinesAjaxView
 
 urlpatterns = [
     # Onze Index
@@ -56,4 +57,11 @@ urlpatterns = [
     url(r'^vervoerder/filter/(?P<pk>\d+)/bewerk', FilterUpdateView.as_view(), name="filter_edit"),
     url(r'^vervoerder/filter/(?P<pk>\d+)/verwijderen$', FilterDeleteView.as_view(), name="filter_delete"),
     url(r'^vervoerder/filter', FilterListView.as_view(), name="filter_list"),
+
+    url(r'^lijnaanpassing$', ChangeLineCancelListView.as_view(), name="change_line_index"),
+    url(r'^lijnaanpassing/add$', ChangeLineCancelCreateView.as_view(), name="change_line_add"),
+    url(r'^lijnaanpassing/(?P<pk>\d+)/verwijderen$', ChangeLineCancelDeleteView.as_view(), name="change_line_delete"),
+    url(r'^lijnaanpassing/(?P<pk>\d+)/herstellen', ChangeLineCancelUpdateView.as_view(), name="change_line_redo"),
+    url(r'^lijnaanpassing/lijnen.json$', ActiveLinesAjaxView.as_view(), name="active_lines_ajax"),
 ]
+

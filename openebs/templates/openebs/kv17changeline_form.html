@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load static crispy_forms_tags i18n %}
+
+ {% block title %}{% trans "Nieuwe ritaanpassing" %}{% endblock %}
+
+{% block content %}
+    <div class="row">
+      <div class="col-lg-6">
+          <h2>Lijn</h2>
+        <div class="input-group">
+            <span class="input-group-addon"><span class="glyphicon glyphicon-search"></span></span>
+            <input type="text" class="form-control" id="line_search" placeholder="{% trans 'Lijnnummer of eindbestemming' %}" />
+        </div><br />
+
+        <div class="openebs-lines" id="lineblocks"></div>
+        <div class="clearfix"></div>
+      </div>
+      <div class="col-lg-6">
+          <h2>{% trans "Lijnaanpassing" %}</h2>
+          {% if line_errors > 0 %}
+              <div class="alert alert-warning">
+                  <p><span class="glyphicon glyphicon-warning-sign"></span>&nbsp;{% blocktrans %}Let op, {{ line_errors }} geselecteerde lijn(en) zijn niet gevonden. Controlleer of de juiste lijnen geselecteerd zijn.{% endblocktrans %}</p>
+              </div>
+          {% endif %}
+          <form method="post" class="form" action="{% url 'change_line_add' %}">
+              <div class="control-group row">
+                  <label class="col-lg-4">{% trans "Aanpassing" %}</label>
+                  <p class="col-lg-8 form-control-static" id="">
+                      <span class="label label-danger">{% trans "Opheffen" %}</span>
+                  </p><br />
+                  <input type="hidden" id="lijnen" name="lijnen" />
+              </div>
+
+              <div class="control-group">
+                  <label>{% trans "Geselecteerde lijn(en)" %}</label>
+                  <p class="form-control-static" id="lijn-list">
+                      {% if form.instance.line %}
+                          <span class="label label-danger lijn-recover" id="l{{form.instance.line.publiclinenumber}}">Lijn {{ form.instance.line.publiclinenumber }}</span>
+                      {% elif lijnen %}
+                          {% for l in lijnen %}
+                              <span class="label label-danger lijn-preload" id="st{{l.publiclinenumber}}">Lijn {{ l.publiclinenumber }}<span class="lijn-remove glyphicon glyphicon-remove"></span></span>
+                          {% endfor %}
+                      {% else %}
+                          <em class="help">{% trans "Klik een lijn om een selectie te maken" %}</em>
+                      {% endif %}
+                  </p><br />
+              </div>
+
+              <div class="clearfix"></div>
+              <br />
+              {% crispy form form.helper %}
+
+              <div class="form-group">
+                  <br />
+                  {% trans "Doorvoeren" as doorvoeren %}
+                  {% trans "Annuleer alle lijnen van vervoerder" as annuleer %}
+                  <input type="submit" class="btn btn-primary" name="Doorvoeren" value="{{ doorvoeren }}"/>
+                  <input type="submit" class="btn btn-cancel" name="CancelAll" value="{{ annuleer }}"/>
+
+              </div>
+          </form>
+          <div class="database">
+              {% if days_in_database < 1 %}
+                {% trans "Geen ritten in database" %}
+              {% elif days_in_database < 2 %}
+                {% trans "Geen huidige ritten in database" %}
+              {% endif %}
+          </div>
+      </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'bower_components/jquery-ui/ui/minified/core.min.js' %}"></script>
+    <script src="{% static 'bower_components/jquery-ui/ui/minified/widget.min.js' %}"></script>
+    <script src="{% static 'bower_components/jquery-ui/ui/minified/mouse.min.js' %}"></script>
+    <script src="{% static 'bower_components/jquery-ui/ui/minified/selectable.min.js' %}"></script>
+    <script src="{% static 'js/add_msg_cancel_lines.js' %}"></script>
+{% endblock %}
+
+{% block js_init %}
+    changeSearchBlocks();
+    $('#line_search').on('keyup', changeSearchBlocks);
+    $("#lineblocks").selectable({
+        selected: selectLineBlocks,
+    });
+    $('#lijn-list').on('click', '.line-remove', removeLineFromX);
+    $('#id_operatingday').change(changeOperatingDayLines);
+
+{% endblock %}

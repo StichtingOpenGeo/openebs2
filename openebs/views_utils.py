@@ -1,6 +1,8 @@
 from django.core.exceptions import PermissionDenied
 from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.list import MultipleObjectMixin
+from datetime import datetime
+from django.utils.timezone import make_aware
 
 
 #
@@ -34,3 +36,15 @@ def filter_user(perm_level, user, qry):
         qry = qry.filter(dataownercode=user.userprofile.company)
 
     return qry
+
+
+def datetime_32h(operatingday, begintime):
+    if begintime is None:
+        return None
+    else:
+        operatingday_time = make_aware(datetime.combine(operatingday, datetime.min.time()))
+        begintime_diff = begintime - operatingday_time
+        hours = begintime_diff.days * 24 + (begintime_diff.seconds / 3600)
+        minutes = (begintime_diff.seconds % 3600) / 60
+        seconds = begintime_diff.seconds % 60
+        return '%02d:%02d:%02d' % (hours, minutes, seconds)

@@ -49,6 +49,11 @@
                   <span class="glyphicon glyphicon-road"></span> {% trans "Ritaanpassingen" %}
               </a></li>
           {% endif %}
+          {% if perms.openebs.view_change_line %}
+          <li id="nav-lijnaanpassing"><a href="{% url 'change_line_index' %}">
+                  <span class="glyphicon glyphicon-road"></span> {% trans "Lijnaanpassingen" %}
+              </a></li>
+          {% endif %}
           {% if perms.ferry.add_ferrykv6messages %}
           <li id="nav-ferry"><a href="{% url 'ferry_home' %}">
               <span class="glyphicon glyphicon-tint"></span> {% trans "Veerboot" %}

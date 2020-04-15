@@ -7,7 +7,8 @@ from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
 from openebs.models import Kv15Stopmessage, Kv15Log, Kv15Scenario, UserProfile, Kv15MessageStop, Kv15ScenarioMessage, \
     Kv17Change, Kv17JourneyChange, \
-    Kv1StopFilter, Kv1StopFilterStop
+    Kv1StopFilter, Kv1StopFilterStop, \
+    Kv17ChangeLine, Kv17ChangeLineChange
 
 
 # KV15 Default
@@ -77,6 +78,22 @@ class Kv1StopFilterAdmin(admin.ModelAdmin):
 
 admin.site.register(Kv1StopFilter, Kv1StopFilterAdmin)
 
+
+class Kv17LineChangeInline(admin.StackedInline):
+    model = Kv17ChangeLineChange
+    extra = 0
+
+
+class Kv17ChangeLineAdmin(admin.ModelAdmin):
+    model = Kv17ChangeLine
+    inlines = (Kv17LineChangeInline, )
+    list_display = ('dataownercode', 'operatingday', 'line')
+    list_filter = ('dataownercode', 'operatingday')
+    list_per_page = 500
+    raw_id_fields = ('line',)
+
+
+admin.site.register(Kv17ChangeLine, Kv17ChangeLineAdmin)
 
 # Hack...
 class PermissionFilterMixin(object):

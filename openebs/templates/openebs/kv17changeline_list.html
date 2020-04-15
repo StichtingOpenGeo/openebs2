@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load i18n filters %}
+
+{% block title %}Lijnaanpassingen{% endblock %}
+
+{% block content %}
+
+  <h1>{% trans "Lijnaanpassingen" %}</h1>
+
+  <h2>{% trans "Actieve aanpassingen" %}
+      {% if perms.openebs.add_change_line %}
+          <a class="btn btn-success pull-right" href="{% url 'change_line_add' %}">
+            <span class="glyphicon glyphicon-plus"></span> {% trans "Nieuwe aanpassing" %}
+          </a>
+      {% endif %}
+  </h2>
+  {% regroup active_list by line as line_active_changes %}
+  <div class="row">
+  {% if line_active_changes|length == 0 %}
+      <div class="col-md-12 col-lg-12 text-center"><em>{% trans "Geen berichten gevonden" %}</em></div>
+  {% else %}
+    <div class="col-md-6 col-lg-6">
+      {% if line_active_changes|rows_distributed:"2" %}
+          {% for line in line_active_changes|rows_distributed:"2"|first %}
+            {% include "openebs/snippet_changes-cancel-line.html" %}
+          {% endfor %}
+      {% endif %}
+    </div>
+     <div class="col-md-6 col-lg-6">
+      {% for line in line_active_changes|rows_distributed:"2"|last %}
+        {% include "openebs/snippet_changes-cancel-line.html" %}
+      {% endfor %}
+      </div>
+  {% endif %}
+</div>
+
+  <h2>Verlopen Aanpassingen</h2>
+      <table class="table table-bordered table-condensed table-striped">
+      <tr id="highlight">
+            <th class="col-lg-1">{% trans "Lijndatum"%}</th>
+            <th class="col-lg-1">{% trans "Begintijd" %}</th>
+            <th class="col-lg-1">{% trans "Eindtijd" %}</th>
+            <th class="col-lg-1">{% trans "Lijn" %}</th>
+            <th class="col-lg-5">{% trans "Bestemming" %}</th>
+            <th class="col-lg-1">&nbsp;</th>
+      </tr>
+      {% for msg in archive_list %}
+
+
+        <tr class="{% if msg.is_recovered %}warning{% endif %}">
+            <td>{{ msg.operatingday|date:"d-m-Y" }}</td></td>
+            {% if msg.begintime %}
+                <td>{{ msg.begintime|time:"H:i" }}</td>
+            {% else %}
+                <td> </td>
+            {% endif %}
+            {% if msg.endtime %}
+                <td>{{ msg.endtime|time:"H:i" }}</td>
+            {% else %}
+                <td> </td>
+            {% endif %}
+            {% if msg.line.publiclinenumber %}
+                <td>{{ msg.line.publiclinenumber }}</td>
+                <td>{{ msg.line.headsign }}</td>
+                <td>
+            {% else %}
+                <td> </td>
+                <td>{% trans "Alle lijnen werden geannuleerd" %}</td>
+                <td>
+            {% endif %}
+                {% if perms.openebs.add_change_line %}
+                <form method="post" action="{% url 'change_line_redo' msg.id %}">
+                    {% csrf_token %}
+                    <button class="btn pull-right">
+                        <span class="glyphicon glyphicon-repeat"></span>
+                    </button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+      {% empty %}
+          <tr><td colspan="6" class="text-center"><em>{% trans "Geen berichten gevonden" %}</em></td></tr>
+      {% endfor %}
+      </table>
+
+  <p><small>{% trans "Rood = teruggedraaide aanpassing" %}</small></p>
+{% endblock %}

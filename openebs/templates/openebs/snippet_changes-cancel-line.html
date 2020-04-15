@@ -1,0 +1,72 @@
+{% load i18n filters %}
+
+{% if line.grouper.publiclinenumber %}
+    <h4>{% trans "Lijn" %} {{ line.grouper.publiclinenumber }} <small>{{ line.grouper.headsign }}</small></h4>
+      <table class="table table-condensed table-bordered table-striped">
+      <tr id="highlight">
+          <th class="col-lg-1">{% trans "Lijndatum" %}</th>
+          <th class="col-lg-1">{% trans "Begintijd" %}</th>
+          <th class="col-lg-1">{% trans "Eindtijd" %}</th>
+          {% comment %}
+          <th class="col-lg-1">{% trans "Lijn" %}</th>
+          <th class="col-lg-6">{% trans "Bestemming" %}</th>
+          {% endcomment %}
+          <th class="col-lg-1">&nbsp;</th>
+      </tr>
+      {% for msg in line.list %}
+          <tr>
+              <td>{{ msg.operatingday|date:"d-m-Y" }}</td>
+              {% if msg.begintime %}
+                <td>{{ msg.begintime|time:"H:i" }}</td>
+              {% else %}
+                <td> </td>
+              {% endif %}
+              {% if msg.endtime %}
+                <td>{{ msg.endtime|time:"H:i" }}</td>
+              {% else %}
+                <td> </td>
+              {% endif %}
+              {% comment %}
+              <td>{{ msg.line.publiclinenumber }}</td>
+              <td>{{ msg.line.headsign }}</td>
+              {% endcomment %}
+
+              <td>
+                {% if perms.openebs.add_change_line %}
+                    <form method="post" action="{% url 'change_line_delete' msg.id %}">
+                        {% csrf_token %}
+                        <button class="btn btn-xs btn-danger pull-right">
+                            <span class="glyphicon glyphicon-trash"></span>
+                        </button>
+                    </form>
+                {% endif %}
+              </td>
+          </tr>
+      {% endfor %}
+      </table>
+{% else %}
+    <h4>{% trans "Alle lijnen" %}</h4>
+          <table class="table table-condensed table-bordered" id="all_cancelled">
+          <tr>
+              <th>{% trans "Datum" %}</th>
+              <th> </th>
+              <th>&nbsp;</th>
+          </tr>
+          {% for msg in line.list %}
+          <tr>
+             <td>{{ msg.operatingday|date:"d-m-Y" }}</td>
+             <td>{% trans "Alle lijnen werden geannuleerd" %}</td>
+             <td>
+                 {% if perms.openebs.add_change_line %}
+                    <form method="post" action="{% url 'change_line_delete' msg.id %}">
+                        {% csrf_token %}
+                        <button class="btn btn-xs btn-danger pull-right">
+                        <span class="glyphicon glyphicon-trash"></span>
+                        </button>
+                    </form>
+                 {% endif %}
+             </td>
+          </tr>
+      {% endfor %}
+    </table>
+{% endif %}

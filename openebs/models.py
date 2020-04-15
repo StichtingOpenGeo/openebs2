@@ -21,6 +21,7 @@ from kv1.models import Kv1Stop, Kv1Line, Kv1Journey
 
 from kv15.enum import *
 from openebs2.settings import EXTERNAL_MESSAGE_USER_ID
+from openebs.views_utils import datetime_32h
 
 log = logging.getLogger('openebs.views')
 
@@ -29,6 +30,10 @@ log = logging.getLogger('openebs.views')
 def get_end_service():
     # Hmm, this is GMT
     return (now() + timedelta(days=1)).replace(hour=2, minute=0, second=0, microsecond=0)
+
+def get_start_service():
+    # Hmm, this is GMT
+    return (now()).replace(hour=2, minute=0, second=0, microsecond=0)
 
 
 class UserProfile(models.Model):
@@ -517,3 +522,74 @@ class Kv1StopFilterStop(models.Model):
         verbose_name_plural = _("Filter haltes")
         unique_together = ('filter', 'stop')
         ordering = ['stop__name', 'stop__timingpointcode']
+
+
+class Kv17ChangeLine(models.Model):
+    """
+    Container for a kv17 change for a complete line
+    """
+    dataownercode = models.CharField(verbose_name=_("Vervoerder"), choices=DATAOWNERCODE, max_length=10)
+    operatingday = models.DateField(verbose_name=_("Datum"))
+    begintime = models.DateTimeField(null=True, blank=True, default=get_start_service, verbose_name=_("Ingangstijd"))
+    endtime = models.DateTimeField(null=True, blank=True, default=get_end_service, verbose_name=_("Eindtijd"))
+    line = models.ForeignKey(Kv1Line, verbose_name=_("Lijn"), on_delete=models.CASCADE, null=True)
+    autorecover = models.BooleanField(default=True, verbose_name=_("Autorecover?"))
+    showcancelledtrip = models.BooleanField(default=True, verbose_name =_("Show_cancelled?"))
+    is_cancel = models.BooleanField(default=True, verbose_name=_("Opgeheven?"),
+                                    help_text=_("Lijn kan ook een toelichting zijn voor een halte"))
+    is_recovered = models.BooleanField(default=False, verbose_name=_("Teruggedraaid?"))
+    created = models.DateTimeField(auto_now_add=True)
+    recovered = models.DateTimeField(null=True, blank=True)  # Not filled till recovered
+
+    def delete(self):
+        self.is_recovered = True
+        self.recovered = now()
+        self.save()
+        # Warning: Don't perform the actual delete here!
+
+    def force_delete(self):
+        super(Kv17ChangeLine, self).delete()
+
+    def to_xml(self):
+        """
+        This xml will reflect the status of the object - whether we've been canceled or recovered
+        """
+
+        return render_to_string('xml/kv17changeline.xml', {'object': self, 'begintime': datetime_32h(self.operatingday, self.begintime), 'endtime': datetime_32h(self.operatingday, self.endtime)}).replace(os.linesep, '')
+
+    class Meta(object):
+        verbose_name = _('Lijnaanpassing')
+        verbose_name_plural = _("Lijnaanpassingen")
+        unique_together = ('operatingday', 'line', 'begintime')
+        permissions = (
+            ("view_change_line", _("Lijnaanpassingen bekijken")),
+            ("add_change_line", _("Lijnaanpassingen aanmaken")),
+        )
+
+    def __unicode__(self):
+        return "%s Lijn %s" % (self.operatingday, self.line)
+
+    def realtime_id(self):
+        return "%s:%s" % (self.dataownercode, self.line.lineplanningnumber)
+
+
+class Kv17ChangeLineChange(models.Model):
+    """
+    Store cancel and recover for a complete line
+    If is_recovered = False is a cancel, else it's no longer
+    """
+
+    change = models.ForeignKey(Kv17ChangeLine, related_name="details", on_delete=models.CASCADE)
+    reasontype = models.SmallIntegerField(null=True, blank=True, choices=REASONTYPE, verbose_name=_("Type oorzaak"))
+    subreasontype = models.CharField(max_length=10, blank=True, choices=SUBREASONTYPE, verbose_name=_("Oorzaak"))
+    reasoncontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg oorzaak"))
+    advicetype = models.SmallIntegerField(null=True, blank=True, choices=ADVICETYPE, verbose_name=_("Type advies"))
+    subadvicetype = models.CharField(max_length=10, blank=True, choices=SUBADVICETYPE, verbose_name=_("Advies"))
+    advicecontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg advies"))
+
+    class Meta(object):
+        verbose_name = _('Lijnaanpassingsdetails')
+        verbose_name_plural = _("Lijnaanpassingendetails")
+
+    def __unicode__(self):
+        return "%s Details" % self.change
