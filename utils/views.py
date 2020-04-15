@@ -51,7 +51,8 @@ class ExternalMessagePushMixin(object):
         """
         if len(self.pushers) == 0:
             log.warning("No pushers have been defined")
-            return True
+            if settings.DEBUG:
+                return True
 
         success = False
         for pusher in self.pushers:
