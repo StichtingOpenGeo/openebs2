@@ -13,24 +13,12 @@ from kv15.enum import REASONTYPE, SUBREASONTYPE, ADVICETYPE, SUBADVICETYPE
 from openebs.models import Kv17ChangeLine, Kv17ChangeLineChange
 from datetime import datetime, timedelta, time
 
-
 log = logging.getLogger('openebs.forms')
 
 
 class ChangeLineCancelCreateForm(forms.ModelForm):
     # This is duplication, but should work
-
-    DAYS = [[str(d['date'].strftime('%Y-%m-%d')), str(d['date'].strftime('%d-%m-%Y'))] for d in Kv1JourneyDate.objects.all() \
-        .filter(date__gte=datetime.today() - timedelta(days=1)) \
-        .values('date') \
-        .distinct('date') \
-        .order_by('date')]
-
-    current = [str(datetime.today().strftime('%Y-%m-%d')), str(datetime.today().strftime('%d-%m-%Y'))]
-    DAYS.append(current) if current not in DAYS else None
-    OPERATING_DAY = DAYS[((datetime.now().hour < 4) * -1) + 1] if len(DAYS) > 1 else current[1]
-
-    operatingday = forms.ChoiceField(choices=DAYS, label=_("Datum"), initial=OPERATING_DAY, required=False)
+    operatingday = forms.ChoiceField(label=_("Datum"), required=False)
     begintime_part = forms.TimeField(label=_('Ingangstijd'), required=False, widget=forms.TimeInput(format='%H:%M:%S'))
     endtime_part = forms.TimeField(label=_('Eindtijd'), required=False, widget=forms.TimeInput(format='%H:%M:%S'))
     reasontype = forms.ChoiceField(choices=REASONTYPE, label=_("Type oorzaak"), required=False)
@@ -167,6 +155,19 @@ class ChangeLineCancelCreateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(ChangeLineCancelCreateForm, self).__init__(*args, **kwargs)
+
+        DAYS = [[str(d['date'].strftime('%Y-%m-%d')), str(d['date'].strftime('%d-%m-%Y'))] for d in Kv1JourneyDate.objects.all() \
+            .filter(date__gte=datetime.today() - timedelta(days=1)) \
+            .values('date') \
+            .distinct('date') \
+            .order_by('date')]
+
+        current = [str(datetime.today().strftime('%Y-%m-%d')), str(datetime.today().strftime('%d-%m-%Y'))]
+        DAYS.append(current) if current not in DAYS else None
+        OPERATING_DAY = DAYS[((datetime.now().hour < 4) * -1) + 1] if len(DAYS) > 1 else current[1]
+        self.fields['operatingday'].choices = DAYS
+        self.fields['operatingday'].initial = OPERATING_DAY
+
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
