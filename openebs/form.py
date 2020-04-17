@@ -324,6 +324,10 @@ class Kv17ChangeForm(forms.ModelForm):
                                'advicetype',
                                'subadvicetype',
                                'advicecontent'
+                               ),
+                AccordionGroup(_('Opties'),
+                               'autorecover',
+                               'showcancelledtrip'
                                )
             )
         )
