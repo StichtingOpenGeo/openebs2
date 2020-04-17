@@ -31,11 +31,11 @@
             <advicetype>{{ object.details.all.0.advicetype }}</advicetype>
             <subadvicetype>{{ object.details.all.0.subadvicetype }}</subadvicetype>
             {% if object.details.all.0.advicecontent %}<advicecontent>{{ object.details.all.0.advicecontent }}</advicecontent>{% endif %}
-            {% comment "Controleer volgorde met XSD" %}
+       {% endif %}
+            {% comment "Controleer volgorde showcancelledtrip & autorecover met XSD" %}{% endcomment %}
             <showcancelledtrip>{{ object.showcancelledtrip }}</showcancelledtrip>
             <autorecover>{{ object.autorecover }}</autorecover>
-            {% endcomment %}
-        {% endif %}</CANCEL>
+        </CANCEL>
     {% endif %}
 </KV17MUTATEJOURNEY>
 {% endif %}
