@@ -1,8 +1,3 @@
-/* STOP AND SCENARIO FUNCTIONS */
-var selectedStops = []
-var scenarioStops = []
-var blockedStops = [] /* Already have messages set */
-
 function changeSearch(event) {
     if ($("#line_search").val().length > 0) {
         $.ajax('/line/'+$("#line_search").val(), {
@@ -31,11 +26,11 @@ function writeList(data, status) {
     });
 }
 
-
 /* TRIP SELECTION */
 var selectedTrips = [];
 var activeJourneys = [];
 var activeLine = null;
+var cancelledLines = [];
 var currentLineMeasures = null;
 
 function showTrips(event) {
@@ -50,57 +45,6 @@ function showTrips(event) {
 
     $('#line').val(activeLine)
     $(this).addClass('success')
-}
-
-function changeOperatingDayTrips() {
-    $("#rit-list span").remove();
-    $('#rit-list .help').show();
-    selectedTrips = [];
-    activeJourneys  = []
-    $("#journeys").val('');
-    getActiveJourneys();
-    showTripsOnChange();
-    var operating_day_text = $("#id_operatingday option:selected" ).text();
-    $("#operating_day_text").text(operating_day_text);
-}
-
-var allTrips = null;
-
-function showTripsOnChange() {
-    if (activeLine != null) {
-        var operating_day = $("#id_operatingday").val();
-
-        $.ajax({ url: '/line/'+activeLine+'/ritten',
-         data: {'operatingday': operating_day},
-            success : writeTrips
-        });
-    }
-}
-
-function loadPreselectedJourneys() {
-    $(".rit-preload").each(function(id, val) {
-        selectedTrips.push($(val).attr('id').substring(2));
-    });
-    writeTripList();
-}
-
-function selectTrip(event, ui) {
-    var ritnr = $(ui.selected).attr('id').substring(1);
-    if ($.inArray(parseInt(ritnr), activeJourneys) != -1) /* Note our array stores numbers, so convert */
-        return;
-
-    var id = $.inArray(ritnr, selectedTrips);
-    if (id == -1) {
-        $('#rit-list .help').hide();
-        $(ui.selected).addClass('success');
-        var label = $(ui.selected).find("strong").text();
-        var dellink = '<span class="trip-remove glyphicon glyphicon-remove"></span>';
-        $('#rit-list').append('<span id="st'+ritnr+'" class="pull-left trip-selection label label-danger">'+label+' '+dellink+'</span>');
-        selectedTrips.push(ritnr);
-        writeTripList();
-    } else {
-        removeTrip($(ui.selected).attr('id').substring(1));
-    }
 }
 
 function removeTripFromX(event, ui) {
@@ -120,12 +64,104 @@ function removeTrip(ritnr) {
     writeTripList();
 }
 
+function loadPreselectedJourneys() {
+    $(".rit-preload").each(function(id, val) {
+        selectedTrips.push($(val).attr('id').substring(2));
+    });
+    writeTripList();
+}
+
+function selectTrip(event, ui) {
+    var ritnr = $(ui.selected).attr('id').substring(1);
+    if ($.inArray(parseInt(ritnr), activeJourneys) != -1 /* Note our array stores numbers, so convert */
+        || $(ui.selected).hasClass("line_warning")) /* TODO: ritnr array selection faster than class selection? This disables trip that have been line cancelled. */
+        return;
+
+    var id = $.inArray(ritnr, selectedTrips);
+    if (id == -1) {
+        $('#rit-list .help').hide();
+        $(ui.selected).addClass('success');
+        var label = $(ui.selected).find("strong").text();
+        var dellink = '<span class="trip-remove glyphicon glyphicon-remove"></span>';
+        $('#rit-list').append('<span id="st'+ritnr+'" class="pull-left trip-selection label label-danger">'+label+' '+dellink+'</span>');
+        selectedTrips.push(ritnr);
+        writeTripList();
+    } else {
+        removeTrip($(ui.selected).attr('id').substring(1));
+    }
+}
+
 function writeTripList() {
     var out = "";
     $.each(selectedTrips, function(index, val) {
         out += val+',';
     });
     $("#journeys").val(out)
+}
+
+function changeOperatingDayTrips() {
+    $("#rit-list span").remove();
+    $('#rit-list .help').show();
+    selectedTrips = [];
+    activeJourneys = [];
+    $("#journeys").val('');
+    getActiveLines();
+    var operating_day_text = $("#id_operatingday option:selected" ).text();
+    $("#operating_day_text").text(operating_day_text);
+}
+
+function getActiveLines() {
+    var operating_day = $("#id_operatingday").val();
+    if (operating_day != null) {
+        $.ajax({ url: '/lijnaanpassing/lijnen.json',
+            data: {'operatingday': operating_day},
+            success : saveLines
+        });
+    } else {
+        cancelledLines = [];
+        $('#trips thead').hide();
+        $('#trips tbody').addClass('empty_database');
+        $('#trips tbody').text("Er staan geen ritten in de database.");
+    }
+}
+
+function saveLines(data, status) {
+    if (data.object) {
+        cancelledLines = data.object;
+    } else {
+        cancelledLines = [];
+    }
+    getActiveJourneys();
+}
+
+function getActiveJourneys() {
+    var operating_day = $("#id_operatingday").val();
+     $.ajax({ url: '/ritaanpassing/ritten.json',
+            data: {'operatingday': operating_day},
+            success : writeActiveJourneys
+     });
+}
+
+function writeActiveJourneys(data, status) {
+    if (data.object) {
+        $.each(data.object, function (i, journey) {
+            activeJourneys.push(journey.id)
+        });
+    }
+    showTripsOnChange();
+}
+
+function showTripsOnChange() {
+    if (activeLine != null) {
+        currentLineMeasures = cancelledLines.filter(l => l.id == activeLine || l.id === null);
+
+        var operating_day = $("#id_operatingday").val();
+
+        $.ajax({ url: '/line/'+activeLine+'/ritten',
+         data: {'operatingday': operating_day},
+            success : writeTrips
+        });
+    }
 }
 
 function writeTrips(data, status) {
@@ -151,6 +187,7 @@ function writeTrips(data, status) {
         $('#trips tbody').text("Geen ritten in database.");
     }
 }
+
 function renderTrip(trip_a, trip_b) {
     out = '<tr>';
     out += renderTripCell(trip_a);
@@ -164,9 +201,26 @@ function renderTripCell(trip) {
         return "<td>&nbsp;</td>";
 
     $('#trips td.warning').removeClass('warning');
+    $('#trips td.line_warning').removeClass('line_warning');
+
+    const currentTripMeasures = currentLineMeasures.filter(measure => {
+
+        if (measure.begintime === null && measure.endtime === null) {
+            return true;
+        } else if (measure.begintime === null && measure.endtime > trip.departuretime) {
+            return true;
+        } else if (measure.begintime <= trip.departuretime && measure.endtime === null) {
+            return true;
+        } else if (measure.begintime <= trip.departuretime && measure.endtime >= trip.departuretime) {
+            return true;
+        }
+
+    });
 
     if ($.inArray(trip.id, activeJourneys) != -1) {
         out = '<td class="trip warning" id="t'+trip.id+'">'
+    } else if (currentTripMeasures.length > 0) {
+        out = '<td class="trip line_warning" id="t'+trip.id+'">'
     } else {
         out = '<td class="trip" id="t'+trip.id+'">'
     }
@@ -174,6 +228,9 @@ function renderTripCell(trip) {
     out += "&nbsp;<small>Vertrek "+convertSecondsToTime(trip.departuretime)+"</small>"
     if ($.inArray(trip.id, activeJourneys) != -1) {
         out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Rit is al opgeheven"></span>'
+    }
+    if (currentTripMeasures.length > 0) {
+        out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Lijn is al opgeheven"></span>'
     }
     out += "</td>"
     return out
@@ -200,20 +257,3 @@ function padTime(i) {
         return '00';
     }
 }
-
-function getActiveJourneys() {
-    var operating_day = $("#id_operatingday").val();
-     $.ajax({ url: '/ritaanpassing/ritten.json',
-            data: {'operatingday': operating_day},
-            success : writeActiveJourneys
-     })
-}
-
-function writeActiveJourneys(data, status) {
-    if (data.object) {
-        $.each(data.object, function (i, journey) {
-            activeJourneys.push(journey.id)
-        });
-    }
-}
-
