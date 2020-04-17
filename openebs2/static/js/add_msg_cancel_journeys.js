@@ -56,6 +56,7 @@ function changeOperatingDayTrips() {
     $("#rit-list span").remove();
     $('#rit-list .help').show();
     selectedTrips = [];
+    activeJourneys  = []
     $("#journeys").val('');
     getActiveJourneys();
     showTripsOnChange();
@@ -162,6 +163,7 @@ function renderTripCell(trip) {
     if (trip == null)
         return "<td>&nbsp;</td>";
 
+    $('#trips td.warning').removeClass('warning');
 
     if ($.inArray(trip.id, activeJourneys) != -1) {
         out = '<td class="trip warning" id="t'+trip.id+'">'

@@ -1,6 +1,6 @@
 import logging
 from braces.views import LoginRequiredMixin
-from datetime import timedelta
+from datetime import timedelta, datetime
 from django.urls import reverse_lazy
 from django.db.models import Q
 from django.http import HttpResponseRedirect
@@ -12,6 +12,7 @@ from openebs.views_push import Kv17PushMixin
 from openebs.views_utils import FilterDataownerMixin
 from utils.time import get_operator_date
 from utils.views import AccessMixin, ExternalMessagePushMixin, JSONListResponseMixin
+from django.utils.dateparse import parse_date
 
 log = logging.getLogger('openebs.views.changes')
 
@@ -23,16 +24,23 @@ class ChangeListView(AccessMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super(ChangeListView, self).get_context_data(**kwargs)
 
+        # active list updates at 4 am.
+        if datetime.now().hour < 4:
+            change = -1
+        else:
+            change = 0
+        change_day = get_operator_date() + timedelta(days=change)
+
         # Get the currently active changes
-        context['active_list'] = self.model.objects.filter(operatingday=get_operator_date(), is_recovered=False,
+        context['active_list'] = self.model.objects.filter(operatingday__gte=change_day, is_recovered=False,
                                                            dataownercode=self.request.user.userprofile.company)
-        context['active_list'] = context['active_list'].order_by('line__publiclinenumber', 'line__lineplanningnumber', 'journey__departuretime', 'created')
+        context['active_list'] = context['active_list'].order_by('line__publiclinenumber', 'line__lineplanningnumber', 'journey__departuretime', 'operatingday')
 
         # Add the no longer active changes
         context['archive_list'] = self.model.objects.filter(Q(operatingday__lt=get_operator_date()) | Q(is_recovered=True),
                                                             dataownercode=self.request.user.userprofile.company,
                                                             created__gt=get_operator_date()-timedelta(days=3))
-        context['archive_list'] = context['archive_list'].order_by('-created')
+        context['archive_list'] = context['archive_list'].order_by('-operatingday')
         return context
 
 
@@ -50,6 +58,9 @@ class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
         return data
 
     def add_journeys_from_request(self, data):
+        operating_day = parse_date(self.request.GET['operatingday']) if 'operatingday' in self.request.GET else get_operator_date()
+        data['operator_date'] = operating_day
+
         journey_errors = 0
         journeys = []
         for journey in self.request.GET['journey'].split(','):
@@ -171,8 +182,12 @@ class ActiveJourneysAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailVi
     render_object = 'object'
 
     def get_object(self):
+        operating_day = get_operator_date()
+        if 'operatingday' in self.request.GET:
+            operating_day = parse_date(self.request.GET['operatingday'])
+
         # Note, can't set this on the view, because it triggers the queryset cache
-        queryset = self.model.objects.filter(changes__operatingday=get_operator_date(),
+        queryset = self.model.objects.filter(changes__operatingday=operating_day,
                                              # changes__is_recovered=False, # TODO Fix this - see bug #61
                                              # These two are double, but just in case
                                              changes__dataownercode=self.request.user.userprofile.company,

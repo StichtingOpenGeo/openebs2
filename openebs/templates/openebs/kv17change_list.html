@@ -42,14 +42,14 @@
   <h2>Verlopen Aanpassingen</h2>
   <table class="table table-bordered table-condensed">
   <tr>
-        <th class="col-lg-4">{% trans "Datum"%}</th>
+        <th class="col-lg-4">{% trans "Ritdatum"%}</th>
         <th class="col-lg-2">{% trans "Lijn" %}</th>
         <th class="col-lg-3">{% trans "Rit" %}</th>
         <th class="col-lg-5">&nbsp;</th>
   </tr>
   {% for msg in archive_list %}
     <tr class="{% if msg.is_recovered %}warning{% endif %}">
-        <td>{{ msg.operatingday|date:"d-m-Y" }} {{ msg.created|date:"H:i" }}</td></td>
+        <td>{{ msg.operatingday|date:"d-m-Y" }}</td></td>
         <td>{{ msg.line.publiclinenumber }}</td>
         <td>{{ msg.journey.journeynumber }} <small>(Vertrek {{msg.journey.departuretime|seconds_time|date:"H:i"}})</small></td>
         <td>
