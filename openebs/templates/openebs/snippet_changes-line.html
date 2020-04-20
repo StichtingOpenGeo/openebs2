@@ -1,17 +1,19 @@
 {% load i18n filters %}
-<h4>{% trans "Lijn" %} {{ line.grouper.publiclinenumber }} <small>{{ line.grouper.headsign }}</small></h4>
-  <table class="table table-condensed table-bordered">
-  <tr>
+{% if line.grouper.lineplanningnumber != line.grouper.publiclinenumber %}
+    <h4> {% trans "Lijn" %} {{ line.grouper.publiclinenumber }} / {{ line.grouper.lineplanningnumber }} <small>{{ line.grouper.headsign }}</small></h4>
+{% else %}
+    <h4>{% trans "Lijn" %} {{ line.grouper.publiclinenumber }} <small>{{ line.grouper.headsign }}</small></h4>
+{% endif %}
+<table class="table table-condensed table-bordered table-striped">
+  <tr id="highlight">
       <th>{% trans "Ritdatum" %}</th>
-      <th>{% trans "Vertrektijd" %}</th>
-      <th>{% trans "Ritnummer" %}</th>
+      <th>{% trans "Rit" %}</th>
       <th>&nbsp;</th>
   </tr>
   {% for msg in line.list %}
       <tr>
           <td>{{ msg.operatingday|date:"d-m-Y" }}</td>
-          <td>{{ msg.journey.departuretime|seconds_time|date:"H:i"}}</td>
-          <td>{{ msg.journey.journeynumber }}</td>
+          <td>{{ msg.journey.journeynumber }} <small>(Vertrek {{ msg.journey.departuretime|seconds_time|date:"H:i"}})</small></td>
           <td>
             {% if perms.openebs.add_change %}
                 <form method="post" action="{% url 'change_delete' msg.id %}">

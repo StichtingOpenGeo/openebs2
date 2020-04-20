@@ -12,9 +12,15 @@ function writeList(data, status) {
     $.each(data.object_list, function (i, line) {
         validIds.push('l'+line.pk)
           if (!$('#l'+line.pk).length) {
-            row = '<tr class="line" id="l'+line.pk+'"><td>'+line.publiclinenumber+ '</td>';
-            row += '<td>'+line.headsign+'</td></tr>';
-            $(row).hide().appendTo("#rows").fadeIn(999);
+            if (line.publiclinenumber) { // not all lines with a lineplanningnumber has a publiclinenumber or headsign
+                if (line.publiclinenumber != line.lineplanningnumber) {
+                    row = '<tr class="line" id="l'+line.pk+'"><td>'+line.publiclinenumber+ ' / ' + line.lineplanningnumber+'</td>';
+                } else {
+                    row = '<tr class="line" id="l'+line.pk+'"><td>'+line.publiclinenumber+'</td>';
+                }
+                row += '<td>'+line.headsign+'</td></tr>';
+                $(row).hide().appendTo("#rows").fadeIn(999);
+            }
           }
     });
 

@@ -5,12 +5,7 @@
 
 {% block content %}
 
-  <h1>{% trans "Ritaanpassingen" %}
-        {% comment %}
-        <a class="btn btn-danger pull-right" href="{% url 'change_redbutton' %}">
-        <span class="glyphicon glyphicon-trash"></span> {% trans "Alle ritten opheffen" %}
-        {% endcomment %}
-      </a>&nbsp;</h1>
+  <h1>{% trans "Ritaanpassingen" %}</h1>
 
   <h2>{% trans "Actieve aanpassingen" %}
       {% if perms.openebs.add_change %}
@@ -40,19 +35,25 @@
 </div>
 
   <h2>Verlopen Aanpassingen</h2>
-  <table class="table table-bordered table-condensed">
-  <tr>
-        <th class="col-lg-4">{% trans "Ritdatum"%}</th>
-        <th class="col-lg-2">{% trans "Lijn" %}</th>
-        <th class="col-lg-3">{% trans "Rit" %}</th>
-        <th class="col-lg-5">&nbsp;</th>
+  <table class="table table-bordered table-condensed table-striped">
+  <tr id="highlight">
+        <th class="col-lg-1">{% trans "Ritdatum"%}</th>
+        <th class="col-lg-1">{% trans "Lijn" %}</th>
+        <th class="col-lg-2">{% trans "Rit" %}</th>
+        <th class="col-lg-5">{% trans "Bestemming" %}</th>
+        <th class="col-lg-1">&nbsp;</th>
   </tr>
   {% for msg in archive_list %}
     <tr class="{% if msg.is_recovered %}warning{% endif %}">
         <td>{{ msg.operatingday|date:"d-m-Y" }}</td></td>
-        <td>{{ msg.line.publiclinenumber }}</td>
+        {% if msg.line.lineplanningnumber != msg.line.publiclinenumber %}
+            <td>{{ msg.line.publiclinenumber }} / {{ msg.line.lineplanningnumber }}</td>
+        {% else %}
+            <td>{{ msg.line.publiclinenumber }}</td>
+        {% endif %}
         <td>{{ msg.journey.journeynumber }} <small>(Vertrek {{msg.journey.departuretime|seconds_time|date:"H:i"}})</small></td>
-        <td>
+        <td>{{ msg.line.headsign }}</td>
+       <td>
             {% if perms.openebs.add_change %}
             <form method="post" action="{% url 'change_redo' msg.id %}">
                 {% csrf_token %}
