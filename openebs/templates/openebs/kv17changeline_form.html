@@ -53,9 +53,9 @@
               <div class="form-group">
                   <br />
                   {% trans "Doorvoeren" as doorvoeren %}
-                  {% trans "Annuleer alle lijnen van vervoerder" as annuleer %}
+                  {% trans "Annuleer alle lijnen van " as annuleer %}
                   <input type="submit" class="btn btn-primary" name="Doorvoeren" value="{{ doorvoeren }}"/>
-                  <input type="submit" class="btn btn-cancel" name="CancelAll" value="{{ annuleer }}"/>
+                  <input type="submit" class="btn btn-cancel" name="CancelAll" value="{{ annuleer }}{{dataowner}}"/>
 
               </div>
           </form>

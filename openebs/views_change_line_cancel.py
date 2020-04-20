@@ -67,6 +67,7 @@ class ChangeLineCancelCreateView(AccessMixin, Kv17PushMixin, CreateView):
             .order_by('publiclinenumber')
         data['header'] = ['Lijn', 'Eindbestemming']
         data['lines'] = lines
+        data['dataowner'] = self.request.user.userprofile.company
 
     def get_days(self, data):
         database = Kv1JourneyDate.objects.all() \
