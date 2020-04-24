@@ -7,10 +7,7 @@
           <th class="col-lg-1">{% trans "Lijndatum" %}</th>
           <th class="col-lg-1">{% trans "Begintijd" %}</th>
           <th class="col-lg-1">{% trans "Eindtijd" %}</th>
-          {% comment %}
-          <th class="col-lg-1">{% trans "Lijn" %}</th>
-          <th class="col-lg-6">{% trans "Bestemming" %}</th>
-          {% endcomment %}
+          <th class="col-lg-1">&nbsp;</th>
           <th class="col-lg-1">&nbsp;</th>
       </tr>
       {% for msg in line.list %}
@@ -26,10 +23,13 @@
               {% else %}
                 <td> </td>
               {% endif %}
-              {% comment %}
-              <td>{{ msg.line.publiclinenumber }}</td>
-              <td>{{ msg.line.headsign }}</td>
-              {% endcomment %}
+              <td align="center" style="vertical-align:bottom;">
+                {% if msg.monitoring_error %}
+                    <span class="glyphicon glyphicon-ban-circle" title="Niet gevolgd"></span>
+                {% else %}
+                    <span> </span>
+                {% endif %}
+              </td>
 
               <td>
                 {% if perms.openebs.add_change_line %}

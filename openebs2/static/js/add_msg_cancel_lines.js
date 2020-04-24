@@ -125,3 +125,9 @@ function changeOperatingDayLines() {
     var operating_day_text = $("#id_operatingday option:selected" ).text();
     $("#operating_day_text").text(operating_day_text);
 }
+
+function notMonitored() {
+    $("#notMonitored").text($(this).text());
+    $("#notMonitoredInput").val($(this).attr('value'));
+    $("#notMonitored").removeClass('disabled');
+}

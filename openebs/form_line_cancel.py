@@ -9,7 +9,7 @@ import floppyforms.__future__ as forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from kv1.models import Kv1JourneyDate, Kv1Line
-from kv15.enum import REASONTYPE, SUBREASONTYPE, ADVICETYPE, SUBADVICETYPE
+from kv15.enum import REASONTYPE, SUBREASONTYPE, ADVICETYPE, SUBADVICETYPE, MONITORINGERROR
 from openebs.models import Kv17ChangeLine, Kv17ChangeLineChange
 from datetime import datetime, timedelta, time
 
@@ -24,11 +24,12 @@ class ChangeLineCancelCreateForm(forms.ModelForm):
     reasontype = forms.ChoiceField(choices=REASONTYPE, label=_("Type oorzaak"), required=False)
     subreasontype = forms.ChoiceField(choices=SUBREASONTYPE, label=_("Oorzaak"), required=False)
     reasoncontent = forms.CharField(max_length=255, label=_("Uitleg oorzaak"), required=False,
-                                    widget=forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}))
+                                    widget=forms.Textarea(attrs={'cols': 40, 'rows': 4, 'class': 'col-lg-6'}))
     advicetype = forms.ChoiceField(choices=ADVICETYPE, label=_("Type advies"), required=False)
     subadvicetype = forms.ChoiceField(choices=SUBADVICETYPE, label=_("Advies"), required=False)
     advicecontent = forms.CharField(max_length=255, label=_("Uitleg advies"), required=False,
-                                    widget=forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}))
+                                    widget=forms.Textarea(attrs={'cols': 40, 'rows': 4, 'class': 'col-lg-6'}))
+    monitoring_error = forms.ChoiceField(choices=MONITORINGERROR, required=False)
 
     def clean(self):
         cleaned_data = super(ChangeLineCancelCreateForm, self).clean()
@@ -39,7 +40,8 @@ class ChangeLineCancelCreateForm(forms.ModelForm):
             begintime = make_aware(datetime.combine(operatingday, time(int(hh), int(mm))))
 
         if 'CancelAll' in self.data:
-            if Kv17ChangeLine.objects.filter(line__isnull=True, is_recovered=False, operatingday=operatingday, begintime=begintime).count() != 0:
+            if Kv17ChangeLine.objects.filter(line__isnull=True, is_recovered=False, operatingday=operatingday,
+                                             begintime=begintime).count() != 0:
                 raise ValidationError(_("Deze operatie is al gepland."))
 
             return cleaned_data
@@ -50,17 +52,25 @@ class ChangeLineCancelCreateForm(forms.ModelForm):
         if self.data['endtime_part'] != '':
             hh_e, mm_e = self.data['endtime_part'].split(':')
             endtime = time(int(hh_e), int(mm_e))
-            if begintime and endtime < time(int(hh), int(mm)): # if endtime before begintime
-                if endtime >= time(6, 0): # and after 6 am: validation error
+            if begintime and endtime < time(int(hh), int(mm)):  # if endtime before begintime
+                if endtime >= time(6, 0):  # and after 6 am: validation error
                     raise ValidationError(_("Eindtijd valt op volgende operationele dag"))
 
         valid_lines = 0
         for line in self.data['lijnen'].split(',')[0:-1]:
+            Kv17ChangeLine.objects.filter(line__pk=line, \
+                                          line=line, \
+                                          operatingday=operatingday, \
+                                          begintime=begintime, \
+                                          is_recovered=False, \
+                                          monitoring_error__isnull=False).delete()
+
             if Kv17ChangeLine.objects.filter(line__pk=line, \
                                              line=line, \
                                              operatingday=operatingday, \
                                              begintime=begintime, \
-                                             is_recovered=False).count() != 0:
+                                             is_recovered=False, \
+                                             monitoring_error__isnull=True).count() != 0:
                 raise ValidationError(_("Een of meer geselecteerde lijnen zijn al aangepast"))
             valid_lines += 1
         if valid_lines == 0:
@@ -98,6 +108,7 @@ class ChangeLineCancelCreateForm(forms.ModelForm):
             self.instance.operatingday = operatingday
             self.instance.begintime = begintime
             self.instance.endtime = endtime
+            self.instance.monitoring_error = None
 
             self.instance.is_cancel = True
             self.instance.save()
@@ -114,7 +125,7 @@ class ChangeLineCancelCreateForm(forms.ModelForm):
 
             xml_output.append(self.instance.to_xml())
 
-        else:
+        elif 'Doorvoeren' in self.data:
             for line in self.data['lijnen'].split(',')[0:-1]:
                 qry = Kv1Line.objects.filter(id=line)
                 if qry.count() == 1:
@@ -124,6 +135,7 @@ class ChangeLineCancelCreateForm(forms.ModelForm):
                     self.instance.begintime = begintime
                     self.instance.endtime = endtime
                     self.instance.is_cancel = True
+                    self.instance.monitoring_error = None
 
                     # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
                     if self.instance.line.dataownercode == self.instance.dataownercode:
@@ -132,17 +144,44 @@ class ChangeLineCancelCreateForm(forms.ModelForm):
                         # Add details
                         if self.data['reasontype'] != '0' or self.data['advicetype'] != '0':
                             Kv17ChangeLineChange(change=self.instance,
-                                              reasontype=self.data['reasontype'],
-                                              subreasontype=self.data['subreasontype'],
-                                              reasoncontent=self.data['reasoncontent'],
-                                              advicetype=self.data['advicetype'],
-                                              subadvicetype=self.data['subadvicetype'],
-                                              advicecontent=self.data['advicecontent']).save()
+                                                 reasontype=self.data['reasontype'],
+                                                 subreasontype=self.data['subreasontype'],
+                                                 reasoncontent=self.data['reasoncontent'],
+                                                 advicetype=self.data['advicetype'],
+                                                 subadvicetype=self.data['subadvicetype'],
+                                                 advicecontent=self.data['advicecontent']).save()
 
                         xml_output.append(self.instance.to_xml())
                     else:
-                        log.error("Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
-                                  (self.instance.line.dataownercode, self.instance.dataownercode))
+                        log.error(
+                            "Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
+                            (self.instance.line.dataownercode, self.instance.dataownercode))
+                else:
+                    log.error("Failed to find line %s" % line)
+        else:
+            for line in self.data['lijnen'].split(',')[0:-1]:
+                qry = Kv1Line.objects.filter(id=line)
+                if qry.count() == 1:
+                    self.instance.pk = None
+                    self.instance.line = qry[0]
+                    self.instance.operatingday = operatingday
+                    self.instance.begintime = begintime
+                    self.instance.endtime = endtime
+                    self.instance.is_cancel = False
+                    self.instance.monitoring_error = self.data['notMonitored']
+                    self.instance.autorecover = False
+                    self.instance.showcancelledtrip = False
+
+                    # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
+                    if self.instance.line.dataownercode == self.instance.dataownercode:
+                        self.instance.save()
+
+                        xml_output.append(self.instance.to_xml())
+
+                    else:
+                        log.error(
+                            "Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
+                            (self.instance.line.dataownercode, self.instance.dataownercode))
                 else:
                     log.error("Failed to find line %s" % line)
 
@@ -151,16 +190,17 @@ class ChangeLineCancelCreateForm(forms.ModelForm):
 
     class Meta(object):
         model = Kv17ChangeLine
-        exclude = [ 'dataownercode', 'line', 'is_recovered']
+        exclude = ['dataownercode', 'line', 'is_recovered']
 
     def __init__(self, *args, **kwargs):
         super(ChangeLineCancelCreateForm, self).__init__(*args, **kwargs)
 
-        DAYS = [[str(d['date'].strftime('%Y-%m-%d')), str(d['date'].strftime('%d-%m-%Y'))] for d in Kv1JourneyDate.objects.all() \
-            .filter(date__gte=datetime.today() - timedelta(days=1)) \
-            .values('date') \
-            .distinct('date') \
-            .order_by('date')]
+        DAYS = [[str(d['date'].strftime('%Y-%m-%d')), str(d['date'].strftime('%d-%m-%Y'))] for d in
+                Kv1JourneyDate.objects.all() \
+                    .filter(date__gte=datetime.today() - timedelta(days=1)) \
+                    .values('date') \
+                    .distinct('date') \
+                    .order_by('date')]
 
         current = [str(datetime.today().strftime('%Y-%m-%d')), str(datetime.today().strftime('%d-%m-%Y'))]
         DAYS.append(current) if current not in DAYS else None
@@ -173,23 +213,23 @@ class ChangeLineCancelCreateForm(forms.ModelForm):
         self.helper.layout = Layout(
             Accordion(
                 AccordionGroup(_('Datum en tijd'),
-                        'operatingday',
-                        'begintime_part',
-                        'endtime_part'
-                ),
+                               'operatingday',
+                               'begintime_part',
+                               'endtime_part'
+                               ),
                 AccordionGroup(_('Oorzaak'),
-                       'reasontype',
-                       'subreasontype',
-                       'reasoncontent'
-                ),
+                               'reasontype',
+                               'subreasontype',
+                               'reasoncontent'
+                               ),
                 AccordionGroup(_('Advies'),
-                       'advicetype',
-                       'subadvicetype',
-                       'advicecontent'
-                ),
+                               'advicetype',
+                               'subadvicetype',
+                               'advicecontent'
+                               ),
                 AccordionGroup(_('Opties'),
                                'autorecover',
                                'showcancelledtrip'
-                )
+                               )
             )
         )

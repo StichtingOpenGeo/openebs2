@@ -43,12 +43,12 @@
             <th class="col-lg-1">{% trans "Lijn" %}</th>
             <th class="col-lg-5">{% trans "Bestemming" %}</th>
             <th class="col-lg-1">&nbsp;</th>
+            <th class="col-lg-1">&nbsp;</th>
+
       </tr>
       {% for msg in archive_list %}
-
-
         <tr class="{% if msg.is_recovered %}warning{% endif %}">
-            <td>{{ msg.operatingday|date:"d-m-Y" }}</td></td>
+            <td>{{ msg.operatingday|date:"d-m-Y" }}</td>
             {% if msg.begintime %}
                 <td>{{ msg.begintime|time:"H:i" }}</td>
             {% else %}
@@ -62,20 +62,24 @@
             {% if msg.line.publiclinenumber %}
                 <td>{{ msg.line.publiclinenumber }}</td>
                 <td>{{ msg.line.headsign }}</td>
-                <td>
             {% else %}
                 <td> </td>
                 <td>{% trans "Alle lijnen werden geannuleerd" %}</td>
-                <td>
             {% endif %}
-                {% if perms.openebs.add_change_line %}
+            {% if msg.monitoring_error %}
+                <td align="center"><span class="glyphicon glyphicon-ban-circle" title="Rit werd niet gevolgd"></span></td>
+            {% else %}
+                <td> </td>
+            {% endif %}
+            <td>
+            {% if perms.openebs.add_change_line %}
                 <form method="post" action="{% url 'change_line_redo' msg.id %}">
                     {% csrf_token %}
                     <button class="btn pull-right">
                         <span class="glyphicon glyphicon-repeat"></span>
                     </button>
                 </form>
-                {% endif %}
+            {% endif %}
             </td>
         </tr>
       {% empty %}

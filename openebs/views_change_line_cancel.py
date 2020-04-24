@@ -5,7 +5,7 @@ from django.utils.timezone import now
 from django.utils.dateparse import parse_date
 
 from django.urls import reverse_lazy
-from django.db.models import Q
+from django.db.models import Q, F
 from django.http import HttpResponseRedirect
 from django.views.generic import ListView, CreateView, DeleteView, DetailView
 from kv1.models import Kv1Line, Kv1JourneyDate
@@ -159,10 +159,43 @@ class ActiveLinesAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView)
         # Note, can't set this on the view, because it triggers the queryset cache
         queryset = self.model.objects.filter(operatingday=operating_day,
                                              is_recovered=False,
+                                             changes__monitoring_error__isnull=True,
                                              # These two are double, but just in case
                                              #changes__dataownercode=self.request.user.userprofile.company,
                                              dataownercode=self.request.user.userprofile.company).distinct()
 
         # TODO: is it possible to apply a function on a value of a queryset?
         start_of_day = datetime.combine(operating_day, datetime.min.time()).timestamp()
-        return list({'id': x['line'], 'begintime': int(x['begintime'].timestamp() - start_of_day) if x['begintime'] is not None else None, 'endtime': int(x['endtime'].timestamp() - start_of_day) if x['endtime'] is not None else None, 'dataownercode': x['dataownercode']} for x in queryset.values('begintime', 'endtime', 'line', 'dataownercode'))
+        return list({'id': x['line'], 'begintime': int(x['begintime'].timestamp() - start_of_day) if x['begintime'] is not None else None,
+                     'endtime': int(x['endtime'].timestamp() - start_of_day) if x['endtime'] is not None else None,
+                     'dataownercode': x['dataownercode']} for x in
+                    queryset.values('begintime', 'endtime', 'line', 'dataownercode'))
+
+
+# Mogelijk overbodig als we dit niet aangeven in lijnovericht, maar wel nuttig als we dit in 'ritaanpassingen' willen toevoegen
+"""
+class NotMonitoredLinesAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+    model = Kv17ChangeLine
+    form_class = ChangeLineCancelCreateForm
+    render_object = 'object'
+
+    def get_object(self):
+        operating_day = get_operator_date()
+        if 'operatingday' in self.request.GET:
+            operating_day = parse_date(self.request.GET['operatingday'])
+
+        # Note, can't set this on the view, because it triggers the queryset cache
+        queryset = self.model.objects.filter(operatingday=operating_day,
+                                             is_recovered=False,
+                                             changes__monitoring_error__isnull=False,
+                                             # These two are double, but just in case
+                                             # changes__dataownercode=self.request.user.userprofile.company,
+                                             dataownercode=self.request.user.userprofile.company).distinct()
+
+        # TODO: is it possible to apply a function on a value of a queryset?
+        start_of_day = datetime.combine(operating_day, datetime.min.time()).timestamp()
+        return list({'id': x['line'], 'begintime': int(x['begintime'].timestamp() - start_of_day) if x['begintime'] is not None else None,
+                     'endtime': int(x['endtime'].timestamp() - start_of_day) if x['endtime'] is not None else None,
+                     'dataownercode': x['dataownercode']} for x in
+                    queryset.values('begintime', 'endtime', 'line', 'dataownercode', monitoring_error=F('changes__monitoring_error')))
+"""
