@@ -540,6 +540,8 @@ class Kv17ChangeLine(models.Model):
     is_recovered = models.BooleanField(default=False, verbose_name=_("Teruggedraaid?"))
     created = models.DateTimeField(auto_now_add=True)
     recovered = models.DateTimeField(null=True, blank=True)  # Not filled till recovered
+    monitoring_error = models.CharField(max_length=40, default=False, choices=MONITORINGERROR,
+                                        verbose_name=_("Monitoring_error"))
 
     def delete(self):
         self.is_recovered = True
