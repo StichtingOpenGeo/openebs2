@@ -4,11 +4,13 @@
     <h4>{% trans "Lijn" %} {{ line.grouper.publiclinenumber }} <small>{{ line.grouper.headsign }}</small></h4>
       <table class="table table-condensed table-bordered table-striped">
       <tr id="highlight">
-          <th class="col-lg-1">{% trans "Lijndatum" %}</th>
-          <th class="col-lg-1">{% trans "Begintijd" %}</th>
-          <th class="col-lg-1">{% trans "Eindtijd" %}</th>
-          <th class="col-lg-1">&nbsp;</th>
-          <th class="col-lg-1">&nbsp;</th>
+          <th class="col-lg-2">{% trans "Lijndatum" %}</th>
+          <th class="col-lg-2">{% trans "Begintijd" %}</th>
+          <th class="col-lg-2">{% trans "Eindtijd" %}</th>
+          <th class="col-lg-1"></th>
+          <th class="col-lg-1"></th>
+          <th class="col-lg-1"></th>
+          <th class="col-lg-1"></th>
       </tr>
       {% for msg in line.list %}
           <tr>
@@ -16,21 +18,35 @@
               {% if msg.begintime %}
                 <td>{{ msg.begintime|time:"H:i" }}</td>
               {% else %}
-                <td> </td>
+                <td></td>
               {% endif %}
               {% if msg.endtime %}
                 <td>{{ msg.endtime|time:"H:i" }}</td>
               {% else %}
-                <td> </td>
+                <td></td>
               {% endif %}
+
               <td align="center" style="vertical-align:bottom;">
                 {% if msg.monitoring_error %}
                     <span class="glyphicon glyphicon-ban-circle" title="Niet gevolgd"></span>
                 {% else %}
+                    <span></span>
+                {% endif %}
+              </td>
+              <td align="center" style="vertical-align:bottom;">
+                {% if msg.showcancelledtrip %}
+                    <span class="glyphicon glyphicon-eye-open" title="Toon geannuleerde ritten"></span>
+                {% else %}
                     <span> </span>
                 {% endif %}
               </td>
-
+              <td align="center" style="vertical-align:bottom;">
+                {% if msg.autorecover %}
+                    <span class="glyphicon glyphicon-text-color" title="Autorecover"></span></td>
+                {% else %}
+                    <span></span>
+                {% endif %}
+              </td>
               <td>
                 {% if perms.openebs.add_change_line %}
                     <form method="post" action="{% url 'change_line_delete' msg.id %}">
