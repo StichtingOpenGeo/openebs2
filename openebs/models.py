@@ -568,8 +568,8 @@ class Kv17ChangeLine(models.Model):
             ("add_change_line", _("Lijnaanpassingen aanmaken")),
         )
 
-    def __unicode__(self):
-        return "%s Lijn %s" % (self.operatingday, self.line)
+    def __str__(self):
+        return "%s Lijn %s / %s %s" % (self.operatingday, self.line.publiclinenumber, self.line.lineplanningnumber, self.line)
 
     def realtime_id(self):
         return "%s:%s" % (self.dataownercode, self.line.lineplanningnumber)
