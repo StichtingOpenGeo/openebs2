@@ -3,7 +3,7 @@ import logging
 from crispy_forms.bootstrap import AccordionGroup, Accordion
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, Field, HTML, Div, Hidden
-from django.utils.timezone import now
+from django.utils.timezone import now, is_aware, make_aware
 import floppyforms.__future__ as forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
@@ -12,6 +12,8 @@ from kv15.enum import REASONTYPE, SUBREASONTYPE, ADVICETYPE, SUBADVICETYPE
 from openebs.models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, Kv17Change, get_end_service
 from openebs.models import Kv17JourneyChange
 from utils.time import get_operator_date
+from dateutil import parser
+from datetime import datetime
 
 log = logging.getLogger('openebs.forms')
 
@@ -19,6 +21,15 @@ log = logging.getLogger('openebs.forms')
 class Kv15StopMessageForm(forms.ModelForm):
     def clean(self):
         # TODO Move _all_ halte parsing here!
+
+        endtime = parser.parse(self.data['messageendtime'])
+        if not is_aware(endtime):
+            endtime = make_aware(endtime)
+
+        current = datetime.now()
+        if not is_aware(current):
+            current = make_aware(current)
+
         ids = []
         for halte in self.data['haltes'].split(','):
             halte_split = halte.split('_')
@@ -30,6 +41,8 @@ class Kv15StopMessageForm(forms.ModelForm):
                     raise ValidationError(_("Datafout: halte niet gevonden in database. Meld dit bij een beheerder."))
         if len(ids) == 0:
             raise ValidationError(_("Selecteer minimaal een halte"))
+        elif current > endtime:
+            raise ValidationError(_("Eindtijd van bericht ligt in het verleden"))
         else:
             return self.cleaned_data
 
