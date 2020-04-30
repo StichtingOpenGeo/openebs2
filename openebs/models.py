@@ -146,6 +146,9 @@ class Kv15Stopmessage(models.Model):
             message = _("<geen bericht>")
         return "%s|%s#%s : %s" % (self.dataownercode, self.messagecodedate, self.messagecodenumber, message)
 
+    def realtime_id(self):
+        return "%s:%s:%s" % (self.dataownercode, self.messagecodedate, self.messagecodenumber)
+
     def clean(self):
         # Validate the object
         if self.messagedurationtype == 'REMOVE':
