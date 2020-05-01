@@ -14,8 +14,8 @@
     <messagetype>{{ object.messagetype }}</messagetype>
     <messagedurationtype>{{ object.messagedurationtype }}</messagedurationtype>
     <messagestarttime>{{ object.messagestarttime|date:"c" }}</messagestarttime>
-    {% if object.messagedurationtype != "REMOVE" %}
-    <messageendtime>{{ object.messageendtime|date:"c" }}</messageendtime>
+    {% if object.messagedurationtype != "REMOVE" and object.messageendtime %}
+        <messageendtime>{{ object.messageendtime|date:"c" }}</messageendtime>
     {% endif %}
     <messagecontent>{{ object.messagecontent }}</messagecontent>
     {% if object.reasontype != "ONGEDEFINIEERD" and object.reasontype != None %}<reasontype>{{ object.reasontype }}</reasontype>
