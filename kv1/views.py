@@ -11,7 +11,8 @@ from djgeojson.views import GeoJSONLayerView
 from utils.calender import CountCalendar
 from utils.time import get_operator_date
 from utils.views import JSONListResponseMixin
-from kv1.models import Kv1Line, Kv1Stop, Kv1JourneyDate
+from kv1.models import Kv1Line, Kv1Stop, Kv1JourneyDate, ImportStatus
+from kv1.management.commands.import_rid import Command
 
 
 # Views for adding messages and related lookups
@@ -147,6 +148,7 @@ class DataImportView(LoginRequiredMixin, StaffuserRequiredMixin, ListView):
         context['calendar'] = mark_safe(
             cal.formatmonth(date_now.year, date_now.month, ) + '<br />' + cal.formatmonth(date_next.year,
                                                                                           date_next.month, ))
+        context['import'] = ImportStatus.objects.all().order_by('-importDate')
         return context
 
     def get_queryset(self):

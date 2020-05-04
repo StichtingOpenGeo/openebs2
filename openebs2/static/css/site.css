@@ -210,3 +210,7 @@ span.stop-selection,span.trip-selection{
 .label-padded {
     margin-left: 4px;
 }
+
+#import-table {
+    width: 25%;
+}
