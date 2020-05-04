@@ -12,8 +12,6 @@ from utils.calender import CountCalendar
 from utils.time import get_operator_date
 from utils.views import JSONListResponseMixin
 from kv1.models import Kv1Line, Kv1Stop, Kv1JourneyDate, ImportStatus
-from kv1.management.commands.import_rid import Command
-
 
 # Views for adding messages and related lookups
 class LineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
