@@ -33,7 +33,7 @@ class Command(BaseCommand):
                 else:
                     self.log("ERROR!: %s on %s" % (message.realtime_id(), self.date))
             else:
-                self.log("Not send: %s on %s" % (message.realtime_id(), self.date))
+                self.log("Not sent: %s on %s" % (message.realtime_id(), self.date))
             if len(to_send) > 0 and len(to_send) % self.BATCH_SIZE == 0:
                 to_send, to_send_messages = self.send(to_send, to_send_messages)
         if len(to_send) > 0:
