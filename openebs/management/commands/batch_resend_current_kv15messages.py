@@ -4,13 +4,13 @@ from datetime import date, datetime
 from django.core.management import BaseCommand
 
 from openebs.models import Kv15Stopmessage
-from openebs.views_push import Kv17PushMixin
+from openebs.views_push import Kv15PushMixin
 from utils.time import get_operator_date
 from django.utils.timezone import is_aware, make_aware
 
 class Command(BaseCommand):
 
-    pusher = Kv17PushMixin()
+    pusher = Kv15PushMixin()
     BATCH_SIZE = 100
 
     date = get_operator_date()
