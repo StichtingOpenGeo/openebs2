@@ -12,6 +12,7 @@ from utils.calender import CountCalendar
 from utils.time import get_operator_date
 from utils.views import JSONListResponseMixin
 from kv1.models import Kv1Line, Kv1Stop, Kv1JourneyDate, ImportStatus
+from dateutil.relativedelta import relativedelta
 
 # Views for adding messages and related lookups
 class LineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
@@ -142,7 +143,7 @@ class DataImportView(LoginRequiredMixin, StaffuserRequiredMixin, ListView):
         context = super(DataImportView, self).get_context_data(**kwargs)
         cal = CountCalendar(context['object_list'])
         date_now = datetime.now()
-        date_next = date_now + timedelta(weeks=4)
+        date_next = date_now + relativedelta(months=1)
         context['calendar'] = mark_safe(
             cal.formatmonth(date_now.year, date_now.month, ) + '<br />' + cal.formatmonth(date_next.year,
                                                                                           date_next.month, ))
