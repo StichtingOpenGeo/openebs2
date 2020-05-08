@@ -415,17 +415,25 @@ class Kv17Change(models.Model):
     class Meta(object):
         verbose_name = _('Ritaanpassing')
         verbose_name_plural = _("Ritaanpassingen")
-        unique_together = ('operatingday', 'line', 'journey', 'reinforcement')
+        unique_together = ('operatingday', 'line', 'journey', 'reinforcement', 'is_alljourneysofline', 'is_alllines')
         permissions = (
             ("view_change", _("Ritaanpassingen bekijken")),
             ("add_change", _("Ritaanpassingen aanmaken")),
         )
 
     def __str__(self):
-        return "%s Lijn %s Rit# %s" % (self.operatingday, self.line, self.journey.journeynumber)
+        if not self.journey:
+            journeynumber = "Alle ritten"
+        else:
+            journeynumber = self.journey.journeynumber
+        return "%s Lijn %s Rit# %s" % (self.operatingday, self.line, journeynumber)
 
     def realtime_id(self):
-        return "%s:%s:%s" % (self.dataownercode, self.line.lineplanningnumber, self.journey.journeynumber)
+        if not self.journey:
+            journeynumber = "Alle ritten"
+        else:
+            journeynumber = self.journey.journeynumber
+        return "%s:%s:%s" % (self.dataownercode, self.line.lineplanningnumber, journeynumber)
 
 
 class Kv17JourneyChange(models.Model):

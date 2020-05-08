@@ -24,6 +24,7 @@
                 </tr>
             </tbody>
         </table>
+
     </div>
     <div class="col-lg-5">
         <h2>Ritten <span title="Dienstregelingsdatum">{{ operator_date|date:"d-m-Y" }}</span> </h2>
@@ -56,6 +57,8 @@
                     <span class="label label-danger">{% trans "Opheffen" %}</span>
                 </p><br />
                 <input type="hidden" id="journeys" name="journeys" />
+                <input type="hidden" id="line" name="line" />
+
             </div>
             <div class="control-group">
                 <label>{% trans "Rit" %}</label>
@@ -77,6 +80,7 @@
             <div class="form-group">
                     <br />
                     <button type="submit" class="btn btn-primary">{% trans "Doorvoeren" %}</button>
+                    <input type="submit" class="btn btn-danger" name="AllJourneys" value="Alle ritten opheffen"/>
             </div>
         </form>
     </div>
@@ -89,7 +93,7 @@
     <script src="{% static 'bower_components/jquery-ui/ui/minified/widget.min.js' %}"></script>
     <script src="{% static 'bower_components/jquery-ui/ui/minified/mouse.min.js' %}"></script>
     <script src="{% static 'bower_components/jquery-ui/ui/minified/selectable.min.js' %}"></script>
-    <script src="{% static 'js/add_msg.js' %}"></script>
+    <script src="{% static 'js/add_msg_journey.js' %}"></script>
 {% endblock %}
 {% block js_init %}
     getActiveJourneys();

@@ -2,14 +2,16 @@
 <h4>{% trans "Lijn" %} {{ line.grouper.publiclinenumber }} <small>{{ line.grouper.headsign }}</small></h4>
   <table class="table table-condensed table-bordered">
   <tr>
-      <th>{% trans "Vertrektijd" %}</th>
-      <th>{% trans "Ritnummer" %}</th>
-      <th>&nbsp;</th>
+      <th class="col-sm-4">{% trans "Ritnummer" %}</th>
+      <th class="col-sm-1">&nbsp;</th>
   </tr>
   {% for msg in line.list %}
       <tr>
-          <td>{{ msg.journey.departuretime|seconds_time|date:"H:i"}}</td>
-          <td>{{ msg.journey.journeynumber }}</td>
+          {% if msg.journey %}
+          <td>{{ msg.journey.journeynumber }} <small>(Vertrek {{ msg.journey.departuretime|seconds_time|date:"H:i"}})</small></td>
+          {% else %}
+          <td>{% trans "Alle ritten" %}</td>
+          {% endif %}
           <td>
             {% if perms.openebs.add_change %}
                 <form method="post" action="{% url 'change_delete' msg.id %}">
