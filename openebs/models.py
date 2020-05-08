@@ -385,10 +385,12 @@ class Kv17Change(models.Model):
     """
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
     operatingday = models.DateField(verbose_name=_("Datum"))
-    line = models.ForeignKey(Kv1Line, verbose_name=_("Lijn"), on_delete=models.CASCADE)
+    line = models.ForeignKey(Kv1Line, verbose_name=_("Lijn"), on_delete=models.CASCADE, null=True)
     journey = models.ForeignKey(Kv1Journey, verbose_name=_("Rit"), related_name="changes",
-                                on_delete=models.CASCADE)  # "A journey has changes"
+                                on_delete=models.CASCADE, null=True)  # "A journey has changes"
     reinforcement = models.IntegerField(default=0, verbose_name=_("Versterkingsnummer"))  # Never fill this for now
+    is_alljourneysofline = models.BooleanField(default=False, verbose_name=_("Alle ritten"))
+    is_alllines = models.BooleanField(default=False, verbose_name=_("Alle ritten"))
     is_cancel = models.BooleanField(default=True, verbose_name=_("Opgeheven?"),
                                     help_text=_("Rit kan ook een toelichting zijn voor een halte"))
     is_recovered = models.BooleanField(default=False, verbose_name=_("Teruggedraaid?"))
