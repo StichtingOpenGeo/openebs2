@@ -5,8 +5,8 @@
 
 {% block content %}
     <div class="row">
-        <div class="col-lg-3">
-        <h2>Lijn</h2>
+        <div class="col-lg-4">
+            <h2>Lijn <button type="button" onclick="selectAllLines()" id="all_lines" class="btn btn-warning btn-right" style="float: right;" >{% trans "Hele vervoerder" %}</input></button></h2>
         <div class="input-group">
             <span class="input-group-addon"><span class="glyphicon glyphicon-search"></span></span>
             <input type="text" class="form-control" id="line_search" placeholder="{% trans 'Lijnnummer of eindbestemming' %}">
@@ -26,11 +26,8 @@
         </table>
 
     </div>
-    <div class="col-lg-5">
-        <h2>Ritten <span title="Dienstregelingsdatum">{{ operator_date|date:"d-m-Y" }}</span> </h2>
-        <div id="line_cancel_box" class="text-center" style="display: none;">
-            <a id="line_cancel" class="btn btn-danger">{% trans "Alle ritten opheffen" %}</a>
-        </div>
+    <div class="col-lg-4">
+        <h2>Ritten <span title="Dienstregelingsdatum">{{ operator_date|date:"d-m-Y" }}</span><button type="button" onclick="selectAllTrips()" id="all_journeys" class="btn btn-warning btn-right" style="float: right;" >{% trans "Alle ritten" %}</button></h2>
         <table class="table openebs-trips" id="trips">
             <thead>
                 <tr>
@@ -57,11 +54,24 @@
                     <span class="label label-danger">{% trans "Opheffen" %}</span>
                 </p><br />
                 <input type="hidden" id="journeys" name="journeys" />
-                <input type="hidden" id="line" name="line" />
+                <input type="hidden" id="lines" name="lines" />
 
             </div>
             <div class="control-group">
-                <label>{% trans "Rit" %}</label>
+                <div class = "lijn-overzicht" style="display: none;">
+                <label>{% trans "Lijn" %}</label>
+                  <p class="form-control-static" id="lijn-list" >
+                      {% if form.instance.line %}
+                          <span class="label label-danger lijn-recover" id="line{{form.instance.line.lineplanningnumber}}">Lijn {{ form.instance.line.publiclinenumber }}</span>
+                      {% elif lijnen %}
+                          {% for l in lijnen %}
+                              <span class="label label-danger lijn-preload" id="st{{l.lineplanningnumber}}">{% trans "Lijn" %}{{ l.publiclinenumber }}<span class="lijn-remove glyphicon glyphicon-remove"></span></span>
+                          {% endfor %}
+                      {% endif %}
+                  </p><br /></div>
+
+                <label>{% trans "Rit(ten)" %}</label>
+
                 <p class="form-control-static" id="rit-list">
                     {% if form.instance.journey %}
                         <span class="label label-danger rit-recover" id="l{{form.instance.line.publiclinenumber}}">Rit {{ form.instance.journey.journeynumber }}</span>
@@ -80,7 +90,7 @@
             <div class="form-group">
                     <br />
                     <button type="submit" class="btn btn-primary">{% trans "Doorvoeren" %}</button>
-                    <input type="submit" class="btn btn-danger" name="AllJourneys" value="Alle ritten opheffen"/>
+                    {%comment %}<input type="submit" class="btn btn-danger" name="AllJourneys" value="Alle ritten opheffen"/>{% endcomment %}
             </div>
         </form>
     </div>

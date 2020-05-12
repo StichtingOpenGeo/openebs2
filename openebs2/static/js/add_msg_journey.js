@@ -266,16 +266,40 @@ function writeHaltesWithMessages(data, status) {
 /* TRIP SELECTION */
 var selectedTrips = [];
 var activeJourneys = [];
+var selectedLines = [];
 
-function showTrips(event) {
-    $("#rows tr.success").removeClass('success');
+function showTrips(event, ui) {
+    if ($.inArray($("#all_lines").text(), selectedLines) != -1) {
+        selectedLines = [];
+        $('#lijn-list span').remove();
+        $('.lijn-overzicht').css("display","none");
+    }
+
+    $("#trips tr.success").removeClass('success');
     $(".suc-icon").remove();
     $(this).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
     $.ajax('/line/'+$(this).attr('id').substring(1)+'/ritten', {
         success : writeTrips
     })
-    $('#line').val($(this).attr('id').substring(1))
     $(this).addClass('success')
+
+    var lijn = $(this).attr('id').substring(1);
+    var id = $.inArray(lijn, selectedLines);
+    if (id == -1) {
+        var dellink = '<span class="line-remove glyphicon glyphicon-remove"></span>';
+        selectedLines.push(lijn);
+        $('#lijn-list').append('<span id="st'+lijn+'" class="pull-left line-selection label label-danger">'+lijn+' '+dellink+'</span>');
+        $(this).addClass('success')
+    }
+    writeLineList();
+}
+
+function writeLineList() {
+    var out = "";
+    $.each(selectedLines, function(index, val) {
+        out += val+',';
+    });
+    $("#lines").val(out)
 }
 
 function loadPreselectedJourneys() {
@@ -507,4 +531,18 @@ function selectAllTrips() {
     $('#rit-list').append('<span id="st'+ritnr+'" class="pull-left trip-selection label label-danger">'+ritnr+' '+dellink+'</span>');
     selectedTrips.push(ritnr);
     writeTripList();
+}
+
+function selectAllLines() {
+    selectedLines = []
+    $('.lijn-overzicht').css("display","block");
+
+    $('#lijn-list').empty();
+    $("#rows tr").removeClass('success');
+    $(".suc-icon").remove();
+    var lijn = $("#all_lines").text();
+    var dellink = '<span class="line-remove glyphicon glyphicon-remove"></span>';
+    $('#lijn-list').append('<span id="st'+lijn+'" class="pull-left line-selection label label-danger">'+lijn+' '+dellink+'</span>');
+    selectedLines.push(lijn);
+    writeLineList();
 }
