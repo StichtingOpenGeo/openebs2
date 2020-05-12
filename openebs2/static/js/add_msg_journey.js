@@ -6,9 +6,6 @@ var blockedStops = [] /* Already have messages set */
 
 function changeSearch(event) {
     if ($("#line_search").val().length > 0) {
-        var linenr = $("#line_search").val()
-        $('#lines').append(linenr);
-
         $.ajax('/line/'+$("#line_search").val(), {
             success : writeList
         })
@@ -267,16 +264,23 @@ function writeHaltesWithMessages(data, status) {
 var selectedTrips = [];
 var activeJourneys = [];
 var selectedLines = [];
+var activeLine = '';
 
 function showTrips(event, ui) {
+    activeLine = '';
+    //$("#trips tr td").removeClass('success');
+    $("#rows tr.success").removeClass('success');
+    $(".suc-icon").remove();
     if ($.inArray($("#all_lines").text(), selectedLines) != -1) {
         selectedLines = [];
-        $('#lijn-list span').remove();
+        activeJourneys = [];
+        selectedTrips = [];
+        $('#lijn-list span').empty();
         $('.lijn-overzicht').css("display","none");
+        $('.rit-overzicht').css("display","block");
+        $('#rit-list .help').show();
     }
 
-    $("#trips tr.success").removeClass('success');
-    $(".suc-icon").remove();
     $(this).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
     $.ajax('/line/'+$(this).attr('id').substring(1)+'/ritten', {
         success : writeTrips
@@ -286,20 +290,24 @@ function showTrips(event, ui) {
     var lijn = $(this).attr('id').substring(1);
     var id = $.inArray(lijn, selectedLines);
     if (id == -1) {
-        var dellink = '<span class="line-remove glyphicon glyphicon-remove"></span>';
-        selectedLines.push(lijn);
-        $('#lijn-list').append('<span id="st'+lijn+'" class="pull-left line-selection label label-danger">'+lijn+' '+dellink+'</span>');
-        $(this).addClass('success')
+        //var dellink = '<span class="line-remove glyphicon glyphicon-remove"></span>';
+        activeLine = lijn;
+        //$('#lijn-list').append('<span id="st'+lijn+'" class="pull-left line-selection label label-danger">'+lijn+' '+dellink+'</span>');
+        $(this).addClass('success');
     }
-    writeLineList();
+
 }
 
 function writeLineList() {
-    var out = "";
-    $.each(selectedLines, function(index, val) {
-        out += val+',';
-    });
-    $("#lines").val(out)
+    var id = $.inArray(activeLine, selectedLines);
+    if (activeLine !== '' && id == -1) {
+        selectedLines.push(activeLine);
+        var out = "";
+        $.each(selectedLines, function(index, val) {
+            out += val+',';
+        });
+        $("#lines").val(out);
+    }
 }
 
 function loadPreselectedJourneys() {
@@ -313,6 +321,15 @@ function selectTrip(event, ui) {
     var ritnr = $(ui.selected).attr('id').substring(1);
     if ($.inArray(parseInt(ritnr), activeJourneys) != -1) /* Note our array stores numbers, so convert */
         return;
+
+    if ($.inArray($("#all_journeys").text(), selectedTrips) != -1) {
+        activeJourneys = [];
+        selectedTrips = [];
+        $('#rit-list span').empty();
+        $('#rit-list .help').show();
+        $('.lijn-overzicht').css("display","none");
+        $('.rit-overzicht').css("display","block");
+    }
 
     var id = $.inArray(ritnr, selectedTrips);
     if (id == -1) {
@@ -351,6 +368,7 @@ function writeTripList() {
         out += val+',';
     });
     $("#journeys").val(out)
+    writeLineList();
 }
 
 function writeTrips(data, status) {
@@ -523,26 +541,43 @@ function showEndTime() {
 
 function selectAllTrips() {
     selectedTrips = []
+    activeJourneys = []
+    $('#journeys').val('');
     $('#rit-list span').empty();
     $("#trips tr td").removeClass('success');
-    var ritnr = $("#all_journeys").text();
     $('#rit-list .help').hide();
+    $('.lijn-overzicht').css("display","block");
+    var ritnr = $("#all_journeys").text();
     var dellink = '<span class="trip-remove glyphicon glyphicon-remove"></span>';
     $('#rit-list').append('<span id="st'+ritnr+'" class="pull-left trip-selection label label-danger">'+ritnr+' '+dellink+'</span>');
     selectedTrips.push(ritnr);
+    var lijn = $('#rows tr.success').children("td:first").text()
+    var dellink_line = '<span class="line-remove glyphicon glyphicon-remove"></span>';
+    $('#lijn-list').append('<span id="st'+lijn+'" class="pull-left line-selection label label-danger">'+lijn+' '+dellink_line+'</span>');
+
+
     writeTripList();
 }
 
 function selectAllLines() {
     selectedLines = []
-    $('.lijn-overzicht').css("display","block");
+    selectedTrips = []
+    activeJourneys = []
 
+    $('.rit-overzicht').css("display","none");
+    $('#trips tbody').hide();
+    $('#journeys').val('');
     $('#lijn-list').empty();
+    $('#rit-list span').remove();
+    $('#rit-list .help').hide();
     $("#rows tr").removeClass('success');
+    $("#trips tr td").removeClass('ui-selected success');
     $(".suc-icon").remove();
+
     var lijn = $("#all_lines").text();
     var dellink = '<span class="line-remove glyphicon glyphicon-remove"></span>';
     $('#lijn-list').append('<span id="st'+lijn+'" class="pull-left line-selection label label-danger">'+lijn+' '+dellink+'</span>');
     selectedLines.push(lijn);
-    writeLineList();
+    $('#lines').val('Hele vervoerder');
+    $('.lijn-overzicht').css("display","block");
 }

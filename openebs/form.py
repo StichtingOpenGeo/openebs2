@@ -275,6 +275,7 @@ class Kv17ChangeForm(forms.ModelForm):
         self.instance.pk = None
         self.instance.is_alllines = True
         self.instance.operatingday = get_operator_date()
+        self.instance.is_cancel = True
 
         # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
         if self.instance.dataownercode:
@@ -306,6 +307,7 @@ class Kv17ChangeForm(forms.ModelForm):
                 self.instance.is_alljourneysofline = True
                 self.instance.line = qry[0]
                 self.instance.operatingday = get_operator_date()
+                self.instance.is_cancel = True
 
                 # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
                 if self.instance.line.dataownercode == self.instance.dataownercode:

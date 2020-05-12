@@ -50,12 +50,20 @@
   {% for msg in archive_list %}
     <tr class="{% if msg.is_recovered %}warning{% endif %}">
         <td>{{ msg.operatingday|date:"d-m-Y" }} {{ msg.created|date:"H:i" }}</td>
-        <td>{{ msg.line.publiclinenumber }}</td>
+        {% if msg.line %}
+            <td>{{ msg.line.publiclinenumber }}</td>
+        {% else %}
+            <td>{% trans "Alle lijnen" %}</td>
+        {% endif %}
+
         {% if msg.journey %}
             <td>{{ msg.journey.journeynumber }} <small>(Vertrek {{msg.journey.departuretime|seconds_time|date:"H:i"}})</small></td>
-        {% else %}
+        {% elif msg.line %}
             <td>{% trans "Alle ritten" %}</td>
+        {% else %}
+            <td>{% trans "Alle ritten van vervoerder werden geannnuleerd" %}</td>
         {% endif %}
+
         <td>
             {% if perms.openebs.add_change %}
             <form method="post" action="{% url 'change_redo' msg.id %}">
