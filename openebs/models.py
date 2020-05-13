@@ -18,6 +18,7 @@ from datetime import timedelta
 from django.utils.translation import ugettext, ugettext_lazy as _
 from django.utils.timezone import now, datetime, get_current_timezone
 from kv1.models import Kv1Stop, Kv1Line, Kv1Journey
+from openebs.views_utils import datetime_32h
 
 from kv15.enum import *
 from openebs2.settings import EXTERNAL_MESSAGE_USER_ID
@@ -29,6 +30,11 @@ log = logging.getLogger('openebs.views')
 def get_end_service():
     # Hmm, this is GMT
     return (now() + timedelta(days=1)).replace(hour=2, minute=0, second=0, microsecond=0)
+
+
+def get_start_service():
+    # Hmm, this is GMT
+    return (now()).replace(hour=2, minute=0, second=0, microsecond=0)
 
 
 class UserProfile(models.Model):
@@ -385,12 +391,14 @@ class Kv17Change(models.Model):
     """
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
     operatingday = models.DateField(verbose_name=_("Datum"))
+    begintime = models.DateTimeField(null=True, blank=True, default=get_start_service, verbose_name=_("Ingangstijd"))
+    endtime = models.DateTimeField(null=True, blank=True, default=get_end_service, verbose_name=_("Eindtijd"))
     line = models.ForeignKey(Kv1Line, verbose_name=_("Lijn"), on_delete=models.CASCADE, null=True)
     journey = models.ForeignKey(Kv1Journey, verbose_name=_("Rit"), related_name="changes",
                                 on_delete=models.CASCADE, null=True)  # "A journey has changes"
     reinforcement = models.IntegerField(default=0, verbose_name=_("Versterkingsnummer"))  # Never fill this for now
     is_alljourneysofline = models.BooleanField(default=False, verbose_name=_("Alle ritten"))
-    is_alllines = models.BooleanField(default=False, verbose_name=_("Alle ritten"))
+    is_alllines = models.BooleanField(default=False, verbose_name=_("Alle lijnen"))
     is_cancel = models.BooleanField(default=True, verbose_name=_("Opgeheven?"),
                                     help_text=_("Rit kan ook een toelichting zijn voor een halte"))
     is_recovered = models.BooleanField(default=False, verbose_name=_("Teruggedraaid?"))
@@ -408,14 +416,14 @@ class Kv17Change(models.Model):
 
     def to_xml(self):
         """
-        This xml will reflect the status of the object - wheter we've been canceled or recovered
+        This xml will reflect the status of the object - whether we've been canceled or recovered
         """
-        return render_to_string('xml/kv17journey.xml', {'object': self}).replace(os.linesep, '')
+        return render_to_string('xml/kv17journey.xml', {'object': self, 'begintime': datetime_32h(self.operatingday, self.begintime), 'endtime': datetime_32h(self.operatingday, self.endtime)}).replace(os.linesep, '')
 
     class Meta(object):
         verbose_name = _('Ritaanpassing')
         verbose_name_plural = _("Ritaanpassingen")
-        unique_together = ('operatingday', 'line', 'journey', 'reinforcement', 'is_alljourneysofline', 'is_alllines')
+        unique_together = ('operatingday', 'line', 'journey', 'reinforcement', 'is_alljourneysofline', 'is_alllines', 'begintime')
         permissions = (
             ("view_change", _("Ritaanpassingen bekijken")),
             ("add_change", _("Ritaanpassingen aanmaken")),
@@ -426,6 +434,9 @@ class Kv17Change(models.Model):
             journeynumber = "Alle ritten"
         else:
             journeynumber = self.journey.journeynumber
+
+        if not self.line:
+            self.line = "Alle lijnen"
         return "%s Lijn %s Rit# %s" % (self.operatingday, self.line, journeynumber)
 
     def realtime_id(self):
@@ -433,6 +444,9 @@ class Kv17Change(models.Model):
             journeynumber = "Alle ritten"
         else:
             journeynumber = self.journey.journeynumber
+
+        if not self.line:
+            self.line = "Alle lijnen"
         return "%s:%s:%s" % (self.dataownercode, self.line.lineplanningnumber, journeynumber)
 
 
