@@ -106,7 +106,7 @@
     <script src="{% static 'js/add_msg_journey.js' %}"></script>
 {% endblock %}
 {% block js_init %}
-    getActiveJourneys();
+    getActiveLines();
     loadPreselectedJourneys();
     $('#line_search').on('keyup', changeSearch);
     $( "body" ).on('click', ".line", showTrips);

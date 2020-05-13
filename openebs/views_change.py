@@ -178,3 +178,15 @@ class ActiveJourneysAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailVi
                                              changes__dataownercode=self.request.user.userprofile.company,
                                              dataownercode=self.request.user.userprofile.company).distinct()
         return list(queryset.values('id', 'dataownercode'))
+
+
+class ActiveLinesAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+    model = Kv17Change
+    render_object = 'object'
+
+    def get_object(self):
+        # Note, can't set this on the view, because it triggers the queryset cache
+        queryset = self.model.objects.filter(operatingday=get_operator_date(),
+                                             is_recovered=False,
+                                             dataownercode=self.request.user.userprofile.company).distinct()
+        return list({'id': x['line'], 'dataownercode': x['dataownercode']} for x in queryset.values('line', 'dataownercode'))

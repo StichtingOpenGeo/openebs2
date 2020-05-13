@@ -366,9 +366,8 @@ class Kv17ChangeForm(forms.ModelForm):
         return xml_output
 
     def save(self, force_insert=False, force_update=False, commit=True):
-        ''' Save each of the journeys in the model. This is a disaster, we return the XML
-        TODO: Figure out a better solution fo this! '''
-        #xml_output = []
+        ''' Save each of the mutations in the model.'''
+
         if 'Alle ritten' in self.data['journeys']:
             xml_output = self.save_all_journeys(force_insert, force_update, commit)
         elif 'Hele vervoerder' in self.data['lines']:

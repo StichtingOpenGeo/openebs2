@@ -265,10 +265,11 @@ var selectedTrips = [];
 var activeJourneys = [];
 var selectedLines = [];
 var activeLine = '';
+var cancelledLines = [];
+var currentLineMeasures = null;
 
 function showTrips(event, ui) {
     activeLine = '';
-    //$("#trips tr td").removeClass('success');
     $("#rows tr.success").removeClass('success');
     $(".suc-icon").remove();
     if ($.inArray($("#all_lines").text(), selectedLines) != -1) {
@@ -423,6 +424,20 @@ function convertSecondsToTime(seconds) {
         extra = " <em>(+1)</em>"
     }
     return ""+padTime(hours)+":"+padTime(minutes)+extra;
+}
+function getActiveLines() {
+    $.ajax('/ritaanpassing/lijnen.json', {
+            success : saveLines
+    })
+}
+
+function saveLines(data, status) {
+    if (data.object) {
+        cancelledLines = data.object;
+    } else {
+        cancelledLines = [];
+    }
+    getActiveJourneys();
 }
 
 function getActiveJourneys() {
