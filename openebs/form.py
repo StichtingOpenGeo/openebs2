@@ -3,7 +3,7 @@ import logging
 from crispy_forms.bootstrap import AccordionGroup, Accordion
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, Field, HTML, Div, Hidden
-from django.utils.timezone import now
+from django.utils.timezone import now, make_aware
 import floppyforms.__future__ as forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
@@ -12,6 +12,7 @@ from kv15.enum import REASONTYPE, SUBREASONTYPE, ADVICETYPE, SUBADVICETYPE
 from openebs.models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, Kv17Change, get_end_service
 from openebs.models import Kv17JourneyChange
 from utils.time import get_operator_date
+from datetime import datetime, time, timedelta
 from django.utils.dateparse import parse_date
 
 
@@ -221,6 +222,8 @@ class Kv15ScenarioMessageForm(forms.ModelForm):
 
 class Kv17ChangeForm(forms.ModelForm):
     # This is duplication, but should work
+    begintime_part = forms.TimeField(label=_('Ingangstijd'), required=False, widget=forms.TimeInput(format='%H:%M:%S'))
+    endtime_part = forms.TimeField(label=_('Eindtijd'), required=False, widget=forms.TimeInput(format='%H:%M:%S'))
     reasontype = forms.ChoiceField(choices=REASONTYPE, label=_("Type oorzaak"), required=False)
     subreasontype = forms.ChoiceField(choices=SUBREASONTYPE, label=_("Oorzaak"), required=False)
     reasoncontent = forms.CharField(max_length=255, label=_("Uitleg oorzaak"), required=False,
@@ -235,6 +238,19 @@ class Kv17ChangeForm(forms.ModelForm):
         if 'journeys' not in self.data:
             raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
 
+        begintime = None
+        if self.data['begintime_part'] != '':
+            hh, mm = self.data['begintime_part'].split(':')
+            begintime = make_aware(datetime.combine(get_operator_date(), time(int(hh), int(mm))))
+
+        endtime = None
+        if self.data['endtime_part'] != '':
+            hh_e, mm_e = self.data['endtime_part'].split(':')
+            endtime = time(int(hh_e), int(mm_e))
+            if begintime and endtime < time(int(hh), int(mm)):  # if endtime before begintime
+                if endtime >= time(6, 0):  # and after 6 am: validation error
+                    raise ValidationError(_("Eindtijd valt op volgende operationele dag"))
+
         valid_journeys = 0
         if 'Alle ritten' in self.data['journeys']:
             if 'lines' in self.data:
@@ -243,15 +259,18 @@ class Kv17ChangeForm(forms.ModelForm):
                     if line_qry.count() == 0:
                         raise ValidationError(_("Geen lijn gevonden."))
                     if Kv17Change.objects.filter(is_alljourneysofline=True, line=line_qry[0],
-                                                 operatingday=get_operator_date()).count() != 0:
-                        raise ValidationError(_("De gehele lijn is al aangepast"))
+                                                 operatingday=get_operator_date(), \
+                                                 begintime=begintime, \
+                                                 is_recovered=False).count() != 0:
+                        raise ValidationError(_("Een of meer geselecteerde lijnen zijn al aangepast"))
                 valid_journeys -= 1
             else:
-                raise ValidationError(_("Geen geldige lijn geselecteerd"))
+                raise ValidationError(_("Een of meer geselecteerde lijnen zijn ongeldig"))
 
         elif 'Hele vervoerder' in self.data['lines']:
             if Kv17Change.objects.filter(is_alllines=True,
-                                         operatingday=get_operator_date()).count() != 0:
+                                         operatingday=get_operator_date(), \
+                                         begintime=begintime).count() != 0:
                 raise ValidationError(_("De gehele vervoerder is al aangepast"))
             valid_journeys -= 1
 
@@ -272,9 +291,29 @@ class Kv17ChangeForm(forms.ModelForm):
 
     def save_all_lines(self, force_insert=False, force_update=False, commit=True):
         xml_output = []
+        operatingday = get_operator_date()
+        begintime = None
+        if self.data['begintime_part'] != '':
+            hh, mm = self.data['begintime_part'].split(':')
+            begintime = make_aware(datetime.combine(operatingday, time(int(hh), int(mm))))
+
+        endtime = None
+        if self.data['endtime_part'] != '':
+            hh_end, mm_end = self.data['endtime_part'].split(':')
+            # if begintime is set and endtime is earlier than begintime add 1 day to operatingday of endtime
+            if begintime and time(int(hh_end), int(mm_end)) < time(int(hh), int(mm)):
+                if time(0, 0) <= time(int(hh_end), int(mm_end)) < time(6, 0):
+                    operatingday_endtime = operatingday + timedelta(days=1)
+                endtime = make_aware(datetime.combine(operatingday_endtime, time(int(hh_end), int(mm_end))))
+            # else, operatingday is given day
+            else:
+                endtime = make_aware(datetime.combine(operatingday, time(int(hh_end), int(mm_end))))
+
         self.instance.pk = None
         self.instance.is_alllines = True
-        self.instance.operatingday = get_operator_date()
+        self.instance.operatingday = operatingday
+        self.instance.begintime = begintime
+        self.instance.endtime = endtime
         self.instance.is_cancel = True
 
         # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
@@ -300,13 +339,33 @@ class Kv17ChangeForm(forms.ModelForm):
 
     def save_all_journeys(self, force_insert=False, force_update=False, commit=True):
         xml_output = []
+        operatingday = get_operator_date()
+        begintime = None
+        if self.data['begintime_part'] != '':
+            hh, mm = self.data['begintime_part'].split(':')
+            begintime = make_aware(datetime.combine(operatingday, time(int(hh), int(mm))))
+
+        endtime = None
+        if self.data['endtime_part'] != '':
+            hh_end, mm_end = self.data['endtime_part'].split(':')
+            # if begintime is set and endtime is earlier than begintime add 1 day to operatingday of endtime
+            if begintime and time(int(hh_end), int(mm_end)) < time(int(hh), int(mm)):
+                if time(0, 0) <= time(int(hh_end), int(mm_end)) < time(6, 0):
+                    operatingday_endtime = operatingday + timedelta(days=1)
+                endtime = make_aware(datetime.combine(operatingday_endtime, time(int(hh_end), int(mm_end))))
+            # else, operatingday is given day
+            else:
+                endtime = make_aware(datetime.combine(operatingday, time(int(hh_end), int(mm_end))))
+
         for line in self.data['lines'].split(',')[0:-1]:
             qry = Kv1Line.objects.filter(id=line)
             if qry.count() == 1:
                 self.instance.pk = None
                 self.instance.is_alljourneysofline = True
                 self.instance.line = qry[0]
-                self.instance.operatingday = get_operator_date()
+                self.instance.operatingday = operatingday
+                self.instance.begintime = begintime
+                self.instance.endtime = endtime
                 self.instance.is_cancel = True
 
                 # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
@@ -387,6 +446,10 @@ class Kv17ChangeForm(forms.ModelForm):
         self.helper.form_tag = False
         self.helper.layout = Layout(
             Accordion(
+                AccordionGroup(_('Tijd'),
+                               'begintime_part',
+                               'endtime_part'
+                               ),
                 AccordionGroup(_('Oorzaak'),
                                'reasontype',
                                'subreasontype',

@@ -7,11 +7,24 @@
 {% endif %}
       <table class="table table-condensed table-bordered">
       <tr>
+          <th class="col-sm-2">{% trans "Begintijd" %}</th>
+          <th class="col-sm-2">{% trans "Eindtijd" %}</th>
           <th class="col-sm-4">{% trans "Ritnummer" %}</th>
           <th class="col-sm-1">&nbsp;</th>
       </tr>
       {% for msg in line.list %}
-          <tr>
+          <tr>{% if msg.begintime %}
+                <td>{{ msg.begintime|time:"H:i" }}</td>
+              {% else %}
+                <td> </td>
+              {% endif %}
+
+              {% if msg.endtime %}
+                <td>{{ msg.endtime|time:"H:i" }}</td>
+              {% else %}
+                <td> </td>
+              {% endif %}
+
               {% if msg.journey %}
                 <td>{{ msg.journey.journeynumber }} <small>(Vertrek {{ msg.journey.departuretime|seconds_time|date:"H:i"}})</small></td>
               {% elif all_lines %}

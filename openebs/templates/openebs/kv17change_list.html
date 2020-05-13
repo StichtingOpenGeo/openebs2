@@ -43,13 +43,27 @@
   <table class="table table-bordered table-condensed">
   <tr>
         <th class="col-sm-2">{% trans "Datum"%}</th>
+        <th class="col-sm-2">{% trans "Begintijd" %}</th>
+        <th class="col-sm-2">{% trans "Eindtijd" %}</th>
         <th class="col-sm-2">{% trans "Lijn" %}</th>
         <th class="col-sm-5">{% trans "Rit" %}</th>
         <th class="col-sm-3">&nbsp;</th>
   </tr>
   {% for msg in archive_list %}
     <tr class="{% if msg.is_recovered %}warning{% endif %}">
-        <td>{{ msg.operatingday|date:"d-m-Y" }} {{ msg.created|date:"H:i" }}</td>
+        <td>{{ msg.operatingday|date:"d-m-Y" }}</td>
+        {% if msg.begintime %}
+            <td>{{ msg.begintime|time:"H:i" }}</td>
+        {% else %}
+            <td> </td>
+        {% endif %}
+
+        {% if msg.endtime %}
+            <td>{{ msg.endtime|time:"H:i" }}</td>
+        {% else %}
+            <td> </td>
+        {% endif %}
+
         {% if msg.line %}
             <td>{{ msg.line.publiclinenumber }}</td>
         {% else %}
