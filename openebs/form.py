@@ -239,7 +239,7 @@ class Kv17ChangeForm(forms.ModelForm):
         cleaned_data = super(Kv17ChangeForm, self).clean()
         if 'journeys' not in self.data:
             raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
-
+        dataownercode = self.user.userprofile.company
         operatingday = get_operator_date()
         begintime = None #datetime.utcnow().replace(tzinfo=utc)
         if self.data['begintime_part'] != '':
@@ -274,12 +274,14 @@ class Kv17ChangeForm(forms.ModelForm):
                     if begintime:
                         if endtime:
                             if Kv17Change.objects.filter(Q(begintime__lte=begintime) & Q(begintime__lte=endtime),
+                                                         dataownercode=dataownercode,
                                                          is_alljourneysofline=True, line=line_qry[0],
                                                          operatingday=operatingday,
                                                          is_recovered=False).count() != 0:
                                 raise ValidationError(_("Een of meer geselecteerde lijnen zijn al aangepast"))
                         else:
                             if Kv17Change.objects.filter(Q(begintime__lte=begintime),
+                                                         dataownercode=dataownercode,
                                                          is_alljourneysofline=True, line=line_qry[0],
                                                          operatingday=operatingday,
                                                          is_recovered=False).count() != 0:
@@ -287,6 +289,7 @@ class Kv17ChangeForm(forms.ModelForm):
                     else:
                         begintime = datetime.utcnow().replace(tzinfo=utc)
                         if Kv17Change.objects.filter(is_alljourneysofline=True, line=line_qry[0],
+                                                     dataownercode=dataownercode,
                                                      operatingday=operatingday,
                                                      begintime__lte=begintime,
                                                      is_recovered=False).count() != 0:
@@ -301,26 +304,31 @@ class Kv17ChangeForm(forms.ModelForm):
             if begintime:
                 if endtime:
                     Kv17Change.objects.filter(Q(begintime__lte=begintime) & Q(begintime__lte=endtime),
+                                              dataownercode=dataownercode,
                                               is_alllines=True,
                                               is_recovered=True,
                                               operatingday=operatingday).delete()
                     if Kv17Change.objects.filter(Q(begintime__lte=begintime) & Q(begintime__lte=endtime),
+                                                 dataownercode=dataownercode,
                                                  is_alllines=True,
                                                  is_recovered=False,
                                                  operatingday=operatingday).count() != 0:
                         raise ValidationError(_("Deze operatie is al gepland."))
                 else:
                     Kv17Change.objects.filter(begintime__lte=begintime,
+                                              dataownercode=dataownercode,
                                               is_alllines=True,
                                               is_recovered=True,
                                               operatingday=operatingday).delete()
                     if Kv17Change.objects.filter(begintime__lte=begintime,
+                                                 dataownercode=dataownercode,
                                                  is_alllines=True,
                                                  is_recovered=False,
                                                  operatingday=operatingday).count() != 0:
                         raise ValidationError(_("Deze operatie is al gepland."))
             else:
-                if Kv17Change.objects.filter(is_alllines=True,
+                if Kv17Change.objects.filter(dataownercode=dataownercode,
+                                             is_alllines=True,
                                              is_recovered=False,
                                              operatingday=operatingday).count() != 0:
                     raise ValidationError(_("Deze operatie is al gepland."))
@@ -331,17 +339,21 @@ class Kv17ChangeForm(forms.ModelForm):
                 journey_qry = Kv1Journey.objects.filter(pk=journey, dates__date=operatingday)
                 if journey_qry.count() == 0:
                     raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig."))
-
+                print("dataownercode: ", journey_qry[0].dataownercode)
                 Kv17Change.objects.filter(journey__pk=journey,
+                                          dataownercode=dataownercode,
                                           line=journey_qry[0].line,
                                           operatingday=operatingday,
                                           is_recovered=True).delete()
 
-                if Kv17Change.objects.filter(journey__pk=journey, line=journey_qry[0].line,
+                if Kv17Change.objects.filter(dataownercode=dataownercode,
+                                             journey__pk=journey,
+                                             line=journey_qry[0].line,
                                              operatingday=operatingday).count() != 0:
                     raise ValidationError(_("Een of meer geselecteerde ritten zijn al aangepast."))
 
                 if Kv17Change.objects.filter(Q(is_alljourneysofline=True) & Q(line=journey_qry[0].line) | Q(is_alllines=True),
+                                             dataownercode=dataownercode,
                                              operatingday=operatingday).count() != 0:
                     raise ValidationError(_("Deze lijn is al opgeheven."))
 
@@ -506,6 +518,7 @@ class Kv17ChangeForm(forms.ModelForm):
         exclude = ['dataownercode', 'operatingday', 'line', 'journey', 'is_recovered', 'reinforcement']
 
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
         super(Kv17ChangeForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False

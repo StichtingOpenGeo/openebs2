@@ -22,17 +22,18 @@ class ChangeListView(AccessMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super(ChangeListView, self).get_context_data(**kwargs)
+        operatingday = get_operator_date()
 
         # Get the currently active changes
-        context['active_list'] = self.model.objects.filter(operatingday=get_operator_date(), is_recovered=False,
+        context['active_list'] = self.model.objects.filter(operatingday__gte=operatingday, is_recovered=False,
                                                            dataownercode=self.request.user.userprofile.company)
-        context['active_list'] = context['active_list'].order_by('line__publiclinenumber', 'line__lineplanningnumber', 'journey__departuretime', 'created')
+        context['active_list'] = context['active_list'].order_by('line__publiclinenumber', 'line__headsign', 'operatingday', 'journey__departuretime')
 
         # Add the no longer active changes
-        context['archive_list'] = self.model.objects.filter(Q(operatingday__lt=get_operator_date()) | Q(is_recovered=True),
+        context['archive_list'] = self.model.objects.filter(Q(operatingday__lt=operatingday) | Q(is_recovered=True),
                                                             dataownercode=self.request.user.userprofile.company,
-                                                            created__gt=get_operator_date()-timedelta(days=3))
-        context['archive_list'] = context['archive_list'].order_by('-created')
+                                                            created__gt=operatingday-timedelta(days=3))
+        context['archive_list'] = context['archive_list'].order_by('-operatingday', 'line__publiclinenumber', '-journey__departuretime')
         return context
 
 
@@ -41,6 +42,13 @@ class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
     model = Kv17Change
     form_class = Kv17ChangeForm
     success_url = reverse_lazy('change_index')
+
+    def get_form_kwargs(self):
+        kwargs = super(ChangeCreateView, self).get_form_kwargs()
+        kwargs.update({
+            'user': self.request.user
+        })
+        return kwargs
 
     def get_context_data(self, **kwargs):
         data = super(ChangeCreateView, self).get_context_data(**kwargs)
@@ -177,7 +185,7 @@ class ActiveJourneysAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailVi
                                              # These two are double, but just in case
                                              changes__dataownercode=self.request.user.userprofile.company,
                                              dataownercode=self.request.user.userprofile.company).distinct()
-        return list(queryset.values('id', 'dataownercode', 'line'))
+        return list(queryset.values('id', 'dataownercode'))
 
 
 class ActiveLinesAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
