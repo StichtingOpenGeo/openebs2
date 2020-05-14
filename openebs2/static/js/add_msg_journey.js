@@ -283,6 +283,7 @@ function showTrips(event, ui) {
     }
 
     $(this).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
+
     $.ajax('/line/'+$(this).attr('id').substring(1)+'/ritten', {
         success : writeTrips
     })
@@ -296,7 +297,7 @@ function showTrips(event, ui) {
         //$('#lijn-list').append('<span id="st'+lijn+'" class="pull-left line-selection label label-danger">'+lijn+' '+dellink+'</span>');
         $(this).addClass('success');
     }
-
+    currentLineMeasures = cancelledLines.filter(l => l.id == activeLine || l.id === null);
 }
 
 function writeLineList() {
@@ -404,7 +405,7 @@ function renderTripCell(trip) {
     $('#trips td.line_warning').removeClass('line_warning');
 
     const currentTripMeasures = currentLineMeasures.filter(measure => {
-        if (measure.is_recovered == false) {
+        //if (measure.is_recovered == false) {
             if (measure.begintime === null && measure.endtime === null) {
                 return true;
             } else if (measure.begintime === null && measure.endtime > trip.departuretime) {
@@ -414,13 +415,13 @@ function renderTripCell(trip) {
             } else if (measure.begintime <= trip.departuretime && measure.endtime >= trip.departuretime) {
                 return true;
             }
-        }
+        //}
     });
 
     if ($.inArray(trip.id, activeJourneys) != -1) {
         out = '<td class="trip warning" id="t'+trip.id+'">'
-    //} else if (currentTripMeasures.length > 0) {
-    //    out = '<td class="trip line_warning" id="t'+trip.id+'">'
+    } else if (currentTripMeasures.length > 0) {
+        out = '<td class="trip line_warning" id="t'+trip.id+'">'
     } else {
         out = '<td class="trip" id="t'+trip.id+'">'
     }
@@ -429,9 +430,9 @@ function renderTripCell(trip) {
     if ($.inArray(trip.id, activeJourneys) != -1) {
         out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Rit is al opgeheven"></span>'
     }
-    //if (currentTripMeasures.length > 0) {
-    //    out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Lijn is al opgeheven"></span>'
-    //}
+    if (currentTripMeasures.length > 0) {
+        out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Lijn is al opgeheven"></span>'
+    }
     out += "</td>"
     return out
 }
@@ -473,7 +474,7 @@ function writeActiveJourneys(data, status) {
             activeJourneys.push(journey.id)
         });
     }
-    currentLineMeasures = cancelledLines.filter(l => l.id == activeLine || l.id === null);
+
 }
 
 /* TIME FUNCTIONS */

@@ -177,7 +177,7 @@ class ActiveJourneysAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailVi
                                              # These two are double, but just in case
                                              changes__dataownercode=self.request.user.userprofile.company,
                                              dataownercode=self.request.user.userprofile.company).distinct()
-        return list(queryset.values('id', 'dataownercode'))
+        return list(queryset.values('id', 'dataownercode', 'line'))
 
 
 class ActiveLinesAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):

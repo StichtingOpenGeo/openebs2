@@ -5,7 +5,7 @@
 
 {% block content %}
     <div class="row">
-        <div class="col-lg-4">
+        <div class="col-sm-4">
             <h2>Lijn <button type="button" onclick="selectAllLines()" id="all_lines" class="btn btn-warning btn-right" style="float: right;" >{% trans "Hele vervoerder" %}</input></button></h2>
         <div class="input-group">
             <span class="input-group-addon"><span class="glyphicon glyphicon-search"></span></span>
@@ -26,7 +26,7 @@
         </table>
 
     </div>
-    <div class="col-lg-4">
+    <div class="col-sm-5">
         <h2>Ritten <span title="Dienstregelingsdatum">{{ operator_date|date:"d-m-Y" }}</span><button type="button" onclick="selectAllTrips()" id="all_journeys" class="btn btn-warning btn-right" style="float: right;" >{% trans "Alle ritten" %}</button></h2>
         <table class="table openebs-trips" id="trips">
             <thead>
@@ -40,7 +40,7 @@
             </tbody>
         </table>
     </div>
-    <div class="col-lg-4">
+    <div class="col-sm-3">
         <h2>{% trans "Ritaanpassing" %}</h2>
         {% if journey_errors > 0 %}
             <div class="alert alert-warning">
