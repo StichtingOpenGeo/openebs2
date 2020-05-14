@@ -400,9 +400,27 @@ function renderTrip(trip_a, trip_b) {
 function renderTripCell(trip) {
     if (trip == null)
         return "<td>&nbsp;</td>";
+    $('#trips td.warning').removeClass('warning');
+    $('#trips td.line_warning').removeClass('line_warning');
+
+    const currentTripMeasures = currentLineMeasures.filter(measure => {
+        if (measure.is_recovered == false) {
+            if (measure.begintime === null && measure.endtime === null) {
+                return true;
+            } else if (measure.begintime === null && measure.endtime > trip.departuretime) {
+                return true;
+            } else if (measure.begintime <= trip.departuretime && measure.endtime === null) {
+                return true;
+            } else if (measure.begintime <= trip.departuretime && measure.endtime >= trip.departuretime) {
+                return true;
+            }
+        }
+    });
 
     if ($.inArray(trip.id, activeJourneys) != -1) {
         out = '<td class="trip warning" id="t'+trip.id+'">'
+    //} else if (currentTripMeasures.length > 0) {
+    //    out = '<td class="trip line_warning" id="t'+trip.id+'">'
     } else {
         out = '<td class="trip" id="t'+trip.id+'">'
     }
@@ -411,6 +429,9 @@ function renderTripCell(trip) {
     if ($.inArray(trip.id, activeJourneys) != -1) {
         out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Rit is al opgeheven"></span>'
     }
+    //if (currentTripMeasures.length > 0) {
+    //    out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Lijn is al opgeheven"></span>'
+    //}
     out += "</td>"
     return out
 }
@@ -452,6 +473,7 @@ function writeActiveJourneys(data, status) {
             activeJourneys.push(journey.id)
         });
     }
+    currentLineMeasures = cancelledLines.filter(l => l.id == activeLine || l.id === null);
 }
 
 /* TIME FUNCTIONS */
@@ -562,14 +584,15 @@ function selectAllTrips() {
     $("#trips tr td").removeClass('success');
     $('#rit-list .help').hide();
     $('.lijn-overzicht').css("display","block");
+
     var ritnr = $("#all_journeys").text();
     var dellink = '<span class="trip-remove glyphicon glyphicon-remove"></span>';
     $('#rit-list').append('<span id="st'+ritnr+'" class="pull-left trip-selection label label-danger">'+ritnr+' '+dellink+'</span>');
     selectedTrips.push(ritnr);
+
     var lijn = $('#rows tr.success').children("td:first").text()
     var dellink_line = '<span class="line-remove glyphicon glyphicon-remove"></span>';
     $('#lijn-list').append('<span id="st'+lijn+'" class="pull-left line-selection label label-danger">'+lijn+' '+dellink_line+'</span>');
-
 
     writeTripList();
 }

@@ -1,6 +1,6 @@
 import logging
 from braces.views import LoginRequiredMixin
-from datetime import timedelta
+from datetime import timedelta, datetime
 from django.urls import reverse_lazy
 from django.db.models import Q
 from django.http import HttpResponseRedirect
@@ -185,8 +185,13 @@ class ActiveLinesAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView)
     render_object = 'object'
 
     def get_object(self):
+        operating_day = get_operator_date()
         # Note, can't set this on the view, because it triggers the queryset cache
-        queryset = self.model.objects.filter(operatingday=get_operator_date(),
+        queryset = self.model.objects.filter(Q(is_alljourneysofline=True) | Q(is_alllines=True),
+                                             operatingday=operating_day,
                                              is_recovered=False,
                                              dataownercode=self.request.user.userprofile.company).distinct()
-        return list({'id': x['line'], 'dataownercode': x['dataownercode']} for x in queryset.values('line', 'dataownercode'))
+        # TODO: is it possible to apply a function on a value of a queryset?
+        start_of_day = datetime.combine(operating_day, datetime.min.time()).timestamp()
+        return list({'id': x['line'], 'begintime': int(x['begintime'].timestamp() - start_of_day) if x['begintime'] is not None else None, 'endtime': int(x['endtime'].timestamp() - start_of_day) if x['endtime'] is not None else None, 'dataownercode': x['dataownercode'], 'alljourneysofline': x['is_alljourneysofline'], 'all_lines' : x['is_alllines']} for x in queryset.values('begintime', 'endtime', 'line', 'dataownercode', 'is_alljourneysofline', 'is_alllines'))
+        #return list({'id': x['line'], 'dataownercode': x['dataownercode']} for x in queryset.values('line', 'dataownercode'))
