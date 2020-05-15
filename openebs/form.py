@@ -235,7 +235,9 @@ class Kv17ChangeForm(forms.ModelForm):
 
         valid_journeys = 0
         for journey in self.data['journeys'].split(',')[0:-1]:
-            journey_qry = Kv1Journey.objects.filter(pk=journey, dates__date=get_operator_date())
+            journey_qry = Kv1Journey.objects.filter(pk=journey,
+                                                    dates__date=get_operator_date(),
+                                                    dataownercode=self.user.userprofile.company)
             if journey_qry.count() == 0:
                 raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
             if Kv17Change.objects.filter(journey__pk=journey, line=journey_qry[0].line,
@@ -289,6 +291,7 @@ class Kv17ChangeForm(forms.ModelForm):
         exclude = ['dataownercode', 'operatingday', 'line', 'journey', 'is_recovered', 'reinforcement']
 
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
         super(Kv17ChangeForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
