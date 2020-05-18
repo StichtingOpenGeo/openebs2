@@ -12,6 +12,7 @@ from openebs.views_push import Kv17PushMixin
 from openebs.views_utils import FilterDataownerMixin
 from utils.time import get_operator_date
 from utils.views import AccessMixin, ExternalMessagePushMixin, JSONListResponseMixin
+from django.utils.dateparse import parse_date
 
 log = logging.getLogger('openebs.views.changes')
 
@@ -59,6 +60,10 @@ class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView, MultiplePermissio
         return data
 
     def add_journeys_from_request(self, data):
+        operating_day = parse_date(
+            self.request.GET['operatingday']) if 'operatingday' in self.request.GET else get_operator_date()
+        data['operator_date'] = operating_day
+
         journey_errors = 0
         journeys = []
         for journey in self.request.GET['journey'].split(','):
@@ -180,8 +185,10 @@ class ActiveJourneysAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailVi
     render_object = 'object'
 
     def get_object(self):
+        operating_day = parse_date(self.request.GET['operatingday']) if 'operatingday' in self.request.GET else get_operator_date()
+
         # Note, can't set this on the view, because it triggers the queryset cache
-        queryset = self.model.objects.filter(changes__operatingday=get_operator_date(),
+        queryset = self.model.objects.filter(changes__operatingday=operating_day,
                                              # changes__is_recovered=False, # TODO Fix this - see bug #61
                                              # These two are double, but just in case
                                              changes__dataownercode=self.request.user.userprofile.company,
@@ -194,7 +201,8 @@ class ActiveLinesAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView)
     render_object = 'object'
 
     def get_object(self):
-        operating_day = get_operator_date()
+        operating_day = parse_date(self.request.GET['operatingday']) if 'operatingday' in self.request.GET else get_operator_date()
+
         # Note, can't set this on the view, because it triggers the queryset cache
         queryset = self.model.objects.filter(Q(is_alljourneysofline=True) | Q(is_alllines=True),
                                              operatingday=operating_day,

@@ -5,12 +5,7 @@
 
 {% block content %}
 
-  <h1>{% trans "Ritaanpassingen" %}
-        {% comment %}
-        <a class="btn btn-danger pull-right" href="{% url 'change_redbutton' %}">
-        <span class="glyphicon glyphicon-trash"></span> {% trans "Alle ritten opheffen" %}
-        {% endcomment %}
-      </a>&nbsp;</h1>
+  <h1>{% trans "Ritaanpassingen" %}</h1>
 
   <h2>{% trans "Actieve aanpassingen" %}
       {% if perms.openebs.add_change %}
@@ -90,7 +85,7 @@
         </td>
     </tr>
   {% empty %}
-      <tr><td colspan="5" class="text-center"><em>{% trans "Geen berichten gevonden" %}</em></td></tr>
+      <tr><td colspan="6" class="text-center"><em>{% trans "Geen berichten gevonden" %}</em></td></tr>
   {% endfor %}
   </table>
   <p><small>{% trans "Rood = teruggedraaide aanpassing" %}</small></p>
