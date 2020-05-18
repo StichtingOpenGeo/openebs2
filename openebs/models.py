@@ -427,6 +427,7 @@ class Kv17Change(models.Model):
         permissions = (
             ("view_change", _("Ritaanpassingen bekijken")),
             ("add_change", _("Ritaanpassingen aanmaken")),
+            ("cancel_alllines", _("Vervoerder annuleren")),
         )
 
     def __str__(self):

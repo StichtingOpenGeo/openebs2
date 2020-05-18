@@ -6,7 +6,9 @@
 {% block content %}
     <div class="row">
         <div class="col-sm-4">
-            <h2>Lijn <button type="button" onclick="selectAllLines()" id="all_lines" class="btn btn-warning btn-right" style="float: right;" >{% trans "Hele vervoerder" %}</input></button></h2>
+            {% if perms.openebs.cancel_alllines %}
+                <h2>Lijn <button type="button" onclick="selectAllLines()" id="all_lines" class="btn btn-warning btn-right" style="float: right;" >{% trans "Hele vervoerder" %}</input></button></h2>
+            {% endif %}
         <div class="input-group">
             <span class="input-group-addon"><span class="glyphicon glyphicon-search"></span></span>
             <input type="text" class="form-control" id="line_search" placeholder="{% trans 'Lijnnummer of eindbestemming' %}">

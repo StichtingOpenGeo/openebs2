@@ -1,5 +1,5 @@
 import logging
-from braces.views import LoginRequiredMixin
+from braces.views import LoginRequiredMixin, MultiplePermissionsRequiredMixin
 from datetime import timedelta, datetime
 from django.urls import reverse_lazy
 from django.db.models import Q
@@ -37,8 +37,9 @@ class ChangeListView(AccessMixin, ListView):
         return context
 
 
-class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
+class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView, MultiplePermissionsRequiredMixin):
     permission_required = 'openebs.add_change'
+    #permissions = {"any" : ('openebs.add_change', 'openebs.cancel_alllines')}
     model = Kv17Change
     form_class = Kv17ChangeForm
     success_url = reverse_lazy('change_index')
