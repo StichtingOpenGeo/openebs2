@@ -590,7 +590,7 @@ function showEndTime() {
 }
 
 function selectAllTrips() {
-    writeLineList();
+
 
     selectedTrips = []
     activeJourneys = []
@@ -605,10 +605,12 @@ function selectAllTrips() {
     $('#rit-list').append('<span id="st'+ritnr+'" class="pull-left trip-selection label label-danger">'+ritnr+' '+dellink+'</span>');
     selectedTrips.push(ritnr);
 
-    if ($.inArray(activeLine, selectedLines) != -1) {
+    if ($.inArray(activeLine, selectedLines) == -1) {
         var lijn = $('#rows tr.success').children("td:first").text();
         var dellink_line = '<span class="line-remove glyphicon glyphicon-remove"></span>';
         $('#lijn-list').append('<span id="st'+lijn+'" class="pull-left line-selection label label-danger">'+lijn+' '+dellink_line+'</span>');
+        writeLineList();
+        //selectedLines.push(lijn);
     }
 
     //var lijn = $('#rows tr.success').children("td:first").text();

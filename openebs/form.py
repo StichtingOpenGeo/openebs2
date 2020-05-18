@@ -271,29 +271,44 @@ class Kv17ChangeForm(forms.ModelForm):
                         if line_qry.count() == 0:
                             raise ValidationError(_("Geen lijn gevonden."))
 
-                        """
-                        Kv17Change.objects.filter(Q(begintime__gte=begintime) & Q(begintime__lte=endtime),
-                                                     is_alljourneysofline=True, line=line_qry[0],
-                                                     operatingday=operatingday,
-                                                     is_recovered=True).delete()
-                        """
                         if begintime:
                             if endtime:
+                                """
+                                Kv17Change.objects.filter(Q(begintime__lte=begintime) & Q(begintime__lte=endtime),
+                                                          dataownercode=dataownercode,
+                                                          is_alljourneysofline=True, line=line_qry[0],
+                                                          operatingday=operatingday,
+                                                          is_recovered=True).delete()
+                                """
                                 if Kv17Change.objects.filter(Q(begintime__lte=begintime) & Q(begintime__lte=endtime),
                                                              dataownercode=dataownercode,
                                                              is_alljourneysofline=True, line=line_qry[0],
                                                              operatingday=operatingday,
                                                              is_recovered=False).count() != 0:
-                                    raise ValidationError(_("Een of meer geselecteerde lijnen zijn al aangepast"))
+                                    raise ValidationError(_("Een of meer geselecteerde lijnen zijn al aangepast voor de aangegeven ingangstijd."))
                             else:
+                                """
+                                Kv17Change.objects.filter(Q(begintime__lte=begintime),
+                                                          dataownercode=dataownercode,
+                                                          is_alljourneysofline=True, line=line_qry[0],
+                                                          operatingday=operatingday,
+                                                          is_recovered=True).delete()
+                                """
                                 if Kv17Change.objects.filter(Q(begintime__lte=begintime),
                                                              dataownercode=dataownercode,
                                                              is_alljourneysofline=True, line=line_qry[0],
                                                              operatingday=operatingday,
                                                              is_recovered=False).count() != 0:
-                                    raise ValidationError(_("Een of meer geselecteerde lijnen zijn al aangepast"))
+                                    raise ValidationError(_("Een of meer geselecteerde lijnen zijn al aangepast voor de aangegeven ingangstijd."))
                         else:
                             begintime = datetime.utcnow().replace(tzinfo=utc)
+                            """
+                            Kv17Change.objects.filter(is_alljourneysofline=True, line=line_qry[0],
+                                                      dataownercode=dataownercode,
+                                                      operatingday=operatingday,
+                                                      begintime__lte=begintime,
+                                                      is_recovered=False).delete()
+                            """
                             if Kv17Change.objects.filter(is_alljourneysofline=True, line=line_qry[0],
                                                          dataownercode=dataownercode,
                                                          operatingday=operatingday,
@@ -310,17 +325,17 @@ class Kv17ChangeForm(forms.ModelForm):
         elif 'Hele vervoerder' in self.data['lines']:
             if begintime:
                 if endtime:
-                    #Kv17Change.objects.filter(Q(begintime__lte=begintime) & Q(begintime__lte=endtime),
-                    #                          dataownercode=dataownercode,
-                    #                          is_alllines=True,
-                    #                          is_recovered=True,
-                    #                          operatingday=operatingday).delete()
+                    Kv17Change.objects.filter(Q(begintime__lte=begintime) & Q(begintime__lte=endtime),
+                                              dataownercode=dataownercode,
+                                              is_alllines=True,
+                                              is_recovered=True,
+                                              operatingday=operatingday).delete()
                     if Kv17Change.objects.filter(Q(begintime__lte=begintime) & Q(begintime__lte=endtime),
                                                  dataownercode=dataownercode,
                                                  is_alllines=True,
                                                  is_recovered=False,
                                                  operatingday=str(operatingday)).count() != 0:
-                        raise ValidationError(_("Deze operatie is al gepland."))
+                        raise ValidationError(_("De ingangstijd valt al binnen een geplande operatie."))
                 else:
                     Kv17Change.objects.filter(begintime__lte=begintime,
                                               dataownercode=dataownercode,
@@ -332,8 +347,13 @@ class Kv17ChangeForm(forms.ModelForm):
                                                  is_alllines=True,
                                                  is_recovered=False,
                                                  operatingday=operatingday).count() != 0:
-                        raise ValidationError(_("Deze operatie is al gepland."))
+                        raise ValidationError(_("De ingangstijd valt al binnen een geplande operatie."))
             else:
+                Kv17Change.objects.filter(dataownercode=dataownercode,
+                                          is_alllines=True,
+                                          is_recovered=True,
+                                          operatingday=operatingday).delete()
+
                 if Kv17Change.objects.filter(dataownercode=dataownercode,
                                              is_alllines=True,
                                              is_recovered=False,

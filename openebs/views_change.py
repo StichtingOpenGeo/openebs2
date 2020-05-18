@@ -6,13 +6,15 @@ from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.views.generic import ListView, CreateView, DeleteView, DetailView
 from kv1.models import Kv1Journey, Kv1Line
-from openebs.form import Kv17ChangeForm
+#from openebs.form import Kv17ChangeForm
 from openebs.models import Kv17Change
 from openebs.views_push import Kv17PushMixin
 from openebs.views_utils import FilterDataownerMixin
 from utils.time import get_operator_date
 from utils.views import AccessMixin, ExternalMessagePushMixin, JSONListResponseMixin
 from django.utils.dateparse import parse_date
+from openebs.form_diff_clean import Kv17ChangeForm
+from django.utils.timezone import now
 
 log = logging.getLogger('openebs.views.changes')
 
@@ -25,13 +27,23 @@ class ChangeListView(AccessMixin, ListView):
         context = super(ChangeListView, self).get_context_data(**kwargs)
         operatingday = get_operator_date()
 
+        # active list updates at 4 am.
+        if datetime.now().hour < 4:
+            change = -1
+        else:
+            change = 0
+        change_day = operatingday + timedelta(days=change)
+
         # Get the currently active changes
-        context['active_list'] = self.model.objects.filter(operatingday__gte=operatingday, is_recovered=False,
+        context['active_list'] = self.model.objects.filter(Q(endtime__gte=now()) | (Q(endtime__isnull=True) &
+                                                           Q(operatingday__gte=change_day)),
+                                                           is_recovered=False,
                                                            dataownercode=self.request.user.userprofile.company)
         context['active_list'] = context['active_list'].order_by('line__publiclinenumber', 'line__headsign', 'operatingday', 'journey__departuretime')
 
         # Add the no longer active changes
-        context['archive_list'] = self.model.objects.filter(Q(operatingday__lt=operatingday) | Q(is_recovered=True),
+        context['archive_list'] = self.model.objects.filter(Q(endtime__lt=now()) | Q(is_recovered=True) |
+                                                            (Q(endtime__isnull=True) & Q(operatingday__lt=change_day)),
                                                             dataownercode=self.request.user.userprofile.company,
                                                             created__gt=operatingday-timedelta(days=3))
         context['archive_list'] = context['archive_list'].order_by('-operatingday', 'line__publiclinenumber', '-journey__departuretime')
@@ -40,7 +52,6 @@ class ChangeListView(AccessMixin, ListView):
 
 class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView, MultiplePermissionsRequiredMixin):
     permission_required = 'openebs.add_change'
-    #permissions = {"any" : ('openebs.add_change', 'openebs.cancel_alllines')}
     model = Kv17Change
     form_class = Kv17ChangeForm
     success_url = reverse_lazy('change_index')
