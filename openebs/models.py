@@ -428,6 +428,7 @@ class Kv17Change(models.Model):
             ("view_change", _("Ritaanpassingen bekijken")),
             ("add_change", _("Ritaanpassingen aanmaken")),
             ("cancel_alllines", _("Vervoerder annuleren")),
+            ("cancel_lines", _("Lijnen annuleren")),
         )
 
     def __str__(self):
