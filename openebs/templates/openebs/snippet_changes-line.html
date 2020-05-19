@@ -1,6 +1,10 @@
 {% load i18n filters %}
 {% if line.grouper.publiclinenumber %}
-    <h4>{% trans "Lijn" %} {{ line.grouper.publiclinenumber }} <small>{{ line.grouper.headsign }}</small></h4>
+    {% if line.grouper.lineplanningnumber != line.grouper.publiclinenumber %}
+        <h4> {% trans "Lijn" %} {{ line.grouper.publiclinenumber }} / {{ line.grouper.lineplanningnumber }} <small>{{ line.grouper.headsign }}</small></h4>
+    {% else %}
+        <h4>{% trans "Lijn" %} {{ line.grouper.publiclinenumber }} <small>{{ line.grouper.headsign }}</small></h4>
+    {% endif %}
 {% else %}
     <h4>{% trans "Alle lijnen" %}</h4>
     {% trans "Alle ritten van vervoerder werden geannuleerd" as all_lines %}

@@ -60,7 +60,11 @@
         {% endif %}
 
         {% if msg.line %}
-            <td>{{ msg.line.publiclinenumber }}</td>
+            {% if msg.line.lineplanningnumber != msg.line.publiclinenumber %}
+                <td>{{ msg.line.publiclinenumber }} / {{ msg.line.lineplanningnumber }}</td>
+            {% else %}
+                <td>{{ msg.line.publiclinenumber }}</td>
+            {% endif %}
         {% else %}
             <td>{% trans "Alle lijnen" %}</td>
         {% endif %}
