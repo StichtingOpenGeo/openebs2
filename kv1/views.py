@@ -13,6 +13,7 @@ from utils.time import get_operator_date
 from utils.views import JSONListResponseMixin
 from kv1.models import Kv1Line, Kv1Stop, Kv1JourneyDate
 from dateutil.relativedelta import relativedelta
+from django.utils.dateparse import parse_date
 
 # Views for adding messages and related lookups
 class LineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
@@ -51,11 +52,16 @@ class LineTripView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
         """
         Forces our output as json and do some queries
         """
+
+        operating_day = get_operator_date()
+        if 'operatingday' in self.request.GET:
+            operating_day = parse_date(self.request.GET['operatingday'])
+
         obj = get_object_or_404(self.model, pk=self.kwargs.get('pk', None))
         if obj:
             # Note, the list() is required to serialize correctly
             # We're filtering on todays trips #
-            journeys = obj.journeys.filter(dates__date=get_operator_date()).order_by('departuretime') \
+            journeys = obj.journeys.filter(dates__date=operating_day).order_by('departuretime') \
                 .values('id', 'journeynumber', 'direction', 'departuretime')
             return {'trips_1': list(journeys.filter(direction=1)), 'trips_2': list(journeys.filter(direction=2))}
         return obj
