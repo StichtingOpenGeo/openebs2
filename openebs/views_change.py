@@ -10,10 +10,9 @@ from openebs.form import Kv17ChangeForm
 from openebs.models import Kv17Change
 from openebs.views_push import Kv17PushMixin
 from openebs.views_utils import FilterDataownerMixin
-from utils.time import get_operator_date
+from utils.time import get_operator_date, get_operator_date_aware
 from utils.views import AccessMixin, ExternalMessagePushMixin, JSONListResponseMixin
 from django.utils.dateparse import parse_date
-#from openebs.form_diff_clean import Kv17ChangeForm
 from django.utils.timezone import now
 
 log = logging.getLogger('openebs.views.changes')
@@ -25,7 +24,7 @@ class ChangeListView(AccessMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super(ChangeListView, self).get_context_data(**kwargs)
-        operatingday = get_operator_date()
+        operatingday = get_operator_date_aware()
 
         # active list updates at 4 am.
         if datetime.now().hour < 4:
