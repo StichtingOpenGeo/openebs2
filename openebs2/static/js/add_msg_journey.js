@@ -14,7 +14,7 @@ function writeList(data, status) {
           if (!$('#l'+line.pk).length) {
             if (line.publiclinenumber) { // not all lines with a lineplanningnumber has a publiclinenumber or headsign
                 if (line.publiclinenumber != line.lineplanningnumber) {
-                    row = '<tr class="line" id="l'+line.pk+'"><td>'+line.publiclinenumber+ ' / ' + line.lineplanningnumber+'</td>';
+                    row = '<tr class="line" id="l'+line.pk+'"><td>'+line.publiclinenumber+ ' - ' + line.lineplanningnumber+'</td>';
                 } else {
                     row = '<tr class="line" id="l'+line.pk+'"><td>'+line.publiclinenumber+'</td>';
                 }
