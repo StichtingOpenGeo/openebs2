@@ -6,9 +6,12 @@
 {% block content %}
     <div class="row">
         <div class="col-sm-4">
-            {% if perms.openebs.cancel_alllines %}
-                <h2>Lijn <button type="button" onclick="selectAllLines()" id="all_lines" class="btn btn-warning btn-right" style="float: right;" >{% trans "Hele vervoerder" %}</input></button></h2>
-            {% endif %}
+
+                <h2>Lijn
+                    {% if perms.openebs.cancel_alllines %}
+                        <button type="button" onclick="selectAllLines()" id="all_lines" class="btn btn-warning btn-right" style="float: right;" >{% trans "Hele vervoerder" %}</input></button>
+                    {% endif %}
+                </h2>
         <div class="input-group">
             <span class="input-group-addon"><span class="glyphicon glyphicon-search"></span></span>
             <input type="text" class="form-control" id="line_search" placeholder="{% trans 'Lijnnummer of eindbestemming' %}">
@@ -29,7 +32,11 @@
 
     </div>
     <div class="col-sm-5">
-        <h2>Ritten <span title="Dienstregelingsdatum" id="operating_day_text">{{ operator_date|date:"d-m-Y" }}</span><button type="button" onclick="selectAllTrips()" id="all_journeys" class="btn btn-warning btn-right" style="float: right;" >{% trans "Alle ritten" %}</button></h2>
+        <h2>Ritten <span title="Dienstregelingsdatum" id="operating_day_text">{{ operator_date|date:"d-m-Y" }}</span>
+            {% if perms.openebs.cancel_lines %}
+                <button type="button" onclick="selectAllTrips()" id="all_journeys" class="btn btn-warning btn-right" style="float: right;" >{% trans "Alle ritten" %}</button>
+            {% endif %}
+        </h2>
         <table class="table openebs-trips" id="trips">
             <thead>
                 <tr>
