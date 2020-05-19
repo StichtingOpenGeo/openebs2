@@ -245,7 +245,6 @@ class Kv17ChangeForm(forms.ModelForm):
                     if line_qry.count() == 0:
                         raise ValidationError(_("Geen lijn gevonden."))
 
-                    # TEST AllJourneysOfLine in database - shorter
                     database_alljourneys = Kv17Change.objects.filter(dataownercode=dataownercode,
                                                                      is_alljourneysofline=True, line=line_qry[0],
                                                                      operatingday=operatingday,
@@ -255,118 +254,53 @@ class Kv17ChangeForm(forms.ModelForm):
                                                                   is_alllines=True, line=line_qry[0],
                                                                   operatingday=operatingday,
                                                                   is_recovered=False)
-                    if database_alljourneys & database_alllines:
-                        if begintime:
-                            if endtime:
+
+                    Kv17Change.objects.filter(begintime=begintime,
+                                              endtime=endtime,
+                                              dataownercode=dataownercode,
+                                              is_alljourneysofline=True, line=line_qry[0],
+                                              operatingday=operatingday,
+                                              is_recovered=True).delete()
+
+                    if begintime:
+                        if endtime:
+                            if database_alllines:
+                                if database_alllines.filter(Q(begintime__lte=begintime) &
+                                                            Q(begintime__lte=endtime)).count != 0:
+                                    raise ValidationError(_(
+                                        "De gehele vervoerder is al aangepast voor de aangegeven ingangstijd."))
+                            elif database_alljourneys:
                                 if database_alljourneys.filter(Q(begintime__lte=begintime) &
                                                                Q(begintime__lte=endtime)).count != 0:
                                     raise ValidationError(_(
                                         "Een of meer geselecteerde lijnen zijn al aangepast voor de aangegeven ingangstijd."))
 
-                                elif database_alllines:
-                                    if database_alllines.filter(Q(begintime__lte=begintime) &
-                                                                Q(begintime__lte=endtime)).count != 0:
-                                        raise ValidationError(_(
-                                            "De gehele vervoerder is al aangepast voor de aangegeven ingangstijd."))
 
-                            else:  # no endtime
+                        else:  # no endtime
+                            if database_alllines:
+                                if database_alllines.filter(begintime__lte=begintime).count != 0:
+                                    raise ValidationError(_(
+                                        "De gehele vervoerder is al aangepast voor de aangegeven ingangstijd."))
+                            elif database_alljourneys:
                                 if database_alljourneys.filter(begintime__lte=begintime).count != 0:
                                     raise ValidationError(_(
                                         "Een of meer geselecteerde lijnen zijn al aangepast voor de aangegeven ingangstijd."))
-                                elif database_alllines:
-                                    if database_alllines.filter(begintime__lte=begintime).count != 0:
-                                        raise ValidationError(_(
-                                            "De gehele vervoerder is al aangepast voor de aangegeven ingangstijd."))
 
-                        else:  # no begintime
-                            begintime = datetime.utcnow().replace(tzinfo=utc)
+
+                    else:  # no begintime
+                        begintime = datetime.utcnow().replace(tzinfo=utc)
+                        if database_alllines:
+                            if database_alllines.filter(begintime__lte=begintime).count != 0:
+                                raise ValidationError(_(
+                                    "De gehele vervoerder is al aangepast."))
+                        elif database_alljourneys:
                             if database_alljourneys.filter(begintime__lte=begintime).count != 0:
                                 raise ValidationError(_("Een of meer geselecteerde lijnen zijn al aangepast."))
-                            elif database_alllines:
-                                if database_alllines.filter(begintime__lte=begintime).count != 0:
-                                    raise ValidationError(_(
-                                        "De gehele vervoerder is al aangepast."))
 
-                """
-                    if begintime:
-                        if endtime:
-                            #Kv17Change.objects.filter(Q(begintime__lte=begintime) & Q(begintime__lte=endtime),
-                            #                          dataownercode=dataownercode,
-                            #                          is_alljourneysofline=True, line=line_qry[0],
-                            #                          operatingday=operatingday,
-                            #                          is_recovered=True).delete()
-                            #AllJourneysOfLine in database
-                            if Kv17Change.objects.filter(Q(begintime__lte=begintime) & Q(begintime__lte=endtime),
-                                                         dataownercode=dataownercode,
-                                                         is_alljourneysofline=True, line=line_qry[0],
-                                                         operatingday=operatingday,
-                                                         is_recovered=False).count() != 0:
-                                raise ValidationError(_(
-                                    "Een of meer geselecteerde lijnen zijn al aangepast voor de aangegeven ingangstijd."))
-
-                            #AllLines in database
-                            if Kv17Change.objects.filter(Q(begintime__lte=begintime) & Q(begintime__lte=endtime),
-                                                         dataownercode=dataownercode,
-                                                         is_alllines=True, line=line_qry[0],
-                                                         operatingday=operatingday,
-                                                         is_recovered=False).count() != 0:
-                                raise ValidationError(_(
-                                    "De gehele vervoerder is al aangepast voor de aangegeven ingangstijd."))
-                        else:
-                            #Kv17Change.objects.filter(Q(begintime__lte=begintime),
-                            #                          dataownercode=dataownercode,
-                            #                          is_alljourneysofline=True, line=line_qry[0],
-                            #                          operatingday=operatingday,
-                            #                          is_recovered=True).delete()
-
-                """
-                """
-                            #AllJourneysOfLine in database
-                            if Kv17Change.objects.filter(Q(begintime__lte=begintime),
-                                                         dataownercode=dataownercode,
-                                                         is_alljourneysofline=True, line=line_qry[0],
-                                                         operatingday=operatingday,
-                                                         is_recovered=False).count() != 0:
-                                raise ValidationError(_(
-                                    "Een of meer geselecteerde lijnen zijn al aangepast voor de aangegeven ingangstijd."))
-                """
-                """
-                            #AllLines in database
-                            if Kv17Change.objects.filter(Q(begintime__lte=begintime),
-                                                         dataownercode=dataownercode,
-                                                         is_alllines=True, line=line_qry[0],
-                                                         operatingday=operatingday,
-                                                         is_recovered=False).count() != 0:
-                                raise ValidationError(_(
-                                    "De gehele vervoerder is al aangepast voor de aangegeven ingangstijd."))
-
-                    else:
-                        begintime = datetime.utcnow().replace(tzinfo=utc)
-                        #Kv17Change.objects.filter(is_alljourneysofline=True, line=line_qry[0],
-                        #                          dataownercode=dataownercode,
-                        #                          operatingday=operatingday,
-                        #                          begintime__lte=begintime,
-                        #                          is_recovered=False).delete()
-                        # AllJourneysOfLine in database
-                        if Kv17Change.objects.filter(is_alljourneysofline=True, line=line_qry[0],
-                                                     dataownercode=dataownercode,
-                                                     operatingday=operatingday,
-                                                     begintime__lte=begintime,
-                                                     is_recovered=False).count() != 0:
-                            raise ValidationError(_("Een of meer geselecteerde lijnen zijn al aangepast"))
-                        # AllLines in database
-                        if Kv17Change.objects.filter(is_alllines=True, line=line_qry[0],
-                                                     dataownercode=dataownercode,
-                                                     operatingday=operatingday,
-                                                     begintime__lte=begintime,
-                                                     is_recovered=False).count() != 0:
-                            raise ValidationError(_(
-                                "De gehele vervoerder is al aangepast voor de aangegeven ingangstijd."))
-                """
             else:
                 raise ValidationError(_("Er werd geen lijn geselecteerd"))
 
-            valid_journeys -= 1
+            valid_journeys += 1
 
         return valid_journeys
 
@@ -377,77 +311,62 @@ class Kv17ChangeForm(forms.ModelForm):
                                                       is_alllines=True,
                                                       operatingday=operatingday,
                                                       is_recovered=False)
+
+        Kv17Change.objects.filter(begintime=begintime,
+                                  endtime=endtime,
+                                  dataownercode=dataownercode,
+                                  is_alllines=True,
+                                  is_recovered=True,
+                                  operatingday=operatingday).delete()
+
         if database_alllines:
             if begintime:
                 if endtime:
-                    """Kv17Change.objects.filter(Q(begintime__lte=begintime) & Q(begintime__lte=endtime),
-                                              dataownercode=dataownercode,
-                                              is_alllines=True,
-                                              is_recovered=True,
-                                              operatingday=operatingday).delete()
-                    """
                     if database_alllines.filter(Q(begintime__lte=begintime) &
                                                 Q(begintime__lte=endtime)).count() != 0:
                         raise ValidationError(_("De ingangstijd valt al binnen een geplande operatie."))
                 else:  # no endtime
-                    """Kv17Change.objects.filter(begintime__lte=begintime,
-                                              dataownercode=dataownercode,
-                                              is_alllines=True,
-                                              is_recovered=True,
-                                              operatingday=operatingday).delete()
-                    """
                     if database_alllines.filter(begintime__lte=begintime).count() != 0:
                         raise ValidationError(_("De ingangstijd valt al binnen een geplande operatie."))
             else:  # no begintime
                 begintime = datetime.utcnow().replace(tzinfo=utc)
-                Kv17Change.objects.filter(dataownercode=dataownercode,
-                                          is_alllines=True,
-                                          is_recovered=True,
-                                          operatingday=operatingday).delete()
-
                 if database_alllines.filter(begintime__lte=begintime).count != 0:
                     raise ValidationError(_(
                         "De gehele vervoerder is al aangepast."))
 
-        valid_journeys -= 1
+        valid_journeys += 1
 
         return valid_journeys
 
     def clean_journey(self, operatingday, dataownercode):
         valid_journeys = 0
-        for journey in self.data['journeys'].split(',')[0:-1]:
-            journey_qry = Kv1Journey.objects.filter(pk=journey, dates__date=operatingday)
-            if journey_qry.count() == 0:
-                raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig."))
+        if self.data['journeys'] != '':
+            for journey in self.data['journeys'].split(',')[0:-1]:
+                journey_qry = Kv1Journey.objects.filter(pk=journey, dates__date=operatingday)
+                if journey_qry.count() == 0:
+                    raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig."))
 
-            database = Kv17Change.objects.filter(dataownercode=dataownercode,
-                                                 journey__pk=journey,
-                                                 line=journey_qry[0].line,
-                                                 operatingday=operatingday,
-                                                 is_recovered=False)
+                database = Kv17Change.objects.filter(dataownercode=dataownercode,
+                                                     journey__pk=journey,
+                                                     line=journey_qry[0].line,
+                                                     operatingday=operatingday,
+                                                     is_recovered=False)
 
-            if database.filter(is_alllines=True).count() != 0:
-                raise ValidationError(_("De gehele vervoerder is al opgeheven."))
-            elif database.filter(
-                    Q(is_alljourneysofline=True) & Q(line=journey_qry[0].line)).count() != 0:
-                raise ValidationError(_("Deze lijn is al opgeheven."))
-            elif database:
-                raise ValidationError(_("Een of meer geselecteerde ritten zijn al aangepast."))
+                Kv17Change.objects.filter(journey__pk=journey,
+                                          dataownercode=dataownercode,
+                                          line=journey_qry[0].line,
+                                          operatingday=operatingday,
+                                          is_recovered=True).delete()
 
-            Kv17Change.objects.filter(journey__pk=journey,
-                                      dataownercode=dataownercode,
-                                      line=journey_qry[0].line,
-                                      operatingday=operatingday,
-                                      is_recovered=True).delete()
-
-            """
-            if Kv17Change.objects.filter(
-                    Q(is_alljourneysofline=True) & Q(line=journey_qry[0].line) | Q(is_alllines=True),
-                    dataownercode=dataownercode,
-                    operatingday=operatingday,
-                    is_recovered=False).count() != 0:
-                raise ValidationError(_("Deze lijn is al opgeheven."))
-            """
+                if database.filter(is_alllines=True).count() != 0:
+                    raise ValidationError(_("De gehele vervoerder is al opgeheven."))
+                elif database.filter(
+                        Q(is_alljourneysofline=True) & Q(line=journey_qry[0].line)).count() != 0:
+                    raise ValidationError(_("Deze lijn is al opgeheven."))
+                elif database:
+                    raise ValidationError(_("Een of meer geselecteerde ritten zijn al aangepast."))
+        else:
+            raise ValidationError(_("Er werd geen rit geselecteerd."))
 
         valid_journeys += 1
 

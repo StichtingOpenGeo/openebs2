@@ -308,6 +308,7 @@ function selectAllLines() {
     lijnList = [];
     selectedTrips = [];
     activeJourneys = [];
+    activeLine = '';
 
     $('.rit-overzicht').css("display","none");
     $('#trips tbody').hide();
