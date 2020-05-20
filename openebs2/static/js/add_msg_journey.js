@@ -13,8 +13,12 @@ function writeList(data, status) {
         validIds.push('l'+line.pk)
           if (!$('#l'+line.pk).length) {
             if (line.publiclinenumber) { // not all lines with a lineplanningnumber has a publiclinenumber or headsign
+                var out = ''
                 if (line.publiclinenumber != line.lineplanningnumber) {
-                    row = '<tr class="line" id="l'+line.pk+'"><td>'+line.publiclinenumber+ '-' + line.lineplanningnumber+'</td>';
+                out += "<strong>"+line.publiclinenumber+"</strong>"
+                out += " / "
+                out += "<small>"+line.lineplanningnumber+"</small>"
+                    row = '<tr class="line" id="l'+line.pk+'"><td>'+out+'</td>';
                 } else {
                     row = '<tr class="line" id="l'+line.pk+'"><td>'+line.publiclinenumber+'</td>';
                 }
@@ -269,9 +273,10 @@ function selectAllTrips() {
     selectedTrips.push(ritnr);
 
     if ($.inArray(activeLine, selectedLines) == -1) {
-        var lijn = $('#rows tr.success').children("td:first").text();
+        var label = $('#rows tr.success').find("strong").text();
+        var lijn = $('#rows tr.success').find("small").text();
         var dellink_line = '<span class="line-remove glyphicon glyphicon-remove"></span>';
-        $('#lijn-list').append('<span id="st'+lijn+'" class="pull-left line-selection label label-danger">'+lijn+' '+dellink_line+'</span>');
+        $('#lijn-list').append('<span id="st'+label+'" class="pull-left line-selection label label-danger">'+label+' '+dellink_line+'</span>');
         lijnList.push(lijn);
         writeLineList();
     }
@@ -359,10 +364,9 @@ function removeLine(lijn) {
 
     }
     if (selectedLines.length == 0) {
-        $('#rit-list span').empty();
         $('#rit-list .help').show();
+        $('#rit-list span').remove();
         $('.lijn-overzicht').css("display","none");
-        $('#rit-list span').empty();
         $("#journeys").val('');
     }
 }
