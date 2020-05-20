@@ -35,7 +35,10 @@
             <advicetype>{{ object.journey_details.all.0.advicetype }}</advicetype>
             <subadvicetype>{{ object.journey_details.all.0.subadvicetype }}</subadvicetype>
             {% if object.journey_details.all.0.advicecontent %}<advicecontent>{{ object.journey_details.all.0.advicecontent }}</advicecontent>{% endif %}
-        {% endif %}</CANCEL>
+        {% endif %}
+            <showcancelledtrip>{{ object.showcancelledtrip }}</showcancelledtrip>
+            <autorecover>{{ object.autorecover }}</autorecover>
+        </CANCEL>
     {% endif %}
 </KV17MUTATEJOURNEY>
 {% endif %}
