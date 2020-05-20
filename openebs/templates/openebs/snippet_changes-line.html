@@ -16,6 +16,9 @@
           <th class="col-sm-2">{% trans "Eindtijd" %}</th>
           <th class="col-sm-4">{% trans "Ritnummer" %}</th>
           <th class="col-sm-1">&nbsp;</th>
+          <th class="col-sm-1">&nbsp;</th>
+          <th class="col-sm-1">&nbsp;</th>
+
       </tr>
       {% for msg in line.list %}
           <tr>
@@ -39,6 +42,22 @@
               {% else %}
                 <td>{% trans "Alle ritten" %}</td>
               {% endif %}
+
+              <td align="center" style="vertical-align:middle;">
+                {% if msg.showcancelledtrip %}
+                    <span class="glyphicon glyphicon-eye-open" title="Toon geannuleerde ritten"></span>
+                {% else %}
+                    <span></span>
+                {% endif %}
+              </td>
+              <td align="center" style="vertical-align:middle;">
+                {% if msg.autorecover %}
+                    <span class="glyphicon glyphicon-text-color" title="Autorecover"></span></td>
+                {% else %}
+                    <span></span>
+                {% endif %}
+              </td>
+
               <td>
                 {% if perms.openebs.add_change %}
                     <form method="post" action="{% url 'change_delete' msg.id %}">
