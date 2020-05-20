@@ -397,6 +397,8 @@ class Kv17Change(models.Model):
     journey = models.ForeignKey(Kv1Journey, verbose_name=_("Rit"), related_name="changes",
                                 on_delete=models.CASCADE, null=True)  # "A journey has changes"
     reinforcement = models.IntegerField(default=0, verbose_name=_("Versterkingsnummer"))  # Never fill this for now
+    autorecover = models.BooleanField(default=False, verbose_name=_("Automatisch herstellen"))
+    showcancelledtrip = models.BooleanField(default=True, verbose_name=_("Toon opgeheven rit"))
     is_alljourneysofline = models.BooleanField(default=False, verbose_name=_("Alle ritten"))
     is_alllines = models.BooleanField(default=False, verbose_name=_("Alle lijnen"))
     is_cancel = models.BooleanField(default=True, verbose_name=_("Opgeheven?"),
