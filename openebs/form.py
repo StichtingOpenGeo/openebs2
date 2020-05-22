@@ -470,10 +470,13 @@ class Kv17ChangeForm(forms.ModelForm):
                                           advicecontent=self.data['advicecontent']).save()
 
                     xml_output.append(self.instance.to_xml())
+                else:
+                    log.error(
+                        "Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
+                        (self.instance.line.dataownercode, self.instance.dataownercode))
+                    
             else:
-                log.error(
-                    "Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
-                    (self.instance.line.dataownercode, self.instance.dataownercode))
+                log.error("Failed to find line %s" % line)          
 
         return xml_output
 
