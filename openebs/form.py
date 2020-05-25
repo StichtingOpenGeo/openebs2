@@ -266,23 +266,23 @@ class Kv17ChangeForm(forms.ModelForm):
                         if endtime:
                             if database_alllines:
                                 if database_alllines.filter(Q(begintime__lte=begintime) &
-                                                            Q(begintime__lte=endtime)).count != 0:
+                                                            Q(begintime__lte=endtime)):
                                     raise ValidationError(_(
                                         "De gehele vervoerder is al aangepast voor de aangegeven ingangstijd."))
                             elif database_alljourneys:
                                 if database_alljourneys.filter(Q(begintime__lte=begintime) &
-                                                               Q(begintime__lte=endtime)).count != 0:
+                                                               Q(begintime__lte=endtime)):
                                     raise ValidationError(_(
                                         "Een of meer geselecteerde lijnen zijn al aangepast voor de aangegeven ingangstijd."))
 
 
                         else:  # no endtime
                             if database_alllines:
-                                if database_alllines.filter(begintime__lte=begintime).count != 0:
+                                if database_alllines.filter(begintime__lte=begintime):
                                     raise ValidationError(_(
                                         "De gehele vervoerder is al aangepast voor de aangegeven ingangstijd."))
                             elif database_alljourneys:
-                                if database_alljourneys.filter(begintime__lte=begintime).count != 0:
+                                if database_alljourneys.filter(begintime__lte=begintime):
                                     raise ValidationError(_(
                                         "Een of meer geselecteerde lijnen zijn al aangepast voor de aangegeven ingangstijd."))
 
@@ -290,11 +290,11 @@ class Kv17ChangeForm(forms.ModelForm):
                     else:  # no begintime
                         begintime = datetime.utcnow().replace(tzinfo=utc)
                         if database_alllines:
-                            if database_alllines.filter(begintime__lte=begintime).count != 0:
+                            if database_alllines.filter(begintime__lte=begintime):
                                 raise ValidationError(_(
                                     "De gehele vervoerder is al aangepast."))
                         elif database_alljourneys:
-                            if database_alljourneys.filter(begintime__lte=begintime).count != 0:
+                            if database_alljourneys.filter(begintime__lte=begintime):
                                 raise ValidationError(_("Een of meer geselecteerde lijnen zijn al aangepast."))
 
             else:
@@ -323,14 +323,14 @@ class Kv17ChangeForm(forms.ModelForm):
             if begintime:
                 if endtime:
                     if database_alllines.filter(Q(begintime__lte=begintime) &
-                                                Q(begintime__lte=endtime)).count() != 0:
+                                                Q(begintime__lte=endtime)) != 0:
                         raise ValidationError(_("De ingangstijd valt al binnen een geplande operatie."))
                 else:  # no endtime
-                    if database_alllines.filter(begintime__lte=begintime).count() != 0:
+                    if database_alllines.filter(begintime__lte=begintime):
                         raise ValidationError(_("De ingangstijd valt al binnen een geplande operatie."))
             else:  # no begintime
                 begintime = datetime.utcnow().replace(tzinfo=utc)
-                if database_alllines.filter(begintime__lte=begintime).count != 0:
+                if database_alllines.filter(begintime__lte=begintime):
                     raise ValidationError(_(
                         "De gehele vervoerder is al aangepast."))
 
@@ -358,10 +358,10 @@ class Kv17ChangeForm(forms.ModelForm):
                                           operatingday=operatingday,
                                           is_recovered=True).delete()
 
-                if database.filter(is_alllines=True).count() != 0:
+                if database.filter(is_alllines=True):
                     raise ValidationError(_("De gehele vervoerder is al opgeheven."))
                 elif database.filter(
-                        Q(is_alljourneysofline=True) & Q(line=journey_qry[0].line)).count() != 0:
+                        Q(is_alljourneysofline=True) & Q(line=journey_qry[0].line)):
                     raise ValidationError(_("Deze lijn is al opgeheven."))
                 elif database:
                     raise ValidationError(_("Een of meer geselecteerde ritten zijn al aangepast."))
