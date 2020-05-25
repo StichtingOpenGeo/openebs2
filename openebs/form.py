@@ -266,12 +266,12 @@ class Kv17ChangeForm(forms.ModelForm):
                         if endtime:
                             if database_alllines:
                                 if database_alllines.filter(Q(begintime__lte=begintime) &
-                                                            Q(begintime__lte=endtime)):
+                                                            Q(endtime__gt=begintime)):
                                     raise ValidationError(_(
                                         "De gehele vervoerder is al aangepast voor de aangegeven ingangstijd."))
                             elif database_alljourneys:
                                 if database_alljourneys.filter(Q(begintime__lte=begintime) &
-                                                               Q(begintime__lte=endtime)):
+                                                               Q(endtime__gt=begintime)):
                                     raise ValidationError(_(
                                         "Een of meer geselecteerde lijnen zijn al aangepast voor de aangegeven ingangstijd."))
 
@@ -323,7 +323,7 @@ class Kv17ChangeForm(forms.ModelForm):
             if begintime:
                 if endtime:
                     if database_alllines.filter(Q(begintime__lte=begintime) &
-                                                Q(begintime__lte=endtime)) != 0:
+                                                Q(endtime__gt=begintime)) != 0:
                         raise ValidationError(_("De ingangstijd valt al binnen een geplande operatie."))
                 else:  # no endtime
                     if database_alllines.filter(begintime__lte=begintime):
@@ -347,8 +347,6 @@ class Kv17ChangeForm(forms.ModelForm):
                     raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig."))
 
                 database = Kv17Change.objects.filter(dataownercode=dataownercode,
-                                                     journey__pk=journey,
-                                                     line=journey_qry[0].line,
                                                      operatingday=operatingday,
                                                      is_recovered=False)
 
@@ -363,7 +361,7 @@ class Kv17ChangeForm(forms.ModelForm):
                 elif database.filter(
                         Q(is_alljourneysofline=True) & Q(line=journey_qry[0].line)):
                     raise ValidationError(_("Deze lijn is al opgeheven."))
-                elif database:
+                elif database.filter(journey__pk=journey):
                     raise ValidationError(_("Een of meer geselecteerde ritten zijn al aangepast."))
         else:
             raise ValidationError(_("Er werd geen rit geselecteerd."))
