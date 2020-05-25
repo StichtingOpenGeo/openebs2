@@ -20,7 +20,9 @@ function writeList(data, status) {
                 out += "<small>"+line.lineplanningnumber+"</small>"
                     row = '<tr class="line" id="l'+line.pk+'"><td>'+out+'</td>';
                 } else {
-                    row = '<tr class="line" id="l'+line.pk+'"><td>'+line.publiclinenumber+'</td>';
+                    out += "<strong>"+line.publiclinenumber+"</strong>"
+                    out += '<span class="hidden"><small>'+line.lineplanningnumber+'</small>'
+                    row = '<tr class="line" id="l'+line.pk+'"><td>'+out+'</td>';
                 }
                 row += '<td>'+line.headsign+'</td></tr>';
                 $(row).hide().appendTo("#rows").fadeIn(999);
