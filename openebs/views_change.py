@@ -167,14 +167,12 @@ TODO : This is a big red button view allowing you to cancel all active trips if 
 
 
 class ActiveJourneysAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
-    model = Kv1Journey
+    model = Kv17Change
     render_object = 'object'
 
     def get_object(self):
         # Note, can't set this on the view, because it triggers the queryset cache
-        queryset = self.model.objects.filter(changes__operatingday=get_operator_date(),
-                                             # changes__is_recovered=False, # TODO Fix this - see bug #61
-                                             # These two are double, but just in case
-                                             changes__dataownercode=self.request.user.userprofile.company,
+        queryset = self.model.objects.filter(operatingday=get_operator_date(),
+                                             is_recovered=False, # TODO Fix this - see bug #61
                                              dataownercode=self.request.user.userprofile.company).distinct()
-        return list(queryset.values('id', 'dataownercode'))
+        return list(queryset.values('journey_id', 'dataownercode'))
