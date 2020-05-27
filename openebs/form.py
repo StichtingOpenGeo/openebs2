@@ -247,7 +247,6 @@ class Kv17ChangeForm(forms.ModelForm):
                 
             # delete recovered if query is the same.
             Kv17Change.objects.filter(journey__pk=journey,
-                                      dataownercode=dataownercode,
                                       line=journey_qry[0].line,
                                       operatingday=get_operator_date(),
                                       is_cancel=True,
