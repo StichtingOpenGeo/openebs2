@@ -36,6 +36,14 @@ class Kv17ChangeForm(forms.ModelForm):
             journey_qry = Kv1Journey.objects.filter(pk=journey, dates__date=get_operator_date())
             if journey_qry.count() == 0:
                 raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
+
+            # delete recovered if query is the same.
+            Kv17Change.objects.filter(journey__pk=journey,
+                                      line=journey_qry[0].line,
+                                      operatingday=get_operator_date(),
+                                      is_cancel=True,
+                                      is_recovered=True).delete()
+
             if Kv17Change.objects.filter(journey__pk=journey, line=journey_qry[0].line,
                                          operatingday=get_operator_date()).count() != 0:
                 raise ValidationError(_("Een of meer geselecteerde ritten zijn al aangepast"))
