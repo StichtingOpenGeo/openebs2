@@ -1,10 +1,12 @@
 {% load i18n filters %}
 <h4>{% trans "Lijn" %} {{ line.grouper.publiclinenumber }} <small>{{ line.grouper.headsign }}</small></h4>
-  <table class="table table-condensed table-bordered">
-  <tr>
+  <table class="table table-condensed table-bordered table-striped">
+  <tr id="highlight">
       <th class="col-sm-2">{% trans "Ritdatum" %}</th>
       <th class="col-sm-2">{% trans "Vertrektijd" %}</th>
       <th class="col-sm-4">{% trans "Ritnummer" %}</th>
+      <td class="col-sm-1" align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-eye-close" title="Toon opgeheven rit niet"></span></td>
+      <td class="col-sm-1" align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-transfer" title="Automatisch herstellen"></span></td>
       <th class="col-sm-1"></th>
   </tr>
   {% for msg in line.list %}
@@ -12,6 +14,21 @@
           <td>{{ msg.operatingday|date:"d-m-Y" }}</td>
           <td>{{ msg.journey.departuretime|seconds_time|date:"H:i"}}</td>
           <td>{{ msg.journey.journeynumber }}</td>
+          <td align="center" style="vertical-align:middle;">
+            {% if msg.showcancelledtrip %}
+                <span></span>
+            {% else %}
+                <span class="glyphicon glyphicon-eye-close" title="Toon opgeheven rit niet"></span>
+
+            {% endif %}
+          </td>
+          <td align="center" style="vertical-align:middle;">
+            {% if msg.autorecover %}
+                <span class="glyphicon glyphicon-transfer" title="Automatisch herstellen"></span></td>
+            {% else %}
+                <span></span>
+            {% endif %}
+          </td>
           <td>
             {% if perms.openebs.add_change %}
                 <form method="post" action="{% url 'change_delete' msg.id %}">
