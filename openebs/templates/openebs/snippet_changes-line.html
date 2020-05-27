@@ -2,12 +2,14 @@
 <h4>{% trans "Lijn" %} {{ line.grouper.publiclinenumber }} <small>{{ line.grouper.headsign }}</small></h4>
   <table class="table table-condensed table-bordered">
   <tr>
-      <th>{% trans "Vertrektijd" %}</th>
-      <th>{% trans "Ritnummer" %}</th>
-      <th>&nbsp;</th>
+      <th class="col-sm-2">{% trans "Ritdatum" %}</th>
+      <th class="col-sm-2">{% trans "Vertrektijd" %}</th>
+      <th class="col-sm-4">{% trans "Ritnummer" %}</th>
+      <th class="col-sm-1"></th>
   </tr>
   {% for msg in line.list %}
       <tr>
+          <td>{{ msg.operatingday|date:"d-m-Y" }}</td>
           <td>{{ msg.journey.departuretime|seconds_time|date:"H:i"}}</td>
           <td>{{ msg.journey.journeynumber }}</td>
           <td>

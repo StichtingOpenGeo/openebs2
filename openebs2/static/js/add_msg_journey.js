@@ -1,8 +1,3 @@
-/* STOP AND SCENARIO FUNCTIONS */
-var selectedStops = []
-var scenarioStops = []
-var blockedStops = [] /* Already have messages set */
-
 function changeSearch(event) {
     if ($("#line_search").val().length > 0) {
         $.ajax('/line/'+$("#line_search").val(), {
@@ -34,15 +29,18 @@ function writeList(data, status) {
 /* TRIP SELECTION */
 var selectedTrips = [];
 var activeJourneys = [];
+var activeLine = null;
+
 
 function showTrips(event) {
     $("#rows tr.success").removeClass('success');
     $(".suc-icon").remove();
     $(this).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
-    $.ajax('/line/'+$(this).attr('id').substring(1)+'/ritten', {
-        success : writeTrips
-    })
-    $('#line').val($(this).attr('id').substring(1))
+    activeLine = $(this).attr('id').substring(1);
+
+    showTripsOnChange();
+
+    $('#line').val(activeLine)
     $(this).addClass('success')
 }
 
@@ -101,14 +99,24 @@ function writeTrips(data, status) {
     $('#trips tbody').fadeOut(200).empty();
     tripRows = null
     maxLen = Math.max(data.object.trips_1.length, data.object.trips_2.length)
-    for (i = 0; i <= maxLen; i = i + 1) {
-        a = null
-        b = null
-        if (i in data.object.trips_1)
-            a = data.object.trips_1[i]
-        if (i in data.object.trips_2)
-            b = data.object.trips_2[i]
-        tripRows += renderTrip(a, b);
+    if (maxLen > 0) {
+        $('#trips tbody').fadeOut(200).empty();
+        tripRows = null;
+        for (i = 0; i <= maxLen; i = i + 1) {
+            a = null;
+            b = null;
+            if (i in data.object.trips_1)
+                a = data.object.trips_1[i];
+            if (i in data.object.trips_2)
+                b = data.object.trips_2[i];
+            tripRows += renderTrip(a, b);
+        }
+        $('#trips tbody').append(tripRows)
+        $('#trips thead').fadeIn(200);
+        $('#trips tbody').fadeIn(200);
+    } else {
+        $('#trips thead').hide();
+        $('#trips tbody').text("Geen ritten in database.");
     }
     $('#trips tbody').append(tripRows)
     $('#trips tbody').fadeIn(200);
@@ -141,15 +149,40 @@ function renderTripCell(trip) {
 }
 
 function getActiveJourneys() {
-     $.ajax('/ritaanpassing/ritten.json', {
+    var operating_day = $("#id_operatingday").val();
+     $.ajax({ url: '/ritaanpassing/ritten.json',
+            data: {'operatingday': operating_day},
             success : writeActiveJourneys
-     })
+     });
 }
 
 function writeActiveJourneys(data, status) {
     if (data.object) {
         $.each(data.object, function (i, journey) {
             activeJourneys.push(journey.journey_id)
+        });
+    }
+    showTripsOnChange();
+}
+
+function changeOperatingDayTrips() {
+    $("#rit-list span").remove();
+    $('#rit-list .help').show();
+    selectedTrips = [];
+    activeJourneys  = []
+    $("#journeys").val('');
+    getActiveJourneys();
+    showTripsOnChange();
+    var operating_day_text = $("#id_operatingday option:selected" ).text();
+    $("#operating_day_text").text(operating_day_text);
+}
+
+function showTripsOnChange() {
+    if (activeLine != null) {
+        var operating_day = $("#id_operatingday").val();
+        $.ajax({ url: '/line/'+activeLine+'/ritten',
+         data: {'operatingday': operating_day},
+            success : writeTrips
         });
     }
 }

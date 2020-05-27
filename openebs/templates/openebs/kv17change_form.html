@@ -26,7 +26,7 @@
         </table>
     </div>
     <div class="col-lg-5">
-        <h2>Ritten <span title="Dienstregelingsdatum">{{ operator_date|date:"d-m-Y" }}</span> </h2>
+        <h2>Ritten <span title="Dienstregelingsdatum" id="operating_day_text">{{ operator_date|date:"d-m-Y" }}</span><button type="button" onclick="selectAllTrips()" id="all_journeys" class="btn btn-warning btn-right" style="float: right;" >{% trans "Alle ritten" %}</button></h2>
         <div id="line_cancel_box" class="text-center" style="display: none;">
             <a id="line_cancel" class="btn btn-danger">{% trans "Alle ritten opheffen" %}</a>
         </div>
@@ -92,7 +92,7 @@
     <script src="{% static 'js/add_msg_journey.js' %}"></script>
 {% endblock %}
 {% block js_init %}
-    getActiveJourneys();
+    changeOperatingDayTrips();
     loadPreselectedJourneys();
     $('#line_search').on('keyup', changeSearch);
     $( "body" ).on('click', ".line", showTrips);
@@ -101,4 +101,6 @@
       selected: selectTrip,
     });
     $('#rit-list').on('click', '.trip-remove', removeTripFromX);
+    $('#id_operatingday').change(changeOperatingDayTrips);
+
 {% endblock %}

@@ -6,17 +6,22 @@ from crispy_forms.layout import Submit, Layout, Hidden
 import floppyforms.__future__ as forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
-from kv1.models import Kv1Journey
+from kv1.models import Kv1Journey, Kv1JourneyDate
 from kv15.enum import REASONTYPE, SUBREASONTYPE, ADVICETYPE, SUBADVICETYPE
 from openebs.models import Kv17Change
 from openebs.models import Kv17JourneyChange
 from utils.time import get_operator_date
+from django.utils.dateparse import parse_date
+from django.utils.timezone import make_aware
+from datetime import datetime, time, timedelta
+
 
 log = logging.getLogger('openebs.forms')
 
 
 class Kv17ChangeForm(forms.ModelForm):
     # This is duplication, but should work
+    operatingday = forms.ChoiceField(label=_("Datum"), required=True)
     reasontype = forms.ChoiceField(choices=REASONTYPE, label=_("Type oorzaak"), required=False)
     subreasontype = forms.ChoiceField(choices=SUBREASONTYPE, label=_("Oorzaak"), required=False)
     reasoncontent = forms.CharField(max_length=255, label=_("Uitleg oorzaak"), required=False,
@@ -28,16 +33,29 @@ class Kv17ChangeForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super(Kv17ChangeForm, self).clean()
+
+        operatingday = parse_date(self.data['operatingday'])
+        if operatingday is None:
+            raise ValidationError(_("Er staan geen ritten in de database"))
+
         if 'journeys' not in self.data:
             raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
 
         valid_journeys = 0
         for journey in self.data['journeys'].split(',')[0:-1]:
-            journey_qry = Kv1Journey.objects.filter(pk=journey, dates__date=get_operator_date())
+            journey_qry = Kv1Journey.objects.filter(pk=journey, dates__date=operatingday)
             if journey_qry.count() == 0:
                 raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
+
+            # delete recovered if query is the same.
+            Kv17Change.objects.filter(journey__pk=journey,
+                                      line=journey_qry[0].line,
+                                      operatingday=operatingday,
+                                      is_cancel=True,
+                                      is_recovered=True).delete()
+
             if Kv17Change.objects.filter(journey__pk=journey, line=journey_qry[0].line,
-                                         operatingday=get_operator_date()).count() != 0:
+                                         operatingday=operatingday).count() != 0:
                 raise ValidationError(_("Een of meer geselecteerde ritten zijn al aangepast"))
             valid_journeys += 1
 
@@ -50,13 +68,14 @@ class Kv17ChangeForm(forms.ModelForm):
         ''' Save each of the journeys in the model. This is a disaster, we return the XML
         TODO: Figure out a better solution fo this! '''
         xml_output = []
+        operatingday = parse_date(self.data['operatingday'])
         for journey in self.data['journeys'].split(',')[0:-1]:
-            qry = Kv1Journey.objects.filter(id=journey, dates__date=get_operator_date())
+            qry = Kv1Journey.objects.filter(id=journey, dates__date=operatingday)
             if qry.count() == 1:
                 self.instance.pk = None
                 self.instance.journey = qry[0]
                 self.instance.line = qry[0].line
-                self.instance.operatingday = get_operator_date()
+                self.instance.operatingday = operatingday
                 self.instance.is_cancel = True
 
                 # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
@@ -84,14 +103,29 @@ class Kv17ChangeForm(forms.ModelForm):
 
     class Meta(object):
         model = Kv17Change
-        exclude = ['dataownercode', 'operatingday', 'line', 'journey', 'is_recovered', 'reinforcement']
+        exclude = ['dataownercode', 'line', 'journey', 'is_recovered', 'reinforcement']
 
     def __init__(self, *args, **kwargs):
         super(Kv17ChangeForm, self).__init__(*args, **kwargs)
+
+        DAYS = [[str(d['date'].strftime('%Y-%m-%d')), str(d['date'].strftime('%d-%m-%Y'))] for d in
+                Kv1JourneyDate.objects.all()
+                    .filter(date__gte=datetime.today() - timedelta(days=1))
+                    .values('date')
+                    .distinct('date')
+                    .order_by('date')]
+
+        OPERATING_DAY = DAYS[((datetime.now().hour < 4) * -1) + 1] if len(DAYS) > 1 else None
+        self.fields['operatingday'].choices = DAYS
+        self.fields['operatingday'].initial = OPERATING_DAY
+
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
             Accordion(
+                AccordionGroup(_('Datum'),
+                               'operatingday'
+                               ),
                 AccordionGroup(_('Oorzaak'),
                                'reasontype',
                                'subreasontype',
