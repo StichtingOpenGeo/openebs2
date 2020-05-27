@@ -118,8 +118,6 @@ function writeTrips(data, status) {
         $('#trips thead').hide();
         $('#trips tbody').text("Geen ritten in database.");
     }
-    $('#trips tbody').append(tripRows)
-    $('#trips tbody').fadeIn(200);
 }
 
 function renderTrip(trip_a, trip_b) {
@@ -172,7 +170,6 @@ function changeOperatingDayTrips() {
     activeJourneys  = []
     $("#journeys").val('');
     getActiveJourneys();
-    showTripsOnChange();
     var operating_day_text = $("#id_operatingday option:selected" ).text();
     $("#operating_day_text").text(operating_day_text);
 }
