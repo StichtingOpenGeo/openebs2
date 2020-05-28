@@ -6,7 +6,7 @@ from crispy_forms.layout import Submit, Layout, Hidden
 import floppyforms.__future__ as forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
-from kv1.models import Kv1Journey, Kv1JourneyDate
+from kv1.models import Kv1Journey, Kv1JourneyDate, Kv1Line
 from kv15.enum import REASONTYPE, SUBREASONTYPE, ADVICETYPE, SUBADVICETYPE
 from openebs.models import Kv17Change
 from openebs.models import Kv17JourneyChange
@@ -43,28 +43,129 @@ class Kv17ChangeForm(forms.ModelForm):
 
         dataownercode = self.user.userprofile.company
 
-            # delete recovered if query is the same.
-            Kv17Change.objects.filter(journey__pk=journey,
-                                      line=journey_qry[0].line,
-                                      operatingday=operatingday,
-                                      is_cancel=True,
-                                      is_recovered=True).delete()
-
-            if Kv17Change.objects.filter(journey__pk=journey, line=journey_qry[0].line,
-                                         operatingday=operatingday).count() != 0:
-                raise ValidationError(_("Een of meer geselecteerde ritten zijn al aangepast"))
-            valid_journeys += 1
+        if 'Alle ritten' in self.data['journeys']:
+            valid_journeys = self.clean_all_journeys(operatingday, dataownercode)
+        else:
+            valid_journeys = self.clean_journeys(operatingday, dataownercode)
 
         if valid_journeys == 0:
             raise ValidationError(_("Er zijn geen ritten geselecteerd om op te heffen"))
 
         return cleaned_data
 
+    def clean_journeys(self, operatingday, dataownercode):
+        valid_journeys = 0
+        if self.data['journeys'] != '':
+            for journey in self.data['journeys'].split(',')[0:-1]:
+                journey_qry = Kv1Journey.objects.filter(dataownercode=dataownercode,
+                                                        pk=journey,
+                                                        dates__date=operatingday)
+                if journey_qry.count() == 0:
+                    raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
+
+                if Kv17Change.objects.filter(dataownercode=dataownercode,
+                                             journey__pk=journey,
+                                             line=journey_qry[0].line,
+                                             operatingday=operatingday,
+                                             is_recovered=False).count() != 0:
+                    raise ValidationError(_("Een of meer geselecteerde ritten zijn al aangepast"))
+
+                # delete recovered if query is the same.
+                Kv17Change.objects.filter(dataownercode=dataownercode,
+                                          journey__pk=journey,
+                                          line=journey_qry[0].line,
+                                          operatingday=operatingday,
+                                          is_recovered=True).delete()
+
+        else:
+            raise ValidationError(_("Er werd geen rit geselecteerd."))
+
+        valid_journeys += 1
+
+        return valid_journeys
+
+    def clean_all_journeys(self, operatingday, dataownercode):
+        valid_journeys = 0
+
+        if 'lines' in self.data:
+            if self.data['lines'] != '':
+                for line in self.data['lines'].split(',')[0:-1]:
+                    line_qry = Kv1Line.objects.filter(pk=line)
+
+                    if line_qry.count() == 0:
+                        raise ValidationError(_("Geen lijn gevonden."))
+
+                    if Kv17Change.objects.filter(dataownercode=dataownercode,
+                                                 operatingday=operatingday,
+                                                 line=line_qry[0],
+                                                 is_alljourneysofline=True,
+                                                 is_recovered=False).count() != 0:
+                        raise ValidationError(_("De gehele lijn is al aangepast"))
+
+                    # delete recovered if query is the same.
+                    Kv17Change.objects.filter(dataownercode=dataownercode,
+                                              line=line_qry[0],
+                                              operatingday=operatingday,
+                                              is_recovered=True).delete()
+
+        else:
+            raise ValidationError(_("Geen geldige lijn geselecteerd"))
+
+        valid_journeys += 1
+
+        return valid_journeys
+
     def save(self, force_insert=False, force_update=False, commit=True):
         ''' Save each of the journeys in the model. This is a disaster, we return the XML
         TODO: Figure out a better solution fo this! '''
-        xml_output = []
         operatingday = parse_date(self.data['operatingday'])
+
+        if 'Alle ritten' in self.data['journeys']:
+            xml_output = self.save_all_journeys(operatingday)
+        else:
+            xml_output = self.save_journeys(operatingday)
+
+        return xml_output
+
+    def save_all_journeys(self, operatingday):
+        xml_output = []
+
+        for line in self.data['lines'].split(',')[0:-1]:
+            qry = Kv1Line.objects.filter(id=line)
+            if qry.count() == 1:
+                self.instance.pk = None
+                self.instance.is_alljourneysofline = True
+                self.instance.line = qry[0]
+                self.instance.operatingday = operatingday
+                self.instance.is_cancel = True
+
+                # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
+                if self.instance.line.dataownercode == self.instance.dataownercode:
+                    self.instance.save()
+
+                    # Add details
+                    if self.data['reasontype'] != '0' or self.data['advicetype'] != '0':
+                        Kv17JourneyChange(change=self.instance, reasontype=self.data['reasontype'],
+                                          subreasontype=self.data['subreasontype'],
+                                          reasoncontent=self.data['reasoncontent'],
+                                          advicetype=self.data['advicetype'],
+                                          subadvicetype=self.data['subadvicetype'],
+                                          advicecontent=self.data['advicecontent']).save()
+
+                    xml_output.append(self.instance.to_xml())
+                else:
+                    log.error(
+                        "Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
+                        (self.instance.line.dataownercode, self.instance.dataownercode))
+
+            else:
+                log.error("Failed to find line %s" % line)
+
+        return xml_output
+
+    def save_journeys(self, operatingday):
+        xml_output = []
+
         for journey in self.data['journeys'].split(',')[0:-1]:
             qry = Kv1Journey.objects.filter(id=journey, dates__date=operatingday)
             if qry.count() == 1:
@@ -99,7 +200,7 @@ class Kv17ChangeForm(forms.ModelForm):
 
     class Meta(object):
         model = Kv17Change
-        exclude = ['dataownercode', 'line', 'journey', 'is_recovered', 'reinforcement']
+        exclude = ['dataownercode', 'operatingday', 'line', 'journey', 'is_recovered', 'reinforcement']
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)

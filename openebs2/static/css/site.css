@@ -244,3 +244,6 @@ span.stop-selection,span.trip-selection{
 #highlight td {
     background-color: #D3D1D0;
 }
+
+.line_warning {
+    background-color: #def2f9;
