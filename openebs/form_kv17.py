@@ -45,6 +45,8 @@ class Kv17ChangeForm(forms.ModelForm):
 
         if 'Alle ritten' in self.data['journeys']:
             valid_journeys = self.clean_all_journeys(operatingday, dataownercode)
+        elif 'Hele vervoerder' in self.data['lines']:
+            valid_journeys = self.clean_all_lines(operatingday, dataownercode)
         else:
             valid_journeys = self.clean_journeys(operatingday, dataownercode)
 
@@ -115,6 +117,27 @@ class Kv17ChangeForm(forms.ModelForm):
 
         return valid_journeys
 
+    def clean_all_lines(self, operatingday, dataownercode):
+        valid_journeys = 0
+
+        database_alllines = Kv17Change.objects.filter(dataownercode=dataownercode,
+                                                      is_alllines=True,
+                                                      operatingday=operatingday,
+                                                      is_recovered=False)
+
+        if database_alllines:
+            raise ValidationError(_("De gehele vervoerder is al aangepast."))
+
+        # delete recovered if query is the same.
+        Kv17Change.objects.filter(dataownercode=dataownercode,
+                                  is_alllines=True,
+                                  is_recovered=True,
+                                  operatingday=operatingday).delete()
+
+        valid_journeys += 1
+
+        return valid_journeys
+
     def save(self, force_insert=False, force_update=False, commit=True):
         ''' Save each of the journeys in the model. This is a disaster, we return the XML
         TODO: Figure out a better solution fo this! '''
@@ -122,8 +145,39 @@ class Kv17ChangeForm(forms.ModelForm):
 
         if 'Alle ritten' in self.data['journeys']:
             xml_output = self.save_all_journeys(operatingday)
+        elif 'Hele vervoerder' in self.data['lines']:
+            xml_output = self.save_all_lines(operatingday)
         else:
             xml_output = self.save_journeys(operatingday)
+
+        return xml_output
+
+    def save_all_lines(self, operatingday):
+        xml_output = []
+
+        self.instance.pk = None
+        self.instance.is_alllines = True
+        self.instance.operatingday = operatingday
+        self.instance.is_cancel = True
+
+        # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
+        if self.instance.dataownercode == self.user.userprofile.company:
+            self.instance.save()
+
+            # Add details
+            if self.data['reasontype'] != '0' or self.data['advicetype'] != '0':
+                Kv17JourneyChange(change=self.instance, reasontype=self.data['reasontype'],
+                                  subreasontype=self.data['subreasontype'],
+                                  reasoncontent=self.data['reasoncontent'],
+                                  advicetype=self.data['advicetype'],
+                                  subadvicetype=self.data['subadvicetype'],
+                                  advicecontent=self.data['advicecontent']).save()
+
+            xml_output.append(self.instance.to_xml())
+        else:
+            log.error(
+                "Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
+                (self.instance.line.dataownercode, self.instance.dataownercode))
 
         return xml_output
 
@@ -197,6 +251,7 @@ class Kv17ChangeForm(forms.ModelForm):
                 log.error("Failed to find journey %s" % journey)
 
         return xml_output
+
 
     class Meta(object):
         model = Kv17Change

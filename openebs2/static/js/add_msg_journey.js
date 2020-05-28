@@ -341,6 +341,33 @@ function removeLine(lijn) {
     }
 }
 
+function selectAllLines() {
+    selectedLines = [];
+    lijnList = [];
+    selectedTrips = [];
+    activeJourneys = [];
+    activeLine = '';
+
+    $('.rit-overzicht').css("display","none");
+    $('#trips thead').hide();
+    $('#trips tbody').hide();
+    $('#journeys').val('');
+    $('#lijn-list').empty();
+    $('#rit-list span').remove();
+    $('#rit-list .help').hide();
+    $("#rows tr").removeClass('success');
+    $("#trips tr td").removeClass('ui-selected success');
+    $(".suc-icon").remove();
+
+    var lijn = $("#all_lines").text();
+    var dellink = '<span class="line-remove glyphicon glyphicon-remove"></span>';
+    $('#lijn-list').append('<span id="st'+lijn+'" class="pull-left line-selection label label-danger">'+lijn+' '+dellink+'</span>');
+    selectedLines.push(lijn);
+    lijnList.push(lijn);
+    $('#lines').val('Hele vervoerder');
+    $('.lijn-overzicht').css("display","block");
+}
+
 /* TIME FUNCTIONS */
 function convertSecondsToTime(seconds) {
     var hours   = Math.floor(seconds / 3600);
