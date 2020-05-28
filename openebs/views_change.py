@@ -52,6 +52,13 @@ class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
     form_class = Kv17ChangeForm
     success_url = reverse_lazy('change_index')
 
+    def get_form_kwargs(self):
+        kwargs = super(ChangeCreateView, self).get_form_kwargs()
+        kwargs.update({
+            'user': self.request.user
+        })
+        return kwargs
+
     def get_context_data(self, **kwargs):
         data = super(ChangeCreateView, self).get_context_data(**kwargs)
         data['operator_date'] = get_operator_date()
