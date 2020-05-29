@@ -247,3 +247,17 @@ span.stop-selection,span.trip-selection{
 
 .line_warning {
     background-color: #def2f9;
+
+}
+
+.all_selected {
+    background: #dff0d8;
+}
+
+#div_id_begintime_part {
+    display: None
+}
+
+#div_id_endtime_part {
+    display: None
+}

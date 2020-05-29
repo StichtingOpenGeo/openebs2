@@ -10,6 +10,8 @@
   <table class="table table-condensed table-bordered table-striped">
   <tr id="highlight">
       <th class="col-sm-2">{% trans "Ritdatum" %}</th>
+      <th class="col-sm-2">{% trans "Begintijd" %}</th>
+      <th class="col-sm-2">{% trans "Eindtijd" %}</th>
       <th class="col-sm-4">{% trans "Ritnummer" %}</th>
       <td class="col-sm-1" align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-eye-close" title="Toon opgeheven rit niet"></span></td>
       <td class="col-sm-1" align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-transfer" title="Automatisch herstellen"></span></td>
@@ -18,6 +20,16 @@
   {% for msg in line.list %}
       <tr>
           <td>{{ msg.operatingday|date:"d-m-Y" }}</td>
+          <td>
+            {% if msg.begintime %}
+                {{ msg.begintime|time:"H:i" }}
+            {% endif %}
+          </td>
+          <td>
+            {% if msg.endtime %}
+                {{ msg.endtime|time:"H:i" }}
+            {% endif %}
+          </td>
           <td>
             {% if msg.journey %}
                 {{ msg.journey.journeynumber }} <small>(Vertrek {{ msg.journey.departuretime|seconds_time|date:"H:i"}})</small>

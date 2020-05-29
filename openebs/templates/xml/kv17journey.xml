@@ -7,6 +7,12 @@
             <allJourneysOfLine/>
             <lineplanningnumber>{{ object.line.lineplanningnumber }}</lineplanningnumber>
         {% endif %}
+        {% if begintime %}
+            <begintime>{{ begintime }}</begintime>
+        {% endif %}
+        {% if endtime %}
+            <endtime>{{ endtime }}</endtime>
+        {% endif %}
         <operatingday>{{ object.operatingday|date:"Y-m-d" }}</operatingday>
     {% else %}
         <lineplanningnumber>{{ object.line.lineplanningnumber }}</lineplanningnumber>
