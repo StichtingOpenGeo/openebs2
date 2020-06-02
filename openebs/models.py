@@ -404,6 +404,8 @@ class Kv17Change(models.Model):
     is_alllines = models.BooleanField(default=False, verbose_name=_("Alle lijnen"))
     is_cancel = models.BooleanField(default=True, verbose_name=_("Opgeheven?"),
                                     help_text=_("Rit kan ook een toelichting zijn voor een halte"))
+    monitoring_error = models.CharField(max_length=40, null=True, default=False, choices=MONITORINGERROR,
+                                        verbose_name=_("Monitoring_error"))
     is_recovered = models.BooleanField(default=False, verbose_name=_("Teruggedraaid?"))
     created = models.DateTimeField(auto_now_add=True)
     recovered = models.DateTimeField(null=True, blank=True)  # Not filled till recovered

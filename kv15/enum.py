@@ -189,3 +189,13 @@ STOPTYPES = (
     ('INTERMEDIATE', "Tussenhalte"),
     ('LAST', "Eindhalte")
 )
+
+MONITORINGERROR = (
+    ('GPS', 'Storing in de GPS van het voertuig'),
+    ('GPRS', 'Storing in het mobiele netwerk'),
+    ('Radio', 'Storing in de radioverbinding'),
+    ('General', 'Voertuigsysteem werkt niet'),
+    ('NoSystem', 'Voertuig heeft geen volgapparatuur'),
+    ('other', 'Andere oorzaak'),
+    ('unknown', 'Onbekende oorzaak')
+)
