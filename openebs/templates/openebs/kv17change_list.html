@@ -52,7 +52,7 @@
         <td>
             {% if msg.line %}
                 {% if msg.line.lineplanningnumber != msg.line.publiclinenumber %}
-                    {{ msg.line.publiclinenumber }} / {{ msg.line.lineplanningnumber }}
+                    {{ msg.line.publiclinenumber }} ({{ msg.line.lineplanningnumber }})
                 {% else %}
                     {{ msg.line.publiclinenumber }}
                 {% endif %}

@@ -317,7 +317,6 @@ class Kv17ChangeForm(forms.ModelForm):
 
         return xml_output
 
-
     class Meta(object):
         model = Kv17Change
         exclude = ['dataownercode', 'operatingday', 'line', 'journey', 'is_recovered', 'reinforcement']
@@ -328,10 +327,10 @@ class Kv17ChangeForm(forms.ModelForm):
 
         DAYS = [[str(d['date'].strftime('%Y-%m-%d')), str(d['date'].strftime('%d-%m-%Y'))] for d in
                 Kv1JourneyDate.objects.all()
-                    .filter(date__gte=datetime.today() - timedelta(days=1))
-                    .values('date')
-                    .distinct('date')
-                    .order_by('date')]
+                              .filter(date__gte=datetime.today() - timedelta(days=1))
+                              .values('date')
+                              .distinct('date')
+                              .order_by('date')]
 
         OPERATING_DAY = DAYS[((datetime.now().hour < 4) * -1) + 1] if len(DAYS) > 1 else None
         self.fields['operatingday'].choices = DAYS
