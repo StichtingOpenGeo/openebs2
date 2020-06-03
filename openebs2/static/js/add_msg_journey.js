@@ -47,6 +47,9 @@ var cancelledLines = [];
 var currentLineMeasures = null;
 var lijnList = [];
 var tripSelection = [];
+var notmonitoredJourneys = [];
+var notmonitoredLines = [];
+var notMonitoredLineMeasures = null;
 
 function showTrips(event) {
     $("#rows tr.success").removeClass('success');
@@ -227,7 +230,7 @@ function writeActiveJourneys(data, status) {
             activeJourneys.push(journey.journey_id)
         });
     }
-    showTripsOnChange();
+    getNotMonitoredJourneys();
 }
 
 function changeOperatingDayTrips() {
@@ -452,6 +455,57 @@ function colorSelectedRange() {
             }
         });
     });
+}
+
+
+function getNotMonitoredJourneys() {
+    var operating_day = $("#id_operatingday").val();
+    if (operating_day != null) {
+        $.ajax({ url: '/ritaanpassing/ritten-nietgevolgd.json',
+            data: {'operatingday': operating_day},
+            success : saveNotMonitoredJourneys
+        });
+    } else {
+        notmonitoredJourneys = []
+        getNotMonitoredLines();
+    }
+}
+
+function saveNotMonitoredJourneys(data, status) {
+    if (data.object) {
+        $.each(data.object, function (i, journey) {
+            notmonitoredJourneys.push(journey.journey_id);
+        });
+    getNotMonitoredLines();
+    }
+}
+
+function getNotMonitoredLines() {
+    var operating_day = $("#id_operatingday").val();
+    if (operating_day != null) {
+        $.ajax({ url: '/ritaanpassing/lijnen-nietgevolgd.json',
+            data: {'operatingday': operating_day},
+            success : saveNotMonitoredLines
+        });
+    } else {
+        notmonitoredLines = [];
+        showTripsOnChange();
+    }
+}
+
+function saveNotMonitoredLines(data, status) {
+    if (data.object) {
+        notmonitoredLines = data.object;
+    } else {
+        notmonitoredLines = [];
+    };
+    showTripsOnChange();
+}
+
+function notMonitored() {
+    $("#notMonitored").text($(this).text());
+    $("#notMonitoredInput").val($(this).attr('value'));
+    $("#notMonitored").removeClass('disabled');
 }
 
 /* TIME FUNCTIONS */

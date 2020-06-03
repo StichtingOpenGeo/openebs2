@@ -17,47 +17,51 @@
       <th class="col-sm-2">{% trans "Begintijd" %}</th>
       <th class="col-sm-2">{% trans "Eindtijd" %}</th>
       <th class="col-sm-4">{% trans "Ritnummer" %}</th>
+      <td class="col-sm-1" align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-ban-circle" title="Niet gevolgd"></span></td>
       <td class="col-sm-1" align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-eye-close" title="Toon opgeheven rit niet"></span></td>
       <td class="col-sm-1" align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-transfer" title="Automatisch herstellen"></span></td>
       <th class="col-sm-1"></th>
   </tr>
   {% for msg in line.list %}
-      <tr>
-          <td>{{ msg.operatingday|date:"d-m-Y" }}</td>
-          <td>
+    <tr>
+        <td>{{ msg.operatingday|date:"d-m-Y" }}</td>
+        <td>
             {% if msg.begintime %}
                 {{ msg.begintime|time:"H:i" }}
             {% endif %}
-          </td>
-          <td>
+        </td>
+        <td>
             {% if msg.endtime %}
                 {{ msg.endtime|time:"H:i" }}
             {% endif %}
-          </td>
-          <td>
+        </td>
+        <td>
             {% if msg.journey %}
                 {{ msg.journey.journeynumber }} <small>(Vertrek {{ msg.journey.departuretime|seconds_time|date:"H:i"}})</small>
             {% elif all_lines %}
                 {{ all_lines }}
             {% else %}
-              {% trans "Alle ritten" %}
+                {% trans "Alle ritten" %}
             {% endif %}
-          </td>
-          <td align="center" style="vertical-align:middle;">
-            {% if msg.showcancelledtrip %}
-                <span></span>
-            {% else %}
-                <span class="glyphicon glyphicon-eye-close" title="Toon opgeheven rit niet"></span>
-            {% endif %}
-          </td>
-          <td align="center" style="vertical-align:middle;">
-            {% if msg.autorecover %}
-                <span class="glyphicon glyphicon-transfer" title="Automatisch herstellen"></span></td>
-            {% else %}
-                <span></span>
-            {% endif %}
-          </td>
-          <td>
+        </td>
+
+        {% if msg.monitoring_error %}
+            <td align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-ban-circle" title="Niet gevolgd"></span>
+            <td></td>
+            <td></td>
+        {% else %}
+            <td></td>
+            <td align="center" style="vertical-align:middle;">
+                {% if not msg.showcancelledtrip %}
+                    <span class="glyphicon glyphicon-eye-close" title="Toon opgeheven rit niet"></span>
+                {% endif %}
+            </td>
+            <td align="center" style="vertical-align:middle;">
+                {% if msg.autorecover %}
+                    <span class="glyphicon glyphicon-transfer" title="Automatisch herstellen"></span>
+                {% endif %}
+        {% endif %}
+        <td>
             {% if msg.journey and perms.openebs.add_change %}
                 <form method="post" action="{% url 'change_delete' msg.id %}">
                     {% csrf_token %}
@@ -80,7 +84,7 @@
                     </button>
                 </form>
             {% endif %}
-          </td>
-      </tr>
+        </td>
+    </tr>
   {% endfor %}
   </table>
