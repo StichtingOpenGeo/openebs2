@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='kv17change',
             name='monitoring_error',
-            field=models.CharField(choices=[('GPS', 'Storing in de GPS van het voertuig'), ('GPRS', 'Storing in het mobiele netwerk'), ('Radio', 'Storing in de radioverbinding'), ('General', 'Voertuigsysteem werkt niet'), ('NoSystem', 'Voertuig heeft geen volgapparatuur'), ('other', 'Andere oorzaak'), ('unknown', 'Onbekende oorzaak')], default=False, max_length=40, null=True, verbose_name='Monitoring_error'),
+            field=models.CharField(choices=[('GPS', 'Storing in de GPS van het voertuig'), ('GPRS', 'Storing in het mobiele netwerk'), ('Radio', 'Storing in de radioverbinding'), ('General', 'Voertuigsysteem werkt niet'), ('NoSystem', 'Voertuig heeft geen volgapparatuur'), ('other', 'Andere oorzaak'), ('unknown', 'Onbekende oorzaak')], max_length=40, null=True, verbose_name='Monitoring_error'),
         ),
     ]

@@ -292,7 +292,7 @@ function selectAllTrips() {
     }
 
     $('#journeys').val('');
-    $('#rit-list span').empty();
+    $('#rit-list span').remove();
     $("#trips tr td").removeClass('success');
     $('#rit-list .help').hide();
     $('.lijn-overzicht').css("display","block");
