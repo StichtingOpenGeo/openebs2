@@ -139,8 +139,8 @@
     $('#rit-list').on('click', '.trip-remove', removeTripFromX);
     $('#lijn-list').on('click', '.line-remove', removeLineFromX);
     $('#id_operatingday').change(changeOperatingDayTrips);
-    $('#id_begintime_part').change(colorSelectedRange);
-    $('#id_endtime_part').change(colorSelectedRange);
+    $('#id_begintime_part').change(changeOfRange);
+    $('#id_endtime_part').change(changeOfRange);
     $(".dropdown-menu").on('click', 'li a', notMonitored);
 
 {% endblock %}
