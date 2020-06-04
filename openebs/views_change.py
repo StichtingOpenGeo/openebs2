@@ -205,6 +205,7 @@ class ActiveJourneysAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailVi
         # Note, can't set this on the view, because it triggers the queryset cache
         queryset = self.model.objects.filter(operatingday=operating_day,
                                              is_recovered=False,
+                                             is_cancel=True,
                                              dataownercode=self.request.user.userprofile.company).distinct()
         return list(queryset.values('journey_id', 'dataownercode', 'is_recovered'))
 
@@ -220,6 +221,7 @@ class ActiveLinesAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView)
         queryset = self.model.objects.filter(Q(is_alljourneysofline=True) | Q(is_alllines=True),
                                              operatingday=operating_day,
                                              is_recovered=False,
+                                             is_cancel=True,
                                              dataownercode=self.request.user.userprofile.company).distinct()
         # TODO: is it possible to apply a function on a value of a queryset?
         start_of_day = datetime.combine(operating_day, datetime.min.time()).timestamp()
