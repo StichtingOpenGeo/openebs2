@@ -45,17 +45,26 @@
                 {% trans "Alle ritten" %}
             {% endif %}
         </td>
-        <td align="center" style="vertical-align:middle;">
-            {% if msg.shorten_details.all and msg.monitoring_error.all %}
-                <span class="glyphicon glyphicon-random" title="Rit ingekort"></span>
-            {% endif %}
-        </td>
 
-        {% if msg.monitoring_error %}
-        <td align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-ban-circle" title="Niet gevolgd"></span></td>
+        {% if msg.shorten_details.all %}
+            <td align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-random" title="Rit ingekort"></span></td>
+            <td align="center" style="vertical-align:middle;">
+                {% if msg.monitoring_error %}
+                    <span class="glyphicon glyphicon-ban-circle" title="Niet gevolgd"></span>
+                {% endif %}
+            </td>
+            <td align="center" style="vertical-align:middle;">
+                {% if shorten_details.showcancelledtrip == False %}
+                    <span class="glyphicon glyphicon-eye-close" title="Toon opgeheven rit niet"></span>
+                {% endif %}</td>
             <td></td>
+        {% elif msg.monitoring_error %}
             <td></td>
+            <td align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-ban-circle" title="Niet gevolgd"></span></td>
+                <td></td>
+                <td></td>
         {% else %}
+            <td></td>
             <td></td>
             <td align="center" style="vertical-align:middle;">
                 {% if not msg.showcancelledtrip %}

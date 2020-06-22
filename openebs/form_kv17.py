@@ -658,7 +658,6 @@ class Kv17ShortenForm(forms.ModelForm):
                 qry_kv17change = Kv17Change.objects.filter(journey=qry[0], operatingday=parse_date(self.data['operatingday']))
                 if qry_kv17change.count() == 1:
                     self.instance = qry_kv17change[0]
-                    self.instance.showcancelledtrip = True if self.data['showcancelledtrip'] == 'on' else False
                 else:
                     self.instance.pk = None
                     self.instance.journey = qry[0]
@@ -717,13 +716,11 @@ class Kv17ShortenForm(forms.ModelForm):
             if qry_kv17change.count() != 0:
                 ids = qry_kv17change.values_list('id', flat=True)[0]
 
-                # Delete existing duplicate + update newest with existing monitoring_error
-                #Kv17Change.objects.filter(id=ids).delete()
+                showcancelledtrip = self.cleaned_data['showcancelledtrip']
 
-                # get latest id in kv17change (is from same self.instance.save())
-                #Kv17Change.objects.filter(id=maxid).update(monitoring_error=monitoring_error)
-
-                Kv17Shorten(change=self.instance, change_id=ids, stop=stop,
+                Kv17Shorten(change=self.instance,
+                            change_id=ids, stop=stop,
+                            #change__showcancelledtrip=showcancelledtrip, TODO: resolve this in the future
                             # passagesequencenumber=0,   TODO: resolve this in the future
                             ).save()
             else:
