@@ -97,4 +97,5 @@ class ActiveStopsAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView)
         queryset = self.model.objects.filter(change__operatingday=operating_day,
                                              change__is_recovered=False,
                                              change__dataownercode=self.request.user.userprofile.company).distinct()
-        return list(queryset.values('change__journey', 'change__dataownercode', 'stop', 'change__is_recovered'))
+        return list(queryset.values('change__line', 'change__journey', 'change__dataownercode', 'stop__userstopcode',
+                                    'change__is_recovered'))

@@ -1,7 +1,7 @@
 /* STOP AND SCENARIO FUNCTIONS */
 var selectedStops = []
 var scenarioStops = []
-var blockedStops = [] /* Already have messages set */
+var blockedStops = [] /* Already have shortens set */
 
 function changeSearch(event) {
     if ($("#line_search").val().length > 0) {
@@ -187,19 +187,19 @@ function writeLine(data, status) {
 function renderRow(row) {
     out = '<tr class="stopRow">';
     if (row.left != null) {
-        if ($.inArray(row.left.id, scenarioStops) != -1) {
-            out += '<td class="warning">'+row.left.name+' <span class="glyphicon glyphicon-warning-sign pull-right" title="Al in scenario opgenomen"></span></td>'
+        //if ($.inArray(row.left.id, scenarioStops) != -1) {
+        //    out += '<td class="warning">'+row.left.name+' <span class="glyphicon glyphicon-warning-sign pull-right" title="Al in scenario opgenomen"></span></td>'
+        //} else {
+        var id = 's'+row.left.id+'l';
+
+        if ($.inArray('s'+row.left.id, selectedStops) != -1) {
+            out += '<td class="stop stop-left success" id="'+id+'">'+row.left.name+'<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;'
         } else {
-            var id = 's'+row.left.id+'l';
-            if ($.inArray('s'+row.left.id, selectedStops) != -1) {
-                out += '<td class="stop stop-left success" id="'+id+'">'+row.left.name+'<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;'
-            } else {
-                out += '<td class="stop stop-left" id="'+id+'">'+row.left.name;
-                if ($.inArray(row.left.id, blockedStops) != -1) {
-                    out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al bericht"></span>'
-                }
-                out += '</td>';
-            }
+            out += '<td class="stop stop-left" id="'+id+'">'+row.left.name;
+            //if ($.inArray(row.left.id, ShortenStopMeasures) != -1) {
+            //    out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte is op deze lijn al ingekort"></span>'
+            //}
+            out += '</td>';
         }
     } else {
         out += '<td>&nbsp;</td>';
@@ -258,8 +258,8 @@ function getHaltesWithShorten() {
 
 function writeHaltesWithShorten(data, status) {
     $.each(data.object, function (i, halte) {
-        stop = halte['dataownercode']+ '_' + halte['userstopcode']
-        blockedStops.push(stop)
+        //stop = halte['change__dataownercode']+ '_' + halte['stop']
+        blockedStops.push(halte)
     });
 }
 
@@ -273,7 +273,7 @@ var currentLineMeasures = null;
 var lijnList = [];
 var allTrips = [];
 var tripSelection = [];
-var selectTripMeasures = [];
+var currentStopMeasures = [];
 
 
 function showAll() {
@@ -342,6 +342,19 @@ function selectTrip(event, ui) {
     } else {
         removeTrip($(ui.selected).attr('id').substring(1));
     }
+    currentStopMeasures = blockedStops.filter (s => s.change__line == activeLine || s.change__line===null)
+
+    /*
+    var shortenStopMeasures = currentStopMeasures.filter(s => s.change__journey == ritnr)
+    $.each(shortenStopMeasures, function(index, val) {
+
+        var stop_left_id = '#s'+ val['change__dataownercode'] + '_' + val['stop__userstopcode'] + 'l';
+        var stop_right_id = '#s'+ val['change__dataownercode'] + '_' + val['stop__userstopcode'] + 'r';
+        $(stop_left_id).addClass('shortened').append('<span class="stop-check glyphicon glyphicon-alert pull-right"></span>');
+        $(stop_right_id).addClass('shortened').append('<span class="stop-check glyphicon glyphicon-alert pull-right"></span>');
+    });
+    */
+
     $("#body_stops tr.help").hide(200);
     $('.stop_btn').removeClass('hide');
     $("#body_stops tr.stopRow").show(200);

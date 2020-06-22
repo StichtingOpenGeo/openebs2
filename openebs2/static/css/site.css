@@ -261,3 +261,7 @@ span.stop-selection,span.trip-selection{
 #div_id_endtime_part {
     display: None
 }
+
+.shortened {
+    background: eb34ba;
+}
