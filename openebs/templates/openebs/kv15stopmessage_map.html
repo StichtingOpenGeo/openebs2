@@ -133,6 +133,7 @@
 
         function main_map_init (map, options) {
             leafletMap = map;
+            map.options.maxZoom = 19;
             if (!map.restoreView()) {
                 map.setView(new L.LatLng(52.05, 4.32), 12);
             }
