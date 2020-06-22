@@ -47,7 +47,11 @@
         </td>
 
         {% if msg.shorten_details.all %}
-            <td align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-random" title="Rit ingekort"></span></td>
+            <td align="center" style="vertical-align:middle;">
+                <a class="shorten_halte-count btn btn-link" id="shorten_halte-count" href="{% url 'shorten_view' msg.id %}"
+                       data-title="{% trans 'Haltes bij inkorting' %}" data-html="true" data-content="{% include 'openebs/snippet_halte-list_shorten.html' %}">
+                        {{ msg.shorten_details.all | length }}</a>
+            </td>
             <td align="center" style="vertical-align:middle;">
                 {% if msg.monitoring_error %}
                     <span class="glyphicon glyphicon-ban-circle" title="Niet gevolgd"></span>

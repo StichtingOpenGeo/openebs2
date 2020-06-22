@@ -1,0 +1,6 @@
+<ul>{% for item in msg.shorten_details.all %}
+  <li>{{ item.stop.name }}</li>
+{% endfor %}</ul>
+{% if msg.shorten_details.all.count > 15 %}
+<p><small>en {{ msg.shorten_details.all.count|add:-15 }} overige haltes. (klik cijfer om te bekijken)</small></p>
+{% endif %}
