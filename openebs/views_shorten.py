@@ -4,12 +4,12 @@ from braces.views import LoginRequiredMixin
 from django.urls import reverse_lazy
 #from django.db.models import Q, F, Count
 from django.http import HttpResponseRedirect
-from django.views.generic import CreateView, DetailView#, DeleteView,  TemplateView, ListView
+from django.views.generic import CreateView, DetailView, DeleteView#,  TemplateView, ListView
 from kv1.models import Kv1Journey#, Kv1Line, Kv1Stop
 from openebs.form_kv17 import Kv17ShortenForm#, Kv17ChangeForm
 from openebs.models import Kv17Shorten#, Kv1StopFilter, Kv17Change
 from openebs.views_push import Kv17PushMixin
-#from openebs.views_utils import FilterDataownerMixin
+from openebs.views_utils import FilterDataownerMixin
 from utils.time import get_operator_date#, get_operator_date_aware
 from utils.views import AccessMixin, JSONListResponseMixin#, ExternalMessagePushMixin
 from django.utils.dateparse import parse_date
@@ -83,6 +83,32 @@ class ShortenCreateView(AccessMixin, Kv17PushMixin, CreateView):
 
         # Another hack to redirect correctly
         return HttpResponseRedirect(self.success_url)
+
+
+class ShortenDeleteView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteView):
+    permission_required = 'openebs.add_shorten'
+    model = Kv17Shorten
+    success_url = reverse_lazy('change_index')
+
+    def delete(self, request, *args, **kwargs):
+        ret = super(ShortenDeleteView, self).delete(request, *args, **kwargs)
+        obj = self.get_object()
+        if self.push_message(obj.to_xml()):
+            log.error("Recovered shorten succesfully communicated to subscribers: %s" % obj)
+        else:
+            log.error("Failed to send recover request to subscribers: %s" % obj)
+            # We failed to push, recover our delete operation
+            obj.is_recovered = False
+            obj.recovered = None
+            obj.save() # Note, this won't work locally!
+        return ret
+
+
+class ShortenUpdateView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteView):
+    """ This is a really weird view - it's redoing a change that you deleted   """
+    permission_required = 'openebs.add_shorten'
+    model = Kv17Shorten
+    success_url = reverse_lazy('change_index')
 
 
 class ActiveStopsAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
