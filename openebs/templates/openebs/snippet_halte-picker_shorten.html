@@ -1,0 +1,50 @@
+{% load i18n %}
+<div class="col-lg-4">
+    <h2>Lijn</h2>
+    <div class="input-group">
+        <span class="input-group-addon"><span class="glyphicon glyphicon-search"></span></span>
+        <input type="text" class="form-control" id="line_search" placeholder="{% trans 'Lijnnummer of eindbestemming' %}">
+    </div><br />
+    <table class="table table-condensed table-hover">
+        <thead>
+            <tr>
+                <th>{% trans "Lijn" %}</th>
+                <th>{% trans "Eindbestemming" %}</th>
+            </tr>
+        </thead>
+        <tbody id="rows">
+            <tr>
+                <td colspan="2" class="text-center"><em>{% trans "Typ een eindbestemming of lijnnummer om een lijn te zoeken" %}</em></td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="btn-group" id="shorten_buttons">
+        <button type="button" onclick="showAll()" id="go_back" class="btn btn-secundary" >{% trans "Toon vorige" %}</button>
+    </div>
+    <br />
+    <br />
+    <div id="rittenoverzicht">
+    <h2>Ritten <span title="Dienstregelingsdatum" id="operating_day_text">{{ operator_date|date:"d-m-Y" }}</span> </h2>
+        <table class="table openebs-trips" id="trips">
+            <thead>
+                <tr>
+                    <th>{% trans "Heen" %}</th>
+                    <th>{% trans "Terug" %}</th>
+                </tr>
+            </thead>
+            <tbody id="tripoverzicht">
+                <tr class="help text-center"></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+    <div class="col-lg-4" id="halteoverzicht">
+    <h2>Haltes
+        <a class="btn btn-success btn-sm pull-right hide stop_btn" id="stops_all"><i class="glyphicon glyphicon-plus"></i>&nbsp;{% trans "Selecteer lijn" %}</a>&nbsp;&nbsp;
+        <a class="btn btn-danger btn-sm pull-right hide stop_btn" id="stops_none"><i class="glyphicon glyphicon-remove-circle"></i>&nbsp;{% trans "Wis (lijn)selectie" %}</a></h2>
+    <table class="table openebs-stops" id="stops">
+        <tbody id="body_stops">
+            <tr class="help text-center"><td><em>Klik een rit om haltes hier te zien</em></td></tr>
+        </tbody>
+    </table>
+</div>

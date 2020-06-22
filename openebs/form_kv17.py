@@ -6,16 +6,15 @@ from crispy_forms.layout import Submit, Layout, Hidden
 import floppyforms.__future__ as forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
-from kv1.models import Kv1Journey, Kv1JourneyDate, Kv1Line
+from kv1.models import Kv1Journey, Kv1JourneyDate, Kv1Line, Kv1Stop
 from kv15.enum import REASONTYPE, SUBREASONTYPE, ADVICETYPE, SUBADVICETYPE, MONITORINGERROR
-from openebs.models import Kv17Change
-from openebs.models import Kv17JourneyChange
+from openebs.models import Kv17Change, Kv17Shorten
+from openebs.models import Kv17JourneyChange, Kv17MutationMessage
 from utils.time import get_operator_date
 from django.utils.dateparse import parse_date
 from django.utils.timezone import make_aware, utc
 from datetime import datetime, time, timedelta
-from django.db.models import Q
-
+from django.db.models import Q, Max
 
 log = logging.getLogger('openebs.forms')
 
@@ -563,4 +562,241 @@ class CancelLinesForm(forms.Form):
         self.helper.layout = Layout(
             Hidden('verify_ok', 'true'),
             Submit('submit', _("Hef alle ritten op"), css_class="text-center btn-danger btn-tall col-sm-3 pull-right")
+        )
+
+
+class Kv17ShortenForm(forms.ModelForm):
+    operatingday = forms.ChoiceField(label=_("Datum"), required=True)
+    reasontype = forms.ChoiceField(choices=REASONTYPE, label=_("Type oorzaak"), required=False)
+    subreasontype = forms.ChoiceField(choices=SUBREASONTYPE, label=_("Oorzaak"), required=False)
+    reasoncontent = forms.CharField(max_length=255, label=_("Uitleg oorzaak"), required=False,
+                                    widget=forms.Textarea(attrs={'cols': 40, 'rows': 4, 'class': 'col-lg-6'}))
+    advicetype = forms.ChoiceField(choices=ADVICETYPE, label=_("Type advies"), required=False)
+    subadvicetype = forms.ChoiceField(choices=SUBADVICETYPE, label=_("Advies"), required=False)
+    advicecontent = forms.CharField(max_length=255, label=_("Uitleg advies"), required=False,
+                                    widget=forms.Textarea(attrs={'cols': 40, 'rows': 4, 'class': 'col-lg-6'}))
+
+    def clean(self):
+        cleaned_data = super(Kv17ShortenForm, self).clean()
+
+        #Kv17Change.objects.all().delete()
+        #Kv17Shorten.objects.all().delete()
+
+        operating_day = self.data['operatingday']
+        if operating_day is None:
+            raise ValidationError(_("Er staan geen ritten in de database"))
+
+        dataownercode = self.user.userprofile.company
+
+        valid_journeys = 0
+        if self.data['journeys'] != '':
+            for journey in self.data['journeys'].split(',')[0:-1]:
+                journey_qry = Kv1Journey.objects.filter(dataownercode=dataownercode,
+                                                        pk=journey,
+                                                        dates__date=operating_day)
+                if journey_qry.count() == 0:
+                    raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
+
+                valid_stops = []
+                for halte in self.data['haltes'].split(','):
+                    if halte != '':
+                        halte_split = halte.split('_')
+                        if len(halte_split) == 2:
+                            stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
+                            if stop:
+                                valid_stops.append(stop.pk)
+                            else:
+                                raise ValidationError(
+                                    _("Datafout: halte niet gevonden in database. Meld dit bij een beheerder."))
+
+                        if Kv17Change.objects.filter(line=self.instance.line,
+                                                     journey=self.instance.journey,
+                                                     operatingday=self.instance.operatingday,
+                                                     is_cancel=False,
+                                                     is_recovered=False,
+                                                     monitoring_error__isnull=False,
+                                                     shorten_details__stop=stop).count() != 0:
+                            raise ValidationError(
+                                _("Een of meer geselecteerde haltes zijn al aangepast voor de geselecteerde rit(ten)"))
+
+                        if Kv17Shorten.objects.filter(stop=stop.pk,
+                                                      change__journey__pk=journey,
+                                                      change__line=journey_qry[0].line,
+                                                      change__operatingday=operating_day,
+                                                      change__is_recovered=False).count() != 0:
+                            raise ValidationError(
+                                _("Een of meer geselecteerde haltes zijn al aangepast voor de geselecteerde rit(ten)"))
+
+                if len(valid_stops) == 0:
+                    raise ValidationError(_("Selecteer minimaal een halte"))
+
+                # if same shorten_query in database as 'is-recovered', delete
+                Kv17Change.objects.filter(line=self.instance.line,
+                                          journey=self.instance.journey,
+                                          operatingday=self.instance.operatingday,
+                                          begintime=self.instance.begintime,
+                                          endtime=self.instance.endtime,
+                                          is_cancel=False,
+                                          is_recovered=True,
+                                          shorten_details__stop=stop).delete()
+
+            valid_journeys += 1
+
+        if valid_journeys == 0:
+            raise ValidationError(_("Er zijn geen ritten geselecteerd om op te heffen"))
+
+        return cleaned_data
+
+    def save(self, force_insert=False, force_update=False, commit=True):
+        """ Save each of the journeys in the model. This is a disaster, we return the XML
+        TODO: Figure out a better solution fo this! """
+
+        xml_output = []
+        for journey in self.data['journeys'].split(',')[0:-1]:
+            qry = Kv1Journey.objects.filter(id=journey, dates__date=self.data['operatingday'])
+            if qry.count() == 1:
+                qry_kv17change = Kv17Change.objects.filter(journey=qry[0], operatingday=parse_date(self.data['operatingday']))
+                if qry_kv17change.count() == 1:
+                    self.instance = qry_kv17change[0]
+                    self.instance.showcancelledtrip = True if self.data['showcancelledtrip'] == 'on' else False
+                else:
+                    self.instance.pk = None
+                    self.instance.journey = qry[0]
+                    self.instance.line = qry[0].line
+                    self.instance.operatingday = parse_date(self.data['operatingday'])
+                    self.instance.begintime = None
+                    self.instance.endtime = None
+                    self.instance.is_cancel = False
+
+                # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
+                if self.instance.journey.dataownercode == self.instance.dataownercode:
+                    if qry_kv17change.count() == 0:
+                        self.instance.save()
+                    self.save_shorten(qry_kv17change)
+                    self.save_mutationmessage()
+                    xml_output.append(self.instance.to_xml())
+
+                else:
+                    log.error(
+                        "Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
+                        (self.instance.journey.dataownercode, self.instance.dataownercode))
+            else:
+                log.error("Failed to find journey %s" % journey)
+
+        return xml_output
+
+    def save_shorten(self, qry_kv17change):
+        for halte in self.data['haltes'].split(','):
+            if len(halte) == 0:
+                continue
+
+            halte_split = halte.split('_')
+            if len(halte_split) != 2:
+                continue
+
+            stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
+            """
+            if Kv17Change.objects.filter(line=self.instance.line,
+                                         journey=self.instance.journey,
+                                         operatingday=self.instance.operatingday,
+                                         is_cancel=False,
+                                         is_recovered=False,
+                                         monitoring_error__isnull=False
+                                         ).count() != 0:
+            """
+
+            # if same query but not_monitored in database, delete and create new, including not_monitored
+            #database = Kv17Change.objects.filter(line=self.instance.line,
+            #                                     journey=self.instance.journey,
+            #                                     operatingday=self.instance.operatingday,
+            #                                     begintime=self.instance.begintime,
+            #                                     endtime=self.instance.endtime,
+            #                                     is_recovered=False,
+            #                                     monitoring_error__isnull=False)
+
+            if qry_kv17change.count() != 0:
+                ids = qry_kv17change.values_list('id', flat=True)[0]
+
+                # Delete existing duplicate + update newest with existing monitoring_error
+                #Kv17Change.objects.filter(id=ids).delete()
+
+                # get latest id in kv17change (is from same self.instance.save())
+                #Kv17Change.objects.filter(id=maxid).update(monitoring_error=monitoring_error)
+
+                Kv17Shorten(change=self.instance, change_id=ids, stop=stop,
+                            # passagesequencenumber=0,   TODO: resolve this in the future
+                            ).save()
+            else:
+                Kv17Shorten(change=self.instance, stop=stop,
+                            # passagesequencenumber=0,   TODO: resolve this in the future
+                            ).save()
+
+    def save_mutationmessage(self):
+        # Add details
+        for halte in self.data['haltes'].split(','):
+            if len(halte) == 0:
+                continue
+
+            halte_split = halte.split('_')
+            if len(halte_split) != 2:
+                continue
+
+            stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
+
+        if self.data['reasontype'] != '0' or self.data['advicetype'] != '0':
+            Kv17MutationMessage(change=self.instance,
+                                stop=stop,
+                                # passagesequencenumber=0,  # TODO: resolve this in the future
+                                reasontype=self.data['reasontype'],
+                                subreasontype=self.data['subreasontype'],
+                                reasoncontent=self.data['reasoncontent'],
+                                advicetype=self.data['advicetype'],
+                                subadvicetype=self.data['subadvicetype'],
+                                advicecontent=self.data['advicecontent']).save()
+
+    class Meta(Kv17ChangeForm.Meta):
+        model = Kv17Change
+        exclude = ['dataownercode', 'operatingday', 'line', 'journey', 'is_recovered', 'reinforcement', 'stop',
+                   'passagesequencenumber', 'change', 'monitoring_error', 'stops']
+
+        # inherit 'showcancelledtrip' from kv17Change to avoid duplication
+        fields = ('showcancelledtrip',)
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super(Kv17ShortenForm, self).__init__(*args, **kwargs)
+
+        DAYS = [[str(d['date'].strftime('%Y-%m-%d')), str(d['date'].strftime('%d-%m-%Y'))] for d in
+                Kv1JourneyDate.objects.all()
+                    .filter(date__gte=datetime.today() - timedelta(days=1))
+                    .values('date')
+                    .distinct('date')
+                    .order_by('date')]
+
+        OPERATING_DAY = DAYS[((datetime.now().hour < 4) * -1) + 1] if len(DAYS) > 1 else None
+        self.fields['operatingday'].choices = DAYS
+        self.fields['operatingday'].initial = OPERATING_DAY
+        self.fields['showcancelledtrip'].initial = True
+
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            Accordion(
+                AccordionGroup(_('Datum'),
+                               'operatingday',
+                               ),
+                AccordionGroup(_('Oorzaak'),
+                               'reasontype',
+                               'subreasontype',
+                               'reasoncontent'
+                               ),
+                AccordionGroup(_('Advies'),
+                               'advicetype',
+                               'subadvicetype',
+                               'advicecontent'
+                               ),
+                AccordionGroup(_('Opties'),
+                               'showcancelledtrip'
+                               )
+            )
         )

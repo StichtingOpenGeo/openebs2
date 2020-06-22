@@ -1,0 +1,29 @@
+{% comment %} These listeners are required for the linepicker {% endcomment %}
+readHaltesField();
+changeOperatingDayTrips();
+loadPreselectedJourneys(); /* Restore our selection */
+$("#stops").selectable({
+  filter:'td.stop',
+  selected: selectStop,
+  cancel: 'img'
+});
+
+$("#trips").selectable({
+  filter:'td.trip',
+  selected: selectTrip,
+});
+
+$( "#line_search" ).on('keyup', changeSearch);
+$( "body" ).on('click', ".line", showTrips);
+$( "body" ).on('click', ".line", showStops);
+
+$('#rit-list').on('click', '.trip-remove', removeTripFromX);
+$('#id_operatingday').change(changeOperatingDayTrips);
+
+$( "body" ).on('click', ".stop-remove", selectionRemoveStop);
+$( "body" ).on('click', ".stop.success", lineRemoveStop);
+$( "body" ).on('click', "#stops_all", selectAllVisibleStops);
+$( "body" ).on('click', "#stops_none", deselectAllVisibleStops);
+$( "#stops" ).on('click', ".stop-img.stop-both", selectStopFromBall);
+$( "#stops" ).on('click', ".stop-img.stop-left", selectStopFromBall);
+$( "#stops" ).on('click', ".stop-img.stop-right", selectStopFromBall);

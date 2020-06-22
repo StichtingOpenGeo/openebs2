@@ -9,9 +9,12 @@
 
   <h2>{% trans "Actieve aanpassingen" %}
       {% if perms.openebs.add_change %}
-          <a class="btn btn-success pull-right" href="{% url 'change_add' %}">
-            <span class="glyphicon glyphicon-plus"></span> {% trans "Nieuwe aanpassing" %}
-          </a>
+        <div class="btn-group" style="float: right;">
+          <a class="btn btn-success" href="{% url 'change_add' %}">
+            <span class="glyphicon glyphicon-plus"></span> {% trans "Nieuwe aanpassing" %}</a>
+          <a class="btn btn-warning" href="{% url 'shorten_add' %}">
+            <span class="glyphicon glyphicon-plus"></span> {% trans "Nieuwe inkorting" %}</a>
+        </div>
       {% endif %}
   </h2>
   {% regroup active_list by line as line_active_changes %}

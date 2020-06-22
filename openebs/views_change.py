@@ -203,11 +203,13 @@ class ActiveJourneysAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailVi
                                                                         self.request.GET else get_operator_date()
 
         # Note, can't set this on the view, because it triggers the queryset cache
-        queryset = self.model.objects.filter(operatingday=operating_day,
+        queryset = self.model.objects.filter(is_alljourneysofline=False,
+                                             is_alllines=False,
+                                             operatingday=operating_day,
                                              is_recovered=False,
                                              is_cancel=True,
                                              dataownercode=self.request.user.userprofile.company).distinct()
-        return list(queryset.values('journey_id', 'dataownercode', 'is_recovered'))
+        return list(queryset.values('journey_id', 'dataownercode', 'is_recovered', 'is_cancel'))
 
 
 class ActiveLinesAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):

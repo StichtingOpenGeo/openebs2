@@ -17,6 +17,7 @@
       <th class="col-sm-2">{% trans "Begintijd" %}</th>
       <th class="col-sm-2">{% trans "Eindtijd" %}</th>
       <th class="col-sm-4">{% trans "Ritnummer" %}</th>
+      <td class="col-sm-1" align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-random" title="Rit ingekort"></span></td>
       <td class="col-sm-1" align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-ban-circle" title="Niet gevolgd"></span></td>
       <td class="col-sm-1" align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-eye-close" title="Toon opgeheven rit niet"></span></td>
       <td class="col-sm-1" align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-transfer" title="Automatisch herstellen"></span></td>
@@ -44,9 +45,14 @@
                 {% trans "Alle ritten" %}
             {% endif %}
         </td>
+        <td align="center" style="vertical-align:middle;">
+            {% if msg.shorten_details.all and msg.monitoring_error.all %}
+                <span class="glyphicon glyphicon-random" title="Rit ingekort"></span>
+            {% endif %}
+        </td>
 
         {% if msg.monitoring_error %}
-            <td align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-ban-circle" title="Niet gevolgd"></span>
+        <td align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-ban-circle" title="Niet gevolgd"></span></td>
             <td></td>
             <td></td>
         {% else %}
