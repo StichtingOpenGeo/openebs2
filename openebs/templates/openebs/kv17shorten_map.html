@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 {% load i18n leaflet_tags static %}
+{% load i18n filters %}
+
 
 {% block title %}Kaart{% endblock %}
 
@@ -152,7 +154,6 @@
             });
 
             var idnr = window.location.href.split('=')[1];
-            console.log(idnr);
             $.ajax("{% url 'shorten_bounds_ajax' %}?id=" + idnr, {
                 success : function(data, err, xhr) {
                     var array = data.object.extent,
@@ -179,11 +180,13 @@
         <table class="table table-bordered table-striped">
             <tr><th><strong>Uitvoerdatum</strong></th>
                 <th><strong>Ritnummer(s)</strong></th>
+                <th><strong>Geldigheid</strong></th>
             </tr>
             {{#each object}}
             <tr>
-                <td>{{ stop_shorten__change__operatingday }}</td>
-                <td>{{ stop_shorten__change__journey__journeynumber }}</td>
+                <td>{{ operatingday }}</td>
+                <td>{{ journeynumber }}</td>
+                <td>Vertrek {{ departuretime }}</td>
             </tr>
             {{/each}}
         </table>

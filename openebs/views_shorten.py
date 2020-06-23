@@ -1,6 +1,6 @@
 import logging
 from braces.views import LoginRequiredMixin
-from datetime import date#, timedelta, datetime,
+from datetime import date, timedelta, datetime
 from django.urls import reverse_lazy
 #from django.db.models import Q, F, Count
 from django.http import HttpResponseRedirect
@@ -10,7 +10,7 @@ from openebs.form_kv17 import Kv17ShortenForm#, Kv17ChangeForm
 from openebs.models import Kv17Shorten, Kv17Change#, Kv1StopFilter
 from openebs.views_push import Kv17PushMixin
 from openebs.views_utils import FilterDataownerMixin
-from utils.time import get_operator_date, get_operator_date_aware
+from utils.time import get_operator_date, get_operator_date_aware, seconds_to_hhmm
 from utils.views import AccessMixin, JSONListResponseMixin#, ExternalMessagePushMixin
 from django.utils.dateparse import parse_date
 #from django.utils.timezone import now
@@ -183,13 +183,28 @@ class ActiveShortenForStopView(LoginRequiredMixin, JSONListResponseMixin, Detail
             return None
         operatingday = get_operator_date_aware()
 
-        qry = self.model.objects.filter(stop_shorten__change__operatingday__gte=operatingday,
+        # active list updates at 4 am.
+        if datetime.now().hour < 4:
+            change = -1
+        else:
+            change = 0
+
+        change_day = operatingday + timedelta(days=change)
+
+        qry = self.model.objects.filter(stop_shorten__change__operatingday__gte=change_day,
                                         stop_shorten__change__is_recovered=False,
                                         timingpointcode=tpc)
         if not self.request.user.has_perm("openebs.view_all"):
             qry = qry.filter(dataownercode=self.request.user.userprofile.company)
-        return qry.values('id', 'dataownercode', 'stop_shorten__change_id', 'stop_shorten__change__operatingday',
-                          'stop_shorten__change__journey__journeynumber', 'stop_shorten__change__journey__departuretime')
+        day = operatingday.strftime('%d-%m-%Y')
+        return list({'id': x['id'], 'dataownercode': x['dataownercode'],
+                     'operatingday': x['stop_shorten__change__operatingday'].strftime('%d-%m-%Y'),
+                     'journeynumber': x['stop_shorten__change__journey__journeynumber'],
+                     'departuretime': seconds_to_hhmm(x['stop_shorten__change__journey__departuretime'])}
+                     for x in qry.values('id', 'dataownercode', 'stop_shorten__change_id',
+                                         'stop_shorten__change__operatingday',
+                                         'stop_shorten__change__journey__journeynumber',
+                                         'stop_shorten__change__journey__departuretime').order_by('stop_shorten__change__operatingday'))
 
     def get_object(self):
         return list(self.get_queryset())

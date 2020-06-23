@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 {% load static crispy_forms_tags leaflet_tags i18n %}
+{% load i18n filters %}
+
 
  {% block title %}{% trans "Bekijk bericht" %}{% endblock %}
 
@@ -39,7 +41,7 @@
                             <label class="col-sm-4">{% trans "Rit" %}</label>
                             <p class="form-control-static col-sm-8">
                                 {% if object.journey %}
-                                    {{ object.journey.journeynumber }}
+                                    {{ object.journey.journeynumber }} <small>(Vertrek {{object.journey.departuretime|seconds_time|date:"H:i"}})</small>
                                 {% else %}
                                     Alle ritten
                                 {% endif %}</p>
