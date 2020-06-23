@@ -671,6 +671,9 @@ class Kv17ShortenForm(forms.ModelForm):
                 if self.instance.journey.dataownercode == self.instance.dataownercode:
                     if qry_kv17change.count() == 0:
                         self.instance.save()
+                    else:
+                        Kv17Change.objects.filter(journey=qry[0], operatingday=parse_date(self.data['operatingday'])).update(showcancelledtrip=self.cleaned_data['showcancelledtrip'])
+
                     self.save_shorten(qry_kv17change)
                     self.save_mutationmessage()
                     xml_output.append(self.instance.to_xml())
@@ -694,33 +697,12 @@ class Kv17ShortenForm(forms.ModelForm):
                 continue
 
             stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
-            """
-            if Kv17Change.objects.filter(line=self.instance.line,
-                                         journey=self.instance.journey,
-                                         operatingday=self.instance.operatingday,
-                                         is_cancel=False,
-                                         is_recovered=False,
-                                         monitoring_error__isnull=False
-                                         ).count() != 0:
-            """
-
-            # if same query but not_monitored in database, delete and create new, including not_monitored
-            #database = Kv17Change.objects.filter(line=self.instance.line,
-            #                                     journey=self.instance.journey,
-            #                                     operatingday=self.instance.operatingday,
-            #                                     begintime=self.instance.begintime,
-            #                                     endtime=self.instance.endtime,
-            #                                     is_recovered=False,
-            #                                     monitoring_error__isnull=False)
 
             if qry_kv17change.count() != 0:
                 ids = qry_kv17change.values_list('id', flat=True)[0]
 
-                showcancelledtrip = self.cleaned_data['showcancelledtrip']
-
                 Kv17Shorten(change=self.instance,
                             change_id=ids, stop=stop,
-                            #change__showcancelledtrip=showcancelledtrip, TODO: resolve this in the future
                             # passagesequencenumber=0,   TODO: resolve this in the future
                             ).save()
             else:
