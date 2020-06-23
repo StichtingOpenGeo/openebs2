@@ -265,3 +265,7 @@ span.stop-selection,span.trip-selection{
 .shortened {
     background: eb34ba;
 }
+
+#halte-count .popover {
+    width: 300px;
+}

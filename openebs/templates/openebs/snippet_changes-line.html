@@ -47,7 +47,7 @@
         </td>
 
         {% if msg.shorten_details.all %}
-            <td align="center" style="vertical-align:middle;">
+            <td align="center" id="halte-count">
                 <a class="shorten_halte-count btn btn-link" id="shorten_halte-count" href="{% url 'shorten_view' msg.id %}"
                        data-title="{% trans 'Haltes bij inkorting' %}" data-html="true" data-content="{% include 'openebs/snippet_halte-list_shorten.html' %}">
                         {{ msg.shorten_details.all | length }}</a>
