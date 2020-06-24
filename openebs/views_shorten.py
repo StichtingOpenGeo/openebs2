@@ -196,15 +196,16 @@ class ActiveShortenForStopView(LoginRequiredMixin, JSONListResponseMixin, Detail
                                         timingpointcode=tpc)
         if not self.request.user.has_perm("openebs.view_all"):
             qry = qry.filter(dataownercode=self.request.user.userprofile.company)
-        day = operatingday.strftime('%d-%m-%Y')
+
         return list({'id': x['id'], 'dataownercode': x['dataownercode'],
                      'operatingday': x['stop_shorten__change__operatingday'].strftime('%d-%m-%Y'),
                      'journeynumber': x['stop_shorten__change__journey__journeynumber'],
                      'departuretime': seconds_to_hhmm(x['stop_shorten__change__journey__departuretime'])}
-                     for x in qry.values('id', 'dataownercode', 'stop_shorten__change_id',
-                                         'stop_shorten__change__operatingday',
-                                         'stop_shorten__change__journey__journeynumber',
-                                         'stop_shorten__change__journey__departuretime').order_by('stop_shorten__change__operatingday'))
+                    for x in qry.values('id', 'dataownercode', 'stop_shorten__change_id',
+                                        'stop_shorten__change__operatingday',
+                                        'stop_shorten__change__journey__journeynumber',
+                                        'stop_shorten__change__journey__departuretime')
+                    .order_by('stop_shorten__change__operatingday', 'stop_shorten__change__journey__departuretime'))
 
     def get_object(self):
         return list(self.get_queryset())
