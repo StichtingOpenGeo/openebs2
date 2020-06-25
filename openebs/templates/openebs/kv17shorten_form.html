@@ -12,7 +12,7 @@
             <div class="control-group">
                 <div class = "lijn-overzicht" style="display: none;">
                     <label>{% trans "Lijn(en)" %}</label>
-                    <p class="form-control-static" id="lijn-overzicht" >
+                    <p class="form-control-static" id="lijn-list" >
                     {% if form.instance.line %}
                         <span class="label label-danger lijn-recover" id="line{{form.instance.line.lineplanningnumber}}">Lijn {{ form.instance.line.publiclinenumber }}</span>
                     {% elif lijnen %}
@@ -38,6 +38,7 @@
                     </p><br />
                     <input type="hidden" id="journeys" name="journeys" />
                     <input type="hidden" id="lines" name="lines" />
+
                     <div class="clearfix" style="padding-bottom: 1em;"></div>
                     <label>{% trans "Halte(s)" %}</label><br />
                     <p class="form-control-static" id="halte-list">

@@ -270,3 +270,8 @@ span.stop-selection,span.trip-selection{
     width: 400px;
     max-width:none;
 }
+
+#shorten_buttons {
+    display: none;
+    width:100%;
+}
