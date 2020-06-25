@@ -267,5 +267,6 @@ span.stop-selection,span.trip-selection{
 }
 
 #halte-count .popover {
-    width: 300px;
+    width: 400px;
+    max-width:none;
 }

@@ -614,6 +614,7 @@ class Kv17ShortenForm(forms.ModelForm):
                     raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
 
                 valid_stops = []
+                unique_stops = 0
                 for halte in self.data['haltes'].split(','):
                     if halte != '':
                         halte_split = halte.split('_')
@@ -625,6 +626,7 @@ class Kv17ShortenForm(forms.ModelForm):
                                 raise ValidationError(
                                     _("Datafout: halte niet gevonden in database. Meld dit bij een beheerder."))
 
+                        """
                         if Kv17Change.objects.filter(line=self.instance.line,
                                                      journey=self.instance.journey,
                                                      operatingday=self.instance.operatingday,
@@ -634,17 +636,21 @@ class Kv17ShortenForm(forms.ModelForm):
                                                      shorten_details__stop=stop).count() != 0:
                             raise ValidationError(
                                 _("Een of meer geselecteerde haltes zijn al aangepast voor de geselecteerde rit(ten)"))
+                        """
 
                         if Kv17Shorten.objects.filter(stop=stop.pk,
                                                       change__journey__pk=journey,
                                                       change__line=journey_qry[0].line,
                                                       change__operatingday=operating_day,
-                                                      change__is_recovered=False).count() != 0:
-                            raise ValidationError(
-                                _("Een of meer geselecteerde haltes zijn al aangepast voor de geselecteerde rit(ten)"))
+                                                      change__is_recovered=False).count() == 0:
+                            unique_stops += 1
 
                 if len(valid_stops) == 0:
                     raise ValidationError(_("Selecteer minimaal een halte"))
+
+                if unique_stops == 0:
+                    raise ValidationError(
+                        _("De geselecteerde halte(s) zijn al aangepast voor de geselecteerde rit(ten)"))
 
                 # if same shorten_query in database as 'is-recovered', delete
                 Kv17Change.objects.filter(line=self.instance.line,
@@ -720,11 +726,15 @@ class Kv17ShortenForm(forms.ModelForm):
 
             if qry_kv17change.count() != 0:
                 ids = qry_kv17change.values_list('id', flat=True)[0]
+                if Kv17Shorten.objects.filter(change=self.instance,
+                                              change_id=ids, stop=stop,
+                                              # passagesequencenumber=0,   TODO: resolve this in the future
+                                              ).count() == 0:
+                    Kv17Shorten(change=self.instance,
+                                change_id=ids, stop=stop,
+                                # passagesequencenumber=0,   TODO: resolve this in the future
+                                ).save()
 
-                Kv17Shorten(change=self.instance,
-                            change_id=ids, stop=stop,
-                            # passagesequencenumber=0,   TODO: resolve this in the future
-                            ).save()
             else:
                 Kv17Shorten(change=self.instance, stop=stop,
                             # passagesequencenumber=0,   TODO: resolve this in the future
