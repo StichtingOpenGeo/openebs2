@@ -62,6 +62,7 @@ function writeList(data, status) {
 function showStops(event) {
     $("#rows tr.success").removeClass('success');
     $(".suc-icon").remove();
+    $("#body_stops tr.stopRow").remove();
     $(this).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
     $.ajax('/line/'+$(this).attr('id').substring(1)+'/stops', {
         success : writeLine
@@ -393,20 +394,28 @@ function writeTripList() {
 }
 
 function writeTrips(data, status) {
-    $('#trips tbody').fadeOut(200).empty();
-    tripRows = null
     maxLen = Math.max(data.object.trips_1.length, data.object.trips_2.length)
-    for (i = 0; i <= maxLen; i = i + 1) {
-        a = null
-        b = null
-        if (i in data.object.trips_1)
-            a = data.object.trips_1[i]
-        if (i in data.object.trips_2)
-            b = data.object.trips_2[i]
-        tripRows += renderTrip(a, b);
+    if (maxLen > 0) {
+        $('#trips tbody').fadeOut(200).empty();
+        tripRows = null
+        for (i = 0; i <= maxLen; i = i + 1) {
+            a = null
+            b = null
+            if (i in data.object.trips_1)
+                a = data.object.trips_1[i]
+            if (i in data.object.trips_2)
+                b = data.object.trips_2[i]
+            tripRows += renderTrip(a, b);
+        }
+        $('#trips tbody').append(tripRows)
+        $('#trips thead').fadeIn(200);
+        $('#trips tbody').fadeIn(200);
+        $("#all_journeys").removeAttr('disabled');
+    } else {
+        $('#trips thead').hide();
+        $('#trips tbody').text("Geen ritten in database.");
+        $('#all_journeys').attr('disabled','disabled');
     }
-    $('#trips tbody').append(tripRows)
-    $('#trips tbody').fadeIn(200);
 }
 
 function renderTrip(trip_a, trip_b) {
