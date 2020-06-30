@@ -612,38 +612,30 @@ class Kv17ShortenForm(forms.ModelForm):
                                                         dates__date=operating_day)
                 if journey_qry.count() == 0:
                     raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
-
                 valid_stops = []
                 unique_stops = 0
-                for halte in self.data['haltes'].split(','):
-                    if halte != '':
-                        halte_split = halte.split('_')
-                        if len(halte_split) == 2:
-                            stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
-                            if stop:
-                                valid_stops.append(stop.pk)
-                            else:
-                                raise ValidationError(
-                                    _("Datafout: halte niet gevonden in database. Meld dit bij een beheerder."))
+                # splits stopdict per lijn: .split(;)
+                for line in self.data['stopdict'].split(";"):
+                    if line != '':
+                        if line.split(":")[0] == journey_qry[0].line.publiclinenumber:
+                            haltes = line.split(":")[1].split(",")
+                            for halte in haltes:
+                                if halte != '':
+                                    halte_split = halte.split('_')
+                                    if len(halte_split) == 2:
+                                        stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
+                                        if stop:
+                                            valid_stops.append(stop.pk)
+                                        else:
+                                            raise ValidationError(
+                                                _("Datafout: halte niet gevonden in database. Meld dit bij een beheerder."))
 
-                        """
-                        if Kv17Change.objects.filter(line=self.instance.line,
-                                                     journey=self.instance.journey,
-                                                     operatingday=self.instance.operatingday,
-                                                     is_cancel=False,
-                                                     is_recovered=False,
-                                                     monitoring_error__isnull=False,
-                                                     shorten_details__stop=stop).count() != 0:
-                            raise ValidationError(
-                                _("Een of meer geselecteerde haltes zijn al aangepast voor de geselecteerde rit(ten)"))
-                        """
-
-                        if Kv17Shorten.objects.filter(stop=stop.pk,
-                                                      change__journey__pk=journey,
-                                                      change__line=journey_qry[0].line,
-                                                      change__operatingday=operating_day,
-                                                      change__is_recovered=False).count() == 0:
-                            unique_stops += 1
+                                    if Kv17Shorten.objects.filter(stop=stop.pk,
+                                                                  change__journey__pk=journey,
+                                                                  change__line=journey_qry[0].line,
+                                                                  change__operatingday=operating_day,
+                                                                  change__is_recovered=False).count() == 0:
+                                        unique_stops += 1
 
                 if len(valid_stops) == 0:
                     raise ValidationError(_("Selecteer minimaal een halte"))

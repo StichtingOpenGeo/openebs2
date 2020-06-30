@@ -38,6 +38,7 @@ class ShortenCreateView(AccessMixin, Kv17PushMixin, CreateView):
         data['operator_date'] = get_operator_date()
         if 'journey' in self.request.GET:
             self.add_journeys_from_request(data)
+            self.add_stops_from_request(data)
         return data
 
     def add_journeys_from_request(self, data):

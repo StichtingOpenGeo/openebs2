@@ -52,12 +52,8 @@
                             <em class="help">{% trans "Klik haltenamen om een selectie te maken" %}</em>
                         {% endif %}
                     </p><br />
-                    {% if prefilled_stop %}
-                        <input type="hidden" id="haltes" name="haltes" value="{{ prefilled_stop.dataownercode }}_{{ prefilled_stop.userstopcode }}," />
-                    {% else %}
-                        <input type="hidden" id="haltes" name="haltes"
-                           value="{% for halte in object.kv15messagestop_set.all %}{{ halte.stop.dataownercode }}_{{ halte.stop.userstopcode }},{% endfor %}" />
-                    {% endif %}
+                    <input type="hidden" id="haltes" name="haltes">
+                    <input type="hidden" id="stopdict" name="stopdict">
                 </div>
             </div>
             <div class="clearfix"></div>
