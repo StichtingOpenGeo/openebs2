@@ -616,26 +616,31 @@ class Kv17ShortenForm(forms.ModelForm):
                 unique_stops = 0
                 # splits stopdict per lijn: .split(;)
                 for line in self.data['stopdict'].split(";"):
-                    if line != '':
-                        if line.split(":")[0] == journey_qry[0].line.publiclinenumber:
-                            haltes = line.split(":")[1].split(",")
-                            for halte in haltes:
-                                if halte != '':
-                                    halte_split = halte.split('_')
-                                    if len(halte_split) == 2:
-                                        stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
-                                        if stop:
-                                            valid_stops.append(stop.pk)
-                                        else:
-                                            raise ValidationError(
-                                                _("Datafout: halte niet gevonden in database. Meld dit bij een beheerder."))
+                    if len(line) == 0:
+                        continue
+                    if line.split(":")[0] == journey_qry[0].line.publiclinenumber:
+                        haltes = line.split(":")[1].split(",")
+                        for halte in haltes:
+                            if len(halte) == 0:
+                                continue
 
-                                    if Kv17Shorten.objects.filter(stop=stop.pk,
-                                                                  change__journey__pk=journey,
-                                                                  change__line=journey_qry[0].line,
-                                                                  change__operatingday=operating_day,
-                                                                  change__is_recovered=False).count() == 0:
-                                        unique_stops += 1
+                            halte_split = halte.split('_')
+                            if len(halte_split) != 2:
+                                continue
+
+                            stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
+                            if stop:
+                                valid_stops.append(stop.pk)
+                            else:
+                                raise ValidationError(
+                                    _("Datafout: halte niet gevonden in database. Meld dit bij een beheerder."))
+
+                        if Kv17Shorten.objects.filter(stop=stop.pk,
+                                                      change__journey__pk=journey,
+                                                      change__line=journey_qry[0].line,
+                                                      change__operatingday=operating_day,
+                                                      change__is_recovered=False).count() == 0:
+                            unique_stops += 1
 
                 if len(valid_stops) == 0:
                     raise ValidationError(_("Selecteer minimaal een halte"))
@@ -644,16 +649,16 @@ class Kv17ShortenForm(forms.ModelForm):
                     raise ValidationError(
                         _("De geselecteerde halte(s) zijn al aangepast voor de geselecteerde rit(ten)"))
 
+                # TODO: check if this actually works... or fix
+                """
                 # if same shorten_query in database as 'is-recovered', delete
                 Kv17Change.objects.filter(line=self.instance.line,
                                           journey=self.instance.journey,
                                           operatingday=self.instance.operatingday,
-                                          begintime=self.instance.begintime,
-                                          endtime=self.instance.endtime,
                                           is_cancel=False,
                                           is_recovered=True,
                                           shorten_details__stop=stop).delete()
-
+                """
             valid_journeys += 1
 
         if valid_journeys == 0:
@@ -706,31 +711,36 @@ class Kv17ShortenForm(forms.ModelForm):
         return xml_output
 
     def save_shorten(self, qry_kv17change):
-        for halte in self.data['haltes'].split(','):
-            if len(halte) == 0:
-                continue
+        for line in self.data['stopdict'].split(";"):
+            if line != '':
+                lijn = self.instance.line
+                if line.split(":")[0] == lijn.publiclinenumber:
+                    haltes = line.split(":")[1].split(",")
+                    for halte in haltes:
+                        if len(halte) == 0:
+                            continue
 
-            halte_split = halte.split('_')
-            if len(halte_split) != 2:
-                continue
+                        halte_split = halte.split('_')
+                        if len(halte_split) != 2:
+                            continue
 
-            stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
+                        stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
 
-            if qry_kv17change.count() != 0:
-                ids = qry_kv17change.values_list('id', flat=True)[0]
-                if Kv17Shorten.objects.filter(change=self.instance,
-                                              change_id=ids, stop=stop,
-                                              # passagesequencenumber=0,   TODO: resolve this in the future
-                                              ).count() == 0:
-                    Kv17Shorten(change=self.instance,
-                                change_id=ids, stop=stop,
-                                # passagesequencenumber=0,   TODO: resolve this in the future
-                                ).save()
+                        if qry_kv17change.count() != 0:
+                            ids = qry_kv17change.values_list('id', flat=True)[0]
+                            if Kv17Shorten.objects.filter(change=self.instance,
+                                                          change_id=ids, stop=stop,
+                                                          # passagesequencenumber=0,   TODO: resolve this in the future
+                                                          ).count() == 0:
+                                Kv17Shorten(change=self.instance,
+                                            change_id=ids, stop=stop,
+                                            # passagesequencenumber=0,   TODO: resolve this in the future
+                                            ).save()
 
-            else:
-                Kv17Shorten(change=self.instance, stop=stop,
-                            # passagesequencenumber=0,   TODO: resolve this in the future
-                            ).save()
+                        else:
+                            Kv17Shorten(change=self.instance, stop=stop,
+                                        # passagesequencenumber=0,   TODO: resolve this in the future
+                                        ).save()
 
     def save_mutationmessage(self):
         # Add details
