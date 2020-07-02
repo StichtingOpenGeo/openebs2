@@ -1,4 +1,4 @@
-/* STOP AND SCENARIO FUNCTIONS */
+/* STOP FUNCTIONS */
 var selectedStops = []
 var scenarioStops = []
 var blockedStops = [] /* Already have shortens set */
@@ -8,7 +8,7 @@ function changeSearch(event) {
         $.ajax('/line/'+$("#line_search").val(), {
             success : writeList
         })
-        $("#body_stops tr td").removeClass('success');
+        $("#tripoverzicht tr td").removeClass('success');
         showAll();
     }
 }
@@ -71,19 +71,12 @@ function showStops(event) {
 }
 
 
-
 function selectStop(event, ui) {
     $('#halte-list .help').hide()
     if (doSelectStop(ui.selected)) {
-        stopDict(ui.selected.id.slice(1,-1));
         writeHaltesField();
     }
 }
-
-var selectedStopsOfLine = [];
-var stopSelectionOfLine = {};
-
-
 
 function selectStopFromBall(obj) {
     $('#halte-list .help').hide()
@@ -128,11 +121,9 @@ function deselectAllVisibleStops() {
 
 function doSelectStop(obj) {
     /* Make sure to strip the 'l' or 'r' */
-    stopSelection.push(obj);
     id = $(obj).attr('id').slice(0, -1)
     index = $.inArray(id, selectedStops)
     var lijn = $('#rows .success').find('small').text();
-
     if (index == -1) {
         $("#"+id+"l, #"+id+"r").addClass('success')
         $("#"+id+"l, #"+id+"r").append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;')
@@ -142,12 +133,14 @@ function doSelectStop(obj) {
         } else {
             direction = "trg";
         }
-        var lijn = $('#rows .success').find('small').text();
         delLink = '<span class="stop-remove glyphicon glyphicon-remove"></span>';
         $("#halte-list").append('<span class="stop-selection pull-left label label-primary" id="s'+id+'">'+'Lijn ' +lijn+': '+$(obj).text()+'('+direction+') '+delLink+ '</span>');
+
+        stopDict(id.substring(1), lijn);
+
         return true;
     } else {
-        removeStop(id,lijn);
+        removeStop(id, lijn);
     }
 
     return false;
@@ -175,9 +168,9 @@ function readHaltesField() {
 
 /* Wrapper functions to get the id */
 function removeStopFromX(event) {
-    var stop = $(this).parent().attr('id').substring(1);
-    var lijnnr = $(this).parent().text().split(":")[0].split(" ")[1];
-    removeStop(stop, lijnnr);
+    var lijn = $(this).parent().text().split(":")[0].split(" ")[1];
+    var id = $(this).parent().attr('id').substring(1);
+    removeStop(id, lijn)
 }
 
 function lineRemoveStop(event) {
@@ -185,7 +178,7 @@ function lineRemoveStop(event) {
 }
 
 /* Do the actual work here */
-function removeStop(id, line) {
+function removeStop(id, lijn) {
     var i = $.inArray(id, selectedStops);
     if (i != -1) {
         selectedStops.splice(i, 1);
@@ -195,9 +188,8 @@ function removeStop(id, line) {
         if (selectedStops.length == 0) {
             $('#halte-list .help').show();
         }
-
         writeHaltesField()
-        removeStopFromDict(id.substring(1),line)
+        removeStopFromDict(id, lijn)
     }
 }
 
@@ -214,18 +206,11 @@ function writeLine(data, status) {
 function renderRow(row) {
     out = '<tr class="stopRow">';
     if (row.left != null) {
-        //if ($.inArray(row.left.id, scenarioStops) != -1) {
-        //    out += '<td class="warning">'+row.left.name+' <span class="glyphicon glyphicon-warning-sign pull-right" title="Al in scenario opgenomen"></span></td>'
-        //} else {
         var id = 's'+row.left.id+'l';
-
         if ($.inArray('s'+row.left.id, selectedStops) != -1) {
             out += '<td class="stop stop-left success" id="'+id+'">'+row.left.name+'<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;'
         } else {
             out += '<td class="stop stop-left" id="'+id+'">'+row.left.name;
-            //if ($.inArray(row.left.id, ShortenStopMeasures) != -1) {
-            //    out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte is op deze lijn al ingekort"></span>'
-            //}
             out += '</td>';
         }
     } else {
@@ -260,21 +245,6 @@ function renderRow(row) {
     return out
 }
 
-function getScenarioStops(scenario) {
-     $.ajax('/scenario/'+scenario+'/haltes.geojson', {
-            success : writeScenarioStops
-     })
-}
-
-function writeScenarioStops(data, status) {
-    if (data.features) {
-        $.each(data.features, function (i, halte) {
-            stop = halte['properties']['dataownercode']+ '_' + halte['properties']['userstopcode']
-            scenarioStops.push(stop)
-        });
-    }
-}
-
 function getHaltesWithShorten() {
     var operating_day = $("#id_operatingday").val();
      $.ajax({ url: '/ritinkorting/haltes.json',
@@ -285,25 +255,22 @@ function getHaltesWithShorten() {
 
 function writeHaltesWithShorten(data, status) {
     $.each(data.object, function (i, halte) {
-        //stop = halte['change__dataownercode']+ '_' + halte['stop']
         blockedStops.push(halte)
     });
 }
 
 /* TRIP SELECTION */
-var selectedTrips = [];  // all journeys from current selected line
-var activeJourneys = []; // journeys from ajax --> already cancelled in kv17
-var activeLine = null;  // current selected line
-var selectedLines = [];  // list of selected publiclinenumbers (for display)
-var cancelledLines = [];  // array with measures of lines from ajax --> already cancelled in kv17
-var currentLineMeasures = null;  // array of measures of current line (filtered from cancelledLines)
-var lijnList = [];  // list of selected lineplanningnumbers (for database / xml)
-//var allTrips = []; // list of dicts with all trips per active lines (dependent on begin- and endtime)
-//var tripSelection = [];  // list with trip-ids which are currently in the selection (dependent on begin- and endtime)
-var currentStopMeasures = [];  // array with measures of stops from ajax, based on current line (filtered from blockedStops)
-var stopSelection = []; // list with array of measures from selected stops (to determine which to delete when a line is 'de-selected'
-var selectedTripsOfLine = []; // list with selected trips of current active line
-var tripSelectionOfLine = {}; // dictionary of selected trips (values) for each selected line (keys)
+var selectedTrips = [];
+var activeJourneys = [];
+var activeLine = null;
+var selectedLines = [];
+var cancelledLines = [];
+var currentLineMeasures = null;
+var lijnList = [];
+var allTrips = [];
+var tripSelection = [];
+var currentStopMeasures = [];
+var stopSelectionOfLine = {};
 
 function showAll() {
     $("#rows tr:not(.success)").show();
@@ -343,6 +310,7 @@ function selectTrip(event, ui) {
         selectedTrips = []
         $('#rit-list span').empty()
         $('#rit-list .help').show()
+        selectedLines = [];
         lijnList = [];
         emptyLineList();
     }
@@ -361,12 +329,8 @@ function selectTrip(event, ui) {
         $('#rit-list').append('<span id="st'+ritnr+'" class="pull-left trip-selection label label-danger">'+label+' '+dellink+'</span>');
         selectedTrips.push(ritnr);
         writeTripList();
-        tripDict(label);
     } else {
         removeTrip($(ui.selected).attr('id').substring(1));
-        var label = $(ui.selected).find("strong").text();
-        var lijnnr = $('#rows tr.success').find("small").text()
-        removeTripFromDict(label, lijnnr);
     }
     currentStopMeasures = blockedStops.filter (s => s.change__line == activeLine || s.change__line===null)
 
@@ -381,10 +345,8 @@ function selectTrip(event, ui) {
 function removeTripFromX(event, ui) {
     if ($('#rit-list span').text() == "Alle ritten ") {
         clearAllTrips();
-        removeTripFromDict('alle ritten', 'alle lijnen');
     } else {
         removeTrip($(this).parent().attr('id').substring(2));
-        removeTripFromDict($(this).parent().text(), 'unknown')
     }
 }
 
@@ -571,60 +533,63 @@ function showTripsOnChange() {
 }
 
 function selectAllTrips() {
-    if ($('#rit-list span').text() != "Alle ritten ") {
+    if ($('#rit-list span').text() == "Alle ritten ") {
+        removeTripFromX();
+    } else {
         selectedTrips = [];
         activeJourneys = [];
-        selectedTripsOfLine = [];
 
         $('#journeys').val('');
         $('#rit-list span').remove();
+
+        // if no begin-time or end-time is given:
+        $("#trips tr td").each( function() {
+            if ($(this).attr('id')) {
+                $(this).addClass('success');
+            };
+        });
+
         $('#rit-list .help').hide();
+        $('.lijn-overzicht').css("display","block");
+        //$('#div_id_begintime_part').css("display","inline");
+        //$('#div_id_endtime_part').css("display","inline");
         var label = $("#all_journeys").text();
         var dellink = '<span class="trip-remove glyphicon glyphicon-remove"></span>';
         $('#rit-list').append('<span id="st'+label+'" class="pull-left trip-selection label label-danger">'+label+' '+dellink+'</span>');
-    }
 
-    // if no begin-time or end-time is given:
-    $("#trips tr td").each( function() {
-        if ($(this).attr('id')) {
-            $(this).addClass('success');
-        };
-    });
+        // get journeynumbers of each journey of the selected line
+        $('#tripoverzicht tr td.success').each(function() {
+            selectedTrips.push($(this).attr('id').substring(1));
+        });
+        writeTripList();
 
-    // get journeynumbers of each journey of the selected line
-    $('#tripoverzicht tr td.success').each(function() {
-        selectedTrips.push($(this).attr('id').substring(1));
-    });
-    writeTripList();
-
-    $('.lijn-overzicht').css("display","block");
-    if ($.inArray(activeLine, selectedLines) == -1) {
-        var label = '';
-        if ($('#rows tr.success').find("strong").text() === $('#rows tr.success').find("small").text()) {
-            label += $('#rows tr.success').find("strong").text();
-        } else {
-            label += $('#rows tr.success').find("strong").text();
-            label += ' (';
-            label += $('#rows tr.success').find("small").text();
-            label += ')';
+        if ($.inArray(activeLine, selectedLines) == -1) {
+            var label = '';
+            if ($('#rows tr.success').find("strong").text() === $('#rows tr.success').find("small").text()) {
+                label += $('#rows tr.success').find("strong").text();
+            } else {
+                label += $('#rows tr.success').find("strong").text();
+                label += ' (';
+                label += $('#rows tr.success').find("small").text();
+                label += ')';
+            }
+            var lijn = $('#rows tr.success').find("small").text();
+            var dellink_line = '<span class="line-remove glyphicon glyphicon-remove"></span>';
+            $('#lijn-list').append('<span id="st'+lijn+'" class="pull-left line-selection label label-danger">'+label+' '+dellink_line+'</span>');
+            lijnList.push(lijn);
+            writeLineList();
         }
-        var lijn = $('#rows tr.success').find("small").text();
-        var dellink_line = '<span class="line-remove glyphicon glyphicon-remove"></span>';
-        $('#lijn-list').append('<span id="st'+lijn+'" class="pull-left line-selection label label-danger">'+label+' '+dellink_line+'</span>');
-        lijnList.push(lijn);
-        writeLineList();
+
+        currentStopMeasures = blockedStops.filter (s => s.change__line == activeLine || s.change__line===null)
+
+        $("#body_stops tr.help").hide(200);
+        $('.stop_btn').removeClass('hide');
+        $("#body_stops tr.stopRow").show(200);
+        document.querySelector('#halteoverzicht').scrollIntoView({
+            behavior: 'smooth'
+        });
     }
-
-    currentStopMeasures = blockedStops.filter (s => s.change__line == activeLine || s.change__line===null)
-    tripDict('alle ritten');
-    $("#body_stops tr.help").hide(200);
-    $('.stop_btn').removeClass('hide');
-    $("#body_stops tr.stopRow").show(200);
-    document.querySelector('#halteoverzicht').scrollIntoView({
-        behavior: 'smooth'
-    });
 }
-
 
 function writeLineList() {
     var id = $.inArray(activeLine, selectedLines);
@@ -647,22 +612,17 @@ function clearAllTrips() {
     writeTripList();
     clearAllStops();
     emptyLineList();
-    removeTripFromDict('alle ritten', 'alle lijnen');
 }
 
 function clearAllStops() {
     selectedStops = [];
-    $('#halte-list span').remove();
+    $('#halte-list span').empty();
     $('#halte-list .help').show();
-    $(".stopRow td").removeClass("success");
-    $(".stop-check").remove();
-    $("#body_stops tr.stopRow").hide(200);
     $("#body_stops tr.help").show(200);
     $('.stop_btn').addClass('hide');
+    $("#body_stops tr.stopRow").hide(200);
     writeHaltesField();
-    removeStopFromDict('alle haltes', 'alle lijnen');
 }
-
 
 function removeLineFromX() {
     removeLine($(this).parent().attr('id').substring(2));
@@ -673,20 +633,15 @@ function removeLine(lijn) {
 
     if (id != -1) {
         $('#st'+lijn).remove();
-        var lijnnr = selectedLines[id];
-        selectedLines.splice(id, 1)[0];
+        selectedLines.splice(id, 1);
         lijnList.splice(id, 1);
         var out = "";
         $.each(selectedLines, function(index, val) {
             out += val+',';
         });
         $("#lines").val(out);
-        removeTripFromDict('hele lijn', lijn);
-        removeStopFromDict('hele lijn', lijn);
-        updateSelectedStops('hele lijn', linenr);
 
     }
-
     if (selectedLines.length == 0) {
         $('#rit-list .help').show();
         $('#rit-list span').remove();
@@ -698,120 +653,41 @@ function removeLine(lijn) {
 
 function emptyLineList() {
     lijnList = [];
-    selectedLines = [];
     $("#lijn-list").empty();
     $("#lines").val('');
     $('.lijn-overzicht').css("display","none");
+
 }
-/*
-function getStopsFromLine(data, status) {
-    var stopsOfLine = []
-    $.each(data.object.stop_map, function (i, stop) {
-        $.each(stop, function (side, halte) {
-            if (halte !== null) {
-                stopsOfLine.push(halte['id'])
-            }
-        });
-    });
 
-    // remove stops of line from selectedStops
-    $.each(selectedStops, function (i, selectedStop) {
-        if (selectedStop.length) {
-            stop_id = selectedStop.replace('s', '');
-            if ($.inArray(stop_id, stopsOfLine)) {
-                selectedStops.splice($.inArray(selectedStop, selectedStops), 1);
-            };
-        }
-    });
-    writeHaltesField();
-} */
 
-function tripDict(triplabel) {
-    if (triplabel === undefined) {
-        return
-    }
+function stopDict(id, line) {
+    var selectedStopsOfLine = [];
     // check if current active line has dictionary
-    if (tripSelectionOfLine.hasOwnProperty($('#rows .success').find('small').text())) {
-        // check if current selected trip is already included
-        if ($.inArray(triplabel, selectedTripsOfLine) === -1) {
-                selectedTripsOfLine.push(triplabel);
-                tripSelectionOfLine[$('#rows .success').find('small').text()] = selectedTripsOfLine;
-        }
-    } else { /* create dict of line and add current trip to new list */
-        selectedTripsOfLine = [];
-        selectedTripsOfLine.push(triplabel);
-        tripSelectionOfLine[$('#rows .success').find('small').text()] = selectedTripsOfLine;
-    }
-}
-
-function removeTripFromDict (triplabel, linenr) {
-    if (linenr === 'alle lijnen') { /* wis complete selectie */
-        tripSelectionOfLine = {};
-    } else if (triplabel === 'hele lijn') { /* hele lijn alleen zichtbaar bij 'alle ritten'. Geen specifieke ritten nodig om te deselecteren */
-        delete tripSelectionOfLine[linenr];
-    } else if (linenr === 'unknown') { /* als rit via (x) wordt verwijderd, moet lijnnr erbij worden gezocht */
-        if (triplabel.slice(-1) == ' ') {
-            triplabel = triplabel.slice(0,-1);
-        }
-        $.each(tripSelectionOfLine, function (line, ritten) {
-            var index = ritten.indexOf(triplabel);
-            if (index !== -1) {
-                ritten.splice(index,1);
-                linenr = line;
-                tripSelectionOfLine[linenr] = ritten;
-                if (tripSelectionOfLine[linenr].length === 0) {
-                    removeStopFromDict('hele lijn', linenr);
-                }
-            }
-        });
-    } else { /* rit wordt verwijderd door er nogmaals op te klikken --> actieve lijn is bijbehorende lijn */
-        //var selection = [];
-        var selection = tripSelectionOfLine[linenr];
-        selection.splice(triplabel, 1);
-        tripSelectionOfLine[linenr] = selection;
-        if (tripSelectionOfLine[linenr].length > 0) {
-            removeStopFromDict('hele lijn', linenr);
-        }
-    }
-
-
-}
-
-function stopDict(stoplabel) {
-    // check if current active line has dictionary
-    if (stopSelectionOfLine.hasOwnProperty($('#rows .success').find('small').text())) {
+    if (stopSelectionOfLine.hasOwnProperty(line)) {
+        selectedStopsOfLine = stopSelectionOfLine[line];
         // check if current selected stop is already included
-        if ($.inArray(stoplabel, selectedStopsOfLine) === -1) {
-                selectedStopsOfLine.push(stoplabel);
-                stopSelectionOfLine[$('#rows .success').find('small').text()] = selectedStopsOfLine;
+        if ($.inArray(id, selectedStopsOfLine) === -1) {
+                selectedStopsOfLine.push(id);
+                stopSelectionOfLine[line] = selectedStopsOfLine;
                 writeOutputAsString(stopSelectionOfLine);
         }
     } else { /* create dict of line and add current stop to new list */
-        selectedStopsOfLine = [];
-        selectedStopsOfLine.push(stoplabel);
-        stopSelectionOfLine[$('#rows .success').find('small').text()] = selectedStopsOfLine;
+        selectedStopsOfLine.push(id);
+        stopSelectionOfLine[line] = selectedStopsOfLine;
         writeOutputAsString(stopSelectionOfLine);
     }
 }
 
-function removeStopFromDict(stoplabel, linenr){
-    if (linenr === 'alle lijnen') { // wis complete selectie
-        stopSelectionOfLine = {};
-    } else if (stoplabel === 'hele lijn') { // hele lijn alleen zichtbaar bij 'alle ritten'.
-        delete stopSelectionOfLine[linenr];
-    } else {
-        var selection = stopSelectionOfLine[linenr];
-        var index = selection.indexOf(stoplabel);
-        if (index !== -1){
-            selection.splice(index,1);
-        }
-        stopSelectionOfLine[linenr] = selection;
+function removeStopFromDict(id, linenr){
+    var selection = stopSelectionOfLine[linenr];
+    var index = selection.indexOf(id.substring(1));
+    if (index !== -1){
+        selection.splice(index,1);
     }
+    stopSelectionOfLine[linenr] = selection;
     writeOutputAsString(stopSelectionOfLine);
-    // ToDo: find way to update #halte-lijst with names of stops
 }
 
-// write stopSelectionOfLine as string
 function writeOutputAsString(data) {
     var out = "";
     $.each(data, function (line, stops) {
@@ -824,27 +700,6 @@ function writeOutputAsString(data) {
         out += ";";
     });
     $("#stopdict").val(out);
-}
-
-
-function updateSelectedStops(stopname, linenr) { // ToDo: fix this, doesn't update #haltes
-    if (stopname === 'hele lijn'){ // remove all with line=linenr
-        $.each(stopSelectionOfLine, function (line, stops) {
-            if (line == linenr) {
-                $.each(stops, function(i, stop) {
-                    stop_id = "s" + stop;
-                });
-            }
-        });
-
-    } /* overbodig
-        else {
-        stop_id = "s" + stopname;
-        var index = $.inArray(stop_id, selectedStops);
-        if (index != 0) {
-            selectedStops.splice(index, 1);
-        }
-    } */
 }
 
 
@@ -938,7 +793,6 @@ function hideEndTime() {
     $('#div_id_messageendtime').hide();
     $('#id_messageendtime').val('31-12-2099 00:00:00');
 }
-
 function showEndTime() {
    $('#div_id_messageendtime').show();
    var enddate = new Date();
