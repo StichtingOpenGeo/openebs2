@@ -75,7 +75,9 @@ function selectStop(event, ui) {
     $('#halte-list .help').hide()
     if (doSelectStop(ui.selected)) {
         writeHaltesField();
+        writeSelectedJourneys();
     }
+
 }
 
 function selectStopFromBall(obj) {
@@ -172,7 +174,7 @@ function readHaltesField() {
 function removeStopFromX(event) {
     var lijn = $(this).parent().text().split(":")[0].split(" ")[1];
     var id = $(this).parent().attr('id').substring(1);
-    removeStop(id, lijn)
+    removeStop(id, lijn);
 }
 
 function lineRemoveStop(event) {
@@ -287,12 +289,13 @@ var allTrips = [];
 var tripSelection = [];
 var currentStopMeasures = [];
 var stopSelectionOfLine = {};
+var currentTrips = [];
+var currentTripLabels = [];
 
 function showAll() {
     $("#rows tr:not(.success)").show();
     $("#shorten_buttons").css("display","none");
     $("#rittenoverzicht").css("display","none");
-    //clearAllTrips();
 }
 
 function showTrips(event) {
@@ -322,13 +325,13 @@ function loadPreselectedJourneys() {
 }
 
 function selectTrip(event, ui) {
+    if ($.inArray('Alle ritten', currentTripLabels) != -1) {
+        clearAllTrips();
+    }
     if ($('#rit-list span').text() == "Alle ritten ") {
-        selectedTrips = []
-        $('#rit-list span').empty()
-        $('#rit-list .help').show()
-        selectedLines = [];
-        lijnList = [];
-        emptyLineList();
+        clearAllTrips();
+        //selectedLines = [];
+        //lijnList = [];
     }
 
     var ritnr = $(ui.selected).attr('id').substring(1);
@@ -340,14 +343,10 @@ function selectTrip(event, ui) {
     var new_ritnr = ritnr+'-'+lijn;
     var id = $.inArray(new_ritnr, selectedTrips);
     if (id == -1) {
-
-        $('#rit-list .help').hide();
+        currentTrips.push(new_ritnr);
         $(ui.selected).addClass('success');
-        var label = $(ui.selected).find("strong").text();
-        var dellink = '<span class="trip-remove glyphicon glyphicon-remove"></span>';
-        $('#rit-list').append('<span id="st'+new_ritnr+'" class="pull-left trip-selection label label-danger">'+label+' '+dellink+'</span>');
-        selectedTrips.push(new_ritnr);
-        writeTripList();
+        currentTripLabels.push($(ui.selected).find("strong").text());
+        $('#rit-list .help').hide();
     } else {
         removeTrip(new_ritnr);
     }
@@ -403,7 +402,8 @@ function removeTrip(ritnr) {
 function writeTripList() {
     var out = "";
     $.each(selectedTrips, function(index, val) {
-        out += val+',';
+        var new_trip = val.split("-")[0];
+        out += new_trip.substring(1)+",";
     });
     $("#journeys").val(out)
 }
@@ -565,43 +565,27 @@ function showTripsOnChange() {
 }
 
 function selectAllTrips() {
+    currentTriplabels = [];
+    currentTrips = [];
     if ($('#rit-list span').text() != "Alle ritten ") {
         activeJourneys = [];
         clearAllTrips();
         $('#rit-list .help').hide();
 
-        $('.lijn-overzicht').css("display","block");
-
-        var label = $("#all_journeys").text();
-        var dellink = '<span class="trip-remove glyphicon glyphicon-remove"></span>';
-        $('#rit-list').append('<span id="st'+label+'" class="pull-left trip-selection label label-danger">'+label+' '+dellink+'</span>');
+        currentTripLabels.push($("#all_journeys").text());
     }
 
     // add activeLine if not already in selectedLines
     if ($.inArray(activeLine, selectedLines) == -1) {
-        var label = '';
-        if ($('#rows tr.success').find("strong").text() === $('#rows tr.success').find("small").text()) {
-            label += $('#rows tr.success').find("strong").text();
-        } else {
-            label += $('#rows tr.success').find("strong").text();
-            label += ' (';
-            label += $('#rows tr.success').find("small").text();
-            label += ')';
-        }
-        var lijn = $('#rows tr.success').find("small").text();
-        var dellink_line = '<span class="line-remove glyphicon glyphicon-remove"></span>';
-        $('#lijn-list').append('<span id="st'+lijn+'" class="pull-left line-selection label label-danger">'+label+' '+dellink_line+'</span>');
-        lijnList.push(lijn);
-        writeLineList();
+
+
 
         // if no begin-time or end-time is given:
         $("#trips tr td").each( function() {
         if ($(this).attr('id')) {
             $(this).addClass('success');
-            selectedTrips.push($(this).attr('id').substring(1));
-
+            currentTrips.push($(this).attr('id').substring(1));
         };
-        writeTripList();
     });
     }
 
@@ -630,6 +614,8 @@ function writeLineList() {
 
 function clearAllTrips() {
     selectedTrips = [];
+    currentTripLabels = [];
+    currentTrips = [];
     $('#rit-list span').empty();
     $('#rit-list .help').show();
     $('#tripoverzicht tr td.success').removeClass('success');
@@ -742,6 +728,49 @@ function resetAll() {
     writeOutputAsString(stopSelectionOfLine);
 }
 
+function writeSelectedJourneys() {
+    if ($.inArray(activeLine, selectedLines) != -1) {
+        return;
+    }
+    var new_ritnr = null;
+    var dellink = '<span class="trip-remove glyphicon glyphicon-remove"></span>';
+    if ($.inArray('Alle ritten', currentTripLabels) != -1) {
+        var lijn = $('#rows tr.success').find("small").text()
+        new_ritnr = 'Alle ritten';
+        $('#rit-list').append('<span id="st'+new_ritnr+'" class="pull-left trip-selection label label-danger">'+new_ritnr+' '+dellink+'</span>');
+        $.each(currentTrips, function(i, trip) {
+             selectedTrips.push(trip+'-'+lijn);
+        });
+        writeSelectedLines();
+    } else {
+        $.each(currentTripLabels, function(i, label) {
+            new_ritnr = currentTrips[i];
+            $('#rit-list').append('<span id="st'+new_ritnr+'" class="pull-left trip-selection label label-danger">'+label+' '+dellink+'</span>');
+            selectedTrips.push(new_ritnr);
+        });
+    }
+    currentTripLabels = [];
+    currentTrips = [];
+    writeTripList();
+}
+
+function writeSelectedLines() {
+    var label = '';
+    if ($('#rows tr.success').find("strong").text() === $('#rows tr.success').find("small").text()) {
+        label += $('#rows tr.success').find("strong").text();
+    } else {
+        label += $('#rows tr.success').find("strong").text();
+        label += ' (';
+        label += $('#rows tr.success').find("small").text();
+        label += ')';
+    }
+    var lijn = $('#rows tr.success').find("small").text();
+    var dellink_line = '<span class="line-remove glyphicon glyphicon-remove"></span>';
+    $('#lijn-list').append('<span id="st'+lijn+'" class="pull-left line-selection label label-danger">'+label+' '+dellink_line+'</span>');
+    lijnList.push(lijn);
+    writeLineList();
+    $('.lijn-overzicht').css("display","block");
+}
 
 /* TIME FUNCTIONS */
 function checkMessageTime(event, ui) {
