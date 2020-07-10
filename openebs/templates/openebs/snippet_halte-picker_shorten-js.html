@@ -1,7 +1,7 @@
 {% comment %} These listeners are required for the linepicker {% endcomment %}
-readHaltesField();
+{% comment %} readHaltesField(); {% endcomment %}
 changeOperatingDayTrips();
-loadPreselectedJourneys(); /* Restore our selection */
+{% comment %} loadPreselectedJourneys(); {% endcomment %} /* Restore our selection */
 $("#stops").selectable({
   filter:'td.stop',
   selected: selectStop,

@@ -614,8 +614,8 @@ class Kv17ShortenForm(forms.ModelForm):
                     raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
                 valid_stops = []
                 unique_stops = 0
-                # splits stopdict per lijn: .split(;)
-                for line in self.data['stopdict'].split(";"):
+                # splits haltes per lijn: .split(;)
+                for line in self.data['haltes'].split(";"):
                     if len(line) == 0:
                         continue
                     if line.split(":")[0] == journey_qry[0].line.publiclinenumber:
@@ -711,7 +711,7 @@ class Kv17ShortenForm(forms.ModelForm):
         return xml_output
 
     def save_shorten(self, qry_kv17change):
-        for line in self.data['stopdict'].split(";"):
+        for line in self.data['haltes'].split(";"):
             if line != '':
                 lijn = self.instance.line
                 if line.split(":")[0] == lijn.publiclinenumber:

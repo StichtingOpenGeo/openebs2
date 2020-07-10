@@ -53,8 +53,7 @@
                         {% endif %}
                     </p><br />
                     <input type="hidden" id="haltes" name="haltes">
-                    <input type="hidden" id="stopdict" name="stopdict">
-                </div>
+                    </div>
             </div>
             <div class="clearfix"></div>
             {% crispy form form.helper %}
@@ -80,5 +79,4 @@
 {% endblock %}
 {% block js_init %}
     {% include "openebs/snippet_halte-picker_shorten-js.html" %}
-    getHaltesWithShorten()
-{% endblock %}
+    {% endblock %}
