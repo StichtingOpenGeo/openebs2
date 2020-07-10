@@ -64,7 +64,6 @@ function showStops() {
         return
     }
     $("#body_stops tr.help").hide(200);
-    $('.stop_btn').removeClass('hide');
     $.ajax('/line/'+activeLine+'/stops', {
         success : writeLine
     });
@@ -72,7 +71,7 @@ function showStops() {
 }
 
 function selectStop(event, ui) {
-    $('#halte-list .help').hide()
+    $('#halte-list .help').hide();
     if (doSelectStop(ui.selected)) {
         writeHaltesField();
         writeSelectedJourneys();
@@ -96,29 +95,8 @@ function selectStopFromBall(obj) {
     }
     if (did) {
         writeHaltesField();
+        writeSelectedJourneys();
     }
-}
-
-function selectAllVisibleStops() {
-    $('#stops .stop').each(function(index, value) {
-        /* Check this is not already selected */
-        index = $(this).attr('id').slice(0, -1);
-        if ($.inArray(index, selectedStops) == -1) {
-            doSelectStop($(this));
-        }
-    });
-    writeHaltesField();
-}
-
-function deselectAllVisibleStops() {
-    $('#stops .stop.success').each(function(index, value) {
-        index = $(this).attr('id').slice(0, -1);
-        if ($.inArray(index, selectedStops) != -1) {
-            var lijn = $('#rows .success').find('small').text();
-            removeStop(index, lijn);
-        }
-    });
-    writeHaltesField();
 }
 
 function doSelectStop(obj) {
@@ -420,7 +398,6 @@ function selectTrip(event, ui) {
 
     /*
     $("#body_stops tr.help").hide(200);
-    $('.stop_btn').removeClass('hide');
     $("#body_stops tr.stopRow").show(200);
     document.querySelector('#halteoverzicht').scrollIntoView({
         behavior: 'smooth'
@@ -703,7 +680,6 @@ function clearAllStops() {
     $('#halte-list span').remove();
     $('#halte-list .help').show();
     //$("#body_stops tr.help").show(200);
-    //$('.stop_btn').addClass('hide');
     //$("#body_stops tr.stopRow").hide(200);
     $(".stop").removeClass("success");
     $(".stop span").removeClass("stop-check glyphicon glyphicon-ok-circle pull-right");
@@ -799,7 +775,6 @@ function resetAll() {
     $("#tripoverzicht tr").remove();
     $("#body_stops .stopRow").remove();
     $("#body_stops .help").show(200);
-    $(".stop_btn").addClass('hide');
     clearAllTrips();
     clearAllStops();
     $("#line_search").val("");
