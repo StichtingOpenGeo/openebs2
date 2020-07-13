@@ -399,16 +399,18 @@ function selectStopFromBall(obj) {
     var left = $(parent).find(".stop-left");
     var right = $(parent).find(".stop-right");
     if (left.length) {
-        doSelectStop(parent.find(".stop.stop-right"));
+        x = doSelectStop(parent.find(".stop.stop-right"));
         did = true;
     }
     /* Check if left and right stops aren't accidentally equal */
     if (left.length && right.length && left.attr('id').slice(0, -1) != right.attr('id').slice(0, -1)) {
-        doSelectStop(parent.find(".stop.stop-left"));
+        x = doSelectStop(parent.find(".stop.stop-left"));
         did = true;
     }
-    if (did) {
-        writeSelectedJourneys();
+    if (x != 'remove') {
+        if (did) {
+            writeSelectedJourneys();
+        }
     }
 }
 
@@ -431,6 +433,7 @@ function doSelectStop(obj) {
         return true;
     } else {
         removeStop(id+'-'+currentLine, currentLine);
+        return 'remove';
     }
     return false;
 }
@@ -451,6 +454,7 @@ function writeSelectedJourneys() {
         selectedTrips.push(trip+'-'+currentLine);
         });
         writeSelectedLines();
+
     } else {
         $.each(currentTripLabels, function(i, label) {
             new_ritnr = currentTrips[i];
