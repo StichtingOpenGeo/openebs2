@@ -583,6 +583,8 @@ class CancelLinesForm(forms.Form):
 
 class Kv17ShortenForm(forms.ModelForm):
     operatingday = forms.ChoiceField(label=_("Datum"), required=True)
+    begintime_part = forms.TimeField(label=_('Ingangstijd'), required=False, widget=forms.TimeInput(format='%H:%M:%S'))
+    endtime_part = forms.TimeField(label=_('Eindtijd'), required=False, widget=forms.TimeInput(format='%H:%M:%S'))
     reasontype = forms.ChoiceField(choices=REASONTYPE, label=_("Type oorzaak"), required=False)
     subreasontype = forms.ChoiceField(choices=SUBREASONTYPE, label=_("Oorzaak"), required=False)
     reasoncontent = forms.CharField(max_length=255, label=_("Uitleg oorzaak"), required=False,
@@ -793,8 +795,10 @@ class Kv17ShortenForm(forms.ModelForm):
         self.helper.form_tag = False
         self.helper.layout = Layout(
             Accordion(
-                AccordionGroup(_('Datum'),
+                AccordionGroup(_('Datum en Tijd'),
                                'operatingday',
+                               'begintime_part',
+                               'endtime_part'
                                ),
                 AccordionGroup(_('Oorzaak'),
                                'reasontype',

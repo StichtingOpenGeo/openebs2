@@ -7,11 +7,14 @@ var selectedLines = [];  // list of lineplanningnumbers of selected lines
 var lijnList = [];  // list with publiclinenumbers of selected lines
 var currentLineMeasures = null;
 
-/* TRIP SELECTION */
+/* TRIP VARIABLES */
 var activeJourneys = [];  // list of cancelled trips from Ajax
 var selectedTrips = [];  // list of selected trips
 var currentTrips = [];  // keeps trip_id's in memory until stop is clicked
 var currentTripLabels = [];  // keeps trip_labels in memory until stop is clicked
+var allTrips = []; // list of dicts with all trips of selected lines
+var tripSelection = []; // list of all trips of current line
+var selectTripMeasures = [];  // list of dicts of trips of selected lines within given time range
 
 /* STOP VARIABLES */
 var blockedStops = []  // list of stops that already have shortens set (from Ajax)
@@ -98,6 +101,7 @@ function writeHaltesWithShorten(data, status) {
 function showTripsOnChange() {
     if (activeLine !== null) {
         currentLineMeasures = cancelledLines.filter(l => l.id == activeLine || l.id === null);
+        tripSelection = [];
         $.ajax({ url: '/line/'+activeLine+'/ritten',
          data: {'operatingday': operating_day},
             success : writeTrips
@@ -106,6 +110,8 @@ function showTripsOnChange() {
 }
 
 function writeTrips(data, status) {
+    tripSelection = data.object.trips_1.concat(data.object.trips_2);
+
     var maxLen = Math.max(data.object.trips_1.length, data.object.trips_2.length);
     if (maxLen > 0) {
         $('#trips tbody').fadeOut(200).empty();
@@ -261,6 +267,8 @@ function selectTrip(event, ui) {
        || $('#rit-list span').text() == "Alle ritten "){
         clearAllTrips();
         clearAllStops();
+        $('#div_id_begintime_part').css("display","none");
+        $('#div_id_endtime_part').css("display","none");
     }
 
     var ritnr = $(ui.selected).attr('id').substring(1);
@@ -311,15 +319,26 @@ function selectAllTrips() {
 
         currentTripLabels.push($("#all_journeys").text());
     }
+    // create dict with all trips of active lines
+    var obj = {};
+    obj[$('#rows .success').find('small').text()] = tripSelection;
+    allTrips.push(obj);
 
+    colorSelectedRange();
+
+    $('#div_id_begintime_part').css("display","inline");
+    $('#div_id_endtime_part').css("display","inline");
+
+    /*
     // if no begin-time or end-time is given:
-    $("#trips tr td").each( function() {
-        if ($(this).attr('id')) {
-            $(this).addClass('success');
-            currentTrips.push($(this).attr('id').substring(1));
-        };
-    });
-
+    if ($('#id_begintime_part').val().length == 0 & $('#id_endtime_part').val().length == 0)
+        $("#trips tr td").each( function() {
+            if ($(this).attr('id')) {
+                $(this).addClass('success');
+                currentTrips.push($(this).attr('id').substring(1));
+            };
+        });
+    } */
 
     currentStopMeasures = blockedStops.filter (s => s.change__line == activeLine || s.change__line===null)
     showStops();
@@ -772,6 +791,69 @@ function resetAll() {
     $("#rows").empty();
     stopSelectionOfLine = {};
     writeOutputAsString(stopSelectionOfLine);
+}
+
+function changeOfRange() {
+    selectTripMeasures = [];
+    $('#trips.td.all_selected').removeClass('all_selected');
+    updateSelectedTrips();
+}
+
+function updateSelectedTrips() {
+    // TODO: update #journeys met ritten die binnen time range vallen
+
+    var selection_begintime = null;
+    var selection_endtime = null;
+
+    if ($('#id_begintime_part').val().length !=0) {
+        var start_hour = (parseInt($('#id_begintime_part').val().split(':')[0]))*3600;
+        var start_minutes = (parseInt($('#id_begintime_part').val().split(':')[1]))*60;
+        selection_begintime = (start_hour)+(start_minutes);
+    };
+    if ($('#id_endtime_part').val().length !=0)  {
+        var end_hour = parseInt($('#id_endtime_part').val().split(':')[0])*3600;
+        var end_minutes = parseInt($('#id_endtime_part').val().split(':')[1])*60;
+        selection_endtime = end_hour+end_minutes;
+    };
+
+    selectTripMeasures = [];
+    $.each(allTrips, function (index, line) {
+        var tripSelection_new = [];
+        $.each(line, function (linenr, tripsofline) {
+            $.each(tripsofline, function (i, trip) {
+                if (selection_begintime === null && selection_endtime === null) {
+                    tripSelection_new.push(trip.id+'-'+linenr);
+                } else if (selection_begintime === null && selection_endtime >= trip.departuretime) {
+                        tripSelection_new.push(trip.id+'-'+linenr);
+                } else if (selection_begintime <= trip.departuretime && selection_endtime === null) {
+                    tripSelection_new.push(trip.id+'-'+linenr);
+                } else if (selection_begintime <= trip.departuretime && selection_endtime >= trip.departuretime) {
+                    tripSelection_new.push(trip.id+'-'+linenr);
+                }
+            });
+            var obj = {};
+            obj[linenr] = tripSelection_new;
+            if ($.inArray(obj, selectTripMeasures) == -1) {
+                selectTripMeasures.push(obj);
+            }
+        });
+    });
+    colorSelectedRange();
+}
+
+function colorSelectedRange() {
+    $('.trip').removeClass('all_selected');
+
+    // change background color for every trip_id within given time-range to show selected trips
+    if (selectTripMeasures.length) {
+        $.each(selectTripMeasures, function (index, line) {
+            $.each(line, function (linenr, tripsofline) {
+                $.each(tripsofline, function (i, trip) {
+                    $('#t'+trip.split('-')[0]).addClass('all_selected');
+                });
+            });
+        });
+    }
 }
 
 /* TIME FUNCTIONS */
