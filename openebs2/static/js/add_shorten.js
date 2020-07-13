@@ -270,9 +270,9 @@ function selectTrip(event, ui) {
 
     var new_ritnr = ritnr+'-'+currentLine;
     var id = $.inArray(new_ritnr, selectedTrips);
-    if (id == -1) {  // not in active selection and not in current selection:
-        var index = $.inArray(new_ritnr, currentTrips);
-        if (index == -1){
+    var index = $.inArray(new_ritnr, currentTrips);
+    if (index == -1) { // not in current selection
+        if (id == -1) {  // and not in active selection
             currentTrips.push(new_ritnr);
             $(ui.selected).addClass('success');
             currentTripLabels.push($(ui.selected).find("strong").text());
@@ -282,9 +282,14 @@ function selectTrip(event, ui) {
                     writeSelectedJourneys();
                 }
             }
+        } else {
+            removeTrip(new_ritnr);
         }
-    } else {
-        removeTrip(new_ritnr);
+    } else {  // remove from current selection
+        currentTrips.splice(index, 1);
+        $(ui.selected).removeClass('success');
+        var label_id = $.inArray($(ui.selected).find("strong").text(), currentTripLabels);
+        currentTripLabels.splice(label_id, 1);
     }
     currentStopMeasures = blockedStops.filter (s => s.change__line == activeLine || s.change__line===null);
     showStops();
