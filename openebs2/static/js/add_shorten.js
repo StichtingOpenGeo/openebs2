@@ -65,7 +65,7 @@ function saveLines(data, status) {
 }
 
 function getActiveJourneys() {
-     //var operating_day = $("#id_operatingday").val();
+     operating_day = $("#id_operatingday").val();
      $.ajax({ url: '/ritaanpassing/ritten.json',
             data: {'operatingday': operating_day},
             success : writeActiveJourneys
@@ -499,7 +499,7 @@ function writeTripList() {
     var out = "";
     $.each(selectedTrips, function(index, val) {
         var new_trip = val.split("-")[0];
-        out += new_trip.substring(1)+",";
+        out += new_trip+",";
     });
     $("#journeys").val(out);
 }
