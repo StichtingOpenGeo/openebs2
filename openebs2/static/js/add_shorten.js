@@ -8,13 +8,14 @@ var lijnList = [];  // list with publiclinenumbers of selected lines
 var currentLineMeasures = null;
 
 /* TRIP VARIABLES */
-var activeJourneys = [];  // list of cancelled trips from Ajax
-var selectedTrips = [];  // list of selected trips
-var currentTrips = [];  // keeps trip_id's in memory until stop is clicked
+var activeJourneys = [];  // list of cancelled trip_ids from Ajax
+var selectedTrips = [];  // list of selected trips_ids
+var currentTrips = [];  // keeps trip_ids in memory until stop is clicked
 var currentTripLabels = [];  // keeps trip_labels in memory until stop is clicked
-var allTrips = []; // list of dicts with all trips of selected lines
-var tripSelection = []; // list of all trips of current line
-var selectTripMeasures = [];  // list of dicts of trips of selected lines within given time range
+
+/* Extra TRIP VARIABLES for 'alle ritten' */
+var allTrips = []; // list of dicts with all trip measures of selected lines
+var tripSelection = []; // temporary list of all trips of current line
 
 /* STOP VARIABLES */
 var blockedStops = []  // list of stops that already have shortens set (from Ajax)
@@ -265,7 +266,7 @@ function showTrips(event) {
 function selectTrip(event, ui) {
     if ($.inArray('Alle ritten', currentTripLabels) != -1
        || $('#rit-list span').text() == "Alle ritten "){
-        clearAllTrips();
+        clearAllTrips(1);
         clearAllStops();
         $('#div_id_begintime_part').css("display","none");
         $('#div_id_endtime_part').css("display","none");
@@ -311,35 +312,26 @@ function selectTrip(event, ui) {
 function selectAllTrips() {
     currentTriplabels = [];
     currentTrips = [];
+    $.each(tripSelection, function(i, trip) {
+        currentTrips.push(trip.id+'-'+currentLine);
+    });
+
     if ($('#rit-list span').text() != "Alle ritten ") {
         activeJourneys = [];
-        clearAllTrips();
+        clearAllTrips(0);
         clearAllStops();
         $('#rit-list .help').hide();
 
         currentTripLabels.push($("#all_journeys").text());
     }
-    // create dict with all trips of active lines
-    var obj = {};
-    obj[$('#rows .success').find('small').text()] = tripSelection;
-    allTrips.push(obj);
-
-    colorSelectedRange();
-
     $('#div_id_begintime_part').css("display","inline");
     $('#div_id_endtime_part').css("display","inline");
 
-    /*
-    // if no begin-time or end-time is given:
-    if ($('#id_begintime_part').val().length == 0 & $('#id_endtime_part').val().length == 0)
-        $("#trips tr td").each( function() {
-            if ($(this).attr('id')) {
-                $(this).addClass('success');
-                currentTrips.push($(this).attr('id').substring(1));
-            };
-        });
-    } */
-
+    if ($('#id_begintime_part').val().length == 0 & $('#id_endtime_part').val().length == 0) {
+        colorSelectedRange();
+    } else {
+        changeOfRange();
+    }
     currentStopMeasures = blockedStops.filter (s => s.change__line == activeLine || s.change__line===null)
     showStops();
     /*
@@ -347,7 +339,6 @@ function selectAllTrips() {
         behavior: 'smooth'
     });
     */
-
 }
 
 function showStops() {
@@ -440,8 +431,8 @@ function selectStopFromBall(obj) {
 
 function doSelectStop(obj) {
     /* Make sure to strip the 'l' or 'r' */
-    id = $(obj).attr('id').slice(0, -1);
-    index = $.inArray(id+'-'+currentLine, selectedStops);
+    var id = $(obj).attr('id').slice(0, -1);
+    var index = $.inArray(id+'-'+currentLine, selectedStops);
     if (index == -1) {
         $("#"+id+"l, #"+id+"r").addClass('success');
         $("#"+id+"l, #"+id+"r").append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;');
@@ -451,7 +442,7 @@ function doSelectStop(obj) {
         } else {
             direction = "trg";
         }
-        delLink = '<span class="stop-remove glyphicon glyphicon-remove"></span>';
+        var delLink = '<span class="stop-remove glyphicon glyphicon-remove"></span>';
         $("#halte-list").append('<span class="stop-selection pull-left label label-primary" id="s'+id+'-'+currentLine+'">'+'Lijn ' +currentLine+': '+$(obj).text()+'('+direction+') '+delLink+ '</span>');
         stopDict(id.substring(1), currentLine);
         return true;
@@ -464,21 +455,29 @@ function doSelectStop(obj) {
 
 /* write data to page */
 function writeSelectedJourneys() {
+    if (tripSelection.length) {
+        var obj = {};
+        obj[$('#rows .success').find('small').text()] = tripSelection;
+        if (!allTrips.hasOwnProperty(obj)) {
+            allTrips.push(obj);
+        }
+        tripSelection = [];
+    }
+
     var new_ritnr = null;
     var dellink = '<span class="trip-remove glyphicon glyphicon-remove"></span>';
     if ($.inArray('Alle ritten', currentTripLabels) != -1) {
         new_ritnr = 'Alle ritten';
         $('#rit-list').append('<span id="st'+new_ritnr+'" class="pull-left trip-selection label label-danger">'+new_ritnr+' '+dellink+'</span>');
         $.each(currentTrips, function(i, trip) {
-             selectedTrips.push(trip+'-'+currentLine);
+             selectedTrips.push(trip);
         });
         writeSelectedLines();
     } else if ($("#rit-list span").attr('id') == "stAlle ritten") {
         $.each(currentTrips, function(i, trip) {
-        selectedTrips.push(trip+'-'+currentLine);
+            selectedTrips.push(trip);
         });
         writeSelectedLines();
-
     } else {
         $.each(currentTripLabels, function(i, label) {
             new_ritnr = currentTrips[i];
@@ -525,10 +524,13 @@ function writeLineList() {
 
 function writeTripList() {
     var out = "";
-    $.each(selectedTrips, function(index, val) {
-        var new_trip = val.split("-")[0];
-        out += new_trip+",";
-    });
+    var x = null;
+    if (selectedTrips.length) {
+        $.each(selectedTrips, function(index, val) {
+            var new_trip = val.split("-")[0];
+            out += new_trip+",";
+        });
+    }
     $("#journeys").val(out);
 }
 
@@ -576,16 +578,13 @@ function removeLine(lijn) {
         $('#st'+lijn).remove();
         selectedLines.splice(id, 1);
         lijnList.splice(id, 1);
-        var out = "";
-        $.each(selectedLines, function(index, val) {
-            out += val+',';
-        });
-        $("#lines").val(out);
-        removeStop('all', lijn);
+        writeLineList();
+        removeStopsOfLine(lijn);
+        removeJourneysOfLine(lijn);
     }
     if (selectedLines.length == 0) {
         $('.lijn-overzicht').css("display","none");
-        clearAllTrips();
+        clearAllTrips(1);
         clearAllStops();
     }
 }
@@ -593,7 +592,7 @@ function removeLine(lijn) {
 /* Remove trip */
 function removeTripFromX(event, ui) {
     if ($('#rit-list span').text() == "Alle ritten ") {
-        clearAllTrips();
+        clearAllTrips(1);
         clearAllStops();
     } else {
         removeTrip($(this).parent().attr('id').substring(2));
@@ -665,27 +664,28 @@ function removeStop(id, lijn) {
             if (selectedStops.length == 0) {
                 $('#halte-list .help').show();
 
-                // move selected trips back to currentTrip + currentTripLabels
-                currentTrips = selectedTrips;
-                selectedTrips = [];
-                $.each(currentTrips, function(index, trip) {
-                    var trip_id = '#t' +trip.split('-')[0];
-                    currentTripLabels.push($(trip_id).find("strong").text());
-                });
+                // move selected trips back to currentTrip + currentTripLabels if currentLine
+                if (lijn === currentLine) {
+                    currentTrips = selectedTrips;
+                    selectedTrips = [];
+                    $.each(currentTrips, function(index, trip) {
+                        var trip_id = '#t' +trip.split('-')[0];
+                        currentTripLabels.push($(trip_id).find("strong").text());
+                    });
+                }
                 $('#rit-list span').remove();
                 writeTripList();
                 clearAllStops();
             } else {
                 removeStopFromDict(stop_id, lijn);
 
-                /* if last stop of line (but other lines/journeys still selected) remove all journeys of line */
+                /* if last stop of line (but other lines/journeys still selected) remove line */
                 if (stopSelectionOfLine[lijn] === undefined) {
-                    removeJourneysOfLine(lijn);
+                    removeLine(lijn);
                  }
             }
         }
     } else {
-        // remove all selected stops from line
         removeStopsOfLine(lijn);
     }
 }
@@ -707,17 +707,12 @@ function removeStopsOfLine(lijn) {
 }
 
 function removeJourneysOfLine(lijn) {
-   if ($("#rit-list span").attr('id') == "stAlle ritten") {
-        $("#st"+lijn).remove();
-        index = lijnList.indexOf(lijn);
-        lijnList.splice(index, 1);
-        selectedLines.splice(index,1);
-        writeLineList();
-    }
     for (var i = 0; i < selectedTrips.length; i++) {
         if (selectedTrips[i].split('-')[1] === lijn) {
+            if (lijn === currentLine) {
             currentTrips.push(selectedTrips[i]);
             currentTripLabels.push($("#st" +selectedTrips[i]).text());
+            }
             $("#st"+selectedTrips[i]).remove();
             selectedTrips.splice(i, 1);
             i--;
@@ -744,14 +739,21 @@ function removeStopFromDict(id, linenr){
 }
 
 /* clear-all functions */
-function clearAllTrips() {
-    selectedTrips = [];
+function clearAllTrips(call) {
+    if (call == 1) {
+        allTrips = [];
+        tripSelection = [];
+        selectedTrips = [];
+        currentTrips = [];
+    }
     currentTripLabels = [];
-    currentTrips = [];
     $('#rit-list span').remove();
     $('#rit-list .help').show();
-    $('#tripoverzicht tr td.success').removeClass('success');
-    $("#journeys").val('')
+    $('#div_id_begintime_part').css("display","none");
+    $('#div_id_endtime_part').css("display","none");
+    $('#tripoverzicht tr td').removeClass('all_selected');
+    $('#tripoverzicht tr td').removeClass('success');
+    $("#journeys").val('');
     writeTripList();
     emptyLineList();
 }
@@ -785,7 +787,9 @@ function resetAll() {
     $("#tripoverzicht tr").remove();
     $("#body_stops .stopRow").remove();
     $("#body_stops .help").show(200);
-    clearAllTrips();
+    $('#div_id_begintime_part').css("display","none");
+    $('#div_id_endtime_part').css("display","none");
+    clearAllTrips(1);
     clearAllStops();
     $("#line_search").val("");
     $("#rows").empty();
@@ -794,14 +798,19 @@ function resetAll() {
 }
 
 function changeOfRange() {
-    selectTripMeasures = [];
-    $('#trips.td.all_selected').removeClass('all_selected');
-    updateSelectedTrips();
+    selectedTrips = [];
+    currentTrips = [];
+    $('.trip').removeClass('all_selected');
+    var times = calculateShortenTimes();
+    if (tripSelection.length) {
+        updateSelectedTrips('tripSelection', times.begintime, times.endtime);
+    }
+    if (allTrips.length) {
+        updateSelectedTrips('allTrips', times.begintime, times.endtime);
+    }
 }
 
-function updateSelectedTrips() {
-    // TODO: update #journeys met ritten die binnen time range vallen
-
+function calculateShortenTimes() {
     var selection_begintime = null;
     var selection_endtime = null;
 
@@ -813,46 +822,84 @@ function updateSelectedTrips() {
     if ($('#id_endtime_part').val().length !=0)  {
         var end_hour = parseInt($('#id_endtime_part').val().split(':')[0])*3600;
         var end_minutes = parseInt($('#id_endtime_part').val().split(':')[1])*60;
-        selection_endtime = end_hour+end_minutes;
+        /* add 24h when endtime between 00:00 and 04:00 */
+        var extra = 0;
+        if (parseInt($('#id_endtime_part').val().split(':')[0]) < 4) {
+            extra = 3600*24;
+        }
+        selection_endtime = end_hour+end_minutes+extra;
     };
+    return {
+        begintime: selection_begintime,
+        endtime: selection_endtime,
+    };
+}
 
-    selectTripMeasures = [];
-    $.each(allTrips, function (index, line) {
+function updateSelectedTrips(x, begintime, endtime) {
+    if (x == 'allTrips') {
         var tripSelection_new = [];
-        $.each(line, function (linenr, tripsofline) {
-            $.each(tripsofline, function (i, trip) {
-                if (selection_begintime === null && selection_endtime === null) {
-                    tripSelection_new.push(trip.id+'-'+linenr);
-                } else if (selection_begintime === null && selection_endtime >= trip.departuretime) {
+        $.each(allTrips, function (index, line) {
+            $.each(line, function (linenr, tripsofline) {
+                $.each(tripsofline, function (i, trip) {
+                    if (begintime === null && endtime === null) {
                         tripSelection_new.push(trip.id+'-'+linenr);
-                } else if (selection_begintime <= trip.departuretime && selection_endtime === null) {
-                    tripSelection_new.push(trip.id+'-'+linenr);
-                } else if (selection_begintime <= trip.departuretime && selection_endtime >= trip.departuretime) {
-                    tripSelection_new.push(trip.id+'-'+linenr);
+                    } else if (begintime === null && endtime >= trip.departuretime) {
+                            tripSelection_new.push(trip.id+'-'+linenr);
+                    } else if (begintime <= trip.departuretime && endtime === null) {
+                        tripSelection_new.push(trip.id+'-'+linenr);
+                    } else if (begintime <= trip.departuretime && endtime >= trip.departuretime) {
+                        tripSelection_new.push(trip.id+'-'+linenr);
+                    }
+                });
+            });
+        });
+        selectedTrips = tripSelection_new;
+    } else {
+        var tripSelection_new = [];
+        $.each(tripSelection, function (index, trip) {
+                if (begintime === null && endtime === null) {
+                    tripSelection_new.push(trip.id+'-'+currentLine);
+                } else if (begintime === null && endtime >= trip.departuretime) {
+                        tripSelection_new.push(trip.id+'-'+currentLine);
+                } else if (begintime <= trip.departuretime && endtime === null) {
+                    tripSelection_new.push(trip.id+'-'+currentLine);
+                } else if (begintime <= trip.departuretime && endtime >= trip.departuretime) {
+                    tripSelection_new.push(trip.id+'-'+currentLine);
+                }
+        });
+        currentTrips = tripSelection_new;
+    }
+    colorSelectedRange();
+
+    if (allTrips.length) {
+        $.each(allTrips, function(i, val) {
+            $.each(val, function(line, trips) {
+                if (line == currentLine) {
+                    writeSelectedJourneys();
                 }
             });
-            var obj = {};
-            obj[linenr] = tripSelection_new;
-            if ($.inArray(obj, selectTripMeasures) == -1) {
-                selectTripMeasures.push(obj);
-            }
         });
-    });
-    colorSelectedRange();
+    }
 }
 
 function colorSelectedRange() {
     $('.trip').removeClass('all_selected');
 
-    // change background color for every trip_id within given time-range to show selected trips
-    if (selectTripMeasures.length) {
-        $.each(selectTripMeasures, function (index, line) {
-            $.each(line, function (linenr, tripsofline) {
-                $.each(tripsofline, function (i, trip) {
+    // set background color for every trip_id within given time-range to show selected trips
+    if ($('#id_begintime_part').val().length == 0 & $('#id_endtime_part').val().length == 0) {
+            $("#trips tr td").each( function() {
+                if ($(this).attr('id')) {
+                    $(this).addClass('all_selected');
+                };
+            });
+    } else if (currentTrips.length) {
+        $.each(currentTrips, function (i, trip) {
+                $('#t'+trip.split('-')[0]).addClass('all_selected');
+        });
+    } else if (selectedTrips.length) {
+                $.each(selectedTrips, function (i, trip) {
                     $('#t'+trip.split('-')[0]).addClass('all_selected');
                 });
-            });
-        });
     }
 }
 
@@ -952,16 +999,3 @@ function padTime(i) {
         return '00';
     }
 }
-/*
-function hideEndTime() {
-    $('#div_id_messageendtime').hide();
-    $('#id_messageendtime').val('31-12-2099 00:00:00');
-}
-function showEndTime() {
-   $('#div_id_messageendtime').show();
-   var enddate = new Date();
-   enddate.setHours(3, 0, 0);
-   enddate.setDate(enddate.getDate()+1);
-   $('#id_messageendtime').val(formatDate(enddate));
-}
-*/
