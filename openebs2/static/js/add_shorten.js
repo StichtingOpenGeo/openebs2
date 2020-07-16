@@ -524,7 +524,6 @@ function writeLineList() {
 
 function writeTripList() {
     var out = "";
-    var x = null;
     if (selectedTrips.length) {
         $.each(selectedTrips, function(index, val) {
             var new_trip = val.split("-")[0];
