@@ -203,17 +203,15 @@ class Kv17ChangeForm(forms.ModelForm):
 
                         if database_alllines:
                             begintime = datetime.utcnow().replace(tzinfo=utc) if begintime is None else begintime
-                            if database_alllines.filter(Q(monitoring_error__isnull=False) | Q(is_cancel=True) &
-                                                        Q(endtime__gt=begintime) | Q(endtime=None) &
-                                                        Q(begintime__lt=begintime)):
+                            if database_alllines.filter(Q(endtime__gt=begintime) | Q(endtime=None),
+                                                        begintime__lt=begintime):
                                 raise ValidationError(_(
                                     "De gehele vervoerder is al aangepast voor de aangegeven ingangstijd."))
 
                         elif database_alljourneys:
                             begintime = datetime.utcnow().replace(tzinfo=utc) if begintime is None else begintime
-                            if database_alljourneys.filter(Q(monitoring_error__isnull=False) | Q(is_cancel=True) &
-                                                         Q(endtime__gt=begintime) | Q(endtime=None) &
-                                                         Q(begintime__lt=begintime)):
+                            if database_alljourneys.filter(Q(endtime__gt=begintime) | Q(endtime=None),
+                                                           begintime__lt=begintime):
                                 raise ValidationError(_("Een of meer geselecteerde lijnen zijn al aangepast"))
 
         else:
@@ -268,10 +266,10 @@ class Kv17ChangeForm(forms.ModelForm):
                                       endtime=endtime).delete()
 
             if database_alllines:
-                begintime = datetime.utcnow().replace(tzinfo=utc) if begintime is None else begintime
+                begintime = make_aware(datetime.now()) if begintime is None else begintime
                 if database_alllines.filter(Q(monitoring_error__isnull=False) | Q(is_cancel=True) &
-                                            Q(endtime__gt=begintime) | Q(endtime=None) &
-                                            Q(begintime__lt=begintime)):
+                                            Q(endtime__gt=begintime) | Q(endtime=None),
+                                            begintime__lt=begintime):
                     raise ValidationError(_(
                         "De gehele vervoerder is al aangepast voor de aangegeven ingangstijd."))
 
@@ -451,7 +449,7 @@ class Kv17ChangeForm(forms.ModelForm):
         elif 'Alle ritten' in self.data['journeys']:  # hele lijn(en)
             for line in self.data['lines'].split(',')[0:-1]:
                 qry = Kv1Line.objects.filter(id=line)
-                if qry.count == 0:
+                if qry.count() == 0:
                     log.error("Failed to find line %s" % line)
                 else:
                     self.instance.pk = None
@@ -478,7 +476,7 @@ class Kv17ChangeForm(forms.ModelForm):
         else:  # enkele rit(ten)
             for journey in self.data['journeys'].split(',')[0:-1]:
                 qry = Kv1Journey.objects.filter(id=journey, dates__date=operatingday)
-                if qry.count == 0:
+                if qry.count() == 0:
                     log.error("Failed to find journey %s" % journey)
                 else:
                     self.instance.pk = None
