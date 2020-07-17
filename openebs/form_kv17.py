@@ -12,7 +12,7 @@ from openebs.models import Kv17Change, Kv17Shorten
 from openebs.models import Kv17JourneyChange, Kv17MutationMessage
 from utils.time import seconds_to_hhmm #get_operator_date
 from django.utils.dateparse import parse_date, parse_time
-from django.utils.timezone import make_aware, utc
+from django.utils.timezone import make_aware
 from datetime import datetime, time, timedelta
 from django.db.models import Q, Max
 
@@ -174,17 +174,17 @@ class Kv17ChangeForm(forms.ModelForm):
                                                   endtime=endtime).update(is_recovered=True)
 
                         if database_alllines:
-                            begintime = datetime.utcnow().replace(tzinfo=utc) if begintime is None else begintime
-                            if database_alllines.filter(Q(endtime__gt=begintime) | Q(endtime=None) &
-                                                        Q(begintime__lt=begintime),
+                            begintime = make_aware(datetime.now()) if begintime is None else begintime
+                            if database_alllines.filter(Q(endtime__gt=begintime) | Q(endtime=None),
+                                                        begintime__lt=begintime,
                                                         is_cancel=True):
                                 raise ValidationError(_(
                                     "De gehele vervoerder is al aangepast voor de aangegeven ingangstijd."))
 
                         elif database_alljourneys:
-                            begintime = datetime.utcnow().replace(tzinfo=utc) if begintime is None else begintime
-                            if database_alljourneys.filter(Q(endtime__gt=begintime) | Q(endtime=None) &
-                                                           Q(begintime__lt=begintime),
+                            begintime = make_aware(datetime.now()) if begintime is None else begintime
+                            if database_alljourneys.filter(Q(endtime__gt=begintime) | Q(endtime=None),
+                                                           begintime__lt=begintime,
                                                            is_cancel=True):
                                 raise ValidationError(_(
                                     "Een of meer geselecteerde lijnen zijn al aangepast voor de aangegeven ingangstijd."))
@@ -200,18 +200,19 @@ class Kv17ChangeForm(forms.ModelForm):
                                                   begintime=begintime,
                                                   endtime=endtime).delete()
 
-                        if database_alllines:
-                            begintime = datetime.utcnow().replace(tzinfo=utc) if begintime is None else begintime
-                            if database_alllines.filter(Q(endtime__gt=begintime) | Q(endtime=None),
-                                                        begintime__lt=begintime):
-                                raise ValidationError(_(
-                                    "De gehele vervoerder is al aangepast voor de aangegeven ingangstijd."))
+                    if database_alllines:
+                        begintime = make_aware(datetime.now()) if begintime is None else begintime
+                        if database_alllines.filter(Q(endtime__gt=begintime) | Q(endtime=None),
+                                                    begintime__lt=begintime):
+                            raise ValidationError(_(
+                                "De gehele vervoerder is al aangepast voor de aangegeven ingangstijd."))
 
-                        elif database_alljourneys:
-                            begintime = datetime.utcnow().replace(tzinfo=utc) if begintime is None else begintime
-                            if database_alljourneys.filter(Q(endtime__gt=begintime) | Q(endtime=None),
-                                                           begintime__lt=begintime):
-                                raise ValidationError(_("Een of meer geselecteerde lijnen zijn al aangepast"))
+                    elif database_alljourneys:
+                        begintime = make_aware(datetime.now()) if begintime is None else begintime
+                        if database_alljourneys.filter(Q(endtime__gt=begintime) | Q(endtime=None),
+                                                       begintime__lt=begintime):
+                            raise ValidationError(_(
+                                "Een of meer geselecteerde lijnen zijn al aangepast voor de aangegeven ingangstijd."))
 
         else:
             raise ValidationError(_("Geen geldige lijn geselecteerd"))
@@ -248,10 +249,9 @@ class Kv17ChangeForm(forms.ModelForm):
                                       endtime=endtime).update(is_recovered=True)
 
             if database_alllines:
-                begintime = datetime.utcnow().replace(tzinfo=utc) if begintime is None else begintime
-                if database_alllines.filter(Q(endtime__gt=begintime) | Q(endtime=None) &
-                                            Q(begintime__lt=begintime),
-                                            is_cancel=True):
+                begintime = make_aware(datetime.now()) if begintime is None else begintime
+                if database_alllines.filter(Q(endtime__gt=begintime) | Q(endtime=None),
+                                            begintime__lt=begintime):
                     raise ValidationError(_("De ingangstijd valt al binnen een geplande operatie."))
 
         else:  # NotMonitored dataownercode
@@ -265,10 +265,10 @@ class Kv17ChangeForm(forms.ModelForm):
                                       endtime=endtime).delete()
 
             if database_alllines:
-                begintime = datetime.utcnow().replace(tzinfo=utc) if begintime is None else begintime
+                begintime = make_aware(datetime.now()) if begintime is None else begintime
                 if database_alllines.filter(Q(monitoring_error__isnull=False) | Q(is_cancel=True) &
-                                            Q(endtime__gt=begintime) | Q(endtime=None) &
-                                            Q(begintime__lt=begintime)):
+                                            Q(endtime__gt=begintime) | Q(endtime=None),
+                                            begintime__lt=begintime):
                     raise ValidationError(_(
                         "De gehele vervoerder is al aangepast voor de aangegeven ingangstijd."))
 
@@ -448,7 +448,7 @@ class Kv17ChangeForm(forms.ModelForm):
         elif 'Alle ritten' in self.data['journeys']:  # hele lijn(en)
             for line in self.data['lines'].split(',')[0:-1]:
                 qry = Kv1Line.objects.filter(id=line)
-                if qry.count == 0:
+                if qry.count() == 0:
                     log.error("Failed to find line %s" % line)
                 else:
                     self.instance.pk = None
@@ -475,7 +475,7 @@ class Kv17ChangeForm(forms.ModelForm):
         else:  # enkele rit(ten)
             for journey in self.data['journeys'].split(',')[0:-1]:
                 qry = Kv1Journey.objects.filter(id=journey, dates__date=operatingday)
-                if qry.count == 0:
+                if qry.count() == 0:
                     log.error("Failed to find journey %s" % journey)
                 else:
                     # check if there's already a kv17change on this journey that is not a cancel
