@@ -200,19 +200,21 @@ class Kv17ChangeForm(forms.ModelForm):
                                                   begintime=begintime,
                                                   endtime=endtime).delete()
 
-                    if database_alllines:
-                        begintime = make_aware(datetime.now()) if begintime is None else begintime
-                        if database_alllines.filter(Q(endtime__gt=begintime) | Q(endtime=None),
-                                                    begintime__lt=begintime):
-                            raise ValidationError(_(
-                                "De gehele vervoerder is al aangepast voor de aangegeven ingangstijd."))
+                        if database_alllines:
+                            begintime = make_aware(datetime.now()) if begintime is None else begintime
+                            if database_alllines.filter(Q(endtime__gt=begintime) | Q(endtime=None),
+                                                        Q(is_cancel=True) | Q(monitoring_error__isnull=False), #Shorten is fine!
+                                                        begintime__lt=begintime):
+                                raise ValidationError(_(
+                                    "De gehele vervoerder is al aangepast voor de aangegeven ingangstijd."))
 
-                    elif database_alljourneys:
-                        begintime = make_aware(datetime.now()) if begintime is None else begintime
-                        if database_alljourneys.filter(Q(endtime__gt=begintime) | Q(endtime=None),
-                                                       begintime__lt=begintime):
-                            raise ValidationError(_(
-                                "Een of meer geselecteerde lijnen zijn al aangepast voor de aangegeven ingangstijd."))
+                        elif database_alljourneys:
+                            begintime = make_aware(datetime.now()) if begintime is None else begintime
+                            if database_alljourneys.filter(Q(endtime__gt=begintime) | Q(endtime=None),
+                                                           Q(is_cancel=True) | Q(monitoring_error__isnull=False), #Shorten is fine!
+                                                           begintime__lt=begintime):
+                                raise ValidationError(_(
+                                    "Een of meer geselecteerde lijnen zijn al aangepast voor de aangegeven ingangstijd."))
 
         else:
             raise ValidationError(_("Geen geldige lijn geselecteerd"))
