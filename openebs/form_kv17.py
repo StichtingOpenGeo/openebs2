@@ -762,26 +762,31 @@ class Kv17ShortenForm(forms.ModelForm):
 
     def save_mutationmessage(self):
         # Add details
-        for halte in self.data['haltes'].split(','):
-            if len(halte) == 0:
-                continue
+        for line in self.data['haltes'].split(";"):
+            if line != '':
+                lijn = self.instance.line
+                if line.split(":")[0] == lijn.publiclinenumber:
+                    haltes = line.split(":")[1].split(",")
+                    for halte in haltes:
+                        if len(halte) == 0:
+                            continue
 
-            halte_split = halte.split('_')
-            if len(halte_split) != 2:
-                continue
+                        halte_split = halte.split('_')
+                        if len(halte_split) != 2:
+                            continue
 
-            stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
+                        stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
 
-        if self.data['reasontype'] != '0' or self.data['advicetype'] != '0':
-            Kv17MutationMessage(change=self.instance,
-                                stop=stop,
-                                # passagesequencenumber=0,  # TODO: resolve this in the future
-                                reasontype=self.data['reasontype'],
-                                subreasontype=self.data['subreasontype'],
-                                reasoncontent=self.data['reasoncontent'],
-                                advicetype=self.data['advicetype'],
-                                subadvicetype=self.data['subadvicetype'],
-                                advicecontent=self.data['advicecontent']).save()
+                        if self.data['reasontype'] != '0' or self.data['advicetype'] != '0':
+                            Kv17MutationMessage(change=self.instance,
+                                                stop=stop,
+                                                # passagesequencenumber=0,  # TODO: resolve this in the future
+                                                reasontype=self.data['reasontype'],
+                                                subreasontype=self.data['subreasontype'],
+                                                reasoncontent=self.data['reasoncontent'],
+                                                advicetype=self.data['advicetype'],
+                                                subadvicetype=self.data['subadvicetype'],
+                                                advicecontent=self.data['advicecontent']).save()
 
     class Meta(Kv17ChangeForm.Meta):
         model = Kv17Change
