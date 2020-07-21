@@ -37,6 +37,9 @@ class Kv17ChangeForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super(Kv17ChangeForm, self).clean()
 
+        #Kv17Change.objects.all().delete()
+        #Kv17Shorten.objects.all().delete()
+
         operatingday = parse_date(self.data['operatingday'])
         if operatingday is None:
             raise ValidationError(_("Er staan geen ritten in de database"))
@@ -597,9 +600,6 @@ class Kv17ShortenForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super(Kv17ShortenForm, self).clean()
 
-        #Kv17Change.objects.all().delete()
-        #Kv17Shorten.objects.all().delete()
-
         operating_day = self.data['operatingday']
         if operating_day is None:
             raise ValidationError(_("Er staan geen ritten in de database"))
@@ -677,19 +677,18 @@ class Kv17ShortenForm(forms.ModelForm):
         for journey in self.data['journeys'].split(',')[0:-1]:
             qry = Kv1Journey.objects.filter(id=journey, dates__date=operatingday) #self.data['operatingday'])
             if qry.count() == 1:
+                departure_time = seconds_to_hhmm(qry[0].departuretime)
+                departure = make_aware(datetime.combine(operatingday, parse_time(departure_time)))
+                qry_kv17change_all = Kv17Change.objects.filter(Q(is_alljourneysofline=True) & Q(line=qry[0].line) |
+                                                               Q(is_alllines=True),
+                                                               operatingday=operatingday,
+                                                               monitoring_error__isnull=False, is_recovered=False,
+                                                               begintime__lte=departure, endtime__gt=departure)
+
                 qry_kv17change = Kv17Change.objects.filter(journey=qry[0], operatingday=operatingday,
                                                            monitoring_error__isnull=False, is_recovered=False)
 
                 if qry_kv17change.count() == 0:
-                    departure_time = seconds_to_hhmm(qry[0].departuretime)
-                    departure = make_aware(datetime.combine(operatingday, parse_time(departure_time)))
-                    qry_kv17change_all = Kv17Change.objects.filter(Q(is_alljourneysofline=True) & Q(line=qry[0].line) |
-                                                                   Q(is_alllines=True),
-                                                                   operatingday=operatingday,
-                                                                   monitoring_error__isnull=False, is_recovered=False,
-                                                                   begintime__lte=departure, endtime__gt=departure)
-                    begin = qry_kv17change_all[0].begintime
-                    end = qry_kv17change_all[0].endtime
                     self.instance.pk = None
                     self.instance.journey = qry[0]
                     self.instance.line = qry[0].line
@@ -697,10 +696,12 @@ class Kv17ShortenForm(forms.ModelForm):
                     self.instance.begintime = None
                     self.instance.endtime = None
                     self.instance.is_cancel = False
-                    if qry_kv17change_all.count() == 1:
+                    self.instance.monitoring_error = None
+                    if qry_kv17change_all.count() > 0:
                         self.instance.monitoring_error = qry_kv17change_all[0].monitoring_error
                 else:
                     self.instance = qry_kv17change[0]
+                    self.instance.monitoring_error = qry_kv17change[0].monitoring_error
                     qry_id = self.instance.id
 
                 # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
@@ -708,9 +709,6 @@ class Kv17ShortenForm(forms.ModelForm):
                     if qry_kv17change.count() == 0:
                         self.instance.save()
                     else:
-                        # update kv17change-object
-                        #Kv17Change.objects.filter(journey=qry[0], operatingday=parse_date(self.data['operatingday']))\
-                        #                  .update(showcancelledtrip=self.cleaned_data['showcancelledtrip'])
                         Kv17Change.objects.filter(pk=qry_id)\
                             .update(showcancelledtrip=self.cleaned_data['showcancelledtrip'])
 
