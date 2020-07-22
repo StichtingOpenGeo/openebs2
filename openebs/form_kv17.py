@@ -177,7 +177,7 @@ class Kv17ChangeForm(forms.ModelForm):
                         if database_alllines:
                             begintime = make_aware(datetime.now()) if begintime is None else begintime
                             if database_alllines.filter(Q(endtime__gt=begintime) | Q(endtime=None),
-                                                        begintime__lt=begintime,
+                                                        begintime__lte=begintime,
                                                         is_cancel=True):
                                 raise ValidationError(_(
                                     "De gehele vervoerder is al aangepast voor de aangegeven ingangstijd."))
@@ -252,7 +252,7 @@ class Kv17ChangeForm(forms.ModelForm):
             if database_alllines:
                 begintime = make_aware(datetime.now()) if begintime is None else begintime
                 if database_alllines.filter(Q(endtime__gt=begintime) | Q(endtime=None),
-                                            begintime__lt=begintime):
+                                            begintime__lte=begintime):
                     raise ValidationError(_("De ingangstijd valt al binnen een geplande operatie."))
 
         else:  # NotMonitored dataownercode
