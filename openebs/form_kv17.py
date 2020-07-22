@@ -10,7 +10,7 @@ from kv1.models import Kv1Journey, Kv1JourneyDate, Kv1Line, Kv1Stop
 from kv15.enum import REASONTYPE, SUBREASONTYPE, ADVICETYPE, SUBADVICETYPE, MONITORINGERROR
 from openebs.models import Kv17Change, Kv17Shorten
 from openebs.models import Kv17JourneyChange, Kv17MutationMessage
-from utils.time import seconds_to_hhmm #get_operator_date
+from utils.time import seconds_to_hhmm, hhmm_to_seconds #get_operator_date
 from django.utils.dateparse import parse_date, parse_time
 from django.utils.timezone import make_aware
 from datetime import datetime, time, timedelta
@@ -450,6 +450,8 @@ class Kv17ChangeForm(forms.ModelForm):
                     "Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
                     (self.instance.journey.dataownercode, self.instance.dataownercode))
 
+            self.update_shorten('multiple_journeys')
+
         elif 'Alle ritten' in self.data['journeys']:  # hele lijn(en)
             for line in self.data['lines'].split(',')[0:-1]:
                 qry = Kv1Line.objects.filter(id=line)
@@ -476,6 +478,7 @@ class Kv17ChangeForm(forms.ModelForm):
                         log.error(
                             "Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
                             (self.instance.journey.dataownercode, self.instance.dataownercode))
+            self.update_shorten('multiple_journeys')
 
         else:  # enkele rit(ten)
             for journey in self.data['journeys'].split(',')[0:-1]:
@@ -508,18 +511,46 @@ class Kv17ChangeForm(forms.ModelForm):
                     if qry_kv17change.count() == 0:
                         self.instance.save()
                     else:
-                        # update database-object
-                        Kv17Change.objects.filter(journey=qry[0],
-                                                  operatingday=parse_date(self.data['operatingday'])).update(
-                                                  monitoring_error=self.data['notMonitored'])
-                        # update self.instance
-                        self.instance.monitoring_error = self.data['notMonitored']
+                        self.update_shorten(qry[0])
+
                     xml_output.append(self.instance.to_xml())
                 else:
                     log.error(
                         "Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
                         (self.instance.journey.dataownercode, self.instance.dataownercode))
         return xml_output
+
+    def update_shorten(self, journey):
+        """ update kv17Change linked to Kv17Shorten if journey is notMonitored as well """
+        if journey == 'multiple_journeys':
+            shortened_journeys = []
+            if self.instance.begintime:
+                begin = hhmm_to_seconds(self.instance.begintime.time())
+            else:
+                begin = hhmm_to_seconds(datetime.now().time())
+            if self.instance.endtime:
+                end = hhmm_to_seconds(self.instance.endtime.time())
+            else:
+                end = 100800  # 04:00 next day
+
+            qry_shortened = Kv17Shorten.objects.filter(change__operatingday=self.instance.operatingday,
+                                                       change__dataownercode=self.instance.dataownercode,
+                                                       change__journey__departuretime__gte=begin,
+                                                       change__journey__departuretime__lt=end)
+            shortened_items = qry_shortened.count()
+            for i in range(shortened_items):
+                kv17change_id = qry_shortened[i].change_id
+                if kv17change_id not in shortened_journeys:  # shouldn't be neccessary, but just in case
+                    shortened_journeys.append(kv17change_id)
+
+            for change_id in shortened_journeys:
+                Kv17Change.objects.filter(pk=change_id).update(monitoring_error=self.data['notMonitored'])
+        else:
+            Kv17Change.objects.filter(journey=journey,
+                                      operatingday=parse_date(self.data['operatingday'])).update(
+                monitoring_error=self.data['notMonitored'])
+
+            self.instance.monitoring_error = self.data['notMonitored']
 
     class Meta(object):
         model = Kv17Change
@@ -599,6 +630,9 @@ class Kv17ShortenForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super(Kv17ShortenForm, self).clean()
+
+        #Kv17Change.objects.all().delete()
+        #Kv17Shorten.objects.all().delete()
 
         operating_day = self.data['operatingday']
         if operating_day is None:
@@ -802,10 +836,10 @@ class Kv17ShortenForm(forms.ModelForm):
 
         DAYS = [[str(d['date'].strftime('%Y-%m-%d')), str(d['date'].strftime('%d-%m-%Y'))] for d in
                 Kv1JourneyDate.objects.all()
-                    .filter(date__gte=datetime.today() - timedelta(days=1))
-                    .values('date')
-                    .distinct('date')
-                    .order_by('date')]
+                                      .filter(date__gte=datetime.today() - timedelta(days=1))
+                                      .values('date')
+                                      .distinct('date')
+                                      .order_by('date')]
 
         OPERATING_DAY = DAYS[((datetime.now().hour < 4) * -1) + 1] if len(DAYS) > 1 else None
         self.fields['operatingday'].choices = DAYS

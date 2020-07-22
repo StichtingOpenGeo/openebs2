@@ -31,3 +31,13 @@ def seconds_to_hhmm(seconds):
         hours -= 24
         time = "%02i:%02i (+1)" % (hours, minutes)
     return time
+
+
+def hhmm_to_seconds(time):
+    if time.hour < 4:
+        time.hour += 24
+    seconds = time.hour * 3600
+    seconds += time.minute * 60
+    seconds += time.second
+
+    return seconds
