@@ -60,7 +60,7 @@
 {% for mutation in object.journey_details_mutation_message.all %}
     <MUTATIONMESSAGE>
         <userstopcode>{{ mutation.stop.userstopcode }}</userstopcode>
-        <passagesequencenumber>{{ mutation.stoporder }}</passagesequencenumber>
+        <passagesequencenumber>{{ mutation.passagesequencenumber }}</passagesequencenumber>
     {% if mutation.reasontype %}
         <reasontype>{{mutation.reasontype }}</reasontype>
         <subreasontype>{{ mutation.subreasontype }}</subreasontype>
