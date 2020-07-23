@@ -539,18 +539,23 @@ class Kv17ChangeForm(forms.ModelForm):
 
     def update_shorten(self, journey):
         """ update kv17Change linked to Kv17Shorten if journey is notMonitored as well """
+        operatingday = self.instance.operatingday
         if journey == 'multiple_journeys':
             shortened_journeys = []
+
+            begin = hhmm_to_seconds(datetime.now().time())
             if self.instance.begintime:
                 begin = hhmm_to_seconds(self.instance.begintime.time())
             else:
-                begin = hhmm_to_seconds(datetime.now().time())
+                if operatingday != datetime.today().date():
+                    begin = 14400  # 04:00
+
             if self.instance.endtime:
                 end = hhmm_to_seconds(self.instance.endtime.time())
             else:
                 end = 100800  # 04:00 next day
 
-            qry_shortened = Kv17Shorten.objects.filter(change__operatingday=self.instance.operatingday,
+            qry_shortened = Kv17Shorten.objects.filter(change__operatingday=operatingday,
                                                        change__dataownercode=self.instance.dataownercode,
                                                        change__journey__departuretime__gte=begin,
                                                        change__journey__departuretime__lt=end)
