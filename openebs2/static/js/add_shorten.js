@@ -27,21 +27,13 @@ var operating_day = null;
 /* SELECTION + WRITING FUNCTIONS */
 function changeOperatingDayTrips() {
     selectedTrips = [];
-    $('#rit-list span').remove();
-    $('#rit-list .help').show();
-
-    selectedStops = [];
-    $('#halte-list span').remove();
-    $('#halte-list .help').show();
-    $('#stops span').removeClass('stop-check glyphicon glyphicon-ok-circle pull-right');
-    $('#stops td').removeClass('ui-selected success');
-
     activeJourneys = [];
-    $("#journeys").val('');
-    getActiveLines();
+    clearAllTrips(0);
+    clearAllStops();
 
     var operating_day_text = $("#id_operatingday option:selected").text();
     $("#operating_day_text").text(operating_day_text);
+    getActiveLines();
 }
 
 function getActiveLines() {
@@ -753,7 +745,7 @@ function clearAllTrips(call) {
     $('#tripoverzicht tr td').removeClass('all_selected');
     $('#tripoverzicht tr td').removeClass('success');
     $("#journeys").val('');
-    writeTripList();
+    //writeTripList();
     emptyLineList();
 }
 
