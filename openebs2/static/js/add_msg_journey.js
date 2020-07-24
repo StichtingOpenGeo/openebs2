@@ -54,6 +54,14 @@ var notMonitoredLineMeasures = null;
 var selectTripMeasures = [];
 
 function showTrips(event) {
+    if ($.inArray($("#all_lines").text(), selectedLines) != -1) {
+        selectedLines = [];
+        emptyLineList();
+        $('.rit-overzicht').css("display","block");
+        $('#rit-list .help').show();
+        $('#div_id_begintime_part').addClass('hidden');
+        $('#div_id_endtime_part').addClass('hidden');
+    }
     $("#rows tr.success").removeClass('success');
     $(".suc-icon").remove();
     $(this).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
@@ -71,30 +79,24 @@ function loadPreselectedJourneys() {
 }
 
 function selectTrip(event, ui) {
-    selectedLines = [];
-    lijnList = [];
-    emptyLineList();
-    $('#div_id_begintime_part').addClass('hidden');
-    $('#div_id_endtime_part').addClass('hidden');
+    if ($.inArray($("#all_journeys").text(), selectedTrips) != -1) {
+        emptyTripList();
+        $('.lijn-overzicht').css("display","none");
+        emptyLineList();
+    }
+    if (!$('#div_id_begintime_part').hasClass('hidden')) {
+        $('#div_id_begintime_part').addClass('hidden');
+        $('#div_id_endtime_part').addClass('hidden');
+        $('#id_begintime_part').val('');
+        $('#id_endtime_part').val('');
+    }
     $("#trips td.all_selected").removeClass('all_selected');
-    $('#id_begintime_part').val('');
-    $('#id_endtime_part').val('');
-    $('.lijn-overzicht').css("display","none");
     $('.rit-overzicht').css("display","block");
-    $('#lijn-list span').remove();
-    $('#lines').val('');
 
     var ritnr = $(ui.selected).attr('id').substring(1);
     if ($.inArray(parseInt(ritnr), activeJourneys) != -1 /* Note our array stores numbers, so convert */
        || $(ui.selected).hasClass("line_warning")) /* TODO: ritnr array selection faster than class selection? This disables trip that have been line cancelled. */
         return;
-
-    if ($.inArray($("#all_journeys").text(), selectedTrips) != -1) {
-        activeJourneys = [];
-        selectedTrips = [];
-        $('#rit-list span').remove();
-        $('#rit-list .help').show();
-    }
 
     var id = $.inArray(ritnr, selectedTrips);
     if (id == -1) {
@@ -112,13 +114,18 @@ function selectTrip(event, ui) {
 
 function removeTripFromX(event, ui) {
     if ($.inArray($("#all_journeys").text(), selectedTrips) != -1) {
+        $("#trips tr td").removeClass('all_selected');
         $('#rit-list span').remove();
         $('#rit-list .help').show();
-        $("#journeys").val('')
-        $('#lijn-list').empty();
-        lijnList = [];
-        $("#lines").val('');
+        $("#journeys").val('');
+        emptyLineList();
         $('.lijn-overzicht').css("display","none");
+        if (!$('#div_id_begintime_part').hasClass('hidden')) {
+            $('#div_id_begintime_part').addClass('hidden');
+            $('#div_id_endtime_part').addClass('hidden');
+            $('#id_begintime_part').val('');
+            $('#id_endtime_part').val('');
+        }
     } else {
         removeTrip($(this).parent().attr('id').substring(2));
     }
@@ -266,18 +273,16 @@ function writeActiveJourneys(data, status) {
 }
 
 function changeOperatingDayTrips() {
-    $('#div_id_begintime_part').addClass('hidden');
-    $('#div_id_endtime_part').addClass('hidden');
-    $("#rit-list span").remove();
-    $('#rit-list .help').show();
-    selectedTrips = [];
-    activeJourneys = [];
-    selectedLines = [];
-    $("#journeys").val('');
-    $("#lines").val('');
-    $("#lijn-list span").remove();
-    $(".lijn-overzicht").css("display","none");
+    if (!$('#div_id_begintime_part').hasClass('hidden')) {
+        $('#div_id_begintime_part').addClass('hidden');
+        $('#div_id_endtime_part').addClass('hidden');
+        $('#id_begintime_part').val('');
+        $('#id_endtime_part').val('');
+    }
+    emptyLineList();
+    emptyJourneyList();
     getActiveLines();
+
     var operating_day_text = $("#id_operatingday option:selected" ).text();
     $("#operating_day_text").text(operating_day_text);
 }
@@ -324,17 +329,18 @@ function selectAllTrips() {
     activeJourneys = [];
 
     if ($.inArray($("#all_lines").text(), selectedLines) != -1) {
-        $('#lines').val('');
-        $('#lijn-list span').remove();
-        selectedLines = [];
+        emptyLineList();
     }
+    $('#rit-list .help').hide();
     $('#journeys').val('');
     $('#rit-list span').remove();
     $("#trips tr td").removeClass('success');
-    $('#rit-list .help').hide();
     $('.lijn-overzicht').css("display","block");
-    $('#div_id_begintime_part').removeClass('hidden');
-    $('#div_id_endtime_part').removeClass('hidden');
+    if ($('#div_id_begintime_part').hasClass('hidden')) {
+        $('#div_id_begintime_part').removeClass('hidden');
+        $('#div_id_endtime_part').removeClass('hidden');
+    }
+
     var ritnr = $("#all_journeys").text();
     var dellink = '<span class="trip-remove glyphicon glyphicon-remove"></span>';
     $('#rit-list').append('<span id="st'+ritnr+'" class="pull-left trip-selection label label-danger">'+ritnr+' '+dellink+'</span>');
@@ -386,16 +392,22 @@ function emptyLineList() {
     lijnList = [];
     $("#lijn-list").empty();
     $("#lines").val('');
+    selectedLines = [];
+    cancelledLines = [];
+    currentLineMeasures = [];
+    $('#lijn-list span').remove();
+    $('.lijn-overzicht').css("display","none");
 }
 
 function removeLineFromX(event, ui) {
     if ($.inArray($("#all_lines").text(), selectedLines) != -1) {
+        emptyLineList();
+        emptyJourneyList();
         $('.rit-overzicht').css("display","block");
         $('#rit-list .help').show();
-        $('#lijn-list').empty();
-        lijnList = [];
-        $("#lines").val('');
-        $('.lijn-overzicht').css("display","none");
+        $('#trips thead').show();
+        $('#trips tbody').show();
+
     } else {
         lijnnr =$(this).parent().attr('id').replace('st', '');
         //remove from selectTripMeasures & allTrips
@@ -441,30 +453,25 @@ function removeLine(lijn) {
 
     }
     if (selectedLines.length == 0) {
-        $('#rit-list .help').show();
-        $('#rit-list span').remove();
-        $('.lijn-overzicht').css("display","none");
-        $("#journeys").val('');
+        emptyJourneyList();
+        emptyLineList();
     }
 }
 
 function selectAllLines() {
-    selectedLines = [];
-    lijnList = [];
-    selectedTrips = [];
-    activeJourneys = [];
+    emptyLineList();
+    emptyJourneyList();
     activeLine = null;
-    $('#div_id_begintime_part').removeClass('hidden');
-    $('#div_id_endtime_part').removeClass('hidden');
+    if ($('#div_id_endtime_part').hasClass('hidden')) {
+        $('#div_id_begintime_part').removeClass('hidden');
+        $('#div_id_endtime_part').removeClass('hidden');
+    }
+    $('#trips tbody tr').remove();
     $('.rit-overzicht').css("display","none");
     $('#trips thead').hide();
     $('#trips tbody').hide();
-    $('#journeys').val('');
-    $('#lijn-list').empty();
-    $('#rit-list span').remove();
     $('#rit-list .help').hide();
     $("#rows tr").removeClass('success');
-    $("#trips tr td").removeClass('ui-selected success');
     $(".suc-icon").remove();
 
     var lijn = $("#all_lines").text();
@@ -537,6 +544,21 @@ function changeOfRange() {
     selectTripMeasures = [];
     $('#trips.td.all_selected').removeClass('all_selected');
     colorSelectedRange();
+}
+
+function emptyJourneyList() {
+    selectedTrips = [];
+    activeJourneys = [];
+    allTrips = [];
+    tripSelection = [];
+    selectTripMeasures = [];
+    $("#rit-list span").remove();
+    $('.rit-overzicht').css("display","block");
+    $('#rit-list .help').show();
+    $('#trips thead').show();
+    $('#trips tbody').show();
+    $("#trips tr td").removeClass('ui-selected success');
+    $("#journeys").val('');
 }
 
 function getNotMonitoredJourneys() {
