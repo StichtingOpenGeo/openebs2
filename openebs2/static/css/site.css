@@ -254,8 +254,8 @@ span.stop-selection,span.trip-selection{
     background: #dff0d8;
 }
 
-.shortened {
-    background: eb34ba;
+#id_operatingday {
+    margin-bottom: 15px;
 }
 
 #halte-count .popover {
@@ -266,4 +266,8 @@ span.stop-selection,span.trip-selection{
 #shorten_buttons {
     display: none;
     width:100%;
+}
+
+.shortened {
+    background: eb34ba;
 }
