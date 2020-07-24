@@ -33,10 +33,12 @@ def seconds_to_hhmm(seconds):
     return time
 
 
-def hhmm_to_seconds(time):
-    if time.hour < 4:
-        time.hour += 24
-    seconds = time.hour * 3600
+def hhmm_to_seconds(call, time):
+    hour = time.hour
+    if call == 'end':
+        if time.hour < 4:
+            hour = time.hour + 24
+    seconds = hour * 3600
     seconds += time.minute * 60
     seconds += time.second
 

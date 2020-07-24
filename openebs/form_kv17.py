@@ -269,7 +269,7 @@ class Kv17ChangeForm(forms.ModelForm):
                         if begintime is None else begintime
 
                 if database_alllines.filter(Q(endtime__gt=begintime) | Q(endtime=None),
-                                        Q(begintime__lte=begintime) | Q(begintime=None)):
+                                            Q(begintime__lte=begintime) | Q(begintime=None)):
                     raise ValidationError(_("De ingangstijd valt al binnen een geplande operatie."))
 
         else:  # NotMonitored dataownercode
@@ -543,17 +543,17 @@ class Kv17ChangeForm(forms.ModelForm):
         if journey == 'multiple_journeys':
             shortened_journeys = []
 
-            begin = hhmm_to_seconds(datetime.now().time())
+            begin = hhmm_to_seconds('begin', datetime.now().time())
             if self.instance.begintime:
-                begin = hhmm_to_seconds(self.instance.begintime.time())
+                begin = hhmm_to_seconds('begin', self.instance.begintime.time())
             else:
                 if operatingday != datetime.today().date():
-                    begin = 14400  # 04:00
+                    begin = 14400  # =04:00 of operatingday
 
             if self.instance.endtime:
-                end = hhmm_to_seconds(self.instance.endtime.time())
+                end = hhmm_to_seconds('end', self.instance.endtime.time())
             else:
-                end = 100800  # 04:00 next day
+                end = 100800  # =04:00 next day
 
             qry_shortened = Kv17Shorten.objects.filter(change__operatingday=operatingday,
                                                        change__dataownercode=self.instance.dataownercode,
@@ -731,15 +731,16 @@ class Kv17ShortenForm(forms.ModelForm):
 
         xml_output = []
         for journey in self.data['journeys'].split(',')[0:-1]:
-            qry = Kv1Journey.objects.filter(id=journey, dates__date=operatingday) #self.data['operatingday'])
+            qry = Kv1Journey.objects.filter(id=journey, dates__date=operatingday)
             if qry.count() == 1:
                 departure_time = seconds_to_hhmm(qry[0].departuretime)
                 departure = make_aware(datetime.combine(operatingday, parse_time(departure_time)))
                 qry_kv17change_all = Kv17Change.objects.filter(Q(is_alljourneysofline=True) & Q(line=qry[0].line) |
                                                                Q(is_alllines=True),
+                                                               Q(begintime__lte=departure) | Q(begintime=None),
+                                                               Q(endtime__gt=departure) | Q(endtime=None),
                                                                operatingday=operatingday,
-                                                               monitoring_error__isnull=False, is_recovered=False,
-                                                               begintime__lte=departure, endtime__gt=departure)
+                                                               monitoring_error__isnull=False, is_recovered=False)
 
                 qry_kv17change = Kv17Change.objects.filter(journey=qry[0], operatingday=operatingday,
                                                            monitoring_error__isnull=False, is_recovered=False)
