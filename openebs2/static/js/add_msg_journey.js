@@ -74,8 +74,8 @@ function selectTrip(event, ui) {
     selectedLines = [];
     lijnList = [];
     emptyLineList();
-    $('#div_id_begintime_part').css("display","None");
-    $('#div_id_endtime_part').css("display","None");
+    $('#div_id_begintime_part').addClass('hidden');
+    $('#div_id_endtime_part').addClass('hidden');
     $("#trips td.all_selected").removeClass('all_selected');
     $('#id_begintime_part').val('');
     $('#id_endtime_part').val('');
@@ -266,6 +266,8 @@ function writeActiveJourneys(data, status) {
 }
 
 function changeOperatingDayTrips() {
+    $('#div_id_begintime_part').addClass('hidden');
+    $('#div_id_endtime_part').addClass('hidden');
     $("#rit-list span").remove();
     $('#rit-list .help').show();
     selectedTrips = [];
@@ -331,8 +333,8 @@ function selectAllTrips() {
     $("#trips tr td").removeClass('success');
     $('#rit-list .help').hide();
     $('.lijn-overzicht').css("display","block");
-    $('#div_id_begintime_part').css("display","inline");
-    $('#div_id_endtime_part').css("display","inline");
+    $('#div_id_begintime_part').removeClass('hidden');
+    $('#div_id_endtime_part').removeClass('hidden');
     var ritnr = $("#all_journeys").text();
     var dellink = '<span class="trip-remove glyphicon glyphicon-remove"></span>';
     $('#rit-list').append('<span id="st'+ritnr+'" class="pull-left trip-selection label label-danger">'+ritnr+' '+dellink+'</span>');
@@ -452,8 +454,8 @@ function selectAllLines() {
     selectedTrips = [];
     activeJourneys = [];
     activeLine = null;
-    $('#div_id_begintime_part').css("display","inline");
-    $('#div_id_endtime_part').css("display","inline");
+    $('#div_id_begintime_part').removeClass('hidden');
+    $('#div_id_endtime_part').removeClass('hidden');
     $('.rit-overzicht').css("display","none");
     $('#trips thead').hide();
     $('#trips tbody').hide();
