@@ -245,6 +245,9 @@ function changeOperatingDayTrips() {
     activeJourneys = [];
     selectedLines = [];
     $("#journeys").val('');
+    $("#lines").val('');
+    $("#lijn-list span").remove();
+    $(".lijn-overzicht").css("display","none");
     getActiveLines();
     var operating_day_text = $("#id_operatingday option:selected" ).text();
     $("#operating_day_text").text(operating_day_text);
