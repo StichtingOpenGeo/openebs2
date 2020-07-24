@@ -260,8 +260,8 @@ function selectTrip(event, ui) {
        || $('#rit-list span').text() == "Alle ritten "){
         clearAllTrips(1);
         clearAllStops();
-        $('#div_id_begintime_part').css("display","none");
-        $('#div_id_endtime_part').css("display","none");
+        $('#div_id_begintime_part').addClass("hidden");
+        $('#div_id_endtime_part').addClass('hidden');
     }
 
     var ritnr = $(ui.selected).attr('id').substring(1);
@@ -316,8 +316,8 @@ function selectAllTrips() {
 
         currentTripLabels.push($("#all_journeys").text());
     }
-    $('#div_id_begintime_part').css("display","inline");
-    $('#div_id_endtime_part').css("display","inline");
+    $('#div_id_begintime_part').removeClass('hidden');
+    $('#div_id_endtime_part').removeClass('hidden');
 
     if ($('#id_begintime_part').val().length == 0 & $('#id_endtime_part').val().length == 0) {
         colorSelectedRange();
@@ -740,8 +740,8 @@ function clearAllTrips(call) {
     currentTripLabels = [];
     $('#rit-list span').remove();
     $('#rit-list .help').show();
-    $('#div_id_begintime_part').css("display","none");
-    $('#div_id_endtime_part').css("display","none");
+    $('#div_id_begintime_part').addClass('hidden');
+    $('#div_id_endtime_part').addClass('hidden');
     $('#tripoverzicht tr td').removeClass('all_selected');
     $('#tripoverzicht tr td').removeClass('success');
     $("#journeys").val('');
@@ -778,8 +778,8 @@ function resetAll() {
     $("#tripoverzicht tr").remove();
     $("#body_stops .stopRow").remove();
     $("#body_stops .help").show(200);
-    $('#div_id_begintime_part').css("display","none");
-    $('#div_id_endtime_part').css("display","none");
+    $('#div_id_begintime_part').addClass("hidden");
+    $('#div_id_endtime_part').addClass('hidden');
     clearAllTrips(1);
     clearAllStops();
     $("#line_search").val("");

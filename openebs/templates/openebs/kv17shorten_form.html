@@ -9,6 +9,12 @@
     <div class="col-lg-4">
         <h2>{% trans "Ritverkorting" %}</h2>
         <form method="post" class="form" action="{% url 'shorten_add' %}">
+            <div class="control-group row">
+                <input type="hidden" id="journeys" name="journeys" />
+                <input type="hidden" id="lines" name="lines" />
+                <input type="hidden" id="haltes" name="haltes" />
+            </div>
+
             <div class="control-group">
                 <div class = "lijn-overzicht" style="display: none;">
                     <label>{% trans "Lijn(en)" %}</label>
@@ -36,10 +42,9 @@
                             <em class="help">{% trans "Klik een rit om een selectie te maken" %}</em>
                         {% endif %}
                     </p><br />
-                    <input type="hidden" id="journeys" name="journeys" />
-                    <input type="hidden" id="lines" name="lines" />
+                </div>
 
-                    <div class="clearfix" style="padding-bottom: 1em;"></div>
+                <div class="halte-overzicht" style="padding-bottom: 1em;">
                     <label>{% trans "Halte(s)" %}</label><br />
                     <p class="form-control-static" id="halte-list">
                         {% if prefilled_stop %}
@@ -52,8 +57,7 @@
                             <em class="help">{% trans "Klik haltenamen om een selectie te maken" %}</em>
                         {% endif %}
                     </p><br />
-                    <input type="hidden" id="haltes" name="haltes">
-                    </div>
+                </div>
             </div>
             <div class="clearfix"></div>
             {% crispy form form.helper %}
