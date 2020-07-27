@@ -10,11 +10,11 @@ from kv1.models import Kv1Journey, Kv1JourneyDate, Kv1Line, Kv1Stop
 from kv15.enum import REASONTYPE, SUBREASONTYPE, ADVICETYPE, SUBADVICETYPE, MONITORINGERROR
 from openebs.models import Kv17Change, Kv17Shorten
 from openebs.models import Kv17JourneyChange, Kv17MutationMessage
-from utils.time import seconds_to_hhmm, hhmm_to_seconds #get_operator_date
+from utils.time import seconds_to_hhmm, hhmm_to_seconds
 from django.utils.dateparse import parse_date, parse_time
 from django.utils.timezone import make_aware
 from datetime import datetime, time, timedelta
-from django.db.models import Q, Max
+from django.db.models import Q
 
 log = logging.getLogger('openebs.forms')
 
@@ -36,9 +36,6 @@ class Kv17ChangeForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super(Kv17ChangeForm, self).clean()
-
-        #Kv17Change.objects.all().delete()
-        #Kv17Shorten.objects.all().delete()
 
         operatingday = parse_date(self.data['operatingday'])
         if operatingday is None:
@@ -653,9 +650,6 @@ class Kv17ShortenForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super(Kv17ShortenForm, self).clean()
 
-        #Kv17Change.objects.all().delete()
-        #Kv17Shorten.objects.all().delete()
-
         operating_day = self.data['operatingday']
         if operating_day is None:
             raise ValidationError(_("Er staan geen ritten in de database"))
@@ -672,7 +666,6 @@ class Kv17ShortenForm(forms.ModelForm):
                     raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
                 valid_stops = []
                 unique_stops = 0
-                # splits haltes per lijn: .split(;)
                 for line in self.data['haltes'].split(";"):
                     if len(line) == 0:
                         continue
@@ -707,16 +700,13 @@ class Kv17ShortenForm(forms.ModelForm):
                     raise ValidationError(
                         _("De geselecteerde halte(s) zijn al aangepast voor de geselecteerde rit(ten)"))
 
-                # TODO: check if this actually works... or fix
-                """
                 # if same shorten_query in database as 'is-recovered', delete
-                Kv17Change.objects.filter(line=self.instance.line,
-                                          journey=self.instance.journey,
-                                          operatingday=self.instance.operatingday,
+                Kv17Change.objects.filter(line=journey_qry[0].line,
+                                          journey=journey,
+                                          operatingday=operating_day,
                                           is_cancel=False,
                                           is_recovered=True,
                                           shorten_details__stop=stop).delete()
-                """
             valid_journeys += 1
 
         if valid_journeys == 0:

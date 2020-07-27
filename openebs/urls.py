@@ -10,7 +10,7 @@ from openebs.views_generic import ChangeCompanyView, TemplateRequestView
 from openebs.views_scenario import ScenarioListView, ScenarioCreateView, ScenarioUpdateView, ScenarioDeleteView, PlanScenarioView, ScenarioStopsAjaxView
 from openebs.views_scenario_msg import ScenarioMessageCreateView, ScenarioMessageUpdateView, ScenarioMessageDeleteView
 from openebs.views_shorten import ShortenCreateView, ShortenDetailsView, ShortenStopsBoundAjaxView, \
-    ActiveStopsAjaxView_shorten, ActiveShortenForStopView, ActiveShortenStopListView
+    ActiveStopsAjaxViewShorten, ActiveShortenForStopView, ActiveShortenStopListView
 
 urlpatterns = [
     # Onze Index
@@ -60,7 +60,7 @@ urlpatterns = [
     url(r'^ritinkorting/halte/(?P<tpc>\w+)/ritten.json$', ActiveShortenForStopView.as_view(), name="shorten_stop_json"),
     url(r'^ritinkorting/active-haltes.geojson$', ActiveShortenStopListView.as_view(), name="shorten_geojson"),
     url(r'^ritinkorting/halte_bereik.geojson$', ShortenStopsBoundAjaxView.as_view(), name="shorten_bounds_ajax"),
-    url(r'^ritinkorting/haltes', ActiveStopsAjaxView_shorten.as_view(), name="active_stops_ajax"),
+    url(r'^ritinkorting/haltes', ActiveStopsAjaxViewShorten.as_view(), name="active_stops_ajax"),
 
     url(r'^vervoerder/wijzig', ChangeCompanyView.as_view(), name="company_change"),
     url(r'^vervoerder/filter/halte/nieuw', FilterStopCreateView.as_view(), name="filter_stop_add"),

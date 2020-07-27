@@ -2,18 +2,16 @@ import logging
 from braces.views import LoginRequiredMixin
 from datetime import date, timedelta, datetime
 from django.urls import reverse_lazy
-#from django.db.models import Q, F, Count
 from django.http import HttpResponseRedirect
-from django.views.generic import CreateView, DetailView, DeleteView#,  TemplateView, ListView
-from kv1.models import Kv1Journey, Kv1Stop#, Kv1Line
-from openebs.form_kv17 import Kv17ShortenForm#, Kv17ChangeForm
-from openebs.models import Kv17Shorten, Kv17Change#, Kv1StopFilter
+from django.views.generic import CreateView, DetailView
+from kv1.models import Kv1Journey, Kv1Stop
+from openebs.form_kv17 import Kv17ShortenForm
+from openebs.models import Kv17Shorten, Kv17Change
 from openebs.views_push import Kv17PushMixin
 from openebs.views_utils import FilterDataownerMixin
 from utils.time import get_operator_date, get_operator_date_aware, seconds_to_hhmm
-from utils.views import AccessMixin, JSONListResponseMixin#, ExternalMessagePushMixin
+from utils.views import AccessMixin, JSONListResponseMixin
 from django.utils.dateparse import parse_date
-#from django.utils.timezone import now
 from djgeojson.views import GeoJSONLayerView
 from django.contrib.gis.db.models import Extent
 
@@ -62,7 +60,6 @@ class ShortenCreateView(AccessMixin, Kv17PushMixin, CreateView):
 
     def form_invalid(self, form):
         log.error("Form for KV17 shorten invalid!")
-        print(form.errors)
         return super(ShortenCreateView, self).form_invalid(form)
 
     def form_valid(self, form):
@@ -112,7 +109,7 @@ class ShortenStopsBoundAjaxView(LoginRequiredMixin, JSONListResponseMixin, Detai
         return qry
 
 
-class ActiveStopsAjaxView_shorten(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+class ActiveStopsAjaxViewShorten(LoginRequiredMixin, JSONListResponseMixin, DetailView):
     model = Kv17Shorten
     render_object = 'object'
 
