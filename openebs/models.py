@@ -576,8 +576,9 @@ class Kv17Shorten(models.Model):
         verbose_name = _('Ritverkorting')
         verbose_name_plural = _("Ritverkortingen")
         permissions = (
-            ("view_shorten", _("Ritverkortingen bekijken")),
-            ("add_shorten", _("Ritverkortingen aanmaken")),
+            ("view_change", _("Ritaanpassingen bekijken")),
+            ("add_change", _("Ritaanpassingen aanmaken")),
+            ("cancel_lines", _("Lijnen annuleren")),
         )
 
     def __str__(self):
