@@ -21,7 +21,7 @@ log = logging.getLogger('openebs.views.changes')
 
 
 class ShortenCreateView(AccessMixin, Kv17PushMixin, CreateView):
-    permission_required = 'openebs.add_shorten'
+    permission_required = 'openebs.add_change'
     model = Kv17Shorten
     form_class = Kv17ShortenForm
     success_url = reverse_lazy('change_index')
@@ -86,54 +86,11 @@ class ShortenCreateView(AccessMixin, Kv17PushMixin, CreateView):
         return HttpResponseRedirect(self.success_url)
 
 
-class ShortenDeleteView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteView):
-    permission_required = 'openebs.add_shorten'
-    model = Kv17Shorten
-    success_url = reverse_lazy('change_index')
-
-    def delete(self, request, *args, **kwargs):
-        ret = super(ShortenDeleteView, self).delete(request, *args, **kwargs)
-        obj = self.get_object()
-        if self.push_message(obj.to_xml()):
-            log.error("Recovered shorten succesfully communicated to subscribers: %s" % obj)
-        else:
-            log.error("Failed to send recover request to subscribers: %s" % obj)
-            # We failed to push, recover our delete operation
-            obj.is_recovered = False
-            obj.recovered = None
-            obj.save() # Note, this won't work locally!
-        return ret
-
-
-class ShortenUpdateView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteView):
-    """ This is a really weird view - it's redoing a change that you deleted   """
-    permission_required = 'openebs.add_shorten'
-    model = Kv17Shorten
-    success_url = reverse_lazy('change_index')
-
-
 class ShortenDetailsView(AccessMixin, FilterDataownerMixin, DetailView):
     permission_required = 'openebs.view_shorten'
     permission_level = 'read'
     model = Kv17Change
     template_name = 'openebs/kv17shorten_detail.html'
-
-
-"""
-class ShortenStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
-    model = Kv1Stop
-    geometry_field = 'location'
-    properties = ['name', 'userstopcode', 'dataownercode']
-
-    def get_queryset(self):
-        qry = super(ShortenStopsAjaxView, self).get_queryset()
-        qry = qry.filter(stop_shorten__change_id=self.kwargs.get('pk', None))
-
-        if not (self.request.user.has_perm("openebs.view_shorten") or self.request.user.has_perm("openebs.add_shorten")):
-            qry = qry.filter(kv17change__dataownercode=self.request.user.userprofile.company)
-
-        return qry
-"""
 
 
 class ShortenStopsBoundAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
@@ -155,7 +112,7 @@ class ShortenStopsBoundAjaxView(LoginRequiredMixin, JSONListResponseMixin, Detai
         return qry
 
 
-class ActiveStopsAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+class ActiveStopsAjaxView_shorten(LoginRequiredMixin, JSONListResponseMixin, DetailView):
     model = Kv17Shorten
     render_object = 'object'
 

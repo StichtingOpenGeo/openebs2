@@ -9,8 +9,8 @@ from openebs.views_filters import FilterListView, FilterDeleteView, FilterUpdate
 from openebs.views_generic import ChangeCompanyView, TemplateRequestView
 from openebs.views_scenario import ScenarioListView, ScenarioCreateView, ScenarioUpdateView, ScenarioDeleteView, PlanScenarioView, ScenarioStopsAjaxView
 from openebs.views_scenario_msg import ScenarioMessageCreateView, ScenarioMessageUpdateView, ScenarioMessageDeleteView
-from openebs.views_shorten import ShortenCreateView, ShortenDeleteView, ShortenDetailsView, ShortenStopsBoundAjaxView, ActiveStopsAjaxView, \
-    ActiveShortenForStopView, ActiveShortenStopListView
+from openebs.views_shorten import ShortenCreateView, ShortenDetailsView, ShortenStopsBoundAjaxView, \
+    ActiveStopsAjaxView_shorten, ActiveShortenForStopView, ActiveShortenStopListView
 
 urlpatterns = [
     # Onze Index
@@ -55,16 +55,12 @@ urlpatterns = [
     url(r'^ritaanpassing/lijnen-nietgevolgd.json$', NotMonitoredLinesAjaxView.as_view(), name="notMonitored_lines_ajax"),
 
     url(r'^ritinkorting/add', ShortenCreateView.as_view(), name="shorten_add"),
-    url(r'^ritinkorting/(?P<pk>\d+)/verwijderen$', ShortenDeleteView.as_view(), name="shorten_delete"),
     url(r'^ritinkorting/(?P<pk>\d+)/bekijken', ShortenDetailsView.as_view(), name="shorten_view"),
-    url(r'^ritinkorting/kaart', TemplateRequestView.as_view(template_name='openebs/kv17shorten_map.html'),
-        name="shorten_map"),
+    url(r'^ritinkorting/kaart', TemplateRequestView.as_view(template_name='openebs/kv17shorten_map.html'), name="shorten_map"),
     url(r'^ritinkorting/halte/(?P<tpc>\w+)/ritten.json$', ActiveShortenForStopView.as_view(), name="shorten_stop_json"),
     url(r'^ritinkorting/active-haltes.geojson$', ActiveShortenStopListView.as_view(), name="shorten_geojson"),
     url(r'^ritinkorting/halte_bereik.geojson$', ShortenStopsBoundAjaxView.as_view(), name="shorten_bounds_ajax"),
-    url(r'^ritinkorting/haltes', ActiveStopsAjaxView.as_view(), name="active_stops_ajax"),
-
-
+    url(r'^ritinkorting/haltes', ActiveStopsAjaxView_shorten.as_view(), name="active_stops_ajax"),
 
     url(r'^vervoerder/wijzig', ChangeCompanyView.as_view(), name="company_change"),
     url(r'^vervoerder/filter/halte/nieuw', FilterStopCreateView.as_view(), name="filter_stop_add"),
