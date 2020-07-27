@@ -676,7 +676,7 @@ class Kv17ShortenForm(forms.ModelForm):
                 for line in self.data['haltes'].split(";"):
                     if len(line) == 0:
                         continue
-                    if line.split(":")[0] == journey_qry[0].line.publiclinenumber:
+                    if line.split(":")[0] == journey_qry[0].line.lineplanningnumber:
                         haltes = line.split(":")[1].split(",")
                         for halte in haltes:
                             if len(halte) == 0:
