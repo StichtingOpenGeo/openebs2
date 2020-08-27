@@ -13,12 +13,12 @@ from django.utils.timezone import now
 
 from djgeojson.views import GeoJSONLayerView
 
-from kv1.models import Kv1Stop
+from kv1.models import Kv1Stop, Kv1Line
 from openebs.views_push import Kv15PushMixin
 from openebs.views_utils import FilterDataownerMixin
 from utils.client import get_client_ip
 from utils.views import JSONListResponseMixin, AccessMixin
-from openebs.models import Kv15Stopmessage, Kv15Log, MessageStatus, Kv1StopFilter
+from openebs.models import Kv15Stopmessage, Kv15Log, MessageStatus, Kv1StopFilter, Kv15MessageStop, Kv15MessageLine
 from openebs.form import Kv15StopMessageForm
 
 
@@ -103,12 +103,24 @@ class MessageCreateView(AccessMixin, Kv15PushMixin, CreateView):
         if haltes:
             stops = Kv1Stop.find_stops_from_haltes(haltes)
 
+        lines = self.request.POST.get('lines', None)
+        lijnen = []
+        if lines:
+            for line in lines.split(','):
+                if len(line) > 0:
+                    result = Kv1Line.find_line(form.instance.dataownercode, line)
+                    lijnen.append(result)
+
         # Save and then log
         ret = super(MessageCreateView, self).form_valid(form)
 
         # Add stop data
         for stop in stops:
             form.instance.kv15messagestop_set.create(stopmessage=form.instance, stop=stop)
+
+        for lijn in lijnen:
+            form.instance.kv15messageline_set.create(stopmessage=form.instance, line=lijn)
+
         Kv15Log.create_log_entry(form.instance, get_client_ip(self.request))
 
         # Send to GOVI

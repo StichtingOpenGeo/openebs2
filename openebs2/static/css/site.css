@@ -210,3 +210,8 @@ span.stop-selection,span.trip-selection{
 .label-padded {
     margin-left: 4px;
 }
+
+#lijngebonden {
+    margin-left: 4px;
+    margin-top: 3px;
+}
