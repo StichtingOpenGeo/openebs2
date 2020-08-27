@@ -490,6 +490,7 @@ function removeStopFromDict(id, line){
 
 function writeLineOutputAsString(data) {
     var out = "";
+    data.sort();
     $.each(data, function (i, line) {
         out += line;
         out += ",";

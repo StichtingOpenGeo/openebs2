@@ -42,10 +42,12 @@
             <th>{% trans "Vervoerder"%}</th>
         {% endif %}
         <th class="col-lg-1">{% trans "Volgnummer"%}</th>
-        <th class="col-lg-5">{% trans "Bericht" %}</th>
+        <th class="col-lg-1">{% trans "Startdatum" %}</th>
+        <th class="col-lg-4">{% trans "Bericht" %}</th>
         <th class="col-lg-1">{% trans "Aantal haltes" %}</th>
+        <th class="col-lg-1">{% trans "Lijn(en)" %}</th>
         <th class="col-lg-2">{% trans "Tijden" %}</th>
-        <th class="col-lg-4">&nbsp;</th>
+        <th class="col-lg-3">&nbsp;</th>
   </tr>
   {% for msg in active_list %}
       <tr class="{% if msg.is_future %}warning{% endif %}">
@@ -57,7 +59,8 @@
             {% if msg.is_future %}
                 <i class="glyphicon glyphicon-time" title="{% trans 'Toekomstig bericht' %}"></i>
             {% endif %}
-            </td>
+        </td>
+        <td>{{ msg.messagestarttime|date:"d-m-Y" }}</td>
         <td>{{ msg.messagecontent|default_if_none:"[geen tekst of overschrijf bericht]" }} {% include "openebs/snippet_status.html" with status=msg.status only %}</td>
         <td class="text-center">
             <a class="halte-count btn btn-link" href="{% url 'msg_view' msg.id %}"
@@ -65,7 +68,8 @@
                 {{ msg.stops__count }}
             </a>
         </td>
-        <td>{% include "openebs/snippet_message-duration_small.html" with msg=msg only %}</td></td>
+        <td>{% include "openebs/snippet_message-lines.html" %}</td>
+        <td>{% include "openebs/snippet_message-duration_small.html" with msg=msg only %}</td>
         <td>
             {% if not view_all or edit_all %}
                 <form method="post" action="{% url 'msg_delete' msg.id %}">
@@ -110,6 +114,7 @@
       <th class="col-lg-1">{% trans "Volgnummer"%}</th>
       <th class="col-lg-6">{% trans "Bericht" %}</th>
       <th class="col-lg-1">{% trans "Haltes" %}</th>
+      <th class="col-lg-1">{% trans "Lijn(en)" %}</th>
       <th class="col-lg-5">{% trans "Tijden" %}</th>
   </tr>
   {% for msg in archive_list %}
@@ -128,6 +133,7 @@
                 {{ msg.stops__count }}
             </a>
         </td>
+        <td>{% include "openebs/snippet_message-lines.html" %}</td>
         <td>
             {% include "openebs/snippet_message-duration.html" with msg=msg only %}
             {% if edit_all %}
@@ -152,4 +158,5 @@
     $('#filter-select').on('change', function(event) {
         window.location.href = $('#filter-select').val();
     });
+
 {% endblock %}
