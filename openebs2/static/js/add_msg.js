@@ -2,7 +2,9 @@
 var selectedStops = []
 var scenarioStops = []
 var blockedStops = [] /* Already have messages set */
-var currentLine = null
+var messageData = [] /* all info from blocked stops */
+var currentLine = null /* publiclinenumber */
+var activeLine = null /* lineplanningnumber */
 var lineSelectionOfStop = {}
 var lineSelection = []
 var line_related = document.getElementById('lijngebonden').checked;
@@ -63,18 +65,64 @@ function writeList(data, status) {
     });
 }
 
+function showStopsOnChange() {
+    $('.stopRow span').remove();
+    blockedStops = [];
+    getHaltesWithMessages();
+    //showStops();
+    if (activeLine) {
+        if (messageData.length > 0) {
+            const filtered = messageData.filter(message => {
+                if (message.line == activeLine) {
+                    start_epoch = epoch(parseDate($('#id_messagestarttime').val()));
+                    end_epoch = epoch(parseDate($('#id_messageendtime').val()));
+                    if (message.starttime <= start_epoch && message.endtime >= start_epoch) {
+                        return true
+                    }
+                }
+            });
+            var stops = [];
+            if (filtered.length > 0) {
+                filtered.filter(message => {
+                    if ($.inArray(message.userstopcode, stops) == -1) {
+                        stops.push(message.userstopcode);
+                    }
+                });
+
+                $.each(stops, function(i, stop) {
+                    $('[id*='+stop+']').append('<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze begintijd"></span>');
+                    blockedStops.push(stop);
+                });
+            }
+        }
+        $('.stopRow td.success').append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;');
+
+    }
+}
+
 function showStops(event) {
-    $("#rows tr.success").removeClass('success');
-    $(".suc-icon").remove();
-    $(this).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
-    $.ajax('/line/'+$(this).attr('id').substring(1)+'/stops', {
-        success : writeLine
-    })
-    $(this).addClass('success');
-    currentLine = $('#rows tr.success').find("small").text();
+    if (event) {
+        $("#rows tr.success").removeClass('success');
+        $(".suc-icon").remove();
+        $(this).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
+        $.ajax('/line/'+$(this).attr('id').substring(1)+'/stops', {
+            success : writeLine
+        })
+        $(this).addClass('success');
+        currentLine = $('#rows tr.success').find("small").text();
+        activeLine = $('#rows tr.success').attr('id').substring(1);
+    } else if (activeLine) {
+        $.ajax('/line/'+activeLine.substring(1)+'/stops', {
+            success : writeLine
+        })
+    }
 }
 
 function selectStop(event, ui) {
+    var stop_id = $(ui.selected).attr('id').split("_")[1].slice(0,-1);
+    if ($.inArray(stop_id, blockedStops) != -1 & $('#id_messagetype_3').parent().hasClass('active') === false) { // if blocked and no OVERRULE
+        return
+    }
     $('#halte-list .help').hide();
     if (doSelectStop(ui.selected)) {
         writeHaltesField();
@@ -311,6 +359,19 @@ function writeLine(data, status) {
 
 function renderRow(row) {
     var stopSelection = [];
+    var currentStopMeasures = [];
+    var messagestarttime = epoch(parseDate($('#id_messagestarttime').val()));
+    var messageendtime = epoch(parseDate($('#id_messageendtime').val()));
+
+    messageData.filter(measure => {
+        if (measure.line == activeLine || measure.line == null) {
+            if (measure.starttime <= messagestarttime && measure.endtime >= messagestarttime) {
+                stop = measure.dataownercode + '_' + measure.userstopcode;
+                currentStopMeasures.push([stop, measure.starttime, measure.endtime, measure.line, measure.message]);
+            }
+        }
+    });
+
     out = '<tr class="stopRow">';
     if (row.left != null) {
         if ($.inArray(row.left.id, scenarioStops) != -1) {
@@ -324,7 +385,13 @@ function renderRow(row) {
                 out += '<td class="stop stop-left success" id="'+id+'">'+row.left.name+'<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;'
             } else {
                 out += '<td class="stop stop-left" id="'+id+'">'+row.left.name;
-                if ($.inArray(row.left.id, blockedStops) != -1) {
+                var selected = currentStopMeasures.filter(message => message[0] === row.left.id);
+                if (selected.length > 0) {
+                //if (currentStopMeasures.length > 0) {
+                    var line = '';
+                    if (selected[3] !== null) {
+                        line = 'deze lijn';
+                    }
                     out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al bericht"></span>'
                 }
                 out += '</td>';
@@ -352,7 +419,8 @@ function renderRow(row) {
                 out += '<td class="stop stop-right success" id="'+id+'">'+row.right.name+'<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;</td>';
             } else {
                 out += '<td class="stop stop-right" id="'+id+'">'+row.right.name;
-                if ($.inArray(row.right.id, blockedStops) != -1) {
+                var selected = currentStopMeasures.filter(message => message[0] === row.right.id);
+                if (selected.length > 0) {
                     out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al bericht"></span>'
                 }
                 out += '</td>';
@@ -381,15 +449,20 @@ function writeScenarioStops(data, status) {
 }
 
 function getHaltesWithMessages() {  // TODO: take line into account (if set)
-    $.ajax('/bericht/haltes.json', {
+    var starttime = parseDate($("#id_messagestarttime").val()).toJSON()
+    var line = null;
+
+    $.ajax({ url: '/bericht/haltes.json',
+            data: {'messagestarttime': starttime},
             success : writeHaltesWithMessages
-     })
+    });
 }
 
 function writeHaltesWithMessages(data, status) {   // TODO: take line into account (if set)
+    messageData = data.object;
     $.each(data.object, function (i, halte) {
-        stop = halte['dataownercode']+ '_' + halte['userstopcode']
-        blockedStops.push(stop)
+        //stop = halte['dataownercode']+ '_' + halte['userstopcode']
+        blockedStops.push(halte['userstopcode'])
     });
 }
 
@@ -496,6 +569,10 @@ function writeLineOutputAsString(data) {
         out += ",";
     });
     $("#lines").val(out);
+}
+
+function epoch(date) {
+    return Date.parse(date) / 1000;
 }
 
 /* TIME FUNCTIONS */
