@@ -67,55 +67,51 @@ function writeList(data, status) {
 
 function showStopsOnChange() {
     $('.stopRow span').remove();
-    blockedStops = [];
-    getHaltesWithMessages();
-    //showStops();
-    if (activeLine) {
-        if (messageData.length > 0) {
-            const filtered = messageData.filter(message => {
-                if (message.line == activeLine) {
-                    start_epoch = epoch(parseDate($('#id_messagestarttime').val()));
-                    end_epoch = epoch(parseDate($('#id_messageendtime').val()));
-                    if (message.starttime <= start_epoch && message.endtime >= start_epoch) {
-                        return true
-                    }
+    if (!activeLine) return;
+
+    var line = null;
+    if (line_related) {
+        line = activeLine;
+    }
+    if (messageData.length > 0) {
+        const filtered = messageData.filter(message => {
+            if (message.line == line) {
+                start_epoch = epoch(parseDate($('#id_messagestarttime').val()));
+                end_epoch = epoch(parseDate($('#id_messageendtime').val()));
+                if (message.starttime <= start_epoch && message.endtime >= start_epoch) {
+                    return true
+                }
+            }
+        });
+        var stops = [];
+        if (filtered.length > 0) {
+            filtered.filter(message => {
+                if ($.inArray(message.userstopcode, stops) == -1) {
+                    stops.push(message.userstopcode);
                 }
             });
-            var stops = [];
-            if (filtered.length > 0) {
-                filtered.filter(message => {
-                    if ($.inArray(message.userstopcode, stops) == -1) {
-                        stops.push(message.userstopcode);
-                    }
-                });
-
-                $.each(stops, function(i, stop) {
-                    $('[id*='+stop+']').append('<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze begintijd"></span>');
-                    blockedStops.push(stop);
-                });
-            }
+            $.each(stops, function(i, stop) {
+                if (line_related){
+                    $('[id*='+stop+']').append('<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze lijn en begintijd"></span>');
+                } else {
+                    $('[id*='+stop+']').append('<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een lijnonafhankelijk bericht voor deze begintijd"></span>');
+                }
+                blockedStops.push(stop);
+            });
         }
-        $('.stopRow td.success').append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;');
-
     }
+    $('.stopRow td.success').append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;');
+
 }
 
 function showStops(event) {
-    if (event) {
-        $("#rows tr.success").removeClass('success');
-        $(".suc-icon").remove();
-        $(this).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
-        $.ajax('/line/'+$(this).attr('id').substring(1)+'/stops', {
-            success : writeLine
-        })
-        $(this).addClass('success');
-        currentLine = $('#rows tr.success').find("small").text();
-        activeLine = $('#rows tr.success').attr('id').substring(1);
-    } else if (activeLine) {
-        $.ajax('/line/'+activeLine.substring(1)+'/stops', {
-            success : writeLine
-        })
-    }
+    $("#rows tr.success").removeClass('success');
+    $(".suc-icon").remove();
+    $(event.currentTarget).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
+    $.ajax('/line/'+$(event.currentTarget).attr('id').substring(1)+'/stops', {
+        success : writeLine
+    })
+    $(event.currentTarget).addClass('success');
 }
 
 function selectStop(event, ui) {
@@ -125,7 +121,11 @@ function selectStop(event, ui) {
     }
     $('#halte-list .help').hide();
     if (doSelectStop(ui.selected)) {
-        writeHaltesField();
+        if (line_related) {
+            writeHaltesWithLine();
+        } else {
+            writeHaltesWithoutLine();
+        }
     }
 }
 
@@ -228,12 +228,6 @@ function writeHaltesField() {
         out += halte+",";
     });
     $("#haltes").val(out);
-
-    if (line_related) {
-        writeHaltesWithLine();
-    } else {
-        writeHaltesWithoutLine();
-    }
 }
 
 /* Do the inverse in case we're editing or something */
@@ -362,9 +356,12 @@ function renderRow(row) {
     var currentStopMeasures = [];
     var messagestarttime = epoch(parseDate($('#id_messagestarttime').val()));
     var messageendtime = epoch(parseDate($('#id_messageendtime').val()));
-
+    var line = null;
+    if (line_related) {
+        line = activeLine;
+    }
     messageData.filter(measure => {
-        if (measure.line == activeLine || measure.line == null) {
+        if (measure.line == line) {
             if (measure.starttime <= messagestarttime && measure.endtime >= messagestarttime) {
                 stop = measure.dataownercode + '_' + measure.userstopcode;
                 currentStopMeasures.push([stop, measure.starttime, measure.endtime, measure.line, measure.message]);
@@ -387,12 +384,11 @@ function renderRow(row) {
                 out += '<td class="stop stop-left" id="'+id+'">'+row.left.name;
                 var selected = currentStopMeasures.filter(message => message[0] === row.left.id);
                 if (selected.length > 0) {
-                //if (currentStopMeasures.length > 0) {
-                    var line = '';
-                    if (selected[3] !== null) {
-                        line = 'deze lijn';
+                    if (line_related) {
+                        out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze lijn en begintijd"></span>'
+                    } else {
+                        out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een lijnonafhankelijk bericht voor deze begintijd"></span>'
                     }
-                    out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al bericht"></span>'
                 }
                 out += '</td>';
             }
@@ -421,7 +417,11 @@ function renderRow(row) {
                 out += '<td class="stop stop-right" id="'+id+'">'+row.right.name;
                 var selected = currentStopMeasures.filter(message => message[0] === row.right.id);
                 if (selected.length > 0) {
-                    out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al bericht"></span>'
+                    if (line_related) {
+                        out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze lijn en begintijd"></span>'
+                    } else {
+                        out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een lijnonafhankelijk bericht voor deze begintijd"></span>'
+                    }
                 }
                 out += '</td>';
             }
@@ -448,28 +448,54 @@ function writeScenarioStops(data, status) {
     }
 }
 
-function getHaltesWithMessages() {  // TODO: take line into account (if set)
+function getHaltesWithMessages(event) {
     var starttime = parseDate($("#id_messagestarttime").val()).toJSON()
-    var line = null;
+    activeLine = $(this).attr('id').substring(1);
+    currentLine = $(this).find("small").text();
 
     $.ajax({ url: '/bericht/haltes.json',
             data: {'messagestarttime': starttime},
-            success : writeHaltesWithMessages
+            success : function(data) {
+                writeHaltesWithMessages(data);
+                showStops(event);
+                }
     });
 }
 
-function writeHaltesWithMessages(data, status) {   // TODO: take line into account (if set)
+function writeHaltesWithMessages(data) {
+    $('.stopRow span').remove();
+    blockedStops = [];
     messageData = data.object;
-    $.each(data.object, function (i, halte) {
-        //stop = halte['dataownercode']+ '_' + halte['userstopcode']
-        blockedStops.push(halte['userstopcode'])
-    });
+    if (activeLine) {
+        var line = null;
+        if (line_related) {
+            line = activeLine
+        }
+        $.each(data.object, function (i, halte) {
+            if (halte['line'] == line) {
+                blockedStops.push(halte['userstopcode'])
+            }
+        });
+    } else {  /* shouldn't be neccassary, but just in case */
+        $.each(data.object, function (i, halte) {
+            blockedStops.push(halte['userstopcode'])
+        });
+    }
 }
 
 function lineRelated() {
-  line_related = document.getElementById('lijngebonden').checked;
-  $('#line_related').val(line_related);
-  switchHaltesField();
+    line_related = document.getElementById('lijngebonden').checked;
+    if (!activeLine) return
+
+    var starttime = parseDate($("#id_messagestarttime").val()).toJSON()
+    $.ajax({ url: '/bericht/haltes.json',
+            data: {'messagestarttime': starttime},
+            success : function(data){
+                writeHaltesWithMessages(data);
+                showStopsOnChange();
+                switchHaltesField();
+                }
+    });
 }
 
 function switchHaltesField() {
@@ -481,7 +507,6 @@ function switchHaltesField() {
         $('#lines').val('');
         writeHaltesWithoutLine();
     }
-    writeHaltesField();
 }
 
 function writeHaltesWithLine() {
@@ -500,6 +525,7 @@ function writeHaltesWithLine() {
     if (selectedStops.length === 0) {
         $('#halte-list .help').show();
     }
+    writeHaltesField();
 }
 
 function writeHaltesWithoutLine() {
@@ -519,6 +545,7 @@ function writeHaltesWithoutLine() {
     if (selectedStops.length === 0) {
         $('#halte-list .help').show();
     }
+    writeHaltesField();
 }
 
 function stopDict(stop, line) {
