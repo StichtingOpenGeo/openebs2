@@ -31,7 +31,6 @@ class MessageListView(AccessMixin, ListView):
     permission_required = 'openebs.view_messages'
     model = Kv15Stopmessage
 
-
     def get_context_data(self, **kwargs):
         # context = super(MessageListView, self).get_context_data(**kwargs)
         context = {'view_all': self.is_view_all(),
@@ -81,13 +80,6 @@ class MessageCreateView(AccessMixin, Kv15PushMixin, CreateView):
     model = Kv15Stopmessage
     form_class = Kv15StopMessageForm
     success_url = reverse_lazy('msg_index')
-
-    def get_form_kwargs(self):
-        kwargs = super(MessageCreateView, self).get_form_kwargs()
-        kwargs.update({
-            'user': self.request.user
-        })
-        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super(MessageCreateView, self).get_context_data(**kwargs)
