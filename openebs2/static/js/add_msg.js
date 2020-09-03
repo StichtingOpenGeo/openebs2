@@ -231,7 +231,7 @@ function writeHaltesField() {
 }
 
 /* Do the inverse in case we're editing or something */
-function readHaltesField() {  // TODO: not adjusted to new html yet
+function readHaltesField() {  // TODO: not adjusted to new line-related yet. Not sure if that's neccessary though
     $.each($("#haltes").val().split(','), function(i, halte) {
         if (halte != "") {
             selectedStops.push('s'+halte)
@@ -291,12 +291,16 @@ function removeStopsOfLine(event) {
     }
     $('#'+$(this).parent().parent().attr('id')).remove();
 
-    writeHaltesField();
+    if (line_related) {
+        writeHaltesWithLine();
+    } else {
+        writeHaltesWithoutLine();
+    }
 }
 
 /* Do the actual work here */
 function removeStop(id, line) {
-if (id == 'all') {
+    if (id == 'all') {
         for (var i = 0; i < selectedStops.length; i++) {
             if (selectedStops[i][1] == line) {
                 if (line === currentLine) {
@@ -337,7 +341,11 @@ if (id == 'all') {
             }
         }
     }
-    writeHaltesField()
+    if (line_related) {
+        writeHaltesWithLine();
+    } else {
+        writeHaltesWithoutLine();
+    }
 }
 
 function writeLine(data, status) {
