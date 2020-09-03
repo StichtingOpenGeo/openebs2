@@ -96,7 +96,7 @@
         </td>
     </tr>
   {% empty %}
-      <tr><td {% if view_all %}colspan="6"{% else %}colspan="5"{% endif %} class="text-center"><em>{% trans "Geen berichten gevonden" %}</em></td></tr>
+      <tr><td {% if view_all %}colspan="8"{% else %}colspan="7"{% endif %} class="text-center"><em>{% trans "Geen berichten gevonden" %}</em></td></tr>
   {% endfor %}
   </table>
     <p><small><i class="glyphicon glyphicon-time"></i> + geel: {% trans "toekomstig bericht" %}</small></p><br />
