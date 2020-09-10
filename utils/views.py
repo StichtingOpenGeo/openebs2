@@ -129,6 +129,13 @@ class AccessMixin(BracesAccessMixin):
             if not has_permission:  # If the user lacks the permission
                 log.info("User %s requested %s but doesn't have permission" % (self.request.user, request.get_full_path()))
                 return redirect(reverse('app_nopermission'))
+
+            if not hasattr(request.user, 'userprofile') or \
+                    not hasattr(request.user.userprofile, 'company'):
+                log.info("User %s requested %s but doesn't have an userprofile or operator" % (
+                self.request.user, request.get_full_path()))
+                return redirect(reverse('app_nopermission'))
+
         else:
             return redirect_to_login(request.get_full_path(),
                                      self.get_login_url(),
