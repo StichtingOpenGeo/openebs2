@@ -1,4 +1,5 @@
 {% load i18n static %}
+{% load filters %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -126,10 +127,11 @@
                     </a></li>
                 <li class="divider"></li>
               {%  endif %}
-
+              {% if not request.user|has_group:"uma_authorization" %}
               <li><a href="{% url 'app_password_change' %}">
                   <span class="glyphicon glyphicon-user"></span>&nbsp;{% trans "Wachtwoord wijzigen" %}
               </a></li>
+              {% endif %}
               <li><a href="/uitloggen/">
                   <span class="glyphicon glyphicon-log-out"></span>&nbsp;{% trans "Uitloggen" %}
               </a></li>

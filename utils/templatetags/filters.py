@@ -15,6 +15,7 @@ from datetime import time, datetime, timedelta
 
 from django import template
 from django.utils.timezone import now
+from django.contrib.auth.models import Group
 
 register = template.Library()
 
@@ -136,3 +137,9 @@ def seconds_time(seconds):
         d = d + timedelta(days=1)
 
     return datetime.combine(d, time(h, m, s))
+
+
+@register.filter
+def has_group(user, group_name):
+    group = Group.objects.get(name=group_name)
+    return True if group in user.groups.all() else False
