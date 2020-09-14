@@ -50,9 +50,13 @@ STATICFILES_FINDERS = (
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'rsy&8z9#0sr4_fpf!p1omymr(!*5upr%p4k7y#d9cz@^et+u)='
 
-LOGIN_URL = 'app_login'
-LOGOUT_URL = 'app_logout'
-LOGIN_REDIRECT_URL = 'msg_index'  # This is temporary
+""" these URLS are now handled by login_view and logout_view in utils/views """
+#LOGIN_URL = 'app_login'
+#LOGOUT_URL = 'app_logout'
+#LOGIN_REDIRECT_URL = 'msg_index'  # This is temporary
+
+# Provided by mozilla-django-oidc
+LOGIN_URL = 'oidc_authentication_callback'
 
 TEMPLATES = [
     {
@@ -81,6 +85,7 @@ MIDDLEWARE = (
     'django.middleware.csrf.CsrfViewMiddleware',
     # 'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'mozilla_django_oidc.middleware.SessionRefresh',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
@@ -93,6 +98,7 @@ WSGI_APPLICATION = 'openebs2.wsgi.application'
 INSTALLED_APPS = (
     # Django pieces
     'django.contrib.auth',
+    'keycloak_oidc',  # load after auth!
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
@@ -116,6 +122,22 @@ INSTALLED_APPS = (
     # Admin & tools
     'django.contrib.admin',
 )
+
+# OICD
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'keycloak_oidc.auth.OIDCAuthenticationBackend',
+)
+
+# set these in local_settings
+OIDC_RP_CLIENT_ID = ''
+OIDC_RP_CLIENT_SECRET = ''
+
+OIDC_OP_AUTHORIZATION_ENDPOINT = ''
+OIDC_OP_TOKEN_ENDPOINT = ''
+OIDC_OP_USER_ENDPOINT = ''
+OIDC_OP_JWKS_ENDPOINT = ''
+OIDC_OP_LOGOUT_ENDPOINT = ''
 
 # Logging so far
 LOGGING = {

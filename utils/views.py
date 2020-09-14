@@ -19,6 +19,7 @@ from django.urls import reverse
 from django.shortcuts import redirect, render
 from utils.push import Push
 from django.db.models.query import QuerySet
+from django.contrib.auth import views as auth_views
 
 log = logging.getLogger('openebs.views.mixins')
 
@@ -197,4 +198,23 @@ def handler404(request, exception):
 def handler500(request):
     response = render(request, 'openebs/servererror.html', {})
     response.status_code = 500
+    return response
+
+def login_view(request):
+    if not request.user.is_authenticated:
+        if settings.OIDC_OP_AUTHORIZATION_ENDPOINT:
+            response = redirect('oidc_authentication_init')
+        else:
+            response = redirect(reverse('app_login'))
+    else:
+        response = redirect(reverse('msg_index'))
+    return response
+
+
+def logout_view(request):
+    if settings.OIDC_OP_AUTHORIZATION_ENDPOINT and settings.OIDC_OP_LOGOUT_ENDPOINT:
+        response = redirect('oidc_logout')
+    else:
+        auth_views.LogoutView.as_view()(request)
+        response = redirect(reverse('app_login'))
     return response

@@ -1,4 +1,4 @@
-from django.conf.urls import url
+from django.conf.urls import url, re_path
 from django.views.generic import RedirectView
 from openebs.views import MessageListView, MessageCreateView, MessageDeleteView, MessageUpdateView, ActiveStopsAjaxView, MessageDetailsView, MessageStopsAjaxView, \
     MessageStopsBoundAjaxView, MessageResendView
@@ -8,11 +8,11 @@ from openebs.views_filters import FilterListView, FilterDeleteView, FilterUpdate
 from openebs.views_generic import ChangeCompanyView, TemplateRequestView
 from openebs.views_scenario import ScenarioListView, ScenarioCreateView, ScenarioUpdateView, ScenarioDeleteView, PlanScenarioView, ScenarioStopsAjaxView
 from openebs.views_scenario_msg import ScenarioMessageCreateView, ScenarioMessageUpdateView, ScenarioMessageDeleteView
-
+from utils.views import login_view
 
 urlpatterns = [
     # Onze Index
-    url(r'^$', RedirectView.as_view(url='/bericht', permanent=True), name='index'),
+    re_path(r'^$', login_view),
 
     # Kaart views
     url(r'^kaart$', TemplateRequestView.as_view(template_name='openebs/kv15stopmessage_map.html'), name="msg_map"),
