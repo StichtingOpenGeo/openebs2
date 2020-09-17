@@ -5,6 +5,24 @@
         <span class="input-group-addon"><span class="glyphicon glyphicon-search"></span></span>
         <input type="text" class="form-control" id="line_search" placeholder="{% trans 'Lijnnummer of eindbestemming' %}">
     </div><br />
+    <h4>Of zoek lijn(en) bij halte</h4>
+    <div class="input-group">
+        <span class="input-group-addon"><span class="glyphicon glyphicon-search"></span></span>
+        <input type="text" class="form-control" id="halte_search" placeholder="{% trans 'Haltenummer of -naam' %}">
+    </div><br />
+    <table class="table table-condensed table-hover">
+        <thead>
+            <tr>
+                <th>{% trans "Halte" %}</th>
+                <th>{% trans "Haltenaam" %}</th>
+            </tr>
+        </thead>
+        <tbody id="stop_rows">
+            <tr>
+                <td colspan="2" class="text-center"><em>{% trans "Typ een naam of haltenummer om een halte te zoeken" %}</em></td>
+            </tr>
+        </tbody>
+    </table><br/>
     <table class="table table-condensed table-hover">
         <thead>
             <tr>

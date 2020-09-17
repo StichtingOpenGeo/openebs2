@@ -6,9 +6,13 @@ $("#stops").selectable({
   cancel: 'img'
 });
 $( "#line_search" ).on('keyup', changeSearch);
+$( "#halte_search" ).on('keyup', stopSearch);
 $( "#id_messagecontent" ).on('keyup', changeCount);
 $( "#id_messagecontent" ).trigger( "keyup" );
 $( "body" ).on('click', ".line", getHaltesWithMessages);
+$( "body" ).on('click', ".search_stop", getLinesOfStop);
+
+
 $( "body" ).on('click', ".stop-remove", selectionRemoveStop);
 $( "body" ).on('click', ".stop.success", lineRemoveStop);
 $( "body" ).on('click', ".line-remove", removeStopsOfLine);

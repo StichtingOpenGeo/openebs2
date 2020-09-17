@@ -18,6 +18,14 @@ function changeSearch(event) {
     }
 }
 
+function stopSearch(event) {
+    if ($("#halte_search").val().length > 0) {
+        $.ajax('/stop/'+$("#halte_search").val(), {
+            success : writeStopList
+        })
+    }
+}
+
 function changeCount(event) {
     len = $(this).val().length
     addon = $(this).parents('.countwrapper').find('.charcount')[0]
@@ -30,6 +38,16 @@ function changeCount(event) {
     } else if (len > 249) {
        $(addon).addClass('badge-danger')
     }
+}
+
+function getLinesOfStop(event) {
+    $("#stop_rows tr.success").removeClass('success');
+    $(".suc-icon").remove();
+    $(event.currentTarget).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
+    $.ajax('/stop/'+$(event.currentTarget).attr('id').substring(2)+'/lines', {
+        success : writeList
+    })
+    $(event.currentTarget).addClass('success');
 }
 
 function writeList(data, status) {
@@ -64,6 +82,30 @@ function writeList(data, status) {
         }
     });
 }
+
+function writeStopList(data, status) {
+    validIds = []
+    /* Add them all, as neccesary */
+    $.each(data.object_list, function (i, stop) {
+        validIds.push('sl'+stop.dataownercode+'_'+stop.userstopcode)
+        if (!$('#sl'+stop.dataownercode+'_'+stop.userstopcode).length) {
+            var out = '';
+            var row = '';
+            out += "<strong>"+stop.userstopcode+"</strong>";
+            row = '<tr class="search_stop" id="sl'+stop.dataownercode+'_'+stop.userstopcode+'"><td>'+out+'</td>';
+            row += '<td>'+stop.name+'</td></tr>';
+            $(row).hide().appendTo("#stop_rows").fadeIn(999);
+        }
+    });
+
+    /* Cleanup */
+    $("#stop_rows tr").each(function(index) {
+        if ($.inArray($(this).attr('id'), validIds) == -1) {
+            $(this).fadeOut(999).remove()
+        }
+    });
+}
+
 
 function showStopsOnChange() {
     $('.stopRow span').remove();
