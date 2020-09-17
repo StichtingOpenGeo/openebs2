@@ -13,7 +13,7 @@ class ChangeCompanyView(LoginRequiredMixin, SuperuserRequiredMixin, RedirectView
     We use the time before redirect to set the new company
     """
     permanent = False
-    url = reverse_lazy('index')
+    url = reverse_lazy('msg_index')
 
     def get_redirect_url(self, **kwargs):
         if self.request.user.is_superuser:
