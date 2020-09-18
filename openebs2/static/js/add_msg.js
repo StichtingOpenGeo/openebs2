@@ -41,16 +41,20 @@ function changeCount(event) {
 }
 
 function getLinesOfStop(event) {
+    $("#rows2").empty();
     $("#stop_rows tr.success").removeClass('success');
     $(".suc-icon").remove();
     $(event.currentTarget).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
     $.ajax('/stop/'+$(event.currentTarget).attr('id').substring(2)+'/lines', {
-        success : writeList
+        success : function(data, status, item){
+            writeList(data, status, 1);
+        }
     })
     $(event.currentTarget).addClass('success');
+    //$("#stop_rows tr:not(.success)").fadeOut(100);
 }
 
-function writeList(data, status) {
+function writeList(data, status, item) {
     validIds = []
     /* Add them all, as neccesary */
     $.each(data.object_list, function (i, line) {
@@ -70,17 +74,30 @@ function writeList(data, status) {
                     row = '<tr class="line" id="l'+line.pk+'"><td>'+out+'</td>';
                 }
                 row += '<td>'+line.headsign+'</td></tr>';
-                $(row).hide().appendTo("#rows").fadeIn(999);
+                if (item == 1){
+                    $(row).hide().appendTo('#rows2').fadeIn(999);
+
+                } else {
+                    $(row).hide().appendTo('#rows').fadeIn(999);
+                }
             }
         }
     });
 
     /* Cleanup */
-    $("#rows tr").each(function(index) {
-        if ($.inArray($(this).attr('id'), validIds) == -1) {
-            $(this).fadeOut(999).remove()
-        }
-    });
+    if (item == 1){
+        $("#rows2 tr").each(function(index) {
+            if ($.inArray($(this).attr('id'), validIds) == -1) {
+                $(this).fadeOut(999).remove()
+            }
+        });
+    } else {
+        $("#rows tr").each(function(index) {
+            if ($.inArray($(this).attr('id'), validIds) == -1) {
+                $(this).fadeOut(999).remove()
+            }
+        });
+    }
 }
 
 function writeStopList(data, status) {
