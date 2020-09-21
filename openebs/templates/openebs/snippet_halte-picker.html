@@ -1,12 +1,12 @@
 {% load i18n %}
 
 <div class="col-lg-3">
-    <h2>Lijn</h2>
+    <h2>Zoeken</h2>
     <div class="panel-group" id="my-accordion">
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#my-accordion"
+                    <a class="accordion-toggle" id="line_button" data-toggle="collapse" data-parent="#my-accordion"
                        href="#searchLine">Zoek op lijn</a></h4>
             </div>
             <div id="searchLine" class="panel-collapse collapse in" aria-expanded="false">
@@ -30,18 +30,32 @@
                 </table>
             </div>
         </div>
-        <br/>
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#my-accordion"
-                       href="#searchStop">Zoek lijn(en) bij halte</a></h4>
+                    <a class="accordion-toggle" id="stop_button" data-toggle="collapse" data-parent="#my-accordion"
+                       href="#searchStop">Zoek op halte</a></h4>
             </div>
             <div id="searchStop" class="panel-collapse collapse" aria-expanded="false">
                 <br/>
                 <div class="input-group">
                     <span class="input-group-addon"><span class="glyphicon glyphicon-search"></span></span>
                     <input type="text" class="form-control" id="halte_search" placeholder="{% trans 'Haltenummer of -naam' %}">
+                </div><br />
+
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a class="accordion-toggle" id="stopline_button" data-toggle="collapse" data-parent="#my-accordion"
+                       href="#searchStopLine">Zoek lijn(en) bij halte</a></h4>
+            </div>
+            <div id="searchStopLine" class="panel-collapse collapse" aria-expanded="false">
+                <br/>
+                <div class="input-group">
+                    <span class="input-group-addon"><span class="glyphicon glyphicon-search"></span></span>
+                    <input type="text" class="form-control" id="haltelijn_search" placeholder="{% trans 'Haltenummer of -naam' %}">
                 </div><br />
                 <table class="table table-condensed table-hover">
                     <thead>
@@ -71,14 +85,21 @@
                 </table>
             </div>
         </div>
+
     </div>
 </div>
 
-<div class="col-lg-5">
+<div class="col-lg-5" id="haltes-original" >
     <h2>Haltes
         <a class="btn btn-success btn-sm pull-right hide stop_btn" id="stops_all"><i class="glyphicon glyphicon-plus"></i>&nbsp;{% trans "Selecteer lijn" %}</a>&nbsp;&nbsp;
         <a class="btn btn-danger btn-sm pull-right hide stop_btn" id="stops_none"><i class="glyphicon glyphicon-remove-circle"></i>&nbsp;{% trans "Wis (lijn)selectie" %}</a></h2>
     <table class="table openebs-stops" id="stops">
         <tr class="help text-center"><td><em>Klik een lijn om haltes hier te zien</em></td></tr>
+    </table>
+</div>
+<div class="col-lg-5 hidden" id="haltes-new" >
+    <h2>Haltes</h2>
+    <table class="table table-condensed" id="stops-new">
+        <tr class="help text-center"><td><em style="font-size: 85%; padding: 0; vertical-align: top;">Typ een haltenummer of -naam om een halte te zoeken</em></td></tr>
     </table>
 </div>

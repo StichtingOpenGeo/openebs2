@@ -5,7 +5,13 @@ $("#stops").selectable({
   selected: selectStop,
   cancel: 'img'
 });
+$("#stops-new").selectable({
+  filter:'tr.stop',
+  selected: selectStop,
+  cancel: 'img'
+});
 $( "#line_search" ).on('keyup', changeSearch);
+$( "#haltelijn_search" ).on('keyup', changeSearch);
 $( "#halte_search" ).on('keyup', stopSearch);
 $( "#id_messagecontent" ).on('keyup', changeCount);
 $( "#id_messagecontent" ).trigger( "keyup" );
@@ -33,23 +39,11 @@ $('body').on('change', '#id_messagedurationtype_1', function() {
 $('body').on('change', '#id_messagedurationtype_2,#id_messagedurationtype_3', function() {
    showEndTime();
 });
+$('body').on('click', '#line_button, #stop_button, #stopline_button', function() {
+    searchSelection($(this));
+});
 /* Onload */
 if ($('#id_messagedurationtype_1').attr('checked')) {
     hideEndTime();
 }
 
-
-var acc = document.getElementsByClassName("my_accordion");
-var i;
-for (i = 0; i < acc.length; i++) {
-  acc[i].addEventListener("click", function() {
-    this.classList.toggle("active");
-
-    var panel = this.nextElementSibling;
-    if (panel.style.display === "block") {
-      panel.style.display = "none";
-    } else {
-      panel.style.display = "block";
-    }
-  });
-}
