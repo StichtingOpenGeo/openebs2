@@ -67,9 +67,14 @@
                     <tbody id="stop_rows">
                         <tr>
                             <td colspan="2" class="help text-center"><em>{% trans "Typ een haltenummer of -naam om een halte te zoeken" %}</em></td>
+                            <td colspan="2" class="specificeer text-center hidden"><em></em></td>
                         </tr>
                     </tbody>
-                </table><br/>
+                </table>
+                <div>
+                <button type="button" onclick="deleteSearch()" id="reset" class="btn btn-danger hidden pull-right">{% trans "Wis resultaten" %}</button>
+                <br/></div>
+
                 <table class="table table-condensed table-hover">
                     <thead>
                         <tr>
@@ -79,7 +84,7 @@
                     </thead>
                     <tbody id="rows2">
                         <tr>
-                            <td colspan="2" class="text-center"><em>{% trans "Selecteer een halte om een lijn te zoeken" %}</em></td>
+                            <td colspan="2" class="help text-center"><em>{% trans "Selecteer een halte om een lijn te zoeken" %}</em></td>
                         </tr>
                     </tbody>
                 </table>

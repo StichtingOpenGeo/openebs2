@@ -11,7 +11,7 @@ $("#stops-new").selectable({
   cancel: 'img'
 });
 $( "#line_search" ).on('keyup', changeSearch);
-$( "#haltelijn_search" ).on('keyup', changeSearch);
+$( "#haltelijn_search" ).on('keyup', stopSearch);
 $( "#halte_search" ).on('keyup', stopSearch);
 $( "#id_messagecontent" ).on('keyup', changeCount);
 $( "#id_messagecontent" ).trigger( "keyup" );

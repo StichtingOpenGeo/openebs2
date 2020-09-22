@@ -166,8 +166,15 @@ class StopSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
             .order_by('userstopcode') \
             .values('pk', 'dataownercode', 'name', 'userstopcode')
         needle = self.kwargs.get('search', '') or ''
-        qry = qry.filter(Q(name__icontains=needle) | Q(userstopcode__startswith=needle))
-        return qry
+        if '_' in needle:
+            needles = needle.split('_')
+            for needle in needles:
+                qry = qry.filter(Q(name__icontains=needle))
+            qry_count = qry.count()
+            return qry
+        else:
+            qry = qry.filter(Q(name__icontains=needle) | Q(userstopcode__startswith=needle))
+            return qry
 
 
 class StopLineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):

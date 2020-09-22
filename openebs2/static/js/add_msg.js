@@ -8,7 +8,7 @@ var activeLine = null /* lineplanningnumber */
 var lineSelectionOfStop = {}
 var lineSelection = []
 var line_related = document.getElementById('lijngebonden').checked;
-
+var stop_searching = false;
 
 function changeSearch(event) {
     if ($("#line_search").val().length > 0) {
@@ -18,19 +18,26 @@ function changeSearch(event) {
     }
 }
 function searchSelection(item) {
-
     if (item.attr('id') === "stop_button") {
+        if (stop_searching === true) return;
+
         $("#haltes-original").addClass('hidden');
         $("#haltes-new").removeClass('hidden');
         $("#lijngebonden").prop("checked", false).prop("disabled", true);
         $("#label_lijngebonden").css("color", "gray");
         line_related = document.getElementById('lijngebonden').checked;
+        resetSelection("stop");
+        stop_searching = true;
     } else {
+        if (stop_searching === false) return;
+
         $("#haltes-original").removeClass('hidden');
         $("#haltes-new").addClass('hidden');
-        $("#lijngebonden").prop("disabled", false);
+        $("#lijngebonden").prop("checked", true).prop("disabled", false);
         $("#label_lijngebonden").css("color", "#333");
         line_related = document.getElementById('lijngebonden').checked;
+        resetSelection("line");
+        stop_searching = false
     }
 }
 
@@ -39,8 +46,15 @@ function stopSearch(event) {
         $.ajax('/stop/'+$("#halte_search").val(), {
             success : writeStopListMiddle
         })
-    } else if ($("#haltelijn_search").val().length > 0) {
-        $.ajax('/stop/'+$("#halte_search").val(), {
+    }
+    if ($("#haltelijn_search").val().length > 0) {
+        var term = $("#haltelijn_search").val()
+        var check = term.indexOf('');
+        if (check > -1 ) {
+           term = term.split(" ").join("_"); // weird method, but 'spaces' are apparently not working for the ajax
+
+        }
+        $.ajax('/stop/'+term, {
             success : writeStopList
         })
     }
@@ -61,7 +75,7 @@ function changeCount(event) {
 }
 
 function getLinesOfStop(event) {
-    $("#rows2").empty();
+    $(".lines").remove();
     $("#stop_rows tr.success").removeClass('success');
     $(".suc-icon").remove();
     $(event.currentTarget).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
@@ -71,7 +85,19 @@ function getLinesOfStop(event) {
         }
     })
     $(event.currentTarget).addClass('success');
-    //$("#stop_rows tr:not(.success)").fadeOut(100);
+    $('#reset').removeClass('hidden');
+}
+/*
+function showSearch() {
+    $("#stop_rows tr").fadeIn(100);
+} */
+
+function deleteSearch() {
+    $('#haltelijn_search').val('');
+    $('.search_stop').remove();
+    $('#stop_rows tr td.help').show();
+    $('.line').remove();
+    $('#rows2 td.help').show();
 }
 
 function writeList(data, status, item) {
@@ -122,6 +148,11 @@ function writeList(data, status, item) {
 
 function writeStopList(data, status) {
     validIds = []
+    if (data.object_list.length > 0 ) {
+        $('#stop_rows tr td.help').hide();
+        $('#stop_rows tr.search_stop').remove();
+    }
+
     /* Add them all, as neccesary */
     $.each(data.object_list, function (i, stop) {
         validIds.push('sl'+stop.dataownercode+'_'+stop.userstopcode)
@@ -131,7 +162,18 @@ function writeStopList(data, status) {
             out += "<strong>"+stop.userstopcode+"</strong>";
             row = '<tr class="search_stop" id="sl'+stop.dataownercode+'_'+stop.userstopcode+'"><td>'+out+'</td>';
             row += '<td>'+stop.name+'</td></tr>';
-            $(row).hide().appendTo("#stop_rows").fadeIn(999);
+            $(row).hide().appendTo("#stop_rows")//.fadeIn(999);
+        }
+    });
+    $(document).ready(function() {
+        if ($('#stop_rows tr').length > 10) {
+            $('#stop_rows tr:lt(10)').fadeIn(999);
+            $('.specificeer').removeClass('hidden');
+            result_count = $('#stop_rows tr').length;
+            $('.specificeer em').text("10 van de " +result_count+ " resulaten getoond. Specificeer uw opdracht aub");
+        } else {
+            $('.specificeer').addClass('hidden');
+            $('#stop_rows tr').fadeIn(999);
         }
     });
 }
@@ -162,7 +204,6 @@ function writeStopListMiddle(data, status) {
         }
     });
 }
-
 
 function showStopsOnChange() {
     $('.stopRow span').remove();
@@ -721,6 +762,15 @@ function writeLineOutputAsString(data) {
         out += ",";
     });
     $("#lines").val(out);
+}
+
+function resetSelection(call) {
+    $('#haltes').val('');
+    $('#halte-list span').remove();
+    $('#lines').val('');
+    selectedStops = [];
+    lineSelectionOfStop = {};
+    lineSelection = [];
 }
 
 function epoch(date) {
