@@ -13,6 +13,7 @@ from utils.time import get_operator_date
 from utils.views import JSONListResponseMixin
 from kv1.models import Kv1Line, Kv1Stop, Kv1JourneyDate
 from dateutil.relativedelta import relativedelta
+from django.forms.models import model_to_dict
 
 # Views for adding messages and related lookups
 class LineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
@@ -162,19 +163,33 @@ class StopSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
 
     def get_queryset(self):
         qry = super(StopSearchView, self).get_queryset()
-        qry = qry.filter(dataownercode=self.request.user.userprofile.company) \
-            .order_by('userstopcode') \
-            .values('pk', 'dataownercode', 'name', 'userstopcode')
+        needle = self.kwargs.get('search', '') or ''
+        needles = []
+        if '_' in needle:
+            needles = needle.split('_')
+        if len(needles) > 0:
+            for needle in needles:
+                qry = qry.filter(Q(name__icontains=needle),
+                                 dataownercode=self.request.user.userprofile.company,
+                                 ) \
+                    .order_by('userstopcode') \
+                    .values('pk', 'dataownercode', 'name', 'userstopcode')
+        else:
+            qry = qry.filter(Q(name__icontains=needle) | Q(userstopcode__startswith=needle),
+                             dataownercode=self.request.user.userprofile.company,
+                             ) \
+                .order_by('userstopcode') \
+                .values('pk', 'dataownercode', 'name', 'userstopcode')#[0:11]
+        """    
         needle = self.kwargs.get('search', '') or ''
         if '_' in needle:
             needles = needle.split('_')
             for needle in needles:
-                qry = qry.filter(Q(name__icontains=needle))
-            qry_count = qry.count()
-            return qry
+                qry = qry.filter(Q(name__icontains=needle))[0:11]
         else:
-            qry = qry.filter(Q(name__icontains=needle) | Q(userstopcode__startswith=needle))
-            return qry
+            qry = qry.filter(Q(name__icontains=needle) | Q(userstopcode__startswith=needle))[0:11]
+        """
+        return qry[0:11]
 
 
 class StopLineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
@@ -186,6 +201,8 @@ class StopLineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
         stop = self.kwargs.get('pk', None)
         if stop is None:
             return
+        dataownercode = stop.split('_')[0]
+        qry = qry.filter(dataownercode=dataownercode)
         obj = []
         for line in qry:
             data = json.loads(line.stop_map)
@@ -194,9 +211,7 @@ class StopLineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
                     if item is not None:
                         if item['id'] == stop:
                             obj.append(line.pk)
-        dataownercode = stop.split('_')[0]
-        qry = qry.filter(dataownercode=dataownercode, pk__in=obj) \
+        qry = qry.filter(pk__in=obj) \
             .order_by('lineplanningnumber') \
             .values('pk', 'dataownercode', 'headsign', 'lineplanningnumber', 'publiclinenumber')
-
         return qry

@@ -15,6 +15,9 @@ function changeSearch(event) {
         $.ajax('/line/'+$("#line_search").val(), {
             success : writeList
         })
+    } else {
+        $('#rows tr td.help').removeClass('hidden');
+        $('#rows .line').remove();
     }
 }
 function searchSelection(item) {
@@ -43,20 +46,35 @@ function searchSelection(item) {
 
 function stopSearch(event) {
     if ($("#halte_search").val().length > 0) {
-        $.ajax('/stop/'+$("#halte_search").val(), {
+        var term = $("#halte_search").val()
+        var check = term.indexOf(' ');
+        if (check > -1 ) {
+           term = term.split(" ").join("_"); // weird method, but 'spaces' are apparently not working for the ajax
+        }
+        $.ajax('/stop/'+term, {
             success : writeStopListMiddle
         })
+    } else {
+        $('#stops-new .help').removeClass('hidden');
+        $('.specificeer-middle').addClass('hidden');
+        $('.stop').remove();
     }
     if ($("#haltelijn_search").val().length > 0) {
         var term = $("#haltelijn_search").val()
-        var check = term.indexOf('');
+        var check = term.indexOf(' ');
         if (check > -1 ) {
            term = term.split(" ").join("_"); // weird method, but 'spaces' are apparently not working for the ajax
-
         }
         $.ajax('/stop/'+term, {
             success : writeStopList
         })
+    } else {
+        $('#stop_rows .help').removeClass('hidden');
+        $('#rows2 tr td.help').removeClass('hidden');
+        $('.specificeer').addClass('hidden');
+        $('.search_stop').remove();
+        $('#rows2 .line').remove();
+        $('#reset').addClass('hidden');
     }
 }
 
@@ -76,6 +94,8 @@ function changeCount(event) {
 
 function getLinesOfStop(event) {
     $(".lines").remove();
+    $("#rows2 .line").remove();
+    $("#haltes-original .stopRow").remove();
     $("#stop_rows tr.success").removeClass('success');
     $(".suc-icon").remove();
     $(event.currentTarget).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
@@ -87,10 +107,6 @@ function getLinesOfStop(event) {
     $(event.currentTarget).addClass('success');
     $('#reset').removeClass('hidden');
 }
-/*
-function showSearch() {
-    $("#stop_rows tr").fadeIn(100);
-} */
 
 function deleteSearch() {
     $('#haltelijn_search').val('');
@@ -132,57 +148,75 @@ function writeList(data, status, item) {
 
     /* Cleanup */
     if (item == 1){
-        $("#rows2 tr").each(function(index) {
+        $('#rows2 tr td.help').addClass('hidden');
+        $("#rows2 line").each(function(index) {
             if ($.inArray($(this).attr('id'), validIds) == -1) {
                 $(this).fadeOut(999).remove()
             }
         });
     } else {
-        $("#rows tr").each(function(index) {
+        $('#rows tr td.help').addClass('hidden');
+        $("#rows line").each(function(index) {
             if ($.inArray($(this).attr('id'), validIds) == -1) {
-                $(this).fadeOut(999).remove()
+                $(this).fadeOut(999).remove();
             }
         });
     }
 }
 
 function writeStopList(data, status) {
-    validIds = []
-    if (data.object_list.length > 0 ) {
-        $('#stop_rows tr td.help').hide();
+    if ($("#haltelijn_search").val().length > 0 && data.object_list.length == 0) {
         $('#stop_rows tr.search_stop').remove();
+        $('#stop_rows tr td.help').addClass('hidden');
+        $('.specificeer em').text("Er werden geen haltes gevonden. Kies een andere zoekterm aub");
+        $('#stop_rows .specificeer').removeClass('hidden');
+        return
     }
 
-    /* Add them all, as neccesary */
-    $.each(data.object_list, function (i, stop) {
-        validIds.push('sl'+stop.dataownercode+'_'+stop.userstopcode)
-        if (!$('#sl'+stop.dataownercode+'_'+stop.userstopcode).length) {
-            var out = '';
-            var row = '';
-            out += "<strong>"+stop.userstopcode+"</strong>";
-            row = '<tr class="search_stop" id="sl'+stop.dataownercode+'_'+stop.userstopcode+'"><td>'+out+'</td>';
-            row += '<td>'+stop.name+'</td></tr>';
-            $(row).hide().appendTo("#stop_rows")//.fadeIn(999);
-        }
-    });
-    $(document).ready(function() {
-        if ($('#stop_rows tr').length > 10) {
-            $('#stop_rows tr:lt(10)').fadeIn(999);
-            $('.specificeer').removeClass('hidden');
-            result_count = $('#stop_rows tr').length;
-            $('.specificeer em').text("10 van de " +result_count+ " resulaten getoond. Specificeer uw opdracht aub");
-        } else {
-            $('.specificeer').addClass('hidden');
-            $('#stop_rows tr').fadeIn(999);
-        }
-    });
+    if (data.object_list.length > 0 ) {
+        $('#stop_rows tr td.help').addClass('hidden');
+        $('#stop_rows tr.search_stop').remove();
+
+        /* Add them all, as neccesary */
+        validIds = []
+        $.each(data.object_list, function (i, stop) {
+            validIds.push('sl'+stop.dataownercode+'_'+stop.userstopcode)
+            if (!$('#sl'+stop.dataownercode+'_'+stop.userstopcode).length) {
+                var out = '';
+                var row = '';
+                out += "<strong>"+stop.userstopcode+"</strong>";
+                row = '<tr class="search_stop" id="sl'+stop.dataownercode+'_'+stop.userstopcode+'"><td>'+out+'</td>';
+                row += '<td>'+stop.name+'</td></tr>';
+                $(row).hide().appendTo("#stop_rows");
+            }
+        });
+        $(document).ready(function() {
+            if ($('#stop_rows tr').length > 11) {
+                $('#stop_rows tr:lt(10)').fadeIn(999);
+                $('#stop_rows .specificeer').removeClass('hidden');
+                $('.specificeer em').text("Er waren meer dan 10 resulaten. Specificeer uw opdracht aub");
+            } else {
+                $('#stop_rows .specificeer').addClass('hidden');
+                $('#stop_rows tr').fadeIn(999);
+            }
+        });
+    }
 }
 
 function writeStopListMiddle(data, status) {
+    if ($("#halte_search").val().length > 0 && data.object_list.length == 0) {
+        //$('#stops-new tr.stop').remove();
+        $('.stop').remove();
+        $('#stops-new .help').addClass('hidden');
+        $('#stops-new .specificeer-middle em').text("Er werden geen haltes gevonden. Kies een andere zoekterm aub");
+        $('#stops-new .specificeer-middle').removeClass('hidden');
+        return
+    }
+
     validIds = []
     if (data.object_list.length > 0 ) {
-        $('#stops-new .help').hide();
-        $('#stops-new .stop').remove();
+        $('#stops-new .help').addClass('hidden');
+        $('.stop').remove();
     }
     /* Add them all, as neccesary */
     $.each(data.object_list, function (i, stop) {
@@ -193,16 +227,28 @@ function writeStopListMiddle(data, status) {
             out += ""+stop.userstopcode+" "+stop.name+"";
             row = '<tr class="stop" id="sl'+stop.dataownercode+'_'+stop.userstopcode+'"><td>'+out+'</td></tr>';
             //row += '<td>'+stop.name+'</td></tr>';
-            $(row).hide().appendTo("#stops-new").fadeIn(999);
+            $(row).hide().appendTo("#stops-new");
         }
+        $(document).ready(function() {
+            if ($('#stops-new tr').length > 11) {
+                $('#stops-new tr:lt(10)').fadeIn(999);
+                $('.specificeer-middle em').text("Er waren meer dan 10 resulaten. Specificeer uw opdracht aub");
+                $('.specificeer-middle').removeClass('hidden');
+
+            } else {
+                $('.specificeer-middle').addClass('hidden');
+                $('#stops-new tr.stop').fadeIn(999);
+            }
+        });
     });
 
+
     /* Cleanup */
-    $("#stops-new tr").each(function(index) {
-        if ($.inArray($(this).attr('id'), validIds) == -1) {
-            $(this).fadeOut(999).remove()
-        }
-    });
+    //$("#stops-new tr").each(function(index) {
+    //    if ($.inArray($(this).attr('id'), validIds) == -1) {
+   //         $(this).fadeOut(999).remove()
+    //    }
+    //});
 }
 
 function showStopsOnChange() {
@@ -765,6 +811,17 @@ function writeLineOutputAsString(data) {
 }
 
 function resetSelection(call) {
+    if (call == 'stop'){
+        // clear search windows
+        $("#line_search, #haltelijn_search").val('');
+        // clear search results
+        $(".line, .search_stop").remove();
+        // remove 'specificeer' and show help
+        $('#stop_rows .specificeer').addClass('hidden');
+        $('#stop_rows tr td.help').show();
+        $('#rows tr td.help').show();
+    }
+
     $('#haltes').val('');
     $('#halte-list span').remove();
     $('#lines').val('');

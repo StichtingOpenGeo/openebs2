@@ -24,7 +24,7 @@
                     </thead>
                     <tbody id="rows">
                         <tr>
-                            <td colspan="2" class="text-center"><em>{% trans "Typ een eindbestemming of lijnnummer om een lijn te zoeken" %}</em></td>
+                            <td colspan="2" class="help text-center"><em>{% trans "Typ een eindbestemming of lijnnummer om een lijn te zoeken" %}</em></td>
                         </tr>
                     </tbody>
                 </table>
@@ -42,7 +42,6 @@
                     <span class="input-group-addon"><span class="glyphicon glyphicon-search"></span></span>
                     <input type="text" class="form-control" id="halte_search" placeholder="{% trans 'Haltenummer of -naam' %}">
                 </div><br />
-
             </div>
         </div>
         <div class="panel panel-default">
@@ -61,13 +60,13 @@
                     <thead>
                         <tr>
                             <th class="col-sm-1">{% trans "Halte" %}</th>
-                            <th class="col-sm-9">{% trans "Haltenaam" %}</th>
+                            <th class="col-sm-7">{% trans "Haltenaam" %}</th>
                         </tr>
                     </thead>
                     <tbody id="stop_rows">
                         <tr>
-                            <td colspan="2" class="help text-center"><em>{% trans "Typ een haltenummer of -naam om een halte te zoeken" %}</em></td>
-                            <td colspan="2" class="specificeer text-center hidden"><em></em></td>
+                            <td colspan="3" class="help text-center"><em>{% trans "Typ een haltenummer of -naam om een halte te zoeken" %}</em></td>
+                            <td colspan="3" class="specificeer hidden"><em></em></td>
                         </tr>
                     </tbody>
                 </table>
@@ -78,8 +77,8 @@
                 <table class="table table-condensed table-hover">
                     <thead>
                         <tr>
-                            <th class="col-sm-1">{% trans "Lijn" %}</th>
-                            <th class="col-sm-7">{% trans "Eindbestemming" %}</th>
+                            <th class="col-sm-2">{% trans "Lijn" %}</th>
+                            <th class="col-sm-9">{% trans "Eindbestemming" %}</th>
                         </tr>
                     </thead>
                     <tbody id="rows2">
@@ -106,5 +105,6 @@
     <h2>Haltes</h2>
     <table class="table table-condensed" id="stops-new">
         <tr class="help text-center"><td><em style="font-size: 85%; padding: 0; vertical-align: top;">Typ een haltenummer of -naam om een halte te zoeken</em></td></tr>
+        <tr class="specificeer-middle hidden"><td><em></em></td></tr>
     </table>
 </div>
