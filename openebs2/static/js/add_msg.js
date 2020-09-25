@@ -14,7 +14,7 @@ function changeSearch(event) {
     if ($("#line_search").val().length > 0) {
         $.ajax('/line/'+$("#line_search").val(), {
             success : writeList
-        })
+        });
     } else {
         $('#rows tr td.help').removeClass('hidden');
         $('#rows .line').remove();
@@ -32,21 +32,23 @@ function searchSelection(item) {
         resetSelection("stop");
         stop_searching = true;
     } else {
-        if (stop_searching === false) return;
-
         $("#haltes-original").removeClass('hidden');
         $("#haltes-new").addClass('hidden');
         $("#lijngebonden").prop("checked", true).prop("disabled", false);
         $("#label_lijngebonden").css("color", "#333");
         line_related = document.getElementById('lijngebonden').checked;
-        resetSelection("line");
+        if (item.attr('id') === "line_button") {
+            resetSelection("line");
+        } else {
+            resetSelection("stopline");
+        }
         stop_searching = false
     }
 }
 
 function stopSearch(event) {
     if ($("#halte_search").val().length > 0) {
-        var term = $("#halte_search").val()
+        var term = $("#halte_search").val();
         var check = term.indexOf(' ');
         if (check > -1 ) {
            term = term.split(" ").join("_"); // weird method, but 'spaces' are apparently not working for the ajax
@@ -60,7 +62,7 @@ function stopSearch(event) {
         $('.stop').remove();
     }
     if ($("#haltelijn_search").val().length > 0) {
-        var term = $("#haltelijn_search").val()
+        var term = $("#haltelijn_search").val();
         var check = term.indexOf(' ');
         if (check > -1 ) {
            term = term.split(" ").join("_"); // weird method, but 'spaces' are apparently not working for the ajax
@@ -69,12 +71,9 @@ function stopSearch(event) {
             success : writeStopList
         })
     } else {
-        $('#stop_rows .help').removeClass('hidden');
-        $('#rows2 tr td.help').removeClass('hidden');
-        $('.specificeer').addClass('hidden');
-        $('.search_stop').remove();
-        $('#rows2 .line').remove();
-        $('#reset').addClass('hidden');
+        $('#stop_rows .help, #rows2 td.help').removeClass('hidden');
+        $('.specificeer, #reset').addClass('hidden');
+        $('.search_stop, #rows2 .line').remove();
     }
 }
 
@@ -94,30 +93,22 @@ function changeCount(event) {
 
 function getLinesOfStop(event) {
     $(".lines").remove();
-    $("#rows2 .line").remove();
+    $("#rows2 .line, .suc-icon").remove();
     $("#haltes-original .stopRow").remove();
     $("#stop_rows tr.success").removeClass('success');
-    $(".suc-icon").remove();
     $(event.currentTarget).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
     $.ajax('/stop/'+$(event.currentTarget).attr('id').substring(2)+'/lines', {
         success : function(data, status, item){
             writeList(data, status, 1);
         }
-    })
+    });
     $(event.currentTarget).addClass('success');
     $('#reset').removeClass('hidden');
 }
 
-function deleteSearch() {
-    $('#haltelijn_search').val('');
-    $('.search_stop').remove();
-    $('#stop_rows tr td.help').show();
-    $('.line').remove();
-    $('#rows2 td.help').show();
-}
-
 function writeList(data, status, item) {
     validIds = []
+    $('#rows2 td.help').addClass('hidden');
     /* Add them all, as neccesary */
     $.each(data.object_list, function (i, line) {
         validIds.push('l'+line.pk)
@@ -149,14 +140,14 @@ function writeList(data, status, item) {
     /* Cleanup */
     if (item == 1){
         $('#rows2 tr td.help').addClass('hidden');
-        $("#rows2 line").each(function(index) {
+        $("#rows2 .line").each(function(index) {
             if ($.inArray($(this).attr('id'), validIds) == -1) {
-                $(this).fadeOut(999).remove()
+                $(this).fadeOut(999).remove();
             }
         });
     } else {
         $('#rows tr td.help').addClass('hidden');
-        $("#rows line").each(function(index) {
+        $("#rows .line").each(function(index) {
             if ($.inArray($(this).attr('id'), validIds) == -1) {
                 $(this).fadeOut(999).remove();
             }
@@ -172,7 +163,6 @@ function writeStopList(data, status) {
         $('#stop_rows .specificeer').removeClass('hidden');
         return
     }
-
     if (data.object_list.length > 0 ) {
         $('#stop_rows tr td.help').addClass('hidden');
         $('#stop_rows tr.search_stop').remove();
@@ -205,7 +195,6 @@ function writeStopList(data, status) {
 
 function writeStopListMiddle(data, status) {
     if ($("#halte_search").val().length > 0 && data.object_list.length == 0) {
-        //$('#stops-new tr.stop').remove();
         $('.stop').remove();
         $('#stops-new .help').addClass('hidden');
         $('#stops-new .specificeer-middle em').text("Er werden geen haltes gevonden. Kies een andere zoekterm aub");
@@ -234,21 +223,19 @@ function writeStopListMiddle(data, status) {
                 $('#stops-new tr:lt(10)').fadeIn(999);
                 $('.specificeer-middle em').text("Er waren meer dan 10 resulaten. Specificeer uw opdracht aub");
                 $('.specificeer-middle').removeClass('hidden');
-
             } else {
                 $('.specificeer-middle').addClass('hidden');
-                $('#stops-new tr.stop').fadeIn(999);
+                $('#stops-new .stop').fadeIn(999);
             }
         });
     });
 
-
     /* Cleanup */
-    //$("#stops-new tr").each(function(index) {
-    //    if ($.inArray($(this).attr('id'), validIds) == -1) {
-   //         $(this).fadeOut(999).remove()
-    //    }
-    //});
+    $("#stops-new .stop").each(function(index) {
+        if ($.inArray($(this).attr('id'), validIds) == -1) {
+            $(this).fadeOut(999).remove()
+        }
+    });
 }
 
 function showStopsOnChange() {
@@ -373,9 +360,13 @@ function doSelectStop(obj) {
     }
     var index = $.inArray(currentLine, selectedLines);
     if (index == -1) {
-        $("#"+id+"l, #"+id+"r").addClass('success');
-        $("#"+id+"l, #"+id+"r").append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;');
-
+        if (obj.id.startsWith('sl')) {
+            $('#sl'+id).addClass('success');
+            $('#sl'+id).append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;');
+        } else {
+            $("#"+id+"l, #"+id+"r").addClass('success');
+            $("#"+id+"l, #"+id+"r").append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;');
+        }
         selectedLines.push(currentLine);
         lineSelectionOfStop[id] = selectedLines;
         var i = $.inArray(currentLine, lineSelection);
@@ -393,8 +384,6 @@ function doSelectStop(obj) {
             }
             var headsign = $(obj).text()+'('+direction+') ';
         }
-        //var stop_id = $(obj).attr('id').slice(0,-1);
-        //selectedStops.push([headsign, currentLine, stop_id]);
         selectedStops.push([headsign, currentLine, id]);
 
         if (line_related) {
@@ -464,7 +453,6 @@ function lineRemoveStop(event) {
 
 function removeStopsOfLine(event) {
     var line = $(this).parent().parent().attr('id').substring(4);
-
     var idx = $.inArray(line, lineSelection);
     lineSelection.splice(idx, 1);
 
@@ -553,7 +541,8 @@ function removeStop(id, line) {
 }
 
 function writeLine(data, status) {
-    $('#stops').fadeOut(200).empty();
+    $('#stops tr.help').addClass('hidden');
+    $("#haltes-original .stopRow").remove();
     out = ""
     $.each(data.object.stop_map, function (i, stop) {
         out += renderRow(stop)
@@ -706,7 +695,7 @@ function lineRelated() {
                 writeHaltesWithMessages(data);
                 showStopsOnChange();
                 switchHaltesField();
-                }
+            }
     });
 }
 
@@ -812,18 +801,32 @@ function writeLineOutputAsString(data) {
 
 function resetSelection(call) {
     if (call == 'stop'){
-        // clear search windows
         $("#line_search, #haltelijn_search").val('');
-        // clear search results
         $(".line, .search_stop").remove();
-        // remove 'specificeer' and show help
         $('#stop_rows .specificeer').addClass('hidden');
-        $('#stop_rows tr td.help').show();
-        $('#rows tr td.help').show();
+        $('#stop_rows tr td.help, #rows tr td.help, #stops tr.help').removeClass('hidden');
+        $("#haltes-original .stopRow").remove();
+        $('.stop_btn').addClass('hide');
+    } else if (call == 'line') {
+        $("#halte_search, #haltelijn_search").val('');
+        $(".stop, .search_stop").remove();
+        $('#stop_rows .specificeer, #stops-new .specificeer-middle').addClass('hidden');
+        $('#stop_rows tr td.help, #stops-new tr.help').removeClass('hidden');
+        $('#stops tr.help, #stops-new tr.help').removeClass('hidden');
+        $("#haltes-original .stopRow, #haltes-new .stop").remove();
+        $('.stop_btn').addClass('hide');
+    } else {
+        $("#halte_search, #line_search").val('');
+        $(".stop, .line").remove();
+        $('#stops-new .specificeer-middle').addClass('hidden');
+        $('#rows tr td.help, #stops-new tr.help').removeClass('hidden');
+        $('#stops tr.help, #stops-new tr.help').removeClass('hidden');
+        $("#haltes-original .stopRow, #haltes-new .stop").remove();
+        $('.stop_btn').addClass('hide');
     }
-
     $('#haltes').val('');
     $('#halte-list span').remove();
+    $('#halte-list em.help').show();
     $('#lines').val('');
     selectedStops = [];
     lineSelectionOfStop = {};
