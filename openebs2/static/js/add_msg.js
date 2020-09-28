@@ -351,52 +351,59 @@ function deselectAllVisibleStops() {
 }
 
 function doSelectStop(obj) {
-    /* Make sure to strip the 'l' or 'r' */
-    if (obj.id.startsWith('sl')) {
-        var id = $(obj).attr('id').substring(2);
-    } else {
-    var id = $(obj).attr('id').slice(0, -1);
-    }
-    var selectedLines = [];
-    if (lineSelectionOfStop[id] !== undefined) {
-            selectedLines = lineSelectionOfStop[id];
-    }
-    var index = $.inArray(currentLine, selectedLines);
-    if (index == -1) {
-        if (obj.id.startsWith('sl')) {
-            $('#sl'+id).addClass('success');
-            $('#sl'+id).append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;');
-        } else {
+    if (stop_searching == false) {
+        /* Make sure to strip the 'l' or 'r' */
+        var id = $(obj).attr('id').slice(0, -1);
+        var selectedLines = [];
+        if (lineSelectionOfStop[id] !== undefined) {
+                selectedLines = lineSelectionOfStop[id];
+        }
+        var index = $.inArray(currentLine, selectedLines);
+        if (index == -1) {
             $("#"+id+"l, #"+id+"r").addClass('success');
             $("#"+id+"l, #"+id+"r").append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;');
-        }
-        selectedLines.push(currentLine);
-        lineSelectionOfStop[id] = selectedLines;
-        var i = $.inArray(currentLine, lineSelection);
-        if (i == -1) {
-            lineSelection.push(currentLine);
-        }
 
-        if (obj.id.startsWith('sl')) {
-            var headsign = obj.textContent;
-        } else {
-            if ($(obj).hasClass('stop-left')) {
-                direction = "heen";
-            } else if ($(obj).hasClass('stop-right')) {
-                direction = "trg";
+            selectedLines.push(currentLine);
+            lineSelectionOfStop[id] = selectedLines;
+            var i = $.inArray(currentLine, lineSelection);
+            if (i == -1) {
+                lineSelection.push(currentLine);
             }
-            var headsign = $(obj).text()+'('+direction+') ';
-        }
-        selectedStops.push([headsign, currentLine, id]);
 
-        if (line_related) {
-            writeHaltesWithLine();
+            if (obj.id.startsWith('sl')) {
+                var headsign = obj.textContent;
+            } else {
+                if ($(obj).hasClass('stop-left')) {
+                    direction = "heen";
+                } else if ($(obj).hasClass('stop-right')) {
+                    direction = "trg";
+                }
+                var headsign = $(obj).text()+'('+direction+') ';
+            }
+            selectedStops.push([headsign, currentLine, id]);
+
+            if (line_related) {
+                writeHaltesWithLine();
+            } else {
+                writeHaltesWithoutLine();
+            }
+            return true;
         } else {
-            writeHaltesWithoutLine();
+            removeStop(id, currentLine);
         }
-        return true;
     } else {
-        removeStop(id, currentLine);
+        if (!obj.id.startsWith('sl')) {
+            return false
+        }
+        if ($.inArray(obj.id.substring(2), selectedStops) === -1) {
+            $('#sl'+obj.id).addClass('success');
+            $('#'+obj.id).children('td').append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>');
+            selectedStops.push(obj.id.substring(2));
+            writeHaltesWithoutLine();
+        } else {
+            var id = $(obj).attr('id').substring(2);
+            removeStop(id, currentLine);
+        }
     }
     return false;
 }
@@ -512,6 +519,12 @@ function removeStop(id, line) {
             }
         }
         removeStopFromDict(id, line);
+    } else if (line === null) {
+        var idx = selectedStops.indexOf(id);
+        selectedStops.splice(idx, 1);
+        $("#ss"+id).remove();
+        $("#sl"+id).removeClass('success');
+        $("#sl"+id+" .stop-check").remove();
     } else {
         var selection = selectedStops.filter(stop => stop[2] === id && stop[1] === line);
         if (selection.length > 0) {
@@ -683,6 +696,9 @@ function getHaltesWithMessages(event) {
     if (stop_searching == false) {
         activeLine = $(this).attr('id').substring(1);
         currentLine = $(this).find("small").text();
+    } else {
+        activeLine = null;
+        currentLine = null;
     }
     $.ajax({ url: '/bericht/haltes.json',
             data: {'messagestarttime': starttime},
@@ -766,13 +782,24 @@ function writeHaltesWithLine() {
 function writeHaltesWithoutLine() {
     $('#halte-list span').remove();
     var haltes = {};
-    $.each(selectedStops, function(i, stop) {
-        var halte_id = stop[2];
-        var headsign = stop[0];
-        if (!haltes.hasOwnProperty(halte_id)) {
-            haltes[halte_id] = headsign;
-        }
-    });
+    if (stop_searching == true) {
+        $.each(selectedStops, function(i, stop) {
+            var halte_id = "s"+stop;
+            var headsign = $("#sl"+stop)[0].innerText;
+            if (!haltes.hasOwnProperty(halte_id)) {
+                haltes[halte_id] = headsign;
+            }
+        });
+
+    } else {
+        $.each(selectedStops, function(i, stop) {
+            var halte_id = stop[2];
+            var headsign = stop[0];
+            if (!haltes.hasOwnProperty(halte_id)) {
+                haltes[halte_id] = headsign;
+            }
+        });
+    }
     var delLink = '<span class="stop-remove glyphicon glyphicon-remove"></span>';
     $.each(haltes, function(halte, headsign) {
         $('#halte-list').append('<span class="stop-selection pull-left label label-primary" id="s'+halte+'">'+headsign+delLink+'</span');
