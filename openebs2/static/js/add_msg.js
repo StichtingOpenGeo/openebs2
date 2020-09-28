@@ -171,12 +171,12 @@ function writeStopList(data, status) {
         /* Add them all, as neccesary */
         validIds = []
         $.each(data.object_list, function (i, stop) {
-            validIds.push('sl'+stop.dataownercode+'_'+stop.userstopcode)
-            if (!$('#sl'+stop.dataownercode+'_'+stop.userstopcode).length) {
+            validIds.push('sq'+stop.dataownercode+'_'+stop.userstopcode)
+            if (!$('#sq'+stop.dataownercode+'_'+stop.userstopcode).length) {
                 var out = '';
                 var row = '';
                 out += "<strong>"+stop.userstopcode+"</strong>";
-                row = '<tr class="search_stop" id="sl'+stop.dataownercode+'_'+stop.userstopcode+'"><td>'+out+'</td>';
+                row = '<tr class="search_stop" id="sq'+stop.dataownercode+'_'+stop.userstopcode+'"><td>'+out+'</td>';
                 row += '<td>'+stop.name+'</td></tr>';
                 $(row).hide().appendTo("#stop_rows");
             }
@@ -267,12 +267,22 @@ function showStopsOnChange() {
                 }
             });
             $.each(stops, function(i, stop) {
-                if (line_related){
-                    $('[id*='+stop+']').append('<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze lijn en begintijd"></span>');
-                } else {
-                    $('[id*='+stop+']').append('<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een lijnonafhankelijk bericht voor deze begintijd"></span>');
+                var items = $('[id*='+stop+']');
+                const filtered_ids = items.filter(item => {
+                    if (!items[item].id.startsWith("sq")) {
+                        return true
+                    }
+                });
+                if (filtered_ids.length > 0) {
+                    $.each(filtered_ids, function(idx, item) {
+                        if (line_related) {
+                            $("#"+item.id).append('<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze lijn en begintijd"></span>');
+                        } else {
+                            $("#"+item.id).append('<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een lijnonafhankelijk bericht voor deze begintijd"></span>');
+                        }
+                        blockedStops.push(stop);
+                    });
                 }
-                blockedStops.push(stop);
             });
         }
     }
