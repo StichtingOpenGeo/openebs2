@@ -31,6 +31,7 @@ function searchSelection(item) {
         line_related = document.getElementById('lijngebonden').checked;
         resetSelection("stop");
         stop_searching = true;
+        getHaltesWithMessages()
     } else {
         $("#haltes-original").removeClass('hidden');
         $("#haltes-new").addClass('hidden');
@@ -214,8 +215,10 @@ function writeStopListMiddle(data, status) {
             var out = '';
             var row = '';
             out += ""+stop.userstopcode+" "+stop.name+"";
+            if ($.inArray(stop.userstopcode, blockedStops) > -1) {
+                out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze begintijd"></span>'
+            }
             row = '<tr class="stop" id="sl'+stop.dataownercode+'_'+stop.userstopcode+'"><td>'+out+'</td></tr>';
-            //row += '<td>'+stop.name+'</td></tr>';
             $(row).hide().appendTo("#stops-new");
         }
         $(document).ready(function() {
@@ -544,9 +547,15 @@ function writeLine(data, status) {
     $('#stops tr.help').addClass('hidden');
     $("#haltes-original .stopRow").remove();
     out = ""
-    $.each(data.object.stop_map, function (i, stop) {
-        out += renderRow(stop)
-    });
+    if (stop_searching == true) {
+        $.each(data.object.stop_map, function (i, stop) {
+        out = renderHaltesNew(stop);
+        });
+    } else {
+        $.each(data.object.stop_map, function (i, stop) {
+            out += renderRow(stop)
+        });
+    }
     $('#stops').append(out)
     $('#stops').fadeIn(200);
     $('.stop_btn').removeClass('hide');
@@ -634,6 +643,26 @@ function renderRow(row) {
     return out
 }
 
+function renderHaltesNew(stop) {  // TODO: fix this :)
+    out = '<tr class="stop">';
+    var id = 'sl'+stop.id;
+    if (lineSelectionOfStop['sl'+stop.id] !== undefined) {
+        stopSelection = lineSelectionOfStop['sl'+stop.id];
+    }
+    if ($.inArray(currentLine, stopSelection) != -1) {
+        out += '<td class="stop stop-left success" id="'+id+'">'+stop.name+'<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;'
+    } else {
+        out += '<td class="stop stop-left" id="'+id+'">'+stop.name;
+        var selected = currentStopMeasures.filter(message => message[0] === stop.id);
+        if (selected.length > 0) {
+            out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze begintijd"></span>'
+        }
+        out += '</td>';
+    }
+    out += '</tr>';
+    return out
+}
+
 function getScenarioStops(scenario) {
      $.ajax('/scenario/'+scenario+'/haltes.geojson', {
             success : writeScenarioStops
@@ -651,15 +680,20 @@ function writeScenarioStops(data, status) {
 
 function getHaltesWithMessages(event) {
     var starttime = parseDate($("#id_messagestarttime").val()).toJSON()
-    activeLine = $(this).attr('id').substring(1);
-    currentLine = $(this).find("small").text();
-
+    if (stop_searching == false) {
+        activeLine = $(this).attr('id').substring(1);
+        currentLine = $(this).find("small").text();
+    }
     $.ajax({ url: '/bericht/haltes.json',
             data: {'messagestarttime': starttime},
             success : function(data) {
                 writeHaltesWithMessages(data);
-                showStops(event);
+                if (stop_searching == false) {
+                    showStops(event);
+                } else {
+                    showStopsOnChange();
                 }
+            }
     });
 }
 
