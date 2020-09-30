@@ -814,7 +814,8 @@ function writeHaltesWithoutLine() {
     }
     var delLink = '<span class="stop-remove glyphicon glyphicon-remove"></span>';
     $.each(haltes, function(halte, headsign) {
-        $('#halte-list').append('<span class="stop-selection pull-left label label-primary" id="s'+halte+'">'+headsign+delLink+'</span');
+        $("#halte-list").append('<div class="all_stops"><p></p></div><div class="clearfix" id="lijnfix"></div>')
+        $('.all_stops p').append('<span class="stop-selection pull-left label label-primary" id="s'+halte+'">'+headsign+delLink+'</span');
     });
     if (selectedStops.length === 0) {
         $('#halte-list .help').show();
