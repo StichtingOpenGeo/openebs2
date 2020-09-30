@@ -23,11 +23,12 @@ function changeSearch(event) {
 function searchSelection(item) {
     if (item.attr('id') === "stop_button") {
         if (stop_searching === true) return;
-
         $("#haltes-original").addClass('hidden');
         $("#haltes-new").removeClass('hidden');
         $("#lijngebonden").prop("checked", false).prop("disabled", true);
         $("#label_lijngebonden").css("color", "gray");
+        $('#halte-list div').remove();
+        $('#lijnfix').remove();
         line_related = document.getElementById('lijngebonden').checked;
         resetSelection("stop");
         stop_searching = true;
@@ -428,7 +429,7 @@ function writeHaltesField() {
     $.each(selectedStops, function(i, stop) {
         if (stop !== undefined) {
             if (lijngebonden.hasAttribute("disabled") === true) {
-                var stop_id = stop[2];
+                var stop_id = stop;
             } else {
                 var stop_id = stop[2].substring(1);
             }
@@ -764,7 +765,6 @@ function switchHaltesField() {
         $('#halte-list span').remove();
         writeHaltesWithLine();
     } else {
-        $('#halte-list div').remove();
         $('#lines').val('');
         writeHaltesWithoutLine();
     }
@@ -791,6 +791,8 @@ function writeHaltesWithLine() {
 
 function writeHaltesWithoutLine() {
     $('#halte-list span').remove();
+    $('#halte-list div').remove();
+
     var haltes = {};
     if (stop_searching == true) {
         $.each(selectedStops, function(i, stop) {
