@@ -386,16 +386,29 @@ function doSelectStop(obj) {
             if (i == -1) {
                 lineSelection.push(currentLine);
             }
-
-            if (obj.id.startsWith('sl')) {
-                var headsign = obj.textContent;
-            } else {
-                if ($(obj).hasClass('stop-left')) {
-                    direction = "heen";
-                } else if ($(obj).hasClass('stop-right')) {
-                    direction = "trg";
+            var me = obj.id;
+            if (obj.id !== undefined) {
+                if (obj.id.startsWith('sl')) {
+                    var headsign = obj.textContent;
+                } else {
+                    if ($(obj).hasClass('stop-left')) {
+                        direction = "heen";
+                    } else if ($(obj).hasClass('stop-right')) {
+                        direction = "trg";
+                    }
+                    var headsign = $(obj).text()+'('+direction+') ';
                 }
-                var headsign = $(obj).text()+'('+direction+') ';
+            } else {
+                if (obj[0].id.startsWith('sl')) {
+                    var headsign = obj[0].textContent;
+                } else {
+                    if ($(obj).hasClass('stop-left')) {
+                        direction = "heen";
+                    } else if ($(obj).hasClass('stop-right')) {
+                        direction = "trg";
+                    }
+                    var headsign = $(obj).text()+'('+direction+') ';
+                }
             }
             selectedStops.push([headsign, currentLine, id]);
 
