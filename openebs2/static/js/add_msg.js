@@ -434,13 +434,15 @@ function writeHaltesField() {
     }
     $.each(selectedStops, function(i, stop) {
         if (stop !== undefined) {
-            if (lijngebonden.hasAttribute("disabled") === true) {
-                var stop_id = stop;
-            } else {
-                var stop_id = stop[2].substring(1);
-            }
-            if ($.inArray(stop_id, stops) === -1) {
-                stops.push(stop_id);
+            if (document.getElementById('lijngebonden') !== null ) {
+                if (lijngebonden.hasAttribute("disabled") === true) {
+                    var stop_id = stop;
+                } else {
+                    var stop_id = stop[2].substring(1);
+                }
+                if ($.inArray(stop_id, stops) === -1) {
+                    stops.push(stop_id);
+                }
             }
         }
     });
@@ -718,10 +720,11 @@ function getHaltesWithMessages(event) {
     } else {
         activeLine = null;
         currentLine = null;
+    }
+
     if (document.getElementById('id_messagestarttime') !== null) {
         var starttime = parseDate($("#id_messagestarttime").val()).toJSON()
 
-    }
         $.ajax({ url: '/bericht/haltes.json',
                 data: {'messagestarttime': starttime},
                 success : function(data) {
