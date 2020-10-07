@@ -318,11 +318,7 @@ function selectStop(event, ui) {
     }
     $('#halte-list .help').hide();
     if (doSelectStop(ui.selected)) {
-        if (line_related) {
-            writeHaltesWithLine();
-        } else {
-            writeHaltesWithoutLine();
-        }
+        writeHaltesField();
     }
 }
 
@@ -412,11 +408,6 @@ function doSelectStop(obj) {
             }
             selectedStops.push([headsign, currentLine, id]);
 
-            //if (line_related) {
-            //    writeHaltesWithLine();
-            //} else {
-            //    writeHaltesWithoutLine();
-            //}
             return true;
         } else {
             removeStop(id, currentLine);
@@ -463,6 +454,12 @@ function writeHaltesField() {
         out += halte+",";
     });
     $("#haltes").val(out);
+
+    if (line_related) {
+        writeHaltesWithLine();
+    } else {
+        writeHaltesWithoutLine();
+    }
 }
 
 /* Do the inverse in case we're editing or something */
@@ -525,11 +522,7 @@ function removeStopsOfLine(event) {
     }
     $('#'+$(this).parent().parent().attr('id')).remove();
 
-    if (line_related) {
-        writeHaltesWithLine();
-    } else {
-        writeHaltesWithoutLine();
-    }
+    writeHaltesField();
 }
 
 /* Do the actual work here */
@@ -580,11 +573,6 @@ function removeStop(id, line) {
                 lineSelection.splice(i, 1);
             }
         }
-    }
-    if (line_related) {
-        writeHaltesWithLine();
-    } else {
-        writeHaltesWithoutLine();
     }
 }
 
@@ -691,7 +679,7 @@ function renderRow(row) {
     return out
 }
 
-function renderHaltesNew(stop) {  // TODO: fix this :)
+function renderHaltesNew(stop) {
     out = '<tr class="stop">';
     var id = 'sl'+stop.id;
     if (lineSelectionOfStop['sl'+stop.id] !== undefined) {
@@ -801,6 +789,8 @@ function switchHaltesField() {
 
 function writeHaltesWithLine() {
     $('#halte-list div').remove();
+    $('#lijnfix').remove();
+    $('.all_stops').remove();
     var delLine = '<span class="line-remove glyphicon glyphicon-remove"></span>';
     $.each(lineSelection, function (index, line) {
         $("#halte-list").append('<div><p class=lijn'+line+' id=lijn'+line+'><span class="stop-selection pull-left label label-danger">Lijn: '+line+ ' '+delLine+'</span></p><br /></div><div class="clearfix" id="lijnfix"></div>');
@@ -815,13 +805,13 @@ function writeHaltesWithLine() {
     if (selectedStops.length === 0) {
         $('#halte-list .help').show();
     }
-    writeHaltesField();
 }
 
 function writeHaltesWithoutLine() {
     $('#halte-list span').remove();
     $('#halte-list div').remove();
     $('.all_stops').remove();
+    $('#lijnfix').remove();
     var haltes = {};
     if (stop_searching == true) {
         $.each(selectedStops, function(i, stop) {
@@ -849,7 +839,6 @@ function writeHaltesWithoutLine() {
     if (selectedStops.length === 0) {
         $('#halte-list .help').show();
     }
-    writeHaltesField();
 }
 
 function stopDict(stop, line) {
