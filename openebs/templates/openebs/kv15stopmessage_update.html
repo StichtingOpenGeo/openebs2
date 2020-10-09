@@ -10,16 +10,29 @@
         <h2>{% trans "Bewerk bericht" %}</h2>
         <form method="post" class="form" action="{% url 'msg_edit' object.pk %}">
             <div class="control-group">
-                <label>{% trans "Haltes" %}</label>
+                <div class="custom-control custom-checkbox mb-3">
+                    <strong>Haltes</strong>
+                    <input class="pull-right" id="lijngebonden" type="checkbox" data-toggle="toggle" checked="checked" onclick="lineRelated()">
+                    <label class="custom-control-label pull-right" id="label_lijngebonden" for="lijngebonden">Lijngebonden</label>
+                </div>
                 <p class="form-control-static" id="halte-list">
+                {% comment %}
                     {% if object.kv15messagestop_set.count > 0 %}
+                        {% if object.kv15messageline_set.count > 0 %}
+                            {% for lijn in object.kv15messageline_set.all %}
+                                <span class="line-selection pull-left label label-danger" id="ul{{ lijn.line.dataownercode }}_{{ lijn.line.lineplanningnumber }}">Lijn {{ lijn.line.lineplanningnumber }}<span class="line-remove glyphicon glyphicon-remove"></span></span>
+                            {% endfor %}
+                        {% endif %}
                         {% for halte in object.kv15messagestop_set.all %}
                             <span class="stop-selection pull-left label label-primary" id="ss{{ halte.stop.dataownercode }}_{{ halte.stop.userstopcode }}">{{ halte.stop.name }} (?)<span class="stop-remove glyphicon glyphicon-remove"></span></span>
                         {% endfor %}
                     {% else %}
                         <em class="help">{% trans "Klik haltenamen om een selectie te maken" %}</em>
                     {% endif %}
+                {% endcomment %}
                 </p><br />
+                <input type="hidden" id="lines" name="lines"
+                       value="{% for lijn in object.kv15messageline_set.all %}{{ lijn.line.lineplanningnumber }},{% endfor %}" />
                 <input type="hidden" id="haltes" name="haltes"
                        value="{% for halte in object.kv15messagestop_set.all %}{{ halte.stop.dataownercode }}_{{ halte.stop.userstopcode }},{% endfor %}" />
             </div>
@@ -42,7 +55,7 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'js/add_msg.js' %}"></script>
+    <script src="{% static 'js/update_msg.js' %}"></script>
     <script src="{% static 'bower_components/jquery-ui/ui/minified/core.min.js' %}"></script>
     <script src="{% static 'bower_components/jquery-ui/ui/minified/widget.min.js' %}"></script>
     <script src="{% static 'bower_components/jquery-ui/ui/minified/mouse.min.js' %}"></script>

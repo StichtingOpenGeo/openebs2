@@ -20,7 +20,7 @@ from utils.client import get_client_ip
 from utils.views import JSONListResponseMixin, AccessMixin
 from openebs.models import Kv15Stopmessage, Kv15Log, MessageStatus, Kv1StopFilter, Kv15MessageStop, Kv15MessageLine
 from openebs.form import Kv15StopMessageForm
-
+import json
 
 log = logging.getLogger('openebs.views')
 
@@ -155,6 +155,9 @@ class MessageUpdateView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, Update
         # Get our new stops, and always determine if we need to get rid of any!
         haltes = self.request.POST.get('haltes', None)
         self.process_new_old_haltes(form.instance, form.instance.kv15messagestop_set, haltes if haltes else "")
+        lijnen = self.request.POST.get('lines', None)
+        self.process_new_old_lines(form.instance, form.instance.kv15messageline_set, lijnen if lijnen else "")
+
 
         # Push a delete, then a create, but the previous one has a different message id
         if self.push_message(form.instance.to_xml_delete(original_message[2])+form.instance.to_xml()):
@@ -181,6 +184,24 @@ class MessageUpdateView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, Update
         for old_msg_stop in stop_set.all():
             if old_msg_stop.stop not in new_stops: # Removed stop, delete it
                 old_msg_stop.delete()
+
+    @staticmethod
+    def process_new_old_lines(msg, line_set, lines):
+        """ Add new lines to the set, and then check if we've deleted any lines from the old list """
+        new_lines = []
+        old_lines = lines.split(',')
+        for line in old_lines:
+            if len(line) > 0:
+                valid_line = Kv1Line.find_line(msg.dataownercode, line)
+                if valid_line:
+                    new_lines.append(valid_line)
+        for lijn in new_lines:
+            # TODO Improve this to not be n-queries
+            if line_set.filter(line=lijn).count() == 0: # New line, add it
+                line_set.create(stopmessage=msg, line=lijn)
+        for old_msg_line in line_set.all():
+            if old_msg_line.line not in new_lines: # Removed line, delete it
+                old_msg_line.delete()
 
 
 class MessageResendView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, DetailView):
@@ -277,3 +298,40 @@ class MessageStopsBoundAjaxView(LoginRequiredMixin, JSONListResponseMixin, Detai
             qry = qry.filter(kv15stopmessage__dataownercode=self.request.user.userprofile.company)
 
         return qry
+
+
+class ActiveMessageAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+    model = Kv15Stopmessage
+    render_object = 'object'
+
+    def get_object(self, **kwargs):
+        qry = self.get_queryset()
+        return qry
+
+    def get_queryset(self):
+        qry = super(ActiveMessageAjaxView, self).get_queryset()
+        qry = qry.filter(id=self.kwargs.get('pk', None))
+        dataownercode = qry.values('dataownercode')[0]['dataownercode']
+        lines = []
+        for item in qry.values('kv15messageline__line_id', 'kv15messageline__line_id__lineplanningnumber'):
+            if item['kv15messageline__line_id'] is None:
+                lines.append('None/None')
+            else:
+                lines.append(str(item['kv15messageline__line_id'])+'/'+item['kv15messageline__line_id__lineplanningnumber'])
+        stops = []
+        for item in qry.values('kv15messagestop__stop_id__userstopcode', 'kv15messagestop__stop_id__name'):
+            stops.append([dataownercode+'_'+item['kv15messagestop__stop_id__userstopcode'], item['kv15messagestop__stop_id__name']])
+
+        line_stops = {}
+        if 'None' in lines[0]:
+            line_stops[lines[0]] = stops
+        else:
+            for line in lines:
+                line_id = line.split('/')[0]
+                line_stops[line] = []
+                query = Kv1Line.objects.filter(id=line_id)
+                stop_map = query.values('stop_map')[0]['stop_map']
+                for stop in stops:
+                    if stop[0] in stop_map:
+                        line_stops[line].append(stop)
+        return line_stops
