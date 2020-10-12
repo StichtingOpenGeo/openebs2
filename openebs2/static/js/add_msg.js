@@ -213,6 +213,10 @@ function getMyData(data){
             if ($.inArray([stop[1], lineplanningnumber, 's'+stop[0]], selectedStops) == -1) {
                 selectedStops.push([stop[1], lineplanningnumber, 's'+stop[0]]);
             }
+            if (lineSelectionOfStop['s'+stop[0]] === undefined) {
+                lineSelectionOfStop['s'+stop[0]] = [];
+            }
+            lineSelectionOfStop['s'+stop[0]].push(i.split('/')[1])
         });
     });
     writeHaltesField();
