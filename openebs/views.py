@@ -331,7 +331,15 @@ class ActiveMessageAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailVie
                 line_stops[line] = []
                 query = Kv1Line.objects.filter(id=line_id)
                 stop_map = query.values('stop_map')[0]['stop_map']
+                used_stops = []
                 for stop in stops:
                     if stop[0] in stop_map:
                         line_stops[line].append(stop)
+                        used_stops.append(stop)
+            # check if all stops are 'used'
+            extra_stops = []
+            for stop in stops:
+                if stop not in used_stops:
+                    extra_stops.append(stop)
+            line_stops['x/Onbekend'] = extra_stops
         return line_stops

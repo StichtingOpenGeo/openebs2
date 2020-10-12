@@ -189,20 +189,33 @@ function writeHaltesField() {
 }
 
 /* Do the inverse in case we're editing or something */
-function readHaltesField() {  // TODO: not adjusted to new html yet
-    $.each($("#lines").val().split(','), function(i, lijn) {
-        if (lijn != "") {
-            lineSelection.push(lijn);
-        }
+function readHaltesField() {
+    message_nr = window.location.pathname.split('/')[2];
+    $.ajax('/bericht/'+message_nr+'/haltes', {
+            success : getMyData
     });
-    $.each($("#haltes").val().split(','), function(i, halte) {
-        if (halte != "") {
-            var headsign = $('#ss'+halte).text();
-            var lijn = lineSelection
-            selectedStops.push([headsign, lijn, 's'+halte])
-        }
-    });
+}
 
+function getMyData(data){
+    my_data = data;
+    $.each(data.object, function (i, line) {
+        var lineplanningnumber = i.split('/')[1]
+        if (lineplanningnumber == "None") {
+            lineplanningnumber = "Onbekend";
+            line_related = false;
+            lineSelection.push(lineplanningnumber);
+            $('#lijngebonden').prop("checked", false);
+        } else {
+            line_related = true;
+            lineSelection.push(lineplanningnumber);
+        }
+        $.each(line, function(idx, stop) {
+            if ($.inArray([stop[1], lineplanningnumber, 's'+stop[0]], selectedStops) == -1) {
+                selectedStops.push([stop[1], lineplanningnumber, 's'+stop[0]]);
+            }
+        });
+    });
+    writeHaltesField();
 }
 
 /* Wrapper functions to get the id */
@@ -388,13 +401,13 @@ function writeScenarioStops(data, status) {
     }
 }
 
-function getHaltesWithMessages() {  // TODO: take line into account (if set)
+function getHaltesWithMessages() {
     $.ajax('/bericht/haltes.json', {
             success : writeHaltesWithMessages
      })
 }
 
-function writeHaltesWithMessages(data, status) {   // TODO: take line into account (if set)
+function writeHaltesWithMessages(data, status) {
     $.each(data.object, function (i, halte) {
         stop = halte['dataownercode']+ '_' + halte['userstopcode']
         blockedStops.push(stop)
@@ -447,6 +460,7 @@ function writeHaltesWithLine() {
 
 function writeHaltesWithoutLine() {
     $('#halte-list span').remove();
+    $('.all_stops').remove();
     var haltes = {};
     $.each(selectedStops, function(i, stop) {
         var halte_id = stop[2];
@@ -456,6 +470,7 @@ function writeHaltesWithoutLine() {
         }
     });
     var delLink = '<span class="stop-remove glyphicon glyphicon-remove"></span>';
+    $("#halte-list").append('<div class="all_stops"><p></p></div><div class="clearfix" id="lijnfix"></div>')
     $.each(haltes, function(halte, headsign) {
         $('#halte-list').append('<span class="stop-selection pull-left label label-primary" id="s'+halte+'">'+headsign+delLink+'</span');
     });
@@ -508,8 +523,10 @@ function writeLineOutputAsString(data) {
     var out = "";
     data.sort();
     $.each(data, function (i, line) {
-        out += line;
-        out += ",";
+        if (line !== "Onbekend") {
+            out += line;
+            out += ",";
+        }
     });
     $("#lines").val(out);
 }
