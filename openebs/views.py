@@ -341,5 +341,6 @@ class ActiveMessageAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailVie
             for stop in stops:
                 if stop not in used_stops:
                     extra_stops.append(stop)
-            line_stops['x/Onbekend'] = extra_stops
+            if len(extra_stops) > 0:
+                line_stops['x/Onbekend'] = extra_stops
         return line_stops
