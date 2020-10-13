@@ -366,6 +366,7 @@ function renderRow(row) {
         out += '<td class="img text-center"><img class="stop-img stop-right" src="/static/img/stop-right.png"></td>'
     }
     if (row.right != null) {
+        stopSelection = []
         if ($.inArray(row.right.id, scenarioStops) != -1) {
             out += '<td class="warning">'+row.right.name+' <span class="glyphicon glyphicon-warning-sign pull-right" title="Al in scenario opgenomen"></span></td>'
         } else {
