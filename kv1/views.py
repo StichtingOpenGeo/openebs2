@@ -154,3 +154,28 @@ class DataImportView(LoginRequiredMixin, StaffuserRequiredMixin, ListView):
         qry = qry.filter(journey__dataownercode=self.request.user.userprofile.company)
         qry = qry.values('date').annotate(dcount=Count('date')).order_by('date')
         return qry
+
+
+class StopLineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
+    model = Kv1Line
+    render_object = 'object_list'
+
+    def get_queryset(self):
+        qry = super(StopLineSearchView, self).get_queryset()
+        stop = self.kwargs.get('pk', None)
+        if stop is None:
+            return
+        obj = []
+        for line in qry:
+            data = json.loads(line.stop_map)
+            for x in data:
+                for item in x.values():
+                    if item is not None:
+                        if item['id'] == stop:
+                            obj.append(line.pk)
+        dataownercode = stop.split('_')[0]
+        qry = qry.filter(dataownercode=dataownercode, pk__in=obj) \
+            .order_by('lineplanningnumber') \
+            .values('pk', 'dataownercode', 'headsign', 'lineplanningnumber', 'publiclinenumber')
+
+        return qry

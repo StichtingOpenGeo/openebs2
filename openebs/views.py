@@ -344,3 +344,5 @@ class ActiveMessageAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailVie
             if len(extra_stops) > 0:
                 line_stops['x/Onbekend'] = extra_stops
         return line_stops
+
+

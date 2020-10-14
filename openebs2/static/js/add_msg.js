@@ -149,11 +149,9 @@ function doSelectStop(obj) {
         var headsign = $(obj).text()+'('+direction+') ';
         var stop_id = $(obj).attr('id').slice(0,-1);
         selectedStops.push([headsign, currentLine, stop_id]);
-        if (line_related) {
-            writeHaltesWithLine();
-        } else {
-            writeHaltesWithoutLine();
-        }
+        // check if other selected lines have this stop also
+        searchSelectedLinesForStop(stop_id.substring(1));
+
         return true;
     } else {
         removeStop(id, currentLine);
@@ -534,6 +532,35 @@ function writeLineOutputAsString(data) {
         }
     });
     $("#lines").val(out);
+}
+
+function searchSelectedLinesForStop(stop_id) {
+    $.ajax('/stop/'+stop_id+'/lines', {
+        success : addLinesToStop
+    });
+}
+
+function addLinesToStop(data) {
+    var stop = $('.ui-selected').attr('id').slice(0,-1);
+    var linesOfStop = lineSelectionOfStop[stop];
+    $.each(lineSelection, function(i, line) {
+        if (line !== currentLine) {
+            $.each(data.object_list, function(row, dict) {
+                if (dict['lineplanningnumber'] === line) {
+                    linesOfStop.push(line)
+                    // TODO: pick a row from stopSelection where [2] === stop_id + add new row to stopSelection
+                    var relevant_stop = selectedStops.filter(row => row[2] === stop)[0];
+                    selectedStops.push([relevant_stop[0], line, relevant_stop[2]])
+                }
+            });
+        }
+    });
+    lineSelectionOfStop[stop] = linesOfStop;
+    if (line_related) {
+            writeHaltesWithLine();
+    } else {
+        writeHaltesWithoutLine();
+    }
 }
 
 /* TIME FUNCTIONS */
