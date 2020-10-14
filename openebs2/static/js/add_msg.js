@@ -234,7 +234,6 @@ function selectionRemoveStop(event) {
     removeStop(stop_id, line);
 }
 
-/* Don't know why this is in here, isn't called properly from the html */
 function lineRemoveStop(event) {
     removeStop($(this).attr('id').slice(0, -1))
 }
@@ -277,7 +276,7 @@ function removeStopsOfLine(event) {
 
 /* Do the actual work here */
 function removeStop(id, line) {
-if (id == 'all') {
+    if (id == 'all') {
         for (var i = 0; i < selectedStops.length; i++) {
             if (selectedStops[i][1] == line) {
                 if (line === currentLine) {
@@ -295,28 +294,35 @@ if (id == 'all') {
         }
         removeStopFromDict(id, line);
     } else {
-        var selection = selectedStops.filter(stop => stop[2] === id && stop[1] === line);
+        var lijnen = [];
+        var selection = selectedStops.filter(stop => stop[2] === id);
         if (selection.length > 0) {
-            var idx = selectedStops.indexOf(selection[0]);
-            selectedStops.splice(idx, 1);
-            removeStopFromDict(selection[0][2], selection[0][1]);
+            $.each(selection, function(i, row) {
+                var idx = selectedStops.indexOf(row);
+                selectedStops.splice(idx, 1);
+                lijnen.push(row[1]);
+                removeStopFromDict(row[2], row[1]);
+            });
             var halte = id;
             if (line_related) {
                 halte = id+'-'+line;
             }
-            $("#"+halte).remove();
+            $('[id^=s'+id+']').remove();
+        }
 
-            if (line === currentLine) {
+        $.each(lijnen, function(i, lijn) {
+            if (lijn === currentLine) {
                 var old_id = id.split('-')[0].substring(1);
                 $("#"+id+"l, #"+id+"r").removeClass('success');
                 $("#"+id+"l .stop-check, #"+id+"r .stop-check").remove();
             }
-            var result = selectedStops.filter(stop => stop[1] === line);
+            var result = selectedStops.filter(stop => stop[1] === lijn);
             if (result.length === 0) {
-                var i = $.inArray(line, lineSelection);
-                lineSelection.splice(i, 1);
+                var j = $.inArray(lijn, lineSelection);
+                lineSelection.splice(j, 1);
             }
-        }
+        });
+
     }
     writeHaltesField()
 }
@@ -426,9 +432,6 @@ function lineRelated() {
 function lineRelatedUpdate() {
   line_related = document.getElementById('lijngebonden').checked;
   $('#line_related').val(line_related);
-
-
-
 }
 
 function switchHaltesField() {
@@ -535,8 +538,14 @@ function writeLineOutputAsString(data) {
 }
 
 function searchSelectedLinesForStop(stop_id) {
-    $.ajax('/stop/'+stop_id+'/lines', {
-        success : addLinesToStop
+    var out = '';
+    $.each(lineSelection, function(index, lijn) {
+        out += lijn+",";
+    });
+    $.ajax({
+        url: '/stop/'+stop_id+'/lines',
+        data: {lijnen : out},
+        success: addLinesToStop
     });
 }
 
@@ -544,23 +553,19 @@ function addLinesToStop(data) {
     var stop = $('.ui-selected').attr('id').slice(0,-1);
     var linesOfStop = lineSelectionOfStop[stop];
     $.each(lineSelection, function(i, line) {
-        if (line !== currentLine) {
-            $.each(data.object_list, function(row, dict) {
-                if (dict['lineplanningnumber'] === line) {
-                    linesOfStop.push(line)
-                    // TODO: pick a row from stopSelection where [2] === stop_id + add new row to stopSelection
-                    var relevant_stop = selectedStops.filter(row => row[2] === stop)[0];
-                    selectedStops.push([relevant_stop[0], line, relevant_stop[2]])
-                }
-            });
+        if (line === currentLine) {
+            return true;
         }
+        $.each(data.object_list, function(row, dict) {
+            if (dict['lineplanningnumber'] === line) {
+                linesOfStop.push(line)
+                var relevant_stop = selectedStops.filter(row => row[2] === stop)[0];
+                selectedStops.push([relevant_stop[0], line, relevant_stop[2]])
+            }
+        });
     });
     lineSelectionOfStop[stop] = linesOfStop;
-    if (line_related) {
-            writeHaltesWithLine();
-    } else {
-        writeHaltesWithoutLine();
-    }
+    writeHaltesField();
 }
 
 /* TIME FUNCTIONS */

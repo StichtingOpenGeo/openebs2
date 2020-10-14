@@ -165,6 +165,9 @@ class StopLineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
         stop = self.kwargs.get('pk', None)
         if stop is None:
             return
+        lijnen = self.request.GET.get('lijnen', None)[0:-1].split(',')
+        dataownercode = stop.split('_')[0]
+        qry = qry.filter(dataownercode=dataownercode, lineplanningnumber__in=lijnen)
         obj = []
         for line in qry:
             data = json.loads(line.stop_map)
@@ -173,8 +176,7 @@ class StopLineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
                     if item is not None:
                         if item['id'] == stop:
                             obj.append(line.pk)
-        dataownercode = stop.split('_')[0]
-        qry = qry.filter(dataownercode=dataownercode, pk__in=obj) \
+        qry = qry.filter(pk__in=obj) \
             .order_by('lineplanningnumber') \
             .values('pk', 'dataownercode', 'headsign', 'lineplanningnumber', 'publiclinenumber')
 
