@@ -484,8 +484,10 @@ function writeScenarioStops(data, status) {
 }
 
 function getHaltesWithMessages(event) {
-    activeLine = $(this).attr('id').substring(1);
-    currentLine = $(this).find("small").text();
+    if ($(this).attr('id') !== undefined) {
+        activeLine = $(this).attr('id').substring(1);
+        currentLine = $(this).find("small").text();
+    }
     if (document.getElementById('id_messagestarttime') !== null) {
         var starttime = parseDate($("#id_messagestarttime").val()).toJSON()
 
@@ -524,9 +526,6 @@ function writeHaltesWithMessages(data) {
 
 function lineRelated() {
     line_related = document.getElementById('lijngebonden').checked;
-    line_related = document.getElementById('lijngebonden').checked;
-    line_related = document.getElementById('lijngebonden').checked;
-    if (!activeLine) return
 
     var starttime = parseDate($("#id_messagestarttime").val()).toJSON()
     $.ajax({ url: '/bericht/haltes.json',
@@ -537,10 +536,6 @@ function lineRelated() {
                 switchHaltesField();
             }
     });
-}
-
-function lineRelatedUpdate() {
-  line_related = document.getElementById('lijngebonden').checked;
 }
 
 function switchHaltesField() {
