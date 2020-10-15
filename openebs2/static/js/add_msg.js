@@ -66,7 +66,6 @@ function writeList(data, status) {
 }
 
 function showStopsOnChange() {
-    emptyStopList();
     $('.stopRow span').remove();
     if (!activeLine) return;
     var line = null;
@@ -101,6 +100,7 @@ function showStopsOnChange() {
             });
         }
     }
+    filterCurrentHalteList();
     $('.stopRow td.success').append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;');
 }
 
@@ -368,7 +368,6 @@ function removeStop(id, line) {
                 lineSelection.splice(j, 1);
             }
         });
-
     }
     writeHaltesField()
 }
@@ -417,9 +416,6 @@ function renderRow(row) {
                 out += '<td class="stop stop-left" id="'+id+'">'+row.left.name;
                 var selected = currentStopMeasures.filter(message => message[0] === row.left.id);
                 if (selected.length > 0) {
-                    //var line = '';
-                    //if (selected[3] !== null) {
-                    //    line = 'deze lijn';
                     if (line_related) {
                         out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze lijn en begintijd"></span>'
                     } else {
@@ -548,11 +544,9 @@ function lineRelatedUpdate() {
 function switchHaltesField() {
     if (line_related) {
         $('#halte-list span').remove();
-        //writeHaltesWithLine();
     } else {
         $('#halte-list div').remove();
         $('#lines').val('');
-        //writeHaltesWithoutLine();
     }
     writeHaltesField();
 }
@@ -679,16 +673,18 @@ function addLinesToStop(data) {
     writeHaltesField();
 }
 
-function emptyStopList() {
-    $('#halte-list div').remove();
-    $('#halte-list .help').show();
-    $('.stop').removeClass('ui-selected success');
-    selectedStops = [];
-    lineSelectionOfStop = {};
-    lineSelection = [];
+function filterCurrentHalteList() {
+    $.each(selectedStops, function(i, stop) {
+        var stop_nr = stop[2].split('_')[1];
+        if ($.inArray(stop_nr, blockedStops) !== -1) {
+            selectedStops.splice(i, 1);
+            delete lineSelectionOfStop[stop[2]];
+            $('[id^='+stop[2]+']').removeClass('success');
+            $('[id^='+stop[2]+'] span').remove();
+        }
+    });
+    writeHaltesField();
 }
-
-
 
 function epoch(date) {
     return Date.parse(date) / 1000;
