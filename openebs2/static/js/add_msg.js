@@ -525,6 +525,7 @@ function writeHaltesWithMessages(data) {
 function lineRelated() {
     line_related = document.getElementById('lijngebonden').checked;
     line_related = document.getElementById('lijngebonden').checked;
+    line_related = document.getElementById('lijngebonden').checked;
     if (!activeLine) return
 
     var starttime = parseDate($("#id_messagestarttime").val()).toJSON()
@@ -588,7 +589,7 @@ function writeHaltesWithoutLine() {
     var delLink = '<span class="stop-remove glyphicon glyphicon-remove"></span>';
     $("#halte-list").append('<div class="all_stops"><p></p></div><div class="clearfix" id="lijnfix"></div>')
     $.each(haltes, function(halte, headsign) {
-        $('#halte-list').append('<span class="stop-selection pull-left label label-primary" id="s'+halte+'">'+headsign+delLink+'</span');
+        $('#halte-list .all_stops').append('<span class="stop-selection pull-left label label-primary" id="s'+halte+'">'+headsign+delLink+'</span');
     });
     if (selectedStops.length === 0) {
         $('#halte-list .help').removeClass('hidden');
