@@ -31,6 +31,11 @@ def get_end_service():
     return (now() + timedelta(days=1)).replace(hour=2, minute=0, second=0, microsecond=0)
 
 
+def get_start_service():
+    # Hmm, this is GMT
+    return (now()).replace(hour=2, minute=0, second=0, microsecond=0)
+
+
 class UserProfile(models.Model):
     """ Store additional user data as we don't really want a custom user model perse """
     user = models.OneToOneField(User, on_delete=models.CASCADE)
