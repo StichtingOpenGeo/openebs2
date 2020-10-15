@@ -189,6 +189,7 @@ function writeHaltesField() {
 /* Do the inverse in case we're editing or something */
 function readHaltesField() {
     message_nr = window.location.pathname.split('/')[2];
+    if (message_nr == 'nieuw') return;
     $.ajax('/bericht/'+message_nr+'/haltes', {
             success : getMyData
     });
