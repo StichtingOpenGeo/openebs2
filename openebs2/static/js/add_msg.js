@@ -116,18 +116,20 @@ function showStops(event) {
 }
 
 function selectStop(event, ui) {
+    $('#halte-list .help').addClass('hidden');
+
     var stop_id = $(ui.selected).attr('id').split("_")[1].slice(0,-1);
     if ($.inArray(stop_id, blockedStops) != -1 & $('#id_messagetype_3').parent().hasClass('active') === false) { // if blocked and no OVERRULE
         return
     }
-    $('#halte-list .help').hide();
     if (doSelectStop(ui.selected)) {
         writeHaltesField();
     }
 }
 
 function selectStopFromBall(obj) {
-    $('#halte-list .help').hide();
+    $('#halte-list .help').addClass('hidden');
+
     var did = false
     var parent = $(this).parents('.stopRow');
     var left = $(parent).find(".stop-left");
@@ -147,7 +149,7 @@ function selectStopFromBall(obj) {
 }
 
 function selectAllVisibleStops() {
-    $('#halte-list .help').hide();
+    $('#halte-list .help').addClass('hidden');
     $('#stops .stop').each(function(index, value) {
         /* Check this is not already selected */
         index = $(this).attr('id').slice(0, -1);
@@ -313,7 +315,7 @@ function removeStopsOfLine(event) {
     $('[id$='+id_end+']').remove();
 
     if (Object.keys(lineSelectionOfStop).length == 0) {
-        $('#halte-list .help').show();
+        $('#halte-list .help').removeClass('hidden');
     }
     $('#'+$(this).parent().parent().attr('id')).remove();
 
@@ -428,7 +430,6 @@ function renderRow(row) {
     } else {
         out += '<td>&nbsp;</td>';
     }
-
     if (row.left != null && row.right != null) {
         out += '<td class="img text-center"><img class="stop-img stop-both" src="/static/img/stop-both.png"></td>'
     } else if (row.left != null) {
@@ -523,6 +524,7 @@ function writeHaltesWithMessages(data) {
 
 function lineRelated() {
     line_related = document.getElementById('lijngebonden').checked;
+    line_related = document.getElementById('lijngebonden').checked;
     if (!activeLine) return
 
     var starttime = parseDate($("#id_messagestarttime").val()).toJSON()
@@ -538,7 +540,6 @@ function lineRelated() {
 
 function lineRelatedUpdate() {
   line_related = document.getElementById('lijngebonden').checked;
-  $('#line_related').val(line_related);
 }
 
 function switchHaltesField() {
@@ -553,6 +554,8 @@ function switchHaltesField() {
 
 function writeHaltesWithLine() {
     $('#halte-list div').remove();
+    $('#lijnfix').remove();
+    $('.all_stops').remove();
     var delLine = '<span class="line-remove glyphicon glyphicon-remove"></span>';
     $.each(lineSelection, function (index, line) {
         $("#halte-list").append('<div><p class=lijn'+line+' id=lijn'+line+'><span class="stop-selection pull-left label label-danger">Lijn: '+line+ ' '+delLine+'</span></p><br /></div><div class="clearfix" id="lijnfix"></div>');
@@ -565,12 +568,14 @@ function writeHaltesWithLine() {
         $('.lijn'+lijn).append('<span class="stop-selection pull-left label label-primary" id="s'+halte_id+'-'+lijn+'">'+headsign+delLink+'</span');
     });
     if (selectedStops.length === 0) {
-        $('#halte-list .help').show();
+        $('#halte-list .help').removeClass('hidden');
     }
 }
 
 function writeHaltesWithoutLine() {
     $('#halte-list span').remove();
+    $('#halte-list div').remove();
+    $('#lijnfix').remove();
     $('.all_stops').remove();
     var haltes = {};
     $.each(selectedStops, function(i, stop) {
@@ -586,7 +591,7 @@ function writeHaltesWithoutLine() {
         $('#halte-list').append('<span class="stop-selection pull-left label label-primary" id="s'+halte+'">'+headsign+delLink+'</span');
     });
     if (selectedStops.length === 0) {
-        $('#halte-list .help').show();
+        $('#halte-list .help').removeClass('hidden');
     }
 }
 
