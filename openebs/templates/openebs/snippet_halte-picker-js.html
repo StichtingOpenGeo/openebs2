@@ -8,7 +8,7 @@ $("#stops").selectable({
 $( "#line_search" ).on('keyup', changeSearch);
 $( "#id_messagecontent" ).on('keyup', changeCount);
 $( "#id_messagecontent" ).trigger( "keyup" );
-$( "body" ).on('click', ".line", showStops);
+$( "body" ).on('click', ".line", getHaltesWithMessages);
 $( "body" ).on('click', ".stop-remove", selectionRemoveStop);
 $( "body" ).on('click', ".stop.success", lineRemoveStop);
 $( "body" ).on('click', ".line-remove", removeStopsOfLine);

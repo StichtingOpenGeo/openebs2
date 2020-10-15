@@ -26,7 +26,6 @@
                         <em class="help">{% trans "Klik haltenamen om een selectie te maken" %}</em>
                     {% endif %}
                 </p><br />
-                <input type="hidden" id="line_related" name="lijngebonden" value="true" />
                 <input type="hidden" id="lines" name="lines" />
                 {% if prefilled_stop %}
                     <input type="hidden" id="haltes" name="haltes" value="{{ prefilled_stop.dataownercode }}_{{ prefilled_stop.userstopcode }}," />
@@ -57,5 +56,4 @@
 {% endblock %}
 {% block js_init %}
     {% include "openebs/snippet_halte-picker-js.html" %}
-    getHaltesWithMessages()
 {% endblock %}
