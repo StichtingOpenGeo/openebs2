@@ -16,26 +16,13 @@
                     <label class="custom-control-label pull-right" id="label_lijngebonden" for="lijngebonden">Lijngebonden</label>
                 </div>
                 <p class="form-control-static" id="halte-list">
-                {% comment %}
-                    {% if object.kv15messagestop_set.count > 0 %}
-                        {% if object.kv15messageline_set.count > 0 %}
-                            {% for lijn in object.kv15messageline_set.all %}
-                                <span class="line-selection pull-left label label-danger" id="ul{{ lijn.line.dataownercode }}_{{ lijn.line.lineplanningnumber }}">Lijn {{ lijn.line.lineplanningnumber }}<span class="line-remove glyphicon glyphicon-remove"></span></span>
-                            {% endfor %}
-                        {% endif %}
-                        {% for halte in object.kv15messagestop_set.all %}
-                            <span class="stop-selection pull-left label label-primary" id="ss{{ halte.stop.dataownercode }}_{{ halte.stop.userstopcode }}">{{ halte.stop.name }} (?)<span class="stop-remove glyphicon glyphicon-remove"></span></span>
-                        {% endfor %}
-                    {% else %}
-                        <em class="help">{% trans "Klik haltenamen om een selectie te maken" %}</em>
-                    {% endif %}
-                {% endcomment %}
+                    <em class="help hidden">{% trans "Klik haltenamen om een selectie te maken" %}</em>
                 </p><br />
                 <input type="hidden" id="lines" name="lines"
                        value="{% for lijn in object.kv15messageline_set.all %}{{ lijn.line.lineplanningnumber }},{% endfor %}" />
                 <input type="hidden" id="haltes" name="haltes"
                        value="{% for halte in object.kv15messagestop_set.all %}{{ halte.stop.dataownercode }}_{{ halte.stop.userstopcode }},{% endfor %}" />
-            </div>
+            </div><br/>
             <div class="clearfix"></div>
             {% csrf_token %}
             {% crispy form form.helper %}
