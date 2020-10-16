@@ -235,11 +235,19 @@ function writeHaltesField() {
 
 /* Do the inverse in case we're editing or something */
 function readHaltesField() {
-    message_nr = window.location.pathname.split('/')[2];
-    if (message_nr == 'nieuw') return;
-    $.ajax('/bericht/'+message_nr+'/haltes', {
-            success : getMyData
-    });
+    if (window.location.pathname.split('/')[1] === 'bericht') {
+        message_nr = window.location.pathname.split('/')[2];
+        if (message_nr == 'nieuw') return;
+        $.ajax('/bericht/'+message_nr+'/haltes', {
+                success : getMyData
+        });
+    } else if (window.location.pathname.split('/')[1] === 'scenario') {
+        scenario_nr = window.location.pathname.split('/')[2];
+        message_nr = window.location.pathname.split('/')[4];
+        $.ajax('/scenario/'+scenario_nr+'/bericht/'+message_nr+'/haltes', {
+                success : getMyData
+       });
+    }
 }
 
 function getMyData(data){
