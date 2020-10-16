@@ -534,16 +534,19 @@ function writeHaltesWithMessages(data) {
 
 function lineRelated() {
     line_related = document.getElementById('lijngebonden').checked;
-
-    var starttime = parseDate($("#id_messagestarttime").val()).toJSON()
-    $.ajax({ url: '/bericht/haltes.json',
-            data: {'messagestarttime': starttime},
-            success : function(data){
-                writeHaltesWithMessages(data);
-                showStopsOnChange();
-                switchHaltesField();
-            }
-    });
+    if ($("#id_messagestarttime").val() === undefined) {
+        switchHaltesField();
+    } else {
+        var starttime = parseDate($("#id_messagestarttime").val()).toJSON()
+        $.ajax({ url: '/bericht/haltes.json',
+                data: {'messagestarttime': starttime},
+                success : function(data){
+                    writeHaltesWithMessages(data);
+                    showStopsOnChange();
+                    switchHaltesField();
+                }
+        });
+    }
 }
 
 function switchHaltesField() {
