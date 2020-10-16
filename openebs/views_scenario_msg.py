@@ -1,13 +1,15 @@
 import logging
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404
-from django.views.generic import CreateView, UpdateView, DeleteView
+from django.views.generic import CreateView, UpdateView, DeleteView, DetailView
 from django.views.generic.edit import BaseFormView
-from kv1.models import Kv1Stop
+from kv1.models import Kv1Stop, Kv1Line
 from openebs.form import Kv15ScenarioMessageForm
 from openebs.models import Kv15Scenario, Kv15ScenarioMessage
 from openebs.views import AccessMixin
 from openebs.views_utils import FilterDataownerMixin
+from braces.views import LoginRequiredMixin
+from utils.views import JSONListResponseMixin
 
 log = logging.getLogger('openebs.views.scenario_message')
 
@@ -47,7 +49,7 @@ class ScenarioMessageCreateView(AccessMixin, ScenarioContentMixin, CreateView):
         if self.kwargs.get('scenario', None):  # This ensures the scenario can never be spoofed
             # TODO Register difference between this and the scenario we've validated on
             form.instance.scenario = get_object_or_404(Kv15Scenario, pk=self.kwargs.get('scenario', None),
-                                                              dataownercode=self.request.user.userprofile.company)
+                                                       dataownercode=self.request.user.userprofile.company)
 
         ret = super(ScenarioMessageCreateView, self).form_valid(form)
 
@@ -56,6 +58,15 @@ class ScenarioMessageCreateView(AccessMixin, ScenarioContentMixin, CreateView):
         if haltes:
             for stop in Kv1Stop.find_stops_from_haltes(haltes):
                 form.instance.stops.create(message=form.instance, stop=stop)
+        lines = self.request.POST.get('lines', None)
+        lijnen = []
+        if lines:
+            for line in lines.split(','):
+                if len(line) > 0:
+                    result = Kv1Line.find_line(form.instance.dataownercode, line)
+                    lijnen.append(result)
+        for lijn in lijnen:
+            form.instance.lines.create(message=form.instance, line=lijn)
 
         return ret
 
@@ -90,3 +101,55 @@ class ScenarioMessageUpdateView(AccessMixin, FilterDataownerMixin, ScenarioConte
 class ScenarioMessageDeleteView(AccessMixin, ScenarioContentMixin, DeleteView):
     permission_required = 'openebs.add_scenario'
     model = Kv15ScenarioMessage
+
+
+class ScenarioMessageAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+    model = Kv15ScenarioMessage
+    render_object = 'object'
+
+    def get_object(self, **kwargs):
+        qry = self.get_queryset()
+        return qry
+
+    def get_queryset(self):
+        qry = super(ScenarioMessageAjaxView, self).get_queryset()
+        #message = self.kwargs.get('pk', None)
+        qry = qry.filter(id=self.kwargs.get('pk', None))
+        dataownercode = qry.values('dataownercode')[0]['dataownercode']
+        lines = []
+        x = qry.values('lines__line_id')
+
+        for item in qry.values('lines__line_id', 'lines__line_id__lineplanningnumber'):
+            if item['lines__line_id'] is None:
+                lines.append('None/None')
+            else:
+                lines.append(str(item['lines__line_id'])+'/'+item['lines__line_id__lineplanningnumber'])
+        stops = []
+        for item in qry.values('stops__stop_id__userstopcode', 'stops__stop_id__name'):
+            stops.append([dataownercode+'_'+item['stops__stop_id__userstopcode'], item['stops__stop_id__name']])
+
+        line_stops = {}
+        if 'None' in lines[0]:
+            line_stops[lines[0]] = stops
+        else:
+            for line in lines:
+                line_id = line.split('/')[0]
+                line_stops[line] = []
+                query = Kv1Line.objects.filter(id=line_id)
+                stop_map = query.values('stop_map')[0]['stop_map']
+                used_stops = []
+                for stop in stops:
+                    if stop[0] in stop_map:
+                        line_stops[line].append(stop)
+                        used_stops.append(stop)
+            # check if all stops are 'used'
+            extra_stops = []
+            for stop in stops:
+                if stop not in used_stops:
+                    extra_stops.append(stop)
+            if len(extra_stops) > 0:
+                line_stops['x/Onbekend'] = extra_stops
+        return line_stops
+
+
+
