@@ -341,6 +341,7 @@ class ActiveMessageAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailVie
             stops.append([dataownercode+'_'+item['kv15messagestop__stop_id__userstopcode'], item['kv15messagestop__stop_id__name']])
 
         line_stops = {}
+        used_stops = []
         if 'None' in lines[0]:
             line_stops[lines[0]] = stops
         else:
@@ -349,11 +350,11 @@ class ActiveMessageAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailVie
                 line_stops[line] = []
                 query = Kv1Line.objects.filter(id=line_id)
                 stop_map = query.values('stop_map')[0]['stop_map']
-                used_stops = []
                 for stop in stops:
                     if stop[0] in stop_map:
                         line_stops[line].append(stop)
-                        used_stops.append(stop)
+                        if stop not in used_stops:
+                            used_stops.append(stop)
             # check if all stops are 'used'
             extra_stops = []
             for stop in stops:
