@@ -362,6 +362,10 @@ class Kv15ScenarioMessage(models.Model):
             message = _("<geen bericht>")
         return "%s : %s" % (self.scenario.name, message)
 
+    def get_distinct_stop_names(self, number=15):
+        """ Get a unique sample of stop names to use when we've got too many """
+        return self.stops.distinct('stop__name').order_by('stop__name')[0:number]
+
     class Meta(object):
         verbose_name = _('Scenario bericht')
         verbose_name_plural = _("Scenario berichten")
