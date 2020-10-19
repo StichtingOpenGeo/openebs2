@@ -29,6 +29,9 @@ $('body').on('change', '#id_messagedurationtype_1', function() {
 $('body').on('change', '#id_messagedurationtype_2,#id_messagedurationtype_3', function() {
    showEndTime();
 });
+$('body').on('change', '#id_messagetype_1,#id_messagetype_2,#id_messagetype_4', function() {
+    filterStops();
+});
 /* Onload */
 if ($('#id_messagedurationtype_1').attr('checked')) {
     hideEndTime();

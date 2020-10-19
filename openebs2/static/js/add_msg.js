@@ -116,13 +116,12 @@ function showStops(event) {
 }
 
 function selectStop(event, ui) {
-    $('#halte-list .help').addClass('hidden');
-
     var stop_id = $(ui.selected).attr('id').split("_")[1].slice(0,-1);
     if ($.inArray(stop_id, blockedStops) != -1 & $('#id_messagetype_3').parent().hasClass('active') === false) { // if blocked and no OVERRULE
         return
     }
     if (doSelectStop(ui.selected)) {
+        $('#halte-list .help').addClass('hidden');
         writeHaltesField();
     }
 }
@@ -696,6 +695,13 @@ function filterCurrentHalteList() {
         }
     });
     writeHaltesField();
+}
+
+function filterStops() {
+    var remove_stops = selectedStops.filter(stop => $.inArray(stop[2].split('_')[1], blockedStops) !== -1);
+    $.each(remove_stops, function (i, stop) {
+        removeStop(stop[2], stop[1]);
+    });
 }
 
 function epoch(date) {
