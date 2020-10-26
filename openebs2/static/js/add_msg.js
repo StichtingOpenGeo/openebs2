@@ -458,7 +458,7 @@ function switchHaltesField() {
 function writeHaltesWithLine(call) {
     if (call == 0 && selectedStops.length > 0) {
         searchSelectedLinesForStop();
-    } else if (call == 1) {
+    } else {
         $('#halte-list div').remove();
         $('#lijnfix').remove();
         $('.all_stops').remove();
@@ -499,7 +499,6 @@ function writeHaltesWithoutLine() {
     });
     if (selectedStops.length === 0) {
         $('#halte-list .help').removeClass('hidden');
-
     }
 }
 
