@@ -456,7 +456,7 @@ function switchHaltesField() {
 }
 
 function writeHaltesWithLine(call) {
-    if (call == 0) {
+    if (call == 0 && selectedStops.length > 0) {
         searchSelectedLinesForStop();
     } else if (call == 1) {
         $('#halte-list div').remove();
@@ -579,6 +579,7 @@ function addLinesToStop(data) {
             }
             var linesOfStop = lineSelectionOfStop["s"+stop];
             var relevant_stop = selectedStops.filter(row => row[2] === 's'+stop)[0];
+            if (relevant_stop === undefined) return false
             var this_stop = [relevant_stop[0], line, relevant_stop[2]].toString();
             var selectedStops_as_string = selectedStops.toString();
             if (selectedStops_as_string.indexOf(this_stop) === -1) {
