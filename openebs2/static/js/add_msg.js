@@ -438,20 +438,6 @@ function writeHaltesWithMessages(data, status) {
 
 function lineRelated() {
   line_related = document.getElementById('lijngebonden').checked;
-  switchHaltesField();
-}
-
-function lineRelatedUpdate() {
-  line_related = document.getElementById('lijngebonden').checked;
-}
-
-function switchHaltesField() {
-    if (line_related) {
-        $('#halte-list span').remove();
-    } else {
-        $('#halte-list div').remove();
-        $('#lines').val('');
-    }
     writeHaltesField();
 }
 
@@ -480,10 +466,8 @@ function writeHaltesWithLine(call) {
 }
 
 function writeHaltesWithoutLine() {
-    $('#halte-list span').remove();
     $('#halte-list div').remove();
-    $('#lijnfix').remove();
-    $('.all_stops').remove();
+    $('#lines').val('');
     var haltes = {};
     $.each(selectedStops, function(i, stop) {
         var halte_id = stop[2];
