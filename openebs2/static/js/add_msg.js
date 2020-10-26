@@ -155,9 +155,6 @@ function doSelectStop(obj) {
         var headsign = $(obj).text()+'('+direction+') ';
         var stop_id = $(obj).attr('id').slice(0,-1);
         selectedStops.push([headsign, currentLine, stop_id]);
-        // check if other selected lines have this stop also
-        searchSelectedLinesForStop(stop_id.substring(1));
-
         return true;
     } else {
         removeStop(id, currentLine);
@@ -186,7 +183,7 @@ function writeHaltesField() {
     $("#haltes").val(out);
 
     if (line_related) {
-        writeHaltesWithLine();
+        writeHaltesWithLine(0);
     } else {
         writeHaltesWithoutLine();
     }
@@ -458,23 +455,27 @@ function switchHaltesField() {
     writeHaltesField();
 }
 
-function writeHaltesWithLine() {
-    $('#halte-list div').remove();
-    $('#lijnfix').remove();
-    $('.all_stops').remove();
-    var delLine = '<span class="line-remove glyphicon glyphicon-remove"></span>';
-    $.each(lineSelection, function (index, line) {
-        $("#halte-list").append('<div><p class=lijn'+line+' id=lijn'+line+'><span class="stop-selection pull-left label label-danger">Lijn: '+line+ ' '+delLine+'</span></p><br /></div><div class="clearfix" id="lijnfix"></div>');
-    });
-    var delLink = '<span class="stop-remove glyphicon glyphicon-remove"></span>';
-    $.each(selectedStops, function(i, stop) {
-        var halte_id = stop[2];
-        var lijn = stop[1];
-        var headsign = stop[0];
-        $('.lijn'+lijn).append('<span class="stop-selection pull-left label label-primary" id="s'+halte_id+'-'+lijn+'">'+headsign+delLink+'</span');
-    });
-    if (selectedStops.length === 0) {
-        $('#halte-list .help').removeClass('hidden');
+function writeHaltesWithLine(call) {
+    if (call == 0) {
+        searchSelectedLinesForStop();
+    } else if (call == 1) {
+        $('#halte-list div').remove();
+        $('#lijnfix').remove();
+        $('.all_stops').remove();
+        var delLine = '<span class="line-remove glyphicon glyphicon-remove"></span>';
+        $.each(lineSelection, function (index, line) {
+            $("#halte-list").append('<div><p class=lijn'+line+' id=lijn'+line+'><span class="stop-selection pull-left label label-danger">Lijn: '+line+ ' '+delLine+'</span></p><br /></div><div class="clearfix" id="lijnfix"></div>');
+        });
+        var delLink = '<span class="stop-remove glyphicon glyphicon-remove"></span>';
+        $.each(selectedStops, function(i, stop) {
+            var halte_id = stop[2];
+            var lijn = stop[1];
+            var headsign = stop[0];
+            $('.lijn'+lijn).append('<span class="stop-selection pull-left label label-primary" id="s'+halte_id+'-'+lijn+'">'+headsign+delLink+'</span');
+        });
+        if (selectedStops.length === 0) {
+            $('#halte-list .help').removeClass('hidden');
+        }
     }
 }
 
@@ -555,34 +556,45 @@ function writeLineOutputAsString(data) {
 }
 
 function searchSelectedLinesForStop(stop_id) {
-    var out = '';
+    var lijnen = '';
     $.each(lineSelection, function(index, lijn) {
-        out += lijn+",";
+        lijnen += lijn+",";
+    });
+    var stops = '';
+    $.each(selectedStops, function(index, stop) {
+        stops += stop[2].substring(1)+",";
     });
     $.ajax({
-        url: '/stop/'+stop_id+'/lines',
-        data: {lijnen : out},
+        url: '/stop/lines',
+        data: {lijnen : lijnen, stops: stops},
         success: addLinesToStop
     });
 }
 
 function addLinesToStop(data) {
-    var stop = $('.ui-selected').attr('id').slice(0,-1);
-    var linesOfStop = lineSelectionOfStop[stop];
-    $.each(lineSelection, function(i, line) {
-        if (line === currentLine) {
-            return true;
-        }
-        $.each(data.object_list, function(row, dict) {
-            if (dict['lineplanningnumber'] === line) {
-                linesOfStop.push(line)
-                var relevant_stop = selectedStops.filter(row => row[2] === stop)[0];
-                selectedStops.push([relevant_stop[0], line, relevant_stop[2]])
+    $.each(data.object, function(line, stops) {
+        $.each(stops, function(i, stop){
+            if (lineSelectionOfStop["s"+stop] === undefined) {
+                 lineSelectionOfStop["s"+stop] = [];
             }
+            var linesOfStop = lineSelectionOfStop["s"+stop];
+            var relevant_stop = selectedStops.filter(row => row[2] === 's'+stop)[0];
+            var this_stop = [relevant_stop[0], line, relevant_stop[2]].toString();
+            var selectedStops_as_string = selectedStops.toString();
+            if (selectedStops_as_string.indexOf(this_stop) === -1) {
+                selectedStops.push([relevant_stop[0], line, relevant_stop[2]]);
+                if (line === currentLine) {
+                    $("#"+relevant_stop[2]+"l, #"+relevant_stop[2]+"r").addClass('success');
+                    $("#"+relevant_stop[2]+"l, #"+relevant_stop[2]+"r").append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;');
+                }
+                if ($.inArray(line, lineSelectionOfStop["s"+stop]) == -1) {
+                    linesOfStop.push(line);
+                }
+            }
+            lineSelectionOfStop['s'+stop] = linesOfStop;
         });
     });
-    lineSelectionOfStop[stop] = linesOfStop;
-    writeHaltesField();
+    writeHaltesWithLine(1);
 }
 
 /* TIME FUNCTIONS */

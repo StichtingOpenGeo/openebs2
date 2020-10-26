@@ -12,5 +12,5 @@ urlpatterns = [
     url(r'^stop/(?P<tpc>\w+)/messages.json$', ActiveMessagesForStopView.as_view(), name="msg_stop_json"),
     url(r'^stop/search.json$', StopAutocompleteView.as_view(), name="stop_search_json"),
 
-    url(r'^stop/(?P<pk>\w+)/lines$', StopLineSearchView.as_view(), name="stopline_search")
+    url(r'^stop/lines$', StopLineSearchView.as_view(), name="stopline_search")
 ]

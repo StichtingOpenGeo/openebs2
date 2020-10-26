@@ -156,28 +156,39 @@ class DataImportView(LoginRequiredMixin, StaffuserRequiredMixin, ListView):
         return qry
 
 
-class StopLineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
+class StopLineSearchView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
     model = Kv1Line
-    render_object = 'object_list'
+    render_object = 'object'
+
+    def get_object(self, **kwargs):
+        qry = self.get_queryset()
+        return qry
 
     def get_queryset(self):
-        qry = super(StopLineSearchView, self).get_queryset()
-        stop = self.kwargs.get('pk', None)
-        if stop is None:
-            return
         lijnen = self.request.GET.get('lijnen', None)[0:-1].split(',')
-        dataownercode = stop.split('_')[0]
-        qry = qry.filter(dataownercode=dataownercode, lineplanningnumber__in=lijnen)
-        obj = []
-        for line in qry:
-            data = json.loads(line.stop_map)
-            for x in data:
-                for item in x.values():
-                    if item is not None:
-                        if item['id'] == stop:
-                            obj.append(line.pk)
-        qry = qry.filter(pk__in=obj) \
-            .order_by('lineplanningnumber') \
-            .values('pk', 'dataownercode', 'headsign', 'lineplanningnumber', 'publiclinenumber')
-
-        return qry
+        stops = self.request.GET.get('stops', None)[0:-1].split(',')
+        if lijnen is None or stops is None:
+            return
+        dataownercode = stops[0].split('_')[0]
+        line_stops = {}
+        used_stops = []
+        if 'None' in lijnen[0]:
+            line_stops[lijnen[0]] = stops
+        else:
+            for line in lijnen:
+                line_stops[line] = []
+                query = Kv1Line.objects.filter(dataownercode=dataownercode, lineplanningnumber=line)
+                stop_map = query.values('stop_map')[0]['stop_map']
+                for stop in stops:
+                    if stop in stop_map:
+                        line_stops[line].append(stop)
+                        if stop not in used_stops:
+                            used_stops.append(stop)
+            # check if all stops are 'used'
+            extra_stops = []
+            for stop in stops:
+                if stop not in used_stops:
+                    extra_stops.append(stop)
+            if len(extra_stops) > 0:
+                line_stops['x/Onbekend'] = extra_stops
+        return line_stops
