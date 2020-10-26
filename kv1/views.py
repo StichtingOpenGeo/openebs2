@@ -176,6 +176,8 @@ class StopLineSearchView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
             line_stops[lijnen[0]] = stops
         else:
             for line in lijnen:
+                if line == 'Onbekend':
+                    continue
                 line_stops[line] = []
                 query = Kv1Line.objects.filter(dataownercode=dataownercode, lineplanningnumber=line)
                 stop_map = query.values('stop_map')[0]['stop_map']
