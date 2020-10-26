@@ -129,6 +129,7 @@ class ScenarioMessageAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailV
             stops.append([dataownercode+'_'+item['stops__stop_id__userstopcode'], item['stops__stop_id__name']])
 
         line_stops = {}
+        used_stops = []
         if 'None' in lines[0]:
             line_stops[lines[0]] = stops
         else:
@@ -137,7 +138,6 @@ class ScenarioMessageAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailV
                 line_stops[line] = []
                 query = Kv1Line.objects.filter(id=line_id)
                 stop_map = query.values('stop_map')[0]['stop_map']
-                used_stops = []
                 for stop in stops:
                     if stop[0] in stop_map:
                         line_stops[line].append(stop)
