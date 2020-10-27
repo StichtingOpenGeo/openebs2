@@ -200,6 +200,7 @@ function readHaltesField() {
     } else if (window.location.pathname.split('/')[1] === 'scenario') {
         scenario_nr = window.location.pathname.split('/')[2];
         message_nr = window.location.pathname.split('/')[4];
+        if (message_nr == 'nieuw') return;
         $.ajax('/scenario/'+scenario_nr+'/bericht/'+message_nr+'/haltes', {
                 success : getMyData
        });
@@ -538,7 +539,7 @@ function writeLineOutputAsString(data) {
     $("#lines").val(out);
 }
 
-function searchSelectedLinesForStop(stop_id) {
+function searchSelectedLinesForStop() {
     var lijnen = '';
     $.each(lineSelection, function(index, lijn) {
         lijnen += lijn+",";
@@ -563,17 +564,22 @@ function addLinesToStop(data) {
             var linesOfStop = lineSelectionOfStop["s"+stop];
             var relevant_stop = selectedStops.filter(row => row[2] === 's'+stop)[0];
             if (relevant_stop === undefined) return false
-            var this_stop = [relevant_stop[0], line, relevant_stop[2]].toString();
-            var selectedStops_as_string = selectedStops.toString();
-            if (selectedStops_as_string.indexOf(this_stop) === -1) {
-                selectedStops.push([relevant_stop[0], line, relevant_stop[2]]);
-                if (line === currentLine) {
-                    $("#"+relevant_stop[2]+"l, #"+relevant_stop[2]+"r").addClass('success');
-                    $("#"+relevant_stop[2]+"l, #"+relevant_stop[2]+"r").append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;');
-                }
-                if ($.inArray(line, lineSelectionOfStop["s"+stop]) == -1) {
-                    linesOfStop.push(line);
-                }
+
+            var relevant_stop_line = selectedStops.filter(row => row[2] === 's'+stop && row[1] === line);
+            if (relevant_stop_line.length > 0) return false
+
+            selectedStops.push([relevant_stop[0], line, relevant_stop[2]]);
+            if (line === currentLine) {
+                $("#"+relevant_stop[2]+"l, #"+relevant_stop[2]+"r").addClass('success');
+                $("#"+relevant_stop[2]+"l, #"+relevant_stop[2]+"r").append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;');
+            }
+            if ($.inArray(line, lineSelectionOfStop["s"+stop]) == -1) {
+                linesOfStop.push(line);
+            }
+            var relevant_stop_unknownline = selectedStops.filter(row => row[2] === 's'+stop && row[1] === 'Onbekend');
+            if (relevant_stop_unknownline.length > 0) {
+                selectedStops.splice([relevant_stop[0], 'Onbekend', relevant_stop[2]], 1);
+                linesOfStop.splice('Onbekend', 1);
             }
             lineSelectionOfStop['s'+stop] = linesOfStop;
         });

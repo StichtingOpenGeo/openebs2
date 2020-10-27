@@ -192,5 +192,5 @@ class StopLineSearchView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
                 if stop not in used_stops:
                     extra_stops.append(stop)
             if len(extra_stops) > 0:
-                line_stops['x/Onbekend'] = extra_stops
+                line_stops['Onbekend'] = extra_stops
         return line_stops
