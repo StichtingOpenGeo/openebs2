@@ -562,11 +562,9 @@ function addLinesToStop(data) {
                  lineSelectionOfStop["s"+stop] = [];
             }
             var linesOfStop = lineSelectionOfStop["s"+stop];
+            if ($.inArray(line, linesOfStop) !== -1) return
             var relevant_stop = selectedStops.filter(row => row[2] === 's'+stop)[0];
-            if (relevant_stop === undefined) return false
-
-            var relevant_stop_line = selectedStops.filter(row => row[2] === 's'+stop && row[1] === line);
-            if (relevant_stop_line.length > 0) return false
+            if (relevant_stop === undefined) return
 
             selectedStops.push([relevant_stop[0], line, relevant_stop[2]]);
             if (line === currentLine) {
@@ -576,8 +574,7 @@ function addLinesToStop(data) {
             if ($.inArray(line, lineSelectionOfStop["s"+stop]) == -1) {
                 linesOfStop.push(line);
             }
-            var relevant_stop_unknownline = selectedStops.filter(row => row[2] === 's'+stop && row[1] === 'Onbekend');
-            if (relevant_stop_unknownline.length > 0) {
+            if ($.inArray('Onbekend', linesOfStop) !== -1) {
                 selectedStops.splice([relevant_stop[0], 'Onbekend', relevant_stop[2]], 1);
                 linesOfStop.splice('Onbekend', 1);
             }
