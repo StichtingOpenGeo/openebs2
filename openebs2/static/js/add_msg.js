@@ -311,11 +311,11 @@ function removeStop(id, line) {
         var lijnen = [];
         var selection = selectedStops.filter(stop => stop[2] === id);
         if (selection.length > 0) {
-            $.each(selection, function(i, row) {
-                var idx = selectedStops.indexOf(row);
+            $.each(selection, function() {
+                var idx = selectedStops.indexOf(this);
                 selectedStops.splice(idx, 1);
-                lijnen.push(row[1]);
-                removeStopFromDict(row[2], row[1]);
+                lijnen.push(this[1]);
+                removeStopFromDict(this[2], this[1]);
             });
             var halte = id;
             if (line_related) {
@@ -581,6 +581,12 @@ function addLinesToStop(data) {
             lineSelectionOfStop['s'+stop] = linesOfStop;
         });
     });
+    if (selectedStops.filter(row => row[1] === 'Onbekend').length == 0) {
+        idx = lineSelection.indexOf('Onbekend');
+        if (idx !== -1) {
+            lineSelection.splice(idx, 1);
+        }
+    }
     writeHaltesWithLine(1);
 }
 
