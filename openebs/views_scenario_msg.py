@@ -83,6 +83,8 @@ class ScenarioMessageUpdateView(AccessMixin, FilterDataownerMixin, ScenarioConte
         haltes = self.request.POST.get('haltes', None)
         self.process_new_old_haltes(form.instance, form.instance.stops, haltes if haltes else "")
 
+        lijnen = self.request.POST.get('lines', None)
+        self.process_new_old_lines(form.instance, form.instance.lines, lijnen if lijnen else "")
         return ret
 
     @staticmethod
@@ -96,6 +98,24 @@ class ScenarioMessageUpdateView(AccessMixin, FilterDataownerMixin, ScenarioConte
         for old_msg_stop in stop_set.all():
             if old_msg_stop.stop not in new_stops:  # Removed stop, delete it
                 old_msg_stop.delete()
+
+    @staticmethod
+    def process_new_old_lines(msg, line_set, lines):
+        """ Add new lines to the set, and then check if we've deleted any lines from the old list """
+        new_lines = []
+        old_lines = lines.split(',')
+        for line in old_lines:
+            if len(line) > 0:
+                valid_line = Kv1Line.find_line(msg.dataownercode, line)
+                if valid_line:
+                    new_lines.append(valid_line)
+        for lijn in new_lines:
+            # TODO Improve this to not be n-queries
+            if line_set.filter(line=lijn).count() == 0: # New line, add it
+                line_set.create(message=msg, line=lijn)
+        for old_msg_line in line_set.all():
+            if old_msg_line.line not in new_lines: # Removed line, delete it
+                old_msg_line.delete()
 
 
 class ScenarioMessageDeleteView(AccessMixin, ScenarioContentMixin, DeleteView):
