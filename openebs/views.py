@@ -21,6 +21,8 @@ from utils.views import JSONListResponseMixin, AccessMixin
 from openebs.models import Kv15Stopmessage, Kv15Log, MessageStatus, Kv1StopFilter, Kv15MessageStop, Kv15MessageLine
 from openebs.form import Kv15StopMessageForm
 import json
+from dateutil import parser
+
 
 log = logging.getLogger('openebs.views')
 
@@ -79,6 +81,13 @@ class MessageCreateView(AccessMixin, Kv15PushMixin, CreateView):
     model = Kv15Stopmessage
     form_class = Kv15StopMessageForm
     success_url = reverse_lazy('msg_index')
+
+    def get_form_kwargs(self):
+        kwargs = super(MessageCreateView, self).get_form_kwargs()
+        kwargs.update({
+            'user': self.request.user
+        })
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super(MessageCreateView, self).get_context_data(**kwargs)
@@ -258,13 +267,23 @@ class ActiveStopsAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView)
 
     def get_object(self, **kwargs):
         # Note, can't set this on the view, because it triggers the queryset cache
-        queryset = self.model.objects.filter(messages__stopmessage__messagestarttime__lte=now(),
-                                             messages__stopmessage__messageendtime__gte=now(),
+        messagestarttime = parser.parse(
+            self.request.GET['messagestarttime']) if 'messagestarttime' in self.request.GET else now()
+        queryset = self.model.objects.filter(messages__stopmessage__messagestarttime__lte=messagestarttime,
+                                             messages__stopmessage__messageendtime__gt=messagestarttime,
                                              messages__stopmessage__isdeleted=False,
                                              # These two are double, but just in case
                                              messages__stopmessage__dataownercode=self.request.user.userprofile.company,
                                              dataownercode=self.request.user.userprofile.company).distinct()
-        return list(queryset.values('dataownercode', 'userstopcode'))
+        return list({'dataownercode': x['dataownercode'],
+                     'userstopcode': x['userstopcode'],
+                     'line': x['messages__stopmessage__kv15messageline__line'],
+                     'starttime': int(x['messages__stopmessage__messagestarttime'].timestamp()),
+                     'endtime': int(x['messages__stopmessage__messageendtime'].timestamp()),
+                     'message': x['messages__stopmessage__messagecontent']} for x in
+                    queryset.values('dataownercode', 'userstopcode', 'messages__stopmessage__kv15messageline__line',
+                                    'messages__stopmessage__messagestarttime', 'messages__stopmessage__messageendtime',
+                                    'messages__stopmessage__messagecontent'))
 
 
 class MessageStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
