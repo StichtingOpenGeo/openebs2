@@ -25,7 +25,6 @@ function showStopsOnChange() {
         line = activeLine;
     }
     blockedStops = [];
-    //getHaltesWithMessages();
     if (messageData.length > 0) {
         const filtered = messageData.filter(message => {
             if (message.line == line) {
@@ -403,24 +402,25 @@ function writeLine(data, status) {
 }
 
 function renderRow(row) {
-    var stopSelection = [];
     var currentStopMeasures = [];
-    var messagestarttime = epoch(parseDate($('#id_messagestarttime').val()));
-    var messageendtime = epoch(parseDate($('#id_messageendtime').val()));
-    var line = null;
-    if (line_related) {
-        line = activeLine;
-    }
-    messageData.filter(measure => {
-        if (measure.line == line) {
-            if (measure.starttime <= messagestarttime && measure.endtime >= messagestarttime) {
-                stop = measure.dataownercode + '_' + measure.userstopcode;
-                currentStopMeasures.push([stop, measure.starttime, measure.endtime, measure.line, measure.message]);
-            }
+    if ($('#id_messagestarttime').val() !== undefined) {
+        var messagestarttime = epoch(parseDate($('#id_messagestarttime').val()));
+        var messageendtime = epoch(parseDate($('#id_messageendtime').val()));
+        var line = null;
+        if (line_related) {
+            line = activeLine;
         }
-    });
+        messageData.filter(measure => {
+            if (measure.line == line) {
+                if (measure.starttime <= messagestarttime && measure.endtime >= messagestarttime) {
+                    stop = measure.dataownercode + '_' + measure.userstopcode;
+                    currentStopMeasures.push([stop, measure.starttime, measure.endtime, measure.line, measure.message]);
+                }
+            }
+        });
+    }
+    var stopSelection = [];
     out = '<tr class="stopRow">';
-
     if (row.left != null) {
         if ($.inArray(row.left.id, scenarioStops) != -1) {
             out += '<td class="warning">'+row.left.name+' <span class="glyphicon glyphicon-warning-sign pull-right" title="Al in scenario opgenomen"></span></td>'
