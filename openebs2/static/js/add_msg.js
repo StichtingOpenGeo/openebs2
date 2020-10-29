@@ -706,24 +706,26 @@ function addLinesToStop(data) {
     writeHaltesWithLine(1);
 }
 function filterCurrentHalteList() {
+    var non_blockedStops = [];
     $.each(selectedStops, function(i, stop) {
+        if (stop === undefined) return
         var stop_nr = stop[2].split('_')[1];
         if ($.inArray(stop_nr, blockedStops) !== -1) {
-            selectedStops.splice(i, 1);
             delete lineSelectionOfStop[stop[2]];
             $('[id^='+stop[2]+']').removeClass('success');
             $('[id^='+stop[2]+'] span').remove();
+            if (line_related) {
+                $('[id^='+stop[2]+']').append('<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze lijn en begintijd"></span>');
+            } else {
+                $('[id^='+stop[2]+']').append('<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een lijnonafhankelijk bericht voor deze begintijd"></span>');
+            }
+        } else {
+            non_blockedStops.push(stop);
         }
     });
+    selectedStops = non_blockedStops;
     writeHaltesField();
 }
-
-//function filterStops() {
-//    var remove_stops = selectedStops.filter(stop => $.inArray(stop[2].split('_')[1], blockedStops) !== -1);
-//    $.each(remove_stops, function (i, stop) {
-//        removeStop(stop[2], stop[1]);
-//    });
-//}
 
 function epoch(date) {
     return Date.parse(date) / 1000;
