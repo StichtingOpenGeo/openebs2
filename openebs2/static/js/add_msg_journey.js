@@ -96,7 +96,6 @@ function writeTripList() {
 }
 
 function writeTrips(data, status) {
-    $('#trips tbody').fadeOut(100).empty();
     tripRows = null
     maxLen = Math.max(data.object.trips_1.length, data.object.trips_2.length)
     if (maxLen > 0) {
