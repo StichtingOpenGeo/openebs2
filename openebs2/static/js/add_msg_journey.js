@@ -14,14 +14,14 @@ function writeList(data, status) {
         if (!$('#l'+line.pk).length) {
             row = '<tr class="line" id="l'+line.pk+'"><td>'+line.publiclinenumber+ '</td>';
             row += '<td>'+line.headsign+'</td></tr>';
-            $(row).hide().appendTo("#rows").fadeIn(999);
+            $(row).hide().appendTo("#rows").fadeIn(200);
         }
     });
 
     /* Cleanup */
     $("#rows tr").each(function(index) {
         if ($.inArray($(this).attr('id'), validIds) == -1) {
-            $(this).fadeOut(999).remove()
+            $(this).fadeOut(200).remove()
         }
     });
 }
@@ -96,11 +96,11 @@ function writeTripList() {
 }
 
 function writeTrips(data, status) {
-    $('#trips tbody').fadeOut(200).empty();
+    $('#trips tbody').fadeOut(100).empty();
     tripRows = null
     maxLen = Math.max(data.object.trips_1.length, data.object.trips_2.length)
     if (maxLen > 0) {
-        $('#trips tbody').fadeOut(200).empty();
+        $('#trips tbody').fadeOut(100).empty();
         tripRows = null;
         for (i = 0; i <= maxLen; i = i + 1) {
             a = null;
@@ -112,8 +112,8 @@ function writeTrips(data, status) {
             tripRows += renderTrip(a, b);
         }
         $('#trips tbody').append(tripRows)
-        $('#trips thead').fadeIn(200);
-        $('#trips tbody').fadeIn(200);
+        $('#trips thead').fadeIn(100);
+        $('#trips tbody').fadeIn(100);
     } else {
         $('#trips thead').hide();
         $('#trips tbody').text("Geen ritten in database.");
