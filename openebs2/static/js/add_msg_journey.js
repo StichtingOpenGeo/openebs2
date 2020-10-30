@@ -25,7 +25,7 @@ function writeList(data, status) {
                     row = '<tr class="line" id="l'+line.pk+'"><td>'+out+'</td>';
                 }
                 row += '<td>'+line.headsign+'</td></tr>';
-                $(row).hide().appendTo("#rows").fadeIn(999);
+                $(row).hide().appendTo("#rows").fadeIn(200);
             }
         }
     });
