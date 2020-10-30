@@ -5,10 +5,18 @@ $("#stops").selectable({
   selected: selectStop,
   cancel: 'img'
 });
+$("#stops-new").selectable({
+  filter:'tr.stop',
+  selected: selectStop,
+  cancel: 'img'
+});
 $( "#line_search" ).on('keyup', changeSearch);
+$( "#halte_search" ).on('keyup', stopSearch);
+$( "#haltelijn_search" ).on('keyup', stopSearch);
 $( "#id_messagecontent" ).on('keyup', changeCount);
 $( "#id_messagecontent" ).trigger( "keyup" );
 $( "body" ).on('click', ".line", getHaltesWithMessages);
+$( "body" ).on('click', ".search_stop", getLinesOfStop);
 $( "body" ).on('click', ".stop-remove", selectionRemoveStop);
 $( "body" ).on('click', ".stop.success", lineRemoveStop);
 $( "body" ).on('click', ".line-remove", removeStopsOfLine);
@@ -28,6 +36,9 @@ $('body').on('change', '#id_messagedurationtype_1', function() {
 });
 $('body').on('change', '#id_messagedurationtype_2,#id_messagedurationtype_3', function() {
    showEndTime();
+});
+$('body').on('click', '#line_button, #stop_button, #stopline_button', function() {
+    searchSelection($(this));
 });
 /* Onload */
 if ($('#id_messagedurationtype_1').attr('checked')) {

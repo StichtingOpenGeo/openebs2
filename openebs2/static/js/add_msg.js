@@ -8,12 +8,75 @@ var lineSelection = []
 var line_related = document.getElementById('lijngebonden').checked;
 var messageData = [] /* all info from blocked stops */
 var activeLine = null /* lineplanningnumber */
+var stop_searching = false;
 
 function changeSearch(event) {
     if ($("#line_search").val().length > 0) {
         $.ajax('/line/'+$("#line_search").val(), {
             success : writeList
+     });
+    } else {
+        $('#rows tr td.help').removeClass('hidden');
+        $('#rows .line').remove();
+    }
+}
+
+function searchSelection(item) {
+    if (item.attr('id') === "stop_button") {
+        if (stop_searching === true) return;
+        $("#haltes-original").addClass('hidden');
+        $("#haltes-new").removeClass('hidden');
+        $("#lijngebonden").prop("checked", false).prop("disabled", true);
+        $("#label_lijngebonden").css("color", "gray");
+        $('#halte-list div').remove();
+        $('#lijnfix').remove();
+        line_related = document.getElementById('lijngebonden').checked;
+        resetSelection("stop");
+        stop_searching = true;
+        getHaltesWithMessages()
+    } else {
+        $("#haltes-original").removeClass('hidden');
+        $("#haltes-new").addClass('hidden');
+        $("#lijngebonden").prop("checked", true).prop("disabled", false);
+        $("#label_lijngebonden").css("color", "#333");
+        line_related = document.getElementById('lijngebonden').checked;
+        if (item.attr('id') === "line_button") {
+            resetSelection("line");
+        } else {
+            resetSelection("stopline");
+        }
+        stop_searching = false
+    }
+}
+
+function stopSearch(event) {
+    if ($("#halte_search").val().length > 0) {
+        var term = $("#halte_search").val();
+        var check = term.indexOf(' ');
+        if (check > -1 ) {
+           term = term.split(" ").join("_"); // weird method, but 'spaces' are apparently not working for the ajax
+        }
+        $.ajax('/stop/'+term, {
+            success : writeStopListMiddle
         })
+    } else {
+        $('#stops-new .help').removeClass('hidden');
+        $('.specificeer-middle').addClass('hidden');
+        $('.stop').remove();
+    }
+    if ($("#haltelijn_search").val().length > 0) {
+        var term = $("#haltelijn_search").val();
+        var check = term.indexOf(' ');
+        if (check > -1 ) {
+           term = term.split(" ").join("_"); // weird method, but 'spaces' are apparently not working for the ajax
+        }
+        $.ajax('/stop/'+term, {
+            success : writeStopList
+        })
+    } else {
+        $('#stop_rows .help, #rows2 td.help').removeClass('hidden');
+        $('.specificeer, #reset').addClass('hidden');
+        $('.search_stop, #rows2 .line').remove();
     }
 }
 
@@ -44,12 +107,22 @@ function showStopsOnChange() {
             });
 
             $.each(stops, function(i, stop) {
-                if (line_related){
-                    $('[id*='+stop+']').append('<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze lijn en begintijd"></span>');
-                } else {
-                    $('[id*='+stop+']').append('<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een lijnonafhankelijk bericht voor deze begintijd"></span>');
-                }
-                blockedStops.push(stop);
+                var items = $('[id*='+stop+']');
+                    const filtered_ids = items.filter(item => {
+                        if (!items[item].id.startsWith("sq")) {
+                            return true
+                        }
+                    });
+                    if (filtered_ids.length > 0) {
+                        $.each(filtered_ids, function(idx, item) {
+                            if (line_related){
+                                $('[id*='+stop+']').append('<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze lijn en begintijd"></span>');
+                            } else {
+                                $('[id*='+stop+']').append('<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een lijnonafhankelijk bericht voor deze begintijd"></span>');
+                            }
+                            blockedStops.push(stop);
+                        });
+                    }
             });
         }
     }
@@ -71,7 +144,7 @@ function changeCount(event) {
     }
 }
 
-function writeList(data, status) {
+function writeList(data, status, item) {
     validIds = []
     /* Add them all, as neccesary */
     $.each(data.object_list, function (i, line) {
@@ -91,17 +164,31 @@ function writeList(data, status) {
                     row = '<tr class="line" id="l'+line.pk+'"><td>'+out+'</td>';
                 }
                 row += '<td>'+line.headsign+'</td></tr>';
-                $(row).hide().appendTo("#rows").fadeIn(200);
-            }
+                if (item == 1){
+                    $(row).hide().appendTo('#rows2').fadeIn(200);
+
+                } else {
+                    $(row).hide().appendTo('#rows').fadeIn(200);
+                }            }
         }
     });
 
     /* Cleanup */
-    $("#rows tr").each(function(index) {
-        if ($.inArray($(this).attr('id'), validIds) == -1) {
-            $(this).fadeOut(200).remove()
-        }
-    });
+    if (item == 1){
+        $('#rows2 tr td.help').addClass('hidden');
+        $("#rows2 .line").each(function(index) {
+            if ($.inArray($(this).attr('id'), validIds) == -1) {
+                $(this).fadeOut(200).remove();
+            }
+        });
+    } else {
+        $('#rows tr td.help').addClass('hidden');
+        $("#rows .line").each(function(index) {
+            if ($.inArray($(this).attr('id'), validIds) == -1) {
+                $(this).fadeOut(200).remove();
+            }
+        });
+    }
 }
 
 function showStops(event) {
@@ -123,7 +210,11 @@ function showStops(event) {
 }
 
 function selectStop(event, ui) {
-    var stop_id = $(ui.selected).attr('id').split("_")[1].slice(0,-1);
+    if ($(ui.selected).attr('id').startsWith('sl')) {
+        var stop_id = $(ui.selected).attr('id').split("_")[1];
+    } else {
+        var stop_id = $(ui.selected).attr('id').split("_")[1].slice(0,-1);
+    }
     if ($.inArray(stop_id, blockedStops) != -1 & $('#id_messagetype_3').parent().hasClass('active') === false) { // if blocked and no OVERRULE
         return
     }
@@ -179,7 +270,8 @@ function deselectAllVisibleStops() {
 
 function doSelectStop(obj) {
     /* Make sure to strip the 'l' or 'r' */
-    var id = $(obj).attr('id').slice(0, -1);
+
+    /*var id = $(obj).attr('id').slice(0, -1);
     var selectedLines = [];
     if (lineSelectionOfStop[id] !== undefined) {
             selectedLines = lineSelectionOfStop[id];
@@ -208,7 +300,69 @@ function doSelectStop(obj) {
     } else {
         removeStop(id, currentLine);
     }
-    return false;
+    return false; */
+    if (stop_searching == false) {
+        /* Make sure to strip the 'l' or 'r' */
+        var id = $(obj).attr('id').slice(0, -1);
+        var selectedLines = [];
+        if (lineSelectionOfStop[id] !== undefined) {
+                selectedLines = lineSelectionOfStop[id];
+        }
+        var index = $.inArray(currentLine, selectedLines);
+        if (index == -1) {
+            $("#"+id+"l, #"+id+"r").addClass('success');
+            $("#"+id+"l, #"+id+"r").append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;');
+            selectedLines.push(currentLine);
+            lineSelectionOfStop[id] = selectedLines;
+            var i = $.inArray(currentLine, lineSelection);
+            if (i == -1) {
+                lineSelection.push(currentLine);
+            }
+            var me = obj.id;
+            if (obj.id !== undefined) {
+                if (obj.id.startsWith('sl')) {
+                    var headsign = obj.textContent;
+                } else {
+                    if ($(obj).hasClass('stop-left')) {
+                        direction = "heen";
+                    } else if ($(obj).hasClass('stop-right')) {
+                        direction = "trg";
+                    }
+                    var headsign = $(obj).text()+'('+direction+') ';
+                }
+            } else {
+                if (obj[0].id.startsWith('sl')) {
+                    var headsign = obj[0].textContent;
+                } else {
+                    if ($(obj).hasClass('stop-left')) {
+                        direction = "heen";
+                    } else if ($(obj).hasClass('stop-right')) {
+                        direction = "trg";
+                    }
+                    var headsign = $(obj).text()+'('+direction+') ';
+                }
+            }
+            selectedStops.push([headsign, currentLine, id]);
+            return true;
+        } else {
+            removeStop(id, currentLine);
+        }
+    } else {
+        if (!obj.id.startsWith('sl')) {
+            return false
+        }
+        if ($.inArray(obj.id.substring(2), selectedStops) === -1) {
+            $('#sl'+obj.id).addClass('success');
+            $('#'+obj.id).children('td').append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>');
+            selectedStops.push(obj.id.substring(2));
+            writeHaltesWithoutLine();
+        } else {
+            var id = $(obj).attr('id').substring(2);
+            removeStop(id, currentLine);
+        }
+    }
+    return false;   // TODO: check if return true should be added somewhere here
+
 }
 
 /* Write data to the form field */
@@ -220,9 +374,15 @@ function writeHaltesField() {
     }
     $.each(selectedStops, function(i, stop) {
         if (stop !== undefined) {
-            var stop_id = stop[2].substring(1);
-            if ($.inArray(stop_id, stops) === -1) {
-                stops.push(stop_id);
+            if (document.getElementById('lijngebonden') !== null ) {
+                if (lijngebonden.hasAttribute("disabled") === true) {
+                    var stop_id = stop;
+                } else {
+                    var stop_id = stop[2].substring(1);
+                }
+                if ($.inArray(stop_id, stops) === -1) {
+                    stops.push(stop_id);
+                }
             }
         }
     });
@@ -302,7 +462,6 @@ function lineRemoveStop(event) {
 
 function removeStopsOfLine(event) {
     var line = $(this).parent().parent().attr('id').substring(4);
-
     var idx = $.inArray(line, lineSelection);
     lineSelection.splice(idx, 1);
 
@@ -391,11 +550,17 @@ function removeStop(id, line) {
 }
 
 function writeLine(data, status) {
-    $('#stops').fadeOut(100).empty();
+    $('#stops').fadeOut(100).empty(); // was changed in searchStop --> check if still needs to change
     out = ""
-    $.each(data.object.stop_map, function (i, stop) {
-        out += renderRow(stop)
-    });
+    if (stop_searching == true) {
+        $.each(data.object.stop_map, function (i, stop) {
+        out = renderHaltesNew(stop);
+        });
+    } else {
+        $.each(data.object.stop_map, function (i, stop) {
+            out += renderRow(stop)
+        });
+    }
     $('#stops').hide().append(out);
     $('#stops').fadeIn(100);
     $('.stop_btn').removeClass('hide');
@@ -485,6 +650,27 @@ function renderRow(row) {
     return out
 }
 
+function renderHaltesNew(stop) { //TODO check if still working this way
+    out = '<tr class="stop">';
+    var id = 'sl'+stop.id;
+    if (lineSelectionOfStop['sl'+stop.id] !== undefined) {
+        stopSelection = lineSelectionOfStop['sl'+stop.id];
+    }
+    if ($.inArray(currentLine, stopSelection) != -1) {
+        out += '<td class="stop stop-left success" id="'+id+'">'+stop.name+'<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;'
+    } else {
+        out += '<td class="stop stop-left" id="'+id+'">'+stop.name;
+        var selected = currentStopMeasures.filter(message => message[0] === stop.id);
+        if (selected.length > 0) {
+            out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze begintijd"></span>'
+        }
+        out += '</td>';
+    }
+    out += '</tr>';
+    return out
+}
+
+
 function getScenarioStops(scenario) {
      $.ajax('/scenario/'+scenario+'/haltes.geojson', {
             success : writeScenarioStops
@@ -501,10 +687,18 @@ function writeScenarioStops(data, status) {
 }
 
 function getHaltesWithMessages(event) {
-    if ($(this).attr('id') !== undefined) {
+    //if ($(this).attr('id') !== undefined) {
+    //    activeLine = $(this).attr('id').substring(1);
+    //    currentLine = $(this).find("small").text();
+    //}
+    if (stop_searching == false) {
         activeLine = $(this).attr('id').substring(1);
         currentLine = $(this).find("small").text();
+    } else {
+        activeLine = null;
+        currentLine = null;
     }
+
     if (document.getElementById('id_messagestarttime') !== null) {
         var starttime = parseDate($("#id_messagestarttime").val()).toJSON()
 
@@ -705,6 +899,7 @@ function addLinesToStop(data) {
     }
     writeHaltesWithLine(1);
 }
+
 function filterCurrentHalteList() {
     var non_blockedStops = [];
     $.each(selectedStops, function(i, stop) {
@@ -725,6 +920,145 @@ function filterCurrentHalteList() {
     });
     selectedStops = non_blockedStops;
     writeHaltesField();
+}
+
+function getLinesOfStop(event) {
+    $(".lines").remove();
+    $("#rows2 .line, .suc-icon").remove();
+    $("#haltes-original .stopRow").remove();
+    $("#stop_rows tr.success").removeClass('success');
+    $(event.currentTarget).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
+    $.ajax('/stop/'+$(event.currentTarget).attr('id').substring(2)+'/lines', {
+        success : function(data, status, item){
+            writeList(data, status, 1);
+        }
+    });
+    $(event.currentTarget).addClass('success');
+    $('#reset').removeClass('hidden');
+}
+
+function writeStopList(data, status, item) {
+    if ($("#haltelijn_search").val().length > 0 && data.object_list.length == 0) {
+        $('#stop_rows tr.search_stop').remove();
+        $('#stop_rows tr td.help').addClass('hidden');
+        $('.specificeer em').text("Er werden geen haltes gevonden. Kies een andere zoekterm aub");
+        $('#stop_rows .specificeer').removeClass('hidden');
+        return
+    }
+    if (data.object_list.length > 0 ) {
+        $('#stop_rows tr td.help').addClass('hidden');
+        $('#stop_rows tr.search_stop').remove();
+    }
+    /* Add them all, as neccesary */
+    validIds = []
+    $.each(data.object_list, function (i, stop) {
+        validIds.push('sl'+stop.dataownercode+'_'+stop.userstopcode)
+        if (!$('#sl'+stop.dataownercode+'_'+stop.userstopcode).length) {
+            var out = '';
+            var row = '';
+            out += "<strong>"+stop.userstopcode+"</strong>";
+            row = '<tr class="search_stop" id="sl'+stop.dataownercode+'_'+stop.userstopcode+'"><td>'+out+'</td>';
+            row += '<td>'+stop.name+'</td></tr>';
+            $(row).hide().appendTo("#stop_rows").fadeIn(200);
+        }
+    });
+    $(document).ready(function() {
+        if ($('#stop_rows tr').length > 11) {
+            $('#stop_rows tr:lt(10)').fadeIn(200);
+            $('#stop_rows .specificeer').removeClass('hidden');
+            $('.specificeer em').text("Er waren meer dan 10 resulaten. Specificeer uw opdracht aub");
+        } else {
+            $('#stop_rows .specificeer').addClass('hidden');
+            $('#stop_rows tr').fadeIn(200);
+        }
+    });
+    /* Cleanup */
+    $("#stop_rows tr").each(function(index) {
+        if ($.inArray($(this).attr('id'), validIds) == -1) {
+            $(this).fadeOut(200).remove()
+        }
+    });
+}
+
+function writeStopListMiddle(data, status) {
+    if ($("#halte_search").val().length > 0 && data.object_list.length == 0) {
+        $('.stop').remove();
+        $('#stops-new .help').addClass('hidden');
+        $('#stops-new .specificeer-middle em').text("Er werden geen haltes gevonden. Kies een andere zoekterm aub");
+        $('#stops-new .specificeer-middle').removeClass('hidden');
+        return
+    }
+
+    validIds = []
+    if (data.object_list.length > 0 ) {
+        $('#stops-new .help').addClass('hidden');
+        $('.stop').remove();
+    }
+    /* Add them all, as neccesary */
+    $.each(data.object_list, function (i, stop) {
+        validIds.push('sl'+stop.dataownercode+'_'+stop.userstopcode)
+        if (!$('#sl'+stop.dataownercode+'_'+stop.userstopcode).length) {
+            var out = '';
+            var row = '';
+            out += ""+stop.userstopcode+" "+stop.name+"";
+            if ($.inArray(stop.userstopcode, blockedStops) > -1) {
+                out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze begintijd"></span>'
+            }
+            row = '<tr class="stop" id="sl'+stop.dataownercode+'_'+stop.userstopcode+'"><td>'+out+'</td></tr>';
+            $(row).hide().appendTo("#stops-new");
+        }
+        $(document).ready(function() {
+            if ($('#stops-new tr').length > 11) {
+                $('#stops-new tr:lt(10)').fadeIn(200);
+                $('.specificeer-middle em').text("Er waren meer dan 10 resulaten. Specificeer uw opdracht aub");
+                $('.specificeer-middle').removeClass('hidden');
+            } else {
+                $('.specificeer-middle').addClass('hidden');
+                $('#stops-new .stop').fadeIn(200);
+            }
+        });
+    });
+    /* Cleanup */
+    $("#stops-new .stop").each(function(index) {
+        if ($.inArray($(this).attr('id'), validIds) == -1) {
+            $(this).fadeOut(200).remove()
+        }
+    });
+}
+
+function resetSelection(call) {
+    if (call == 'stop'){
+        $("#line_search, #haltelijn_search").val('');
+        $(".line, .search_stop").remove();
+        $('#stop_rows .specificeer').addClass('hidden');
+        $('#stop_rows tr td.help, #rows tr td.help, #stops tr.help').removeClass('hidden');
+        $("#haltes-original .stopRow").remove();
+        $('.stop_btn').addClass('hide');
+    } else if (call == 'line') {
+        $("#halte_search, #haltelijn_search").val('');
+        $(".stop, .search_stop").remove();
+        $('#stop_rows .specificeer, #stops-new .specificeer-middle').addClass('hidden');
+        $('#stop_rows tr td.help, #stops-new tr.help').removeClass('hidden');
+        $('#stops tr.help, #stops-new tr.help').removeClass('hidden');
+        $("#haltes-original .stopRow, #haltes-new .stop").remove();
+        $('.stop_btn').addClass('hide');
+    } else {
+        $("#halte_search, #line_search").val('');
+        $(".stop, .line").remove();
+        $('#stops-new .specificeer-middle').addClass('hidden');
+        $('#rows tr td.help, #stops-new tr.help').removeClass('hidden');
+        $('#stops tr.help, #stops-new tr.help').removeClass('hidden');
+        $("#haltes-original .stopRow, #haltes-new .stop").remove();
+        $('.stop_btn').addClass('hide');
+    }
+    $('#haltes').val('');
+    $('#halte-list div').remove();
+    $('#halte-list .help').removeClass('hidden');
+
+    $('#lines').val('');
+    selectedStops = [];
+    lineSelectionOfStop = {};
+    lineSelection = [];
 }
 
 function epoch(date) {

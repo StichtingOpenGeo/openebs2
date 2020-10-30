@@ -156,7 +156,7 @@ class DataImportView(LoginRequiredMixin, StaffuserRequiredMixin, ListView):
         return qry
 
 
-class StopLineSearchView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+class StopLineFilterView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
     model = Kv1Line
     render_object = 'object'
 
@@ -194,3 +194,43 @@ class StopLineSearchView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
             if len(extra_stops) > 0:
                 line_stops['Onbekend'] = extra_stops
         return line_stops
+
+
+class StopSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
+    model = Kv1Stop
+    render_object = 'object_list'
+
+    def get_queryset(self):
+        qry = super(StopSearchView, self).get_queryset()
+        qry = qry.filter(dataownercode=self.request.user.userprofile.company) \
+            .order_by('userstopcode') \
+            .values('pk', 'dataownercode', 'name', 'userstopcode')
+        needle = self.kwargs.get('search', '') or ''
+        qry = qry.filter(Q(name__icontains=needle) | Q(userstopcode__startswith=needle))
+        return qry
+
+
+class StopLineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
+    model = Kv1Line
+    render_object = 'object_list'
+
+    def get_queryset(self):
+        qry = super(StopLineSearchView, self).get_queryset()
+        stop = self.kwargs.get('pk', None)
+        if stop is None:
+            return
+        dataownercode = stop.split('_')[0]
+        qry = qry.filter(dataownercode=dataownercode)
+        obj = []
+        for line in qry:
+            data = json.loads(line.stop_map)
+            for x in data:
+                for item in x.values():
+                    if item is not None:
+                        if item['id'] == stop:
+                            obj.append(line.pk)
+        qry = qry.filter(pk__in=obj) \
+            .order_by('lineplanningnumber') \
+            .values('pk', 'dataownercode', 'headsign', 'lineplanningnumber', 'publiclinenumber')
+
+        return qry
