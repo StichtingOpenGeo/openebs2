@@ -33,7 +33,7 @@ function writeList(data, status) {
     /* Cleanup */
     $("#rows tr").each(function(index) {
         if ($.inArray($(this).attr('id'), validIds) == -1) {
-            $(this).fadeOut(999).remove()
+            $(this).fadeOut(200).remove()
         }
     });
 }
@@ -157,7 +157,7 @@ function writeTrips(data, status) {
 
     maxLen = Math.max(data.object.trips_1.length, data.object.trips_2.length)
     if (maxLen > 0) {
-        $('#trips tbody').fadeOut(200).empty();
+        $('#trips tbody').fadeOut(100).empty();
         tripRows = null;
         for (i = 0; i <= maxLen; i = i + 1) {
             a = null;
@@ -169,8 +169,8 @@ function writeTrips(data, status) {
             tripRows += renderTrip(a, b);
         }
         $('#trips tbody').append(tripRows)
-        $('#trips thead').fadeIn(200);
-        $('#trips tbody').fadeIn(200);
+        $('#trips thead').fadeIn(100);
+        $('#trips tbody').fadeIn(100);
         $("#all_journeys").removeAttr('disabled');
     } else {
         $('#trips thead').hide();
