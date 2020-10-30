@@ -116,7 +116,7 @@ function writeTrips(data, status) {
         $('#trips tbody').fadeIn(100);
     } else {
         $('#trips thead').hide();
-        $('#trips tbody').text("Geen ritten in database.");
+        $('#trips tbody').text("Geen ritten in database.").fadeIn(100);
     }
 }
 
