@@ -183,9 +183,9 @@ span.stop-selection,span.trip-selection{
 }
 .trip {
     height: 28px;
-    text-align: center;
     padding: 4px;
     margin: 4px 0;
+    width: 50%;
 }
 .trip-plain {
     background-color: #f9f9f9;
@@ -209,4 +209,9 @@ span.stop-selection,span.trip-selection{
 
 .label-padded {
     margin-left: 4px;
+}
+
+#trips {
+    width: 100%;
+    table-layout: fixed;
 }
