@@ -173,7 +173,7 @@ function writeTrips(data, status) {
         $("#all_journeys").removeAttr('disabled');
     } else {
         $('#trips thead').hide();
-        $('#trips tbody').text("Geen ritten in database.");
+        $('#trips tbody').text("Geen ritten in database.").fadeIn(100);
         $('#all_journeys').attr('disabled','disabled');
     }
 
