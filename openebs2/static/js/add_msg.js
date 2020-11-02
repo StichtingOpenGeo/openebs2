@@ -885,8 +885,17 @@ function addLinesToStop(data) {
                 linesOfStop.push(line);
             }
             if ($.inArray('Onbekend', linesOfStop) !== -1) {
-                selectedStops.splice([relevant_stop[0], 'Onbekend', relevant_stop[2]], 1);
-                linesOfStop.splice('Onbekend', 1);
+                var index = null;
+                $.each(selectedStops, function(i, row) {
+                    if (row[2] == relevant_stop[2] && row[1] == 'Onbekend') {
+                        index = i;
+                        return
+                    }
+                });
+                if (index !== null) {
+                    selectedStops.splice(index, 1);
+                    linesOfStop.splice('Onbekend', 1);
+                }
             }
             lineSelectionOfStop['s'+stop] = linesOfStop;
         });
