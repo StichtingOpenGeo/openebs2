@@ -7,7 +7,7 @@ from openebs.views_filters import FilterListView, FilterDeleteView, FilterUpdate
     FilterStopCreateView, FilterStopDeleteView
 from openebs.views_generic import ChangeCompanyView, TemplateRequestView
 from openebs.views_scenario import ScenarioListView, ScenarioCreateView, ScenarioUpdateView, ScenarioDeleteView, PlanScenarioView, ScenarioStopsAjaxView
-from openebs.views_scenario_msg import ScenarioMessageCreateView, ScenarioMessageUpdateView, ScenarioMessageDeleteView
+from openebs.views_scenario_msg import ScenarioMessageCreateView, ScenarioMessageUpdateView, ScenarioMessageDeleteView, ScenarioMessageDetailsView
 
 
 urlpatterns = [
@@ -40,6 +40,9 @@ urlpatterns = [
     url(r'^scenario/(?P<scenario>\d+)/bericht/(?P<pk>\d+)/bewerken', ScenarioMessageUpdateView.as_view(), name="scenario_msg_edit"),
     url(r'^scenario/(?P<scenario>\d+)/bericht/(?P<pk>\d+)/verwijderen', ScenarioMessageDeleteView.as_view(), name="scenario_msg_delete"),
     url(r'^scenario/(?P<scenario>\d+)/haltes.geojson', ScenarioStopsAjaxView.as_view(), name="scenario_stops_ajax"),
+    url(r'^scenario/(?P<scenario>\d+)/bericht/(?P<pk>\d+)/bekijken', ScenarioMessageDetailsView.as_view(),
+        name="scenario_msg_view"),
+    url(r'^scenario/(?P<scenario>\d+)/kaart', TemplateRequestView.as_view(template_name='openebs/kv15scenario_map.html')),
 
     # Kv17 views
     url(r'^ritaanpassing$', ChangeListView.as_view(), name="change_index"),

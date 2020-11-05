@@ -32,7 +32,8 @@
         <td>{{ msg.messagecontent }}</td>
         <td class="text-center">
             {% if msg.stops.count > 0 %}
-            <a class="halte-count btn btn-link" data-title="{% trans 'Haltes bij bericht' %}" data-html="true" data-content="{% include 'openebs/snippet_scenario-halte-list.html' %}">
+            <a class="halte-count btn btn-link" href="{% url 'scenario_msg_view' msg.scenario.pk msg.pk %}"
+               {% if not view_all and not edit_all %} data-title="{% trans 'Haltes bij bericht' %}" data-html="true" data-content="{% include 'openebs/snippet_scenario-halte-list.html' %}"{% endif %} %}>
                 {{ msg.stops.count }}</a>
             {% else %}
                 0
