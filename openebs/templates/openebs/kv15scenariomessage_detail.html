@@ -63,7 +63,7 @@
     </div>
 
     <h3>{% trans "Haltes" %} <span style="font-weight: normal;">({{ object.stops.count }})</span>
-        <a class="btn btn-link pull-right" href="{% url 'scenario_msg_map' %}?message={{ object.id }}"><i class="glyphicon glyphicon-screenshot"></i> {% trans "Bekijk op kaart" %}</a>
+        <a class="btn btn-link pull-right" href="{% url 'scenario_msg_map' scenario=object.scenario_id %}"><i class="glyphicon glyphicon-screenshot"></i> {% trans "Bekijk op kaart" %}</a>
     </h3>
     <table class="table table-bordered table-condensed">
     <tr>

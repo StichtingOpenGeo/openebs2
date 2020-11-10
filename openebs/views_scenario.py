@@ -4,14 +4,15 @@ from braces.views import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
-from django.views.generic import FormView, ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import FormView, ListView, CreateView, UpdateView, DeleteView, DetailView
 from djgeojson.views import GeoJSONLayerView
 from kv1.models import Kv1Stop
 from openebs.form import PlanScenarioForm, Kv15ScenarioForm
 from openebs.models import Kv15Scenario, MessageStatus
 from openebs.views_push import Kv15PushMixin
 from openebs.views_utils import FilterDataownerMixin, FilterDataownerListMixin
-from utils.views import AccessMixin
+from utils.views import AccessMixin, JSONListResponseMixin
+from django.contrib.gis.db.models import Extent
 
 log = logging.getLogger('openebs.views.scenario')
 
@@ -105,3 +106,54 @@ class ScenarioStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
         qry = qry.filter(kv15scenariostop__message__scenario=self.kwargs.get('scenario', None),
                          kv15scenariostop__message__scenario__dataownercode=self.request.user.userprofile.company)
         return qry
+
+
+# TODO: adapt to scenario
+class ScenarioStopsBoundAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+    """ sets coordinates for map """
+    model = Kv1Stop
+    render_object = 'object'
+
+    def get_object(self, **kwargs):
+        qry = self.get_queryset()
+        return {'extent': qry.aggregate(Extent('location')).get('location__extent')}
+
+    def get_queryset(self):
+        qry = super(ScenarioStopsBoundAjaxView, self).get_queryset()
+        qry = qry.filter(dataownercode=self.request.user.userprofile.company)
+        qry = qry.filter(kv15scenariostop__message__scenario__id=self.kwargs.get('scenario', None))
+        print(qry.values().count())
+
+        return qry
+
+"""
+class ScenarioFilteredStopsListView(LoginRequiredMixin, GeoJSONLayerView):
+    permission_required = 'openebs.view_scenario'
+    geometry_field = 'location'
+    properties = ['name', 'userstopcode', 'dataownercode', 'scstop']
+    model = Kv1Stop
+
+    def get_queryset(self):"""
+""" return messages of scenario-stops filtered for specific scenario """
+"""        qry = super(ScenarioFilteredStopsListView, self).get_queryset()
+        qry = qry.filter(scstop__message__scenario=self.kwargs.get('scenario', None),
+                         scstop__message__scenario__dataownercode=self.request.user.userprofile.company)
+        messages = qry.values_list('scstop__message_id').distinct()
+        scenario_messages = []
+        for message_id in messages:
+            scenario_messages.append(message_id[0])
+        
+        values = qry.values_list('name', 'userstopcode', 'dataownercode', 'scstop')
+        x = values.count()
+        #for v in values:
+        #    print(v)
+        new_values = values.filter(scstop__message_id__in=scenario_messages)
+        qry_list = list(new_values)
+        
+        #filtered = values.filter(messages='52')
+        #qry_list=list(qry)
+        #for q in filtered:
+        #    print(q)
+        
+        return new_values
+"""
