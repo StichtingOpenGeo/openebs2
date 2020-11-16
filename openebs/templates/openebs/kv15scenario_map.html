@@ -34,9 +34,9 @@
             }
             return str;
         });
-
-        Handlebars.registerHelper('makeStopMessageLink', function(num) {
-            return "{% url "msg_view" 999 %}".replace("999", num);
+        var scenario = window.location.href.split('/')[2];
+        Handlebars.registerHelper('makeScenarioMessageLink', function(num) {
+            return "{% url "scenario_msg_view" scenario 999 %}".replace("999", num);
         });
 
         (function() {
@@ -81,12 +81,14 @@
         }
 
         function onMapFeature(feature, layer) {
+
             if (feature.properties && feature.properties.name) {
+                var scenario = window.location.href.split('/')[2];
                 var popup = L.popup().setContent("<em>Data wordt geladen...</em>")
                 layer.bindPopup(popup);
                 layer.on('click', function(e) {
                     var popup = e.target._popup;
-                    $.get("{% url "msg_stop_json" 999 %}".replace("999", feature.properties.timingpointcode)).done(function(data) {
+                    $.get("{% url "scenariomsg_stop_json" scenario 999 %}".replace("999", feature.properties.timingpointcode)).done(function(data) {
                         popup.setContent(table_template(_.merge(data, feature.properties)));
                         popup.update();
                     });
@@ -179,16 +181,15 @@
         <h3>{{ name }}</h3>
         <strong>TPC:</strong> {{ timingpointcode }}
         <table class="table table-bordered table-striped">
-            <tr><th><strong>Volgnummer</strong></th><th><strong>Inhoud</strong></th></tr>
+            <tr><th><strong>Berichtnaam</strong></th><th><strong>Inhoud</strong></th></tr>
             {{#each object}}
             <tr>
-                <td><a href="{{ makeStopMessageLink kv15stopmessage__id }}"><img src="/static/img/logos/{{ toLowerCase kv15stopmessage__dataownercode }}.png" class="icon_small" />
-                    - {{ kv15stopmessage__messagecodenumber }}</a>
-                </td>
-                <td>{{ shorten kv15stopmessage__messagecontent }}</td></tr>
+                <td><a href="{{ makeScenarioMessageLink scstop__message__id }}"><img src="/static/img/logos/{{ toLowerCase scstop__message__dataownercode }}.png" class="icon_small" />
+                    - {{ scstop__message__scenario__name }}</a></td>
+                <td>{{ shorten scstop__message__messagecontent }}</td>
+            </tr>
             {{/each}}
         </table>
-        <a class="btn btn-xs btn-link" href="{% endverbatim %}{% url 'msg_add' %}{% verbatim %}?id={{ id }}"><i class="glyphicon glyphicon-plus"></i> Plaats bericht op deze halte</a>
     </script>
     <script id="button-template" type="text/x-handlebars-template">
         <h3>{{ name }}</h3>

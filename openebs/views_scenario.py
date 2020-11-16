@@ -99,12 +99,12 @@ class ScenarioDeleteView(AccessMixin, FilterDataownerMixin, DeleteView):
 class ScenarioStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
     model = Kv1Stop
     geometry_field = 'location'
-    properties = ['name', 'userstopcode', 'dataownercode', 'messages']
+    properties = ['name', 'userstopcode', 'dataownercode', 'timingpointcode', 'messages']
 
     def get_queryset(self):
         qry = super(ScenarioStopsAjaxView, self).get_queryset()
-        qry = qry.filter(kv15scenariostop__message__scenario=self.kwargs.get('scenario', None),
-                         kv15scenariostop__message__scenario__dataownercode=self.request.user.userprofile.company)
+        qry = qry.filter(scstop__message__scenario=self.kwargs.get('scenario', None),
+                         scstop__message__scenario__dataownercode=self.request.user.userprofile.company)
         return qry
 
 
@@ -126,34 +126,27 @@ class ScenarioStopsBoundAjaxView(LoginRequiredMixin, JSONListResponseMixin, Deta
 
         return qry
 
-"""
-class ScenarioFilteredStopsListView(LoginRequiredMixin, GeoJSONLayerView):
-    permission_required = 'openebs.view_scenario'
-    geometry_field = 'location'
-    properties = ['name', 'userstopcode', 'dataownercode', 'scstop']
-    model = Kv1Stop
 
-    def get_queryset(self):"""
-""" return messages of scenario-stops filtered for specific scenario """
-"""        qry = super(ScenarioFilteredStopsListView, self).get_queryset()
-        qry = qry.filter(scstop__message__scenario=self.kwargs.get('scenario', None),
-                         scstop__message__scenario__dataownercode=self.request.user.userprofile.company)
-        messages = qry.values_list('scstop__message_id').distinct()
-        scenario_messages = []
-        for message_id in messages:
-            scenario_messages.append(message_id[0])
-        
-        values = qry.values_list('name', 'userstopcode', 'dataownercode', 'scstop')
-        x = values.count()
-        #for v in values:
-        #    print(v)
-        new_values = values.filter(scstop__message_id__in=scenario_messages)
-        qry_list = list(new_values)
-        
-        #filtered = values.filter(messages='52')
-        #qry_list=list(qry)
-        #for q in filtered:
-        #    print(q)
-        
-        return new_values
-"""
+class ScenarioMessagesForStopView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+    """
+    Show scenario messages on an active stop on the map, creates JSON
+    """
+    model = Kv1Stop
+    render_object = 'object'
+
+    def get_queryset(self):
+        tpc = self.kwargs.get('tpc', None)
+        if tpc is None or tpc == '0':
+            return None
+        scenario = self.kwargs.get('scenario', None)
+        if scenario is None:
+            return None
+        qry = self.model.objects.filter(scstop__message__scenario__id=scenario,
+                                        timingpointcode=tpc)
+        if not self.request.user.has_perm("openebs.view_all"):
+            qry = qry.filter(dataownercode=self.request.user.userprofile.company)
+        return qry.values('id', 'dataownercode', 'scstop__message__messagecontent', 'scstop__message__scenario__name',
+                          'scstop__message__id', 'scstop__message__dataownercode')
+
+    def get_object(self):
+        return list(self.get_queryset())
