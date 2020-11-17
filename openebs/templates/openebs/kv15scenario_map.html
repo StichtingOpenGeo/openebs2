@@ -156,7 +156,7 @@
                 }).addTo(map);
             });
 
-        {% if request.GET.message %}
+
             $.ajax("{% url 'scenario_bounds_ajax' scenario=scenario %}", {
                 success : function(data, err, xhr) {
                     var array = data.object.extent,
@@ -170,7 +170,6 @@
                     }
                 }
             })
-        {% endif %}
 
             table_template = Handlebars.compile($("#table-template").html());
             button_template = Handlebars.compile($("#button-template").html());
@@ -184,9 +183,9 @@
             <tr><th><strong>Berichtnaam</strong></th><th><strong>Inhoud</strong></th></tr>
             {{#each object}}
             <tr>
-                <td><a href="{{ makeScenarioMessageLink kv15scenariostop__stop__message__id }}"><img src="/static/img/logos/{{ toLowerCase kv15scenariostop__stop__message__dataownercode }}.png" class="icon_small" />
-                    - {{ kv15scenariostop__stop__message__scenario__name }}</a></td>
-                <td>{{ shorten kv15scenariostop__stop__message__messagecontent }}</td>
+                <td><a href="{{ makeScenarioMessageLink scenario_stop__message__id }}"><img src="/static/img/logos/{{ toLowerCase scenario_stop__message__dataownercode }}.png" class="icon_small" />
+                    - {{ scenario_stop__message__scenario__name }}</a></td>
+                <td>{{ shorten scenario_stop__message__messagecontent }}</td>
             </tr>
             {{/each}}
         </table>

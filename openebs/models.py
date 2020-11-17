@@ -374,7 +374,7 @@ class Kv15ScenarioMessage(models.Model):
 class Kv15ScenarioStop(models.Model):
     """ For the template, this links a stop """
     message = models.ForeignKey(Kv15ScenarioMessage, related_name='stops', on_delete=models.CASCADE)
-    stop = models.ForeignKey(Kv1Stop, on_delete=models.CASCADE)
+    stop = models.ForeignKey(Kv1Stop, related_name="scenario_stop",  on_delete=models.CASCADE)
 
 
 class Kv15ScenarioInstance(models.Model):

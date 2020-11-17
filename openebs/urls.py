@@ -42,7 +42,6 @@ urlpatterns = [
     url(r'^scenario/(?P<scenario>\d+)/haltes.geojson', ScenarioStopsAjaxView.as_view(), name="scenario_stops_ajax"),
     url(r'^scenario/(?P<scenario>\d+)/bericht/(?P<pk>\d+)/bekijken', ScenarioMessageDetailsView.as_view(),
         name="scenario_msg_view"),
-    #url(r'^scenario/(?P<scenario>\d+)/scenario_haltes.geojson', ScenarioFilteredStopsListView.as_view(), name="scenario_messages"),
     url(r'^scenario/(?P<scenario>\d+)/halte_bereik.geojson', ScenarioStopsBoundAjaxView.as_view(), name="scenario_bounds_ajax"), # Map bounds to zoom
     url(r'^scenario/(?P<scenario>\d+)/kaart', TemplateRequestView.as_view(template_name='openebs/kv15scenario_map.html'), name='scenario_msg_map'),
     url(r'^scenario/(?P<scenario>\d+)/(?P<tpc>\w+)/messages.json$', ScenarioMessagesForStopView.as_view(), name="scenariomsg_stop_json"),

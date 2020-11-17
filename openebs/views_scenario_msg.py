@@ -91,21 +91,6 @@ class ScenarioMessageDeleteView(AccessMixin, ScenarioContentMixin, DeleteView):
     permission_required = 'openebs.add_scenario'
     model = Kv15ScenarioMessage
 
-    def delete_line(self, request, *args, **kwargs):
-        # Ensure we update the user
-        msg = self.get_object()
-        msg.user = request.user
-        #msg.save(significant=False)
-
-        ret = super(ScenarioMessageDeleteView, self).delete_line(request, *args, **kwargs)
-        msg = self.get_object()
-        #if self.push_message(msg.to_xml_delete()):
-            #msg.set_status(MessageStatus.DELETED)
-            #log.error("Deleted message succesfully communicated to subscribers: %s" % msg)
-        #else:
-        #    msg.set_status(MessageStatus.ERROR_SEND_DELETE)
-        #    log.error("Failed to send delete request to subscribers: %s" % msg)
-        return ret
 
 class ScenarioMessageDetailsView(AccessMixin, FilterDataownerMixin, DetailView):
     permission_required = 'openebs.view_messages'
