@@ -5,18 +5,16 @@
 
 {% block content %}
 <h2>{% trans "Scenariobericht" %}
-    {% if object.is_editable %}
-        {% if perms.openebs.edit_all or not perms.openebs.view_all or object.dataownercode == user.userprofile.company %}
-            <form method="post" action="{% url 'scenario_msg_delete' object.id %}">
-                {% csrf_token %}
-                <button class="btn btn-danger pull-right">
-                    <span class="glyphicon glyphicon-trash"></span>
-                </button>
-            </form>
-            <a href="{% url 'msg_edit' object.pk %}" class="btn btn-link pull-right">
-                <span class="glyphicon glyphicon-edit"></span> {% trans "Bewerk" %}&nbsp;
-            </a>&nbsp;
-        {% endif %}
+    {% if perms.openebs.edit_all or not perms.openebs.view_all or object.dataownercode == user.userprofile.company %}
+        <form method="post" action="{% url 'scenario_msg_delete' object.scenario.id object.id %}">
+            {% csrf_token %}
+            <button class="btn btn-danger pull-right">
+                <span class="glyphicon glyphicon-trash"></span>
+            </button>
+        </form>
+        <a href="{% url 'scenario_msg_edit' object.scenario.id object.id %}" class="btn btn-link pull-right">
+            <span class="glyphicon glyphicon-edit"></span> {% trans "Bewerk" %}&nbsp;
+        </a>&nbsp;
     {% endif %}
 </h2>
 <div>

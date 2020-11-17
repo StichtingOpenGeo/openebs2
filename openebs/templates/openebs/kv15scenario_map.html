@@ -184,9 +184,9 @@
             <tr><th><strong>Berichtnaam</strong></th><th><strong>Inhoud</strong></th></tr>
             {{#each object}}
             <tr>
-                <td><a href="{{ makeScenarioMessageLink scstop__message__id }}"><img src="/static/img/logos/{{ toLowerCase scstop__message__dataownercode }}.png" class="icon_small" />
-                    - {{ scstop__message__scenario__name }}</a></td>
-                <td>{{ shorten scstop__message__messagecontent }}</td>
+                <td><a href="{{ makeScenarioMessageLink kv15scenariostop__stop__message__id }}"><img src="/static/img/logos/{{ toLowerCase kv15scenariostop__stop__message__dataownercode }}.png" class="icon_small" />
+                    - {{ kv15scenariostop__stop__message__scenario__name }}</a></td>
+                <td>{{ shorten kv15scenariostop__stop__message__messagecontent }}</td>
             </tr>
             {{/each}}
         </table>

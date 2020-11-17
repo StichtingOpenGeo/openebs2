@@ -103,8 +103,8 @@ class ScenarioStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
 
     def get_queryset(self):
         qry = super(ScenarioStopsAjaxView, self).get_queryset()
-        qry = qry.filter(scstop__message__scenario=self.kwargs.get('scenario', None),
-                         scstop__message__scenario__dataownercode=self.request.user.userprofile.company)
+        qry = qry.filter(kv15scenariostop__stop__message__scenario=self.kwargs.get('scenario', None),
+                         kv15scenariostop__stop__message__scenario__dataownercode=self.request.user.userprofile.company)
         return qry
 
 
@@ -141,12 +141,12 @@ class ScenarioMessagesForStopView(LoginRequiredMixin, JSONListResponseMixin, Det
         scenario = self.kwargs.get('scenario', None)
         if scenario is None:
             return None
-        qry = self.model.objects.filter(scstop__message__scenario__id=scenario,
+        qry = self.model.objects.filter(kv15scenariostop__stop__message__scenario__id=scenario,
                                         timingpointcode=tpc)
         if not self.request.user.has_perm("openebs.view_all"):
             qry = qry.filter(dataownercode=self.request.user.userprofile.company)
-        return qry.values('id', 'dataownercode', 'scstop__message__messagecontent', 'scstop__message__scenario__name',
-                          'scstop__message__id', 'scstop__message__dataownercode')
+        return qry.values('id', 'dataownercode', 'kv15scenariostop__stop__message__messagecontent', 'kv15scenariostop__stop__message__scenario__name',
+                          'kv15scenariostop__stop__message__id', 'kv15scenariostop__stop__message__dataownercode')
 
     def get_object(self):
         return list(self.get_queryset())
