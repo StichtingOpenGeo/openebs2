@@ -148,7 +148,16 @@
                     var x = Object.keys(my_array);
                     var colordict = {};
                     $.each(x, function(idx, message_id) {
-                        colordict[message_id] = '#' + Math.random().toString(16).substr(2, 6);
+                        rgbcode = [];
+                        rgbcode.push(parseInt(60*(8*message_id)+250));
+                        rgbcode.push(parseInt(30*(2*message_id)));
+                        rgbcode.push(parseInt(50+(6*message_id)));
+
+                        red = (parseInt(rgbcode[0],10).toString(16)).slice(-2);
+                        green = (parseInt(rgbcode[1],10).toString(16)).slice(-2);
+                        blue = (parseInt(rgbcode[2],10).toString(16)).slice(-2);
+                        hexcolor = "#" + red + green + blue;
+                        colordict[message_id] = hexcolor;
                     });
                     stop_list = {};
                     $.each(my_array, function(message_id, stops) {
