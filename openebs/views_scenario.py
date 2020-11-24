@@ -8,7 +8,7 @@ from django.views.generic import FormView, ListView, CreateView, UpdateView, Del
 from djgeojson.views import GeoJSONLayerView
 from kv1.models import Kv1Stop
 from openebs.form import PlanScenarioForm, Kv15ScenarioForm
-from openebs.models import Kv15Scenario, MessageStatus
+from openebs.models import Kv15Scenario, MessageStatus, Kv15ScenarioMessage, Kv15ScenarioStop
 from openebs.views_push import Kv15PushMixin
 from openebs.views_utils import FilterDataownerMixin, FilterDataownerListMixin
 from utils.views import AccessMixin, JSONListResponseMixin
@@ -108,7 +108,6 @@ class ScenarioStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
         return qry
 
 
-# TODO: adapt to scenario
 class ScenarioStopsBoundAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
     """ sets coordinates for map """
     model = Kv1Stop
@@ -150,3 +149,34 @@ class ScenarioMessagesForStopView(LoginRequiredMixin, JSONListResponseMixin, Det
 
     def get_object(self):
         return list(self.get_queryset())
+
+
+class ScenarioMessagesAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+    """ sets coordinates for map """
+    permission_required = 'openebs.view_scenario'
+    model = Kv1Stop
+    render_object = 'object'
+
+    def get_object(self, **kwargs):
+        return self.get_queryset()
+
+    def get_queryset(self):
+        scenario_id = self.kwargs.get('scenario', None)
+        dataownercode = self.request.user.userprofile.company
+        message_ids = Kv15ScenarioMessage.objects.filter(dataownercode=dataownercode,
+                                                         scenario_id=scenario_id)
+        x = list(message_ids.values_list('id', flat=True))
+        qry = super(ScenarioMessagesAjaxView, self).get_queryset()
+        qry = qry.filter(dataownercode=dataownercode)
+        qry = qry.filter(scenario_stop__message__id__in=x)
+        #z = qry.values_list('userstopcode', 'scenario_stop__message__id')
+        z = list(qry.values_list('scenario_stop__message__id').distinct())
+        my_dict = {}
+        for item in z:
+            my_list = []
+            i = list(qry.filter(scenario_stop__message__id=item[0]).values_list('userstopcode'))
+            for stop in i:
+                my_list.append(stop[0])
+            my_dict[item[0]] = my_list
+        #my_dict = z
+        return my_dict

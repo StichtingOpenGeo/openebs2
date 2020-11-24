@@ -34,7 +34,10 @@
             }
             return str;
         });
+
+        var stop_list = {}
         var scenario = window.location.href.split('/')[2];
+
         Handlebars.registerHelper('makeScenarioMessageLink', function(num) {
             return "{% url "scenario_msg_view" scenario 999 %}".replace("999", num);
         });
@@ -107,6 +110,8 @@
         var leafletMap;
         var markerIndex = {}
 
+        setColorsForMessages(scenario);
+
         function getColorsForDataownercode(dataownercode) {
             switch (dataownercode) {
                 case "HTM":
@@ -132,6 +137,28 @@
             }
         }
 
+        function setColorsForMessages(scenario) {
+            // Download message_ids via Ajax and set color for scenario_message
+            // Create dict per stop
+            stop_list = {};
+
+            $.ajax("{% url 'scenario_message_ids' scenario=scenario %}", {
+                success : function(data, err, xhr) {
+                    var my_array = data.object;
+                    var x = Object.keys(my_array);
+                    var colordict = {};
+                    $.each(x, function(idx, message_id) {
+                        colordict[message_id] = '#' + Math.random().toString(16).substr(2, 6);
+                    });
+                    stop_list = {};
+                    $.each(my_array, function(message_id, stops) {
+                        $.each(stops, function (i, stop) {
+                            stop_list[stop] = colordict[message_id]
+                        });
+                    });
+                }
+            })
+        }
 
         function main_map_init (map, options) {
             leafletMap = map;
@@ -148,9 +175,8 @@
                     onEachFeature: onMapFeature,
                     pointToLayer: function (feature, latlng) {
                         var colors = getColorsForDataownercode(feature.properties.dataownercode);
-                        halteMarkerOptions.fillColor = colors[0];
-                        //halteMarkerOptions.fillColor = '#' + Math.random().toString(16).substr(2, 6);
-                        halteMarkerOptions.color = colors[1];
+                        halteMarkerOptions.fillColor = stop_list[feature.properties.userstopcode];
+                        halteMarkerOptions.color = '#000';
                         return L.circleMarker(latlng, halteMarkerOptions);
                     }
                 }).addTo(map);

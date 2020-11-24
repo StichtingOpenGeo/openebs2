@@ -6,7 +6,8 @@ from openebs.views_change import ChangeListView, ChangeCreateView, ChangeDeleteV
 from openebs.views_filters import FilterListView, FilterDeleteView, FilterUpdateView, FilterCreateView, \
     FilterStopCreateView, FilterStopDeleteView
 from openebs.views_generic import ChangeCompanyView, TemplateRequestView
-from openebs.views_scenario import ScenarioListView, ScenarioCreateView, ScenarioUpdateView, ScenarioDeleteView, PlanScenarioView, ScenarioStopsAjaxView, ScenarioStopsBoundAjaxView, ScenarioMessagesForStopView
+from openebs.views_scenario import ScenarioListView, ScenarioCreateView, ScenarioUpdateView, ScenarioDeleteView, PlanScenarioView, \
+    ScenarioStopsAjaxView, ScenarioStopsBoundAjaxView, ScenarioMessagesForStopView, ScenarioMessagesAjaxView
 from openebs.views_scenario_msg import ScenarioMessageCreateView, ScenarioMessageUpdateView, ScenarioMessageDeleteView, ScenarioMessageDetailsView
 
 
@@ -45,6 +46,7 @@ urlpatterns = [
     url(r'^scenario/(?P<scenario>\d+)/halte_bereik.geojson', ScenarioStopsBoundAjaxView.as_view(), name="scenario_bounds_ajax"), # Map bounds to zoom
     url(r'^scenario/(?P<scenario>\d+)/kaart', TemplateRequestView.as_view(template_name='openebs/kv15scenario_map.html'), name='scenario_msg_map'),
     url(r'^scenario/(?P<scenario>\d+)/(?P<tpc>\w+)/messages.json$', ScenarioMessagesForStopView.as_view(), name="scenariomsg_stop_json"),
+    url(r'^scenario/(?P<scenario>\d+)/messages.json$', ScenarioMessagesAjaxView.as_view(), name="scenario_message_ids"),
 
     # Kv17 views
     url(r'^ritaanpassing$', ChangeListView.as_view(), name="change_index"),
