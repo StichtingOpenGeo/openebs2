@@ -10,6 +10,7 @@ from django.utils.translation import ugettext_lazy as _
 from kv1.models import Kv1Stop
 from openebs.models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, get_end_service
 
+import xml.etree.ElementTree as ET
 log = logging.getLogger('openebs.forms')
 
 
@@ -241,3 +242,106 @@ class PlanScenarioForm(forms.Form):
                 css_class="row"),
             Submit('submit', _("Plan alle berichten in"))
         )
+
+
+class Kv15ImportForm(forms.ModelForm):
+
+    def clean(self):
+        xml = self.data['import-text']
+
+        if len(xml) == 0:
+            raise ValidationError(_("Bericht mag niet leeg zijn."))
+        root = ET.fromstring(xml)
+        #result = list(root)
+        stopmessage = None
+        try:
+            x = root.find('STOPMESSAGE')
+        except:
+            raise ValidationError(_("Bericht bevat geen 'Stopmessage'."))
+
+        for message in root.iter("STOPMESSAGE"):
+            try:
+                dataownercode = message.find('dataownercode').text
+                if dataownercode != self.user.userprofile.company:
+                    raise ValidationError(_("Dataownercode in bericht komt niet overeen met gebruiker."))
+            except:
+                raise ValidationError(_("Bericht bevat geen dataownercode."))
+            try:
+                messagecodedate = message.find('messagecodedate').text
+            except:
+                raise ValidationError(_("Bericht bevat geen messagecodedate."))
+            try:
+                messagecodenumber = message.find('messagecodenumber').text
+            except:
+                raise ValidationError(_("Bericht bevat geen messagecodenumber."))
+
+            try:
+                userstopcodes = []
+                codes = message.findall('./userstopcodes//userstopcode')
+                for code in codes:
+                    userstopcodes.append(code.text)
+                if len(userstopcodes) == 0:
+                    raise ValidationError(_("Bericht bevat geen userstopcodes."))
+            except:
+                raise ValidationError(_("Bericht bevat geen userstopcodes."))
+
+            try:
+                messagepriority = message.find('messagepriority').text
+            except:
+                raise ValidationError(_("Bericht bevat geen messagepriority."))
+
+            try:
+                messagetype = message.find('messagetype').text
+                if len(messagetype) != 'OVERRULE':
+                    messagecontent = message.find('messagecontent').text
+                    if len(messagecontent) == 0:
+                        raise ValidationError(_("Bericht bevat lege messagecontent."))
+            except:
+                raise ValidationError(_("Bericht bevat geen messagetype."))
+            try:
+                messagedurationtype = message.find('messagedurationtype').text
+            except:
+                raise ValidationError(_("Bericht bevat geen messagedurationtype."))
+            try:
+                messagestarttime = message.find('messagestarttime').text
+            except:
+                raise ValidationError(_("Bericht bevat geen messagestarttime."))
+            try:
+                messagetimestamp = message.find('messagetimestamp').text
+            except:
+                raise ValidationError(_("Bericht bevat geen messagetimestamp."))
+
+        print('yeah')
+
+
+
+
+
+        valid_ids = []
+        nonvalid_ids = []
+        for halte in self.data['haltes'].split(','):
+            halte_split = halte.split('_')
+            if len(halte_split) == 2:
+                stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
+                if stop:
+                    valid_ids.append(stop.pk)
+                else:
+                    nonvalid_ids.append(halte)
+
+        if len(nonvalid_ids) != 0:
+            log.warning("Ongeldige haltes: %s" % ', '.join(nonvalid_ids))
+        if len(valid_ids) == 0 and len(nonvalid_ids) != 0:
+            raise ValidationError(_("Er werd geen geldige halte geselecteerd."))
+        elif len(valid_ids) == 0:
+            raise ValidationError(_("Selecteer minimaal een halte."))
+        else:
+            return self.cleaned_data
+
+    class Meta(object):
+        model = Kv15Stopmessage
+        exclude = ['messagecodenumber', 'status', 'stops', 'messagecodedate', 'isdeleted', 'id', 'dataownercode',
+                   'user']
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super(Kv15ImportForm, self).__init__(*args, **kwargs)

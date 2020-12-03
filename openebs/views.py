@@ -19,7 +19,7 @@ from openebs.views_utils import FilterDataownerMixin
 from utils.client import get_client_ip
 from utils.views import JSONListResponseMixin, AccessMixin
 from openebs.models import Kv15Stopmessage, Kv15Log, MessageStatus, Kv1StopFilter
-from openebs.form import Kv15StopMessageForm
+from openebs.form import Kv15StopMessageForm, Kv15ImportForm
 
 
 log = logging.getLogger('openebs.views')
@@ -265,3 +265,65 @@ class MessageStopsBoundAjaxView(LoginRequiredMixin, JSONListResponseMixin, Detai
             qry = qry.filter(kv15stopmessage__dataownercode=self.request.user.userprofile.company)
 
         return qry
+
+
+class MessageImportView(AccessMixin, Kv15PushMixin, CreateView):
+    permission_required = 'openebs.add_messages'
+    model = Kv15Stopmessage
+    form_class = Kv15ImportForm
+    template_name_suffix = '_import'
+    success_url = reverse_lazy('msg_check')
+
+    def get_form_kwargs(self):
+        kwargs = super(MessageImportView, self).get_form_kwargs()
+        kwargs.update({
+            'user': self.request.user
+        })
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super(MessageImportView, self).get_context_data(**kwargs)
+        prefilled_id = self.request.GET.get('id', None)
+        if prefilled_id and prefilled_id.isdigit():
+            try:
+                stop = Kv1Stop.objects.get(id=prefilled_id)
+                if not self.request.user.has_perm("openebs.edit_all") and stop.dataownercode != self.request.user.userprofile.company:
+                    stop = None
+                context['prefilled_stop'] = stop
+            except Kv1Stop.DoesNotExist:
+                pass
+        return context
+
+    def form_valid(self, form):
+        if self.request.user:
+            form.instance.user = self.request.user
+            form.instance.dataownercode = self.request.user.userprofile.company
+
+        haltes = self.request.POST.get('haltes', None)
+        stops = []
+        if haltes:
+            stops = Kv1Stop.find_stops_from_haltes(haltes)
+
+        # Save and then log
+        ret = super(MessageImportView, self).form_valid(form)
+
+        # Add stop data
+        for stop in stops:
+            form.instance.kv15messagestop_set.create(stopmessage=form.instance, stop=stop)
+        Kv15Log.create_log_entry(form.instance, get_client_ip(self.request))
+
+        # Send to GOVI
+        if self.push_message(form.instance.to_xml()):
+            form.instance.set_status(MessageStatus.SENT)
+            log.info("Sent message to subscribers: %s" % (form.instance))
+        else:
+            form.instance.set_status(MessageStatus.ERROR_SEND)
+            log.error("Failed to send message to subscribers: %s" % (form.instance))
+
+        return ret
+
+
+class MessageImportDetailsView(AccessMixin, FilterDataownerMixin, DetailView):
+    permission_required = 'openebs.add_messages'
+    permission_level = 'write'
+    model = Kv15Stopmessage

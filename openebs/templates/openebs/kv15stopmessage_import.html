@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load static crispy_forms_tags i18n %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% trans "Importeer bericht" %}{% endblock %}
+
+{% block content %}
+<div class="col-lg-4">
+    <h2>{% trans "Importeer bericht" %}</h2>
+    <form method="post" class="form" action="{% url 'msg_import' %}">
+
+        <label for="import-text" style="display:block;">Plak hier de xml-tekst: </label>
+        {{ form|as_crispy_errors }}
+        <textarea id="import-text" name="import-text" style="display:block;" rows="25" cols="60"></textarea>
+        <br>
+        <div class="form-group">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary">{% trans "Importeren" %}</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
