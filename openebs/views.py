@@ -7,7 +7,7 @@ from django.contrib.gis.db.models import Extent
 from django.urls import reverse_lazy
 from django.db.models import Q, Count
 from django.shortcuts import redirect
-from django.views.generic import ListView, UpdateView, DetailView
+from django.views.generic import FormView, ListView, UpdateView, DetailView, TemplateView
 from django.views.generic.edit import CreateView, DeleteView
 from django.utils.timezone import now
 
@@ -20,6 +20,8 @@ from utils.client import get_client_ip
 from utils.views import JSONListResponseMixin, AccessMixin
 from openebs.models import Kv15Stopmessage, Kv15Log, MessageStatus, Kv1StopFilter
 from openebs.form import Kv15StopMessageForm, Kv15ImportForm
+
+from django.shortcuts import render
 
 
 log = logging.getLogger('openebs.views')
@@ -267,12 +269,11 @@ class MessageStopsBoundAjaxView(LoginRequiredMixin, JSONListResponseMixin, Detai
         return qry
 
 
-class MessageImportView(AccessMixin, Kv15PushMixin, CreateView):
+class MessageImportView(AccessMixin, Kv15PushMixin, FormView):
     permission_required = 'openebs.add_messages'
-    model = Kv15Stopmessage
     form_class = Kv15ImportForm
-    template_name_suffix = '_import'
-    success_url = reverse_lazy('msg_check')
+    template_name = 'openebs/kv15stopmessage_import_2.html'
+    success_url = reverse_lazy('msg_index')
 
     def get_form_kwargs(self):
         kwargs = super(MessageImportView, self).get_form_kwargs()
@@ -283,47 +284,21 @@ class MessageImportView(AccessMixin, Kv15PushMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super(MessageImportView, self).get_context_data(**kwargs)
-        prefilled_id = self.request.GET.get('id', None)
-        if prefilled_id and prefilled_id.isdigit():
-            try:
-                stop = Kv1Stop.objects.get(id=prefilled_id)
-                if not self.request.user.has_perm("openebs.edit_all") and stop.dataownercode != self.request.user.userprofile.company:
-                    stop = None
-                context['prefilled_stop'] = stop
-            except Kv1Stop.DoesNotExist:
-                pass
+        if hasattr(self.request.POST, 'import-test'):
+            context['importtext'] = self.request.POST['import-text']
+        else:
+            context['importtext'] = ''
+
         return context
 
     def form_valid(self, form):
-        if self.request.user:
-            form.instance.user = self.request.user
-            form.instance.dataownercode = self.request.user.userprofile.company
+        context = super(MessageImportView, self).get_context_data()
+        if hasattr(form, 'cleaned_data'):
+            context['object'] = form.cleaned_data[0]['kv15']
+            context['object'].pk = 9999
+            context['kv15messagestop'] = form.cleaned_data[0]['stops']
 
-        haltes = self.request.POST.get('haltes', None)
-        stops = []
-        if haltes:
-            stops = Kv1Stop.find_stops_from_haltes(haltes)
+        return render(self.request, 'openebs/kv15stopmessage_import_detail.html', context)
 
-        # Save and then log
-        ret = super(MessageImportView, self).form_valid(form)
-
-        # Add stop data
-        for stop in stops:
-            form.instance.kv15messagestop_set.create(stopmessage=form.instance, stop=stop)
-        Kv15Log.create_log_entry(form.instance, get_client_ip(self.request))
-
-        # Send to GOVI
-        if self.push_message(form.instance.to_xml()):
-            form.instance.set_status(MessageStatus.SENT)
-            log.info("Sent message to subscribers: %s" % (form.instance))
-        else:
-            form.instance.set_status(MessageStatus.ERROR_SEND)
-            log.error("Failed to send message to subscribers: %s" % (form.instance))
-
-        return ret
-
-
-class MessageImportDetailsView(AccessMixin, FilterDataownerMixin, DetailView):
-    permission_required = 'openebs.add_messages'
-    permission_level = 'write'
-    model = Kv15Stopmessage
+    def form_invalid(self, form):
+        return render(self.request, 'openebs/kv15stopmessage_import.html', self.get_context_data())

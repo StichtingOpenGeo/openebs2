@@ -1,7 +1,7 @@
 from django.conf.urls import url
 from django.views.generic import RedirectView
 from openebs.views import MessageListView, MessageCreateView, MessageDeleteView, MessageUpdateView, ActiveStopsAjaxView, MessageDetailsView, MessageStopsAjaxView, \
-    MessageStopsBoundAjaxView, MessageResendView, MessageImportView, MessageImportDetailsView
+    MessageStopsBoundAjaxView, MessageResendView, MessageImportView
 from openebs.views_change import ChangeListView, ChangeCreateView, ChangeDeleteView, ActiveJourneysAjaxView, ChangeUpdateView
 from openebs.views_filters import FilterListView, FilterDeleteView, FilterUpdateView, FilterCreateView, \
     FilterStopCreateView, FilterStopDeleteView
@@ -27,7 +27,6 @@ urlpatterns = [
     url(r'^bericht/(?P<pk>\d+)/haltes.geojson', MessageStopsAjaxView.as_view(), name="msg_stops_ajax"), # LEGACY: map
     url(r'^bericht/(?P<pk>\d+)/halte_bereik.geojson', MessageStopsBoundAjaxView.as_view(), name="msg_bounds_ajax"), # Map bounds to zoom
     url(r'^bericht/importeren', MessageImportView.as_view(), name="msg_import"),
-    url(r'^bericht/importeren/check', MessageImportDetailsView.as_view(), name="msg_check"),
 
     # This next view is used as URL when adding a message (name is not used)
     url(r'^bericht/haltes.json', ActiveStopsAjaxView.as_view(), name="active_stops_ajax"),

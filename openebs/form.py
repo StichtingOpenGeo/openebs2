@@ -1,5 +1,7 @@
 from builtins import object
+from dateutil.tz import tzlocal
 import logging
+import re
 from crispy_forms.bootstrap import AccordionGroup, Accordion
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, Field, HTML, Div#, Hidden
@@ -11,6 +13,9 @@ from kv1.models import Kv1Stop
 from openebs.models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, get_end_service
 
 import xml.etree.ElementTree as ET
+from dateutil.parser import parse
+from kv15.enum import MESSAGEPRIORITY, MESSAGETYPE, MESSAGEDURATIONTYPE
+
 log = logging.getLogger('openebs.forms')
 
 
@@ -244,32 +249,44 @@ class PlanScenarioForm(forms.Form):
         )
 
 
-class Kv15ImportForm(forms.ModelForm):
-
+class Kv15ImportForm(forms.Form):
     def clean(self):
         xml = self.data['import-text']
-
         if len(xml) == 0:
             raise ValidationError(_("Bericht mag niet leeg zijn."))
-        root = ET.fromstring(xml)
-        #result = list(root)
-        stopmessage = None
+
+        xml = re.sub(r'\sxmlns="[^"]+"', '', xml, count=1)
+
         try:
-            x = root.find('STOPMESSAGE')
+            root = ET.fromstring(xml)
+        except:
+            raise ValidationError(_("Het bericht is geen geldig XML bericht."))
+
+        try:
+            root.find('STOPMESSAGE')
         except:
             raise ValidationError(_("Bericht bevat geen 'Stopmessage'."))
 
-        for message in root.iter("STOPMESSAGE"):
+        kv15stopmessages = []
+
+        for message in root.findall(".//STOPMESSAGE"):
+            """ Check if all required items are present and valid """
             try:
                 dataownercode = message.find('dataownercode').text
-                if dataownercode != self.user.userprofile.company:
-                    raise ValidationError(_("Dataownercode in bericht komt niet overeen met gebruiker."))
             except:
                 raise ValidationError(_("Bericht bevat geen dataownercode."))
+            if self.user.userprofile.company != dataownercode and not self.user.is_staff:
+                raise ValidationError(_("Dataownercode in bericht komt niet overeen met gebruikersprofiel."))
+
             try:
                 messagecodedate = message.find('messagecodedate').text
             except:
                 raise ValidationError(_("Bericht bevat geen messagecodedate."))
+            try:
+                parse(messagecodedate, fuzzy=False)
+            except:
+                raise ValidationError(_("Bericht bevat een ongeldige messagecodedate."))
+
             try:
                 messagecodenumber = message.find('messagecodenumber').text
             except:
@@ -279,69 +296,208 @@ class Kv15ImportForm(forms.ModelForm):
                 userstopcodes = []
                 codes = message.findall('./userstopcodes//userstopcode')
                 for code in codes:
-                    userstopcodes.append(code.text)
+                    userstopcodes.append(dataownercode+"_"+code.text)
                 if len(userstopcodes) == 0:
                     raise ValidationError(_("Bericht bevat geen userstopcodes."))
             except:
                 raise ValidationError(_("Bericht bevat geen userstopcodes."))
+            stops = ','.join(userstopcodes)
+            valid_stops = Kv1Stop.find_stops_from_haltes(stops)
+            if len(valid_stops) == 0:
+                raise ValidationError(_("Bericht bevat geen geldige userstopcodes"))
 
             try:
                 messagepriority = message.find('messagepriority').text
             except:
                 raise ValidationError(_("Bericht bevat geen messagepriority."))
+            if not (any(messagepriority in i for i in MESSAGEPRIORITY)):
+                raise ValidationError(_("Bericht bevat een ongeldige messagepriority"))
 
             try:
                 messagetype = message.find('messagetype').text
-                if len(messagetype) != 'OVERRULE':
-                    messagecontent = message.find('messagecontent').text
-                    if len(messagecontent) == 0:
-                        raise ValidationError(_("Bericht bevat lege messagecontent."))
             except:
                 raise ValidationError(_("Bericht bevat geen messagetype."))
+            if not (any(messagetype in i for i in MESSAGETYPE)):
+                raise ValidationError(_("Bericht bevat een ongeldige messagetype"))
+            if messagetype != 'OVERRULE':
+                messagecontent = message.find('messagecontent').text
+                if len(messagecontent) == 0:
+                    raise ValidationError(_("Bericht bevat lege messagecontent."))
+
             try:
                 messagedurationtype = message.find('messagedurationtype').text
             except:
                 raise ValidationError(_("Bericht bevat geen messagedurationtype."))
+            if not (any(messagedurationtype in i for i in MESSAGEDURATIONTYPE)):
+                raise ValidationError(_("Bericht bevat een ongeldige messagedurationtype"))
+
             try:
                 messagestarttime = message.find('messagestarttime').text
             except:
                 raise ValidationError(_("Bericht bevat geen messagestarttime."))
             try:
+                starttime = parse(messagestarttime)
+            except:
+                raise ValidationError(_("Bericht bevat een ongeldige messagestarttime"))
+
+
+            try:
+                messageendtime = message.find('messageendtime').text
+            except:
+                raise ValidationError(_("Bericht bevat geen messageendtime."))
+            try:
+                endtime = parse(messageendtime)
+            except:
+                raise ValidationError(_("Bericht bevat een ongeldige messageendtime"))
+
+            try:
                 messagetimestamp = message.find('messagetimestamp').text
             except:
                 raise ValidationError(_("Bericht bevat geen messagetimestamp."))
+            try:
+                timestamp = parse(messagetimestamp)
+            except:
+                raise ValidationError(_("Bericht bevat een ongeldige messagetimestamp"))
 
-        print('yeah')
+            kv15stopmessage = Kv15Stopmessage()
+            kv15stopmessage.messagecodenumber = messagecodenumber
+            kv15stopmessage.messagepriority = messagepriority
+            kv15stopmessage.dataownercode = dataownercode
+            kv15stopmessage.messagetimestamp = timestamp
+            kv15stopmessage.messagecodedate = messagecodedate
+            kv15stopmessage.messagetype = messagetype
+            kv15stopmessage.messagecontent = messagecontent
+            kv15stopmessage.messagedurationtype = messagedurationtype
 
+            kv15stopmessage.messagestarttime = starttime.replace(tzinfo=tzlocal())
+            kv15stopmessage.messageendtime = endtime.replace(tzinfo=tzlocal())
 
+            kv15stopmessages.append({'kv15': kv15stopmessage, 'stops': valid_stops})
 
+        self.cleaned_data = kv15stopmessages
 
-
-        valid_ids = []
-        nonvalid_ids = []
-        for halte in self.data['haltes'].split(','):
-            halte_split = halte.split('_')
-            if len(halte_split) == 2:
-                stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
-                if stop:
-                    valid_ids.append(stop.pk)
-                else:
-                    nonvalid_ids.append(halte)
-
-        if len(nonvalid_ids) != 0:
-            log.warning("Ongeldige haltes: %s" % ', '.join(nonvalid_ids))
-        if len(valid_ids) == 0 and len(nonvalid_ids) != 0:
-            raise ValidationError(_("Er werd geen geldige halte geselecteerd."))
-        elif len(valid_ids) == 0:
-            raise ValidationError(_("Selecteer minimaal een halte."))
-        else:
-            return self.cleaned_data
-
-    class Meta(object):
-        model = Kv15Stopmessage
-        exclude = ['messagecodenumber', 'status', 'stops', 'messagecodedate', 'isdeleted', 'id', 'dataownercode',
-                   'user']
+        return kv15stopmessages
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super(Kv15ImportForm, self).__init__(*args, **kwargs)
+
+
+# class Kv15ImportForm(forms.Form):
+#
+#     def clean(self):
+#         return self.cleaned_data
+#
+#         xml = self.data['import-text']
+#         if len(xml) == 0:
+#             raise ValidationError(_("Bericht mag niet leeg zijn."))
+#         root = ET.fromstring(xml)
+#
+#
+#
+#         try:
+#             root.find('STOPMESSAGE')
+#         except:
+#             raise ValidationError(_("Bericht bevat geen 'Stopmessage'."))
+#
+#         for message in root.iter("STOPMESSAGE"):
+#             """ Check if all required items are present and valid """
+#             try:
+#                 dataownercode = message.find('dataownercode').text
+#             except:
+#                 raise ValidationError(_("Bericht bevat geen dataownercode."))
+#             if self.user.userprofile.company != dataownercode:
+#                 raise ValidationError(_("Dataownercode in bericht komt niet overeen met gebruikersprofiel."))
+#
+#             try:
+#                 messagecodedate = message.find('messagecodedate').text
+#             except:
+#                 raise ValidationError(_("Bericht bevat geen messagecodedate."))
+#             try:
+#                 parse(messagecodedate, fuzzy=False)
+#             except:
+#                 raise ValidationError(_("Bericht bevat een ongeldige messagecodedate."))
+#
+#             try:
+#                 messagecodenumber = message.find('messagecodenumber').text
+#             except:
+#                 raise ValidationError(_("Bericht bevat geen messagecodenumber."))
+#
+#             try:
+#                 userstopcodes = []
+#                 codes = message.findall('./userstopcodes//userstopcode')
+#                 for code in codes:
+#                     userstopcodes.append(dataownercode+"_"+code.text)
+#                 if len(userstopcodes) == 0:
+#                     raise ValidationError(_("Bericht bevat geen userstopcodes."))
+#             except:
+#                 raise ValidationError(_("Bericht bevat geen userstopcodes."))
+#             stops = ','.join(userstopcodes)
+#             valid_stops = Kv1Stop.find_stops_from_haltes(stops)
+#             if len(valid_stops) == 0:
+#                 raise ValidationError(_("Bericht bevat geen geldige userstopcodes"))
+#
+#             try:
+#                 messagepriority = message.find('messagepriority').text
+#             except:
+#                 raise ValidationError(_("Bericht bevat geen messagepriority."))
+#             if not (any(messagepriority in i for i in MESSAGEPRIORITY)):
+#                 raise ValidationError(_("Bericht bevat een ongeldige messagepriority"))
+#
+#             try:
+#                 messagetype = message.find('messagetype').text
+#             except:
+#                 raise ValidationError(_("Bericht bevat geen messagetype."))
+#             if not (any(messagetype in i for i in MESSAGETYPE)):
+#                 raise ValidationError(_("Bericht bevat een ongeldige messagetype"))
+#             if messagetype != 'OVERRULE':
+#                 messagecontent = message.find('messagecontent').text
+#                 if len(messagecontent) == 0:
+#                     raise ValidationError(_("Bericht bevat lege messagecontent."))
+#
+#             try:
+#                 messagedurationtype = message.find('messagedurationtype').text
+#             except:
+#                 raise ValidationError(_("Bericht bevat geen messagedurationtype."))
+#             if not (any(messagedurationtype in i for i in MESSAGEDURATIONTYPE)):
+#                 raise ValidationError(_("Bericht bevat een ongeldige messagedurationtype"))
+#
+#             try:
+#                 messagestarttime = message.find('messagestarttime').text
+#             except:
+#                 raise ValidationError(_("Bericht bevat geen messagestarttime."))
+#             try:
+#                 starttime = parse(messagestarttime)
+#             except:
+#                 raise ValidationError(_("Bericht bevat een ongeldige messagestarttime"))
+#
+#             try:
+#                 messagetimestamp = message.find('messagetimestamp').text
+#             except:
+#                 raise ValidationError(_("Bericht bevat geen messagetimestamp."))
+#             try:
+#                 timestamp = parse(messagetimestamp)
+#             except:
+#                 raise ValidationError(_("Bericht bevat een ongeldige messagetimestamp"))
+#
+#         return self.cleaned_data
+#
+#     # class Meta(object):
+#         # model = Kv15Stopmessage
+#         # exclude = ['messagecodenumber', 'status', 'stops', 'messagecodedate', 'isdeleted', 'id', 'dataownercode',
+#                    # 'user']
+#
+#     def __init__(self, *args, **kwargs):
+#         self.user = kwargs.pop('user', None)
+#         self.helper = FormHelper()
+#         self.helper.form_tag = 'scenario_plan'
+#         self.helper.layout = Layout(
+#             # Put in two columns
+#             Div(Div(Field('messagestarttime'), css_class="col-sm-6 col-lg-6"),
+#                 Div(Field('messageendtime'), css_class="col-sm-6 col-lg-6"),
+#                 css_class="row"),
+#             Submit('submit', _("Plan alle berichten in"))
+#         )
+#         # super(Kv15ImportForm, self).__init__(*args, **kwargs)
+#
+

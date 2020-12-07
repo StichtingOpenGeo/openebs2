@@ -5,18 +5,109 @@
 {% block title %}{% trans "Importeer bericht" %}{% endblock %}
 
 {% block content %}
-<div class="col-lg-4">
+<div class="col-lg-4 import-field">
     <h2>{% trans "Importeer bericht" %}</h2>
     <form method="post" class="form" action="{% url 'msg_import' %}">
 
+                {{ form|as_crispy_errors }}
+
         <label for="import-text" style="display:block;">Plak hier de xml-tekst: </label>
-        {{ form|as_crispy_errors }}
-        <textarea id="import-text" name="import-text" style="display:block;" rows="25" cols="60"></textarea>
+        <textarea id="import-text" name="import-text" style="display:block;" rows="25" cols="60">{{ importtext }}</textarea>
         <br>
         <div class="form-group">
             {% csrf_token %}
-            <button type="submit" class="btn btn-primary">{% trans "Importeren" %}</button>
+            <input type="submit" class="btn btn-primary" id="import2" value="{% trans 'Importeren' %}"/>
+            {% comment %}<button type="button" class="btn btn-primary" id="import" onclick="getMessage()">{% trans "Importeren" %}</button>{% endcomment %}
         </div>
     </form>
 </div>
+<div class="check-import hidden">
+    <h2>{% trans "Bericht" %}
+        <form method="post"  {% comment %} action="{% url 'msg_delete' object.id %}"  {% endcomment %}>
+            {% csrf_token %}
+            <button class="btn btn-danger pull-right">
+                <span class="glyphicon glyphicon-trash"></span>
+            </button>
+        </form>
+    </h2>
+    <div>
+        <div class="row">
+            <div class="col-sm-6 col-lg-6">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">{% trans "Omschrijving" %}</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="control-group row">
+                            <label class="col-lg-4">{% trans "Volgnummer" %}</label>
+                            <p class="form-control-static col-lg-8" id="volgnummer-regel" style="padding-top: 2px;"></p>
+                        </div>
+                        <div class="control-group row">
+                            <label class="col-lg-4">{% trans "Bericht" %}</label>
+                            <p class="form-control-static col-lg-8" id="bericht-regel" style="padding-top: 2px;"><br /><br /></p>
+                        </div>
+                        <div class="control-group row">
+                            <label class="col-lg-4">{% trans "Geldigheid" %}</label>
+                            <p class="form-control-static col-lg-8" id="geldigheid-regel" style="padding-top: 2px;">
+                                 {% comment %} {% include "openebs/snippet_message-duration.html" with msg=object only %} {% endcomment %}
+                            </p>
+                        </div>
+                        <div class="control-group row">
+                            <label class="col-lg-4">{% trans "Laatst aangepast door" %}</label>
+                            <p class="form-control-static col-lg-8" style="padding-top: 2px;">
+                                <i class="glyphicon glyphicon-info-sign"></i>&nbsp;{% trans "Auteur onbekend - bericht opgesteld buiten OpenEBS" %}
+                            </p>
+                        </div>
+                        <div class="control-group row">
+                            <label class="col-lg-4">{% trans "Type tijdsrooster" %}</label>
+                            <p class="form-control-static col-lg-8" id="tijdrooster-regel" style="padding-top: 2px;">
+                                {% comment %}  {{ object.get_messagedurationtype_display }} {% endcomment %}
+                            </p>
+                        </div>
+                        <div class="control-group row">
+                            <label class="col-lg-4">{% trans "Type bericht" %}</label>
+                            <p class="form-control-static col-lg-8" id="'type-bericht-regel" style="padding-top: 2px;">
+                                {% comment %} {{ object.get_messagetype_display }} {% endcomment %}
+                            </p>
+                        </div>
+                        <div class="control-group row">
+                            <label class="col-lg-4">{% trans "Prioriteit" %}</label>
+                            <p class="form-control-static col-lg-8" id="prioriteit-regel" style="padding-top: 2px;">
+                                {% comment %} {{ object.get_messagepriority_display }} {% endcomment %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3>{% trans "Haltes" %} <span style="font-weight: normal;">  {% comment %}({{ object.kv15messagestop_set.count }}) {% endcomment %}</span>
+            <a class="btn btn-link pull-right" href="{% url 'msg_map' %}?message={{ object.id }}"><i class="glyphicon glyphicon-screenshot"></i> {% trans "Bekijk op kaart" %}</a>
+        </h3>
+        <table class="table table-bordered table-condensed">
+        <tr>
+            <th class="col-lg-1">{% trans "Vervoerder" %}</th>
+            <th>Halte</th>
+            <th class="col-lg-2 text-right">Haltenummer</th>
+        </tr>
+       {% comment %}  {% for halte in object.kv15messagestop_set.all %}
+            <tr>
+                <td><img class="user-icon" src="{% get_static_prefix %}img/logos/{{ halte.stop.dataownercode|lower }}.png" /></td>
+                <td>{{ halte.stop.name }}</td>
+                <td class="text-right">{{ halte.stop.userstopcode }}</td>
+            </tr>
+        {% endfor %} {% endcomment %}
+        </table>
+    </div>
+</div>
 {% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'bower_components/jquery-ui/ui/minified/core.min.js' %}"></script>
+    <script src="{% static 'bower_components/jquery-ui/ui/minified/widget.min.js' %}"></script>
+    <script src="{% static 'bower_components/jquery-ui/ui/minified/mouse.min.js' %}"></script>
+    <script src="{% static 'bower_components/jquery-ui/ui/minified/selectable.min.js' %}"></script>
+    <script src="{% static 'js/import_msg.js' %}"></script>
+{% endblock %}
+{% comment %} {% block js_init %}
+{% endblock %}{% endcomment %}
