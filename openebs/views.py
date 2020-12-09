@@ -272,8 +272,8 @@ class MessageStopsBoundAjaxView(LoginRequiredMixin, JSONListResponseMixin, Detai
 class MessageImportView(AccessMixin, Kv15PushMixin, FormView):
     permission_required = 'openebs.add_messages'
     form_class = Kv15ImportForm
-    template_name = 'openebs/kv15stopmessage_import_2.html'
-    success_url = reverse_lazy('msg_index')
+    template_name = 'openebs/kv15stopmessage_import.html'
+    success_url = reverse_lazy('msg_import_add')
 
     def get_form_kwargs(self):
         kwargs = super(MessageImportView, self).get_form_kwargs()
@@ -284,7 +284,7 @@ class MessageImportView(AccessMixin, Kv15PushMixin, FormView):
 
     def get_context_data(self, **kwargs):
         context = super(MessageImportView, self).get_context_data(**kwargs)
-        if hasattr(self.request.POST, 'import-test'):
+        if hasattr(self.request.POST, 'import-text'):
             context['importtext'] = self.request.POST['import-text']
         else:
             context['importtext'] = ''
@@ -293,12 +293,18 @@ class MessageImportView(AccessMixin, Kv15PushMixin, FormView):
 
     def form_valid(self, form):
         context = super(MessageImportView, self).get_context_data()
-        if hasattr(form, 'cleaned_data'):
-            context['object'] = form.cleaned_data[0]['kv15']
-            context['object'].pk = 9999
-            context['kv15messagestop'] = form.cleaned_data[0]['stops']
 
-        return render(self.request, 'openebs/kv15stopmessage_import_detail.html', context)
+        if not hasattr(self.request.POST, 'action'):
+            if hasattr(form, 'cleaned_data'):
+                context['importtext'] = self.request.POST['import-text']
+                context['object'] = form.cleaned_data[0]['kv15']
+                context['object'].pk = 9999
+                context['kv15messagestop'] = form.cleaned_data[0]['stops']
+
+            return render(self.request, 'openebs/kv15stopmessage_import_detail.html', context)
+
+        # iets doen zoals opslaan en verwijderen
+        return redirect(reverse_lazy('msg_index'))
 
     def form_invalid(self, form):
         return render(self.request, 'openebs/kv15stopmessage_import.html', self.get_context_data())

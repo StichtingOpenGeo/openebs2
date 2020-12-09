@@ -1,24 +1,10 @@
 {% extends "base.html" %}
 {% load static crispy_forms_tags leaflet_tags i18n %}
 
- {% block title %}{% trans "Bekijk bericht" %}{% endblock %}
+ {% block title %}{% trans "Importeer bericht" %}{% endblock %}
 
 {% block content %}
-<h2>{% trans "Bericht" %}
-    {% if object.is_editable %}
-        {% if perms.openebs.edit_all or not perms.openebs.view_all or object.dataownercode == user.userprofile.company %}
-            <form method="post" action="{% url 'msg_delete' object.id %}">
-                {% csrf_token %}
-                <button class="btn btn-danger pull-right">
-                    <span class="glyphicon glyphicon-trash"></span>
-                </button>
-            </form>
-            <a href="{% url 'msg_edit' object.pk %}" class="btn btn-link pull-right">
-                <span class="glyphicon glyphicon-edit"></span> {% trans "Bewerk" %}&nbsp;
-            </a>&nbsp;
-        {% endif %}
-    {% endif %}
-    </h2>
+<h2>{% trans "Bericht" %}</h2>
 <div>
     <div class="row">
         <div class="col-sm-6 col-lg-6">
@@ -48,11 +34,7 @@
                     <div class="control-group row">
                         <label class="col-lg-4">{% trans "Laatst aangepast door" %}</label>
                         <p class="form-control-static col-lg-8">
-                            {% if not object.is_external %}
-                                <i class="glyphicon glyphicon-user"></i>&nbsp;{{ object.user.get_full_name|default:object.user.username }}
-                            {% else %}
-                                <i class="glyphicon glyphicon-info-sign"></i>&nbsp;{% trans "Auteur onbekend - bericht opgesteld buiten OpenEBS" %}
-                            {% endif %}
+                                <i class="glyphicon glyphicon-user"></i>&nbsp;{{ user.get_full_name|default:user.username }}
                         </p>
                     </div>
                     <div class="control-group row">
@@ -76,6 +58,24 @@
                 </div>
             </div>
         </div>
+        <div class="col-sm-6 col-lg-6">
+            <form method="post" id="actionform" action="{% url 'msg_import' %}">
+                {% csrf_token %}
+                <div class="btn-group pull-right">
+                    {% csrf_token %}
+
+                    <button type="button" class="btn btn-primary" id="import">Akkoord</button>
+                    <button class="btn btn-primary dropdown-toggle" id="importeren" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span></button>
+                    <ul class="dropdown-menu">
+                        <li><a id="action_create" class="menu-item" value="Importeren en verzenden"/>Importeren en verzenden</a></li>
+                        <li><a id="action_remove" class="menu-item" value="Importeren en verwijderen"/>Importeren en verwijderen</a></li>
+                    </ul>
+                </div>
+                <input type="hidden" name="action" id="action" value="insert"/>
+                        <textarea id="import-text" name="import-text" style="display: none;" rows="25" cols="60">{{ importtext }}</textarea>
+
+            </form>
+        </div>
     </div>
 
     <h3>{% trans "Haltes" %} <span style="font-weight: normal;">({{ kv15messagestop|length }})</span>
@@ -98,4 +98,11 @@
 
 
 </div>
+{% endblock %}
+
+{% block js_init %}
+    $('.menu-item').click(function() {
+        $("#action").val(this.id)
+        $("#actionform").submit();
+    });
 {% endblock %}
