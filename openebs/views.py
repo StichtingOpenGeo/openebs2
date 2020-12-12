@@ -284,7 +284,8 @@ class MessageImportView(AccessMixin, Kv15PushMixin, FormView):
 
     def get_context_data(self, **kwargs):
         context = super(MessageImportView, self).get_context_data(**kwargs)
-        if hasattr(self.request.POST, 'import-text'):
+        #if hasattr(self.request.POST, 'import-text'):
+        if 'import-text' in self.request.POST:
             context['importtext'] = self.request.POST['import-text']
         else:
             context['importtext'] = ''
@@ -294,7 +295,7 @@ class MessageImportView(AccessMixin, Kv15PushMixin, FormView):
     def form_valid(self, form):
         context = super(MessageImportView, self).get_context_data()
 
-        if not hasattr(self.request.POST, 'action'):
+        if 'action' not in self.request.POST:
             if hasattr(form, 'cleaned_data'):
                 context['importtext'] = self.request.POST['import-text']
                 context['object'] = form.cleaned_data[0]['kv15']
@@ -302,8 +303,13 @@ class MessageImportView(AccessMixin, Kv15PushMixin, FormView):
                 context['kv15messagestop'] = form.cleaned_data[0]['stops']
 
             return render(self.request, 'openebs/kv15stopmessage_import_detail.html', context)
+        else:
 
-        # iets doen zoals opslaan en verwijderen
+            # iets doen zoals opslaan en verwijderen
+
+            if self.request.POST['action'] == 'action_delete':
+                return(redirect(reverse_lazy('msg_delete')))
+
         return redirect(reverse_lazy('msg_index'))
 
     def form_invalid(self, form):
