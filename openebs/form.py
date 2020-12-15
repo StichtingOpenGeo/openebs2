@@ -10,7 +10,7 @@ import floppyforms.__future__ as forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from kv1.models import Kv1Stop
-from openebs.models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, get_end_service
+from openebs.models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, get_end_service, MessageStatus
 
 import xml.etree.ElementTree as ET
 from dateutil.parser import parse
@@ -252,6 +252,7 @@ class PlanScenarioForm(forms.Form):
 class Kv15ImportForm(forms.Form):
     def clean(self):
         if 'action' not in self.data:
+            #TODO: check for duplicate key (Dataownercode, messagecodedate, messagecodenumber)
             xml = self.data['import-text']
             if len(xml) == 0:
                 raise ValidationError(_("Bericht mag niet leeg zijn."))
@@ -396,7 +397,7 @@ class Kv15ImportForm(forms.Form):
 
             kv15stopmessage.user = self.user
             kv15stopmessage.dataownercode = message.find('dataownercode').text
-            kv15stopmessage.messagecodedate = message.find('messagecodedate').text
+            kv15stopmessage.messagecodedate = parse(message.find('messagecodedate').text).replace(tzinfo=tzlocal())
             kv15stopmessage.messagecodenumber = message.find('messagecodenumber').text
             kv15stopmessage.messagepriority = message.find('messagepriority').text
             kv15stopmessage.messagetype = message.find('messagetype').text
@@ -404,13 +405,6 @@ class Kv15ImportForm(forms.Form):
             kv15stopmessage.messagestarttime = parse(message.find('messagestarttime').text).replace(tzinfo=tzlocal())
             kv15stopmessage.messagecontent = message.find('messagecontent').text
 
-            userstopcodes = []
-            codes = message.findall('./userstopcodes//userstopcode')
-            for code in codes:
-                userstopcodes.append(kv15stopmessage.dataownercode + "_" + code.text)
-            stops = ','.join(userstopcodes)
-            valid_stops = Kv1Stop.find_stops_from_haltes(stops)
-            kv15stopmessage.stops = valid_stops
             try:
                 endtime = parse(message.find('messageendtime').text)
                 kv15stopmessage.messagestarttime = endtime.replace(tzinfo=tzlocal())
@@ -465,7 +459,20 @@ class Kv15ImportForm(forms.Form):
             except:
                 pass
 
+            self.kv15stopmessage = kv15stopmessage
+            kv15stopmessage.save()
 
+            # add stop data
+            userstopcodes = []
+            codes = message.findall('./userstopcodes//userstopcode')
+            for code in codes:
+                userstopcodes.append(kv15stopmessage.dataownercode + "_" + code.text)
+            stops = ','.join(userstopcodes)
+            valid_stops = Kv1Stop.find_stops_from_haltes(stops)
+            for stop in valid_stops:
+                kv15stopmessage.kv15messagestop_set.create(stopmessage=kv15stopmessage, stop=stop)
+
+            return kv15stopmessage
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)

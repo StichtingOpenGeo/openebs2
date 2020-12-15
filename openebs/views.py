@@ -284,7 +284,6 @@ class MessageImportView(AccessMixin, Kv15PushMixin, FormView):
 
     def get_context_data(self, **kwargs):
         context = super(MessageImportView, self).get_context_data(**kwargs)
-        #if hasattr(self.request.POST, 'import-text'):
         if 'import-text' in self.request.POST:
             context['importtext'] = self.request.POST['import-text']
         else:
@@ -304,11 +303,24 @@ class MessageImportView(AccessMixin, Kv15PushMixin, FormView):
 
             return render(self.request, 'openebs/kv15stopmessage_import_detail.html', context)
         else:
+            if self.push_message(form.kv15stopmessage.to_xml()):
+                form.kv15stopmessage.set_status(MessageStatus.SENT)
+                log.info("Sent message to subscribers: %s" % form.kv15stopmessage)
+            else:
+                form.kv15stopmessage.set_status(MessageStatus.ERROR_SEND)
+                log.error("Failed to send message to subscribers: %s" % form.kv15stopmessage)
 
-            # iets doen zoals opslaan en verwijderen
-
-            if self.request.POST['action'] == 'action_delete':
-                return(redirect(reverse_lazy('msg_delete')))
+            if self.request.POST['action'] == 'action_remove':
+                msg = Kv15Stopmessage.objects.filter(dataownercode=form.kv15stopmessage.dataownercode,
+                                                     messagecodedate=form.kv15stopmessage.messagecodedate,
+                                                     messagecodenumber=form.kv15stopmessage.messagecodenumber)[0]
+                if self.push_message(msg.to_xml_delete()):
+                    msg.set_status(MessageStatus.DELETED)
+                    Kv15Stopmessage.objects.filter(pk=msg.pk).update(isdeleted=True)
+                    log.error("Deleted message succesfully communicated to subscribers: %s" % msg)
+                else:
+                    msg.set_status(MessageStatus.ERROR_SEND_DELETE)
+                    log.error("Failed to send delete request to subscribers: %s" % msg)
 
         return redirect(reverse_lazy('msg_index'))
 
