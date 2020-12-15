@@ -261,7 +261,7 @@ class Kv15ImportForm(forms.Form):
             try:
                 root = ET.fromstring(xml)
             except:
-                raise ValidationError(_("Het bericht is geen geldig XML bericht."))
+                raise ValidationError(_("Het bericht is geen geldig XML-bericht."))
 
             try:
                 root.find('STOPMESSAGE')
@@ -269,7 +269,8 @@ class Kv15ImportForm(forms.Form):
                 raise ValidationError(_("Bericht bevat geen 'Stopmessage'."))
 
             kv15stopmessages = []
-
+            if not root.findall(".//STOPMESSAGE"):
+                raise ValidationError(_("Bericht is geen geldig XML-bericht."))
             for message in root.findall(".//STOPMESSAGE"):
                 """ Check if all required items are present and valid """
                 try:
@@ -346,15 +347,19 @@ class Kv15ImportForm(forms.Form):
                 except:
                     raise ValidationError(_("Bericht bevat een ongeldige messagestarttime"))
 
-
+                endtime = None
                 try:
                     messageendtime = message.find('messageendtime').text
+                    try:
+                         endtime = parse(messageendtime)
+                    except:
+                         raise ValidationError(_("Bericht bevat een ongeldige messageendtime"))
                 except:
-                    raise ValidationError(_("Bericht bevat geen messageendtime."))
-                try:
-                    endtime = parse(messageendtime)
-                except:
-                    raise ValidationError(_("Bericht bevat een ongeldige messageendtime"))
+                    pass  # messageendtime is not required
+                # try:
+                #     endtime = parse(messageendtime)
+                # except:
+                #     raise ValidationError(_("Bericht bevat een ongeldige messageendtime"))
 
                 try:
                     messagetimestamp = message.find('messagetimestamp').text
@@ -376,7 +381,10 @@ class Kv15ImportForm(forms.Form):
                 kv15stopmessage.messagedurationtype = messagedurationtype
 
                 kv15stopmessage.messagestarttime = starttime.replace(tzinfo=tzlocal())
-                kv15stopmessage.messageendtime = endtime.replace(tzinfo=tzlocal())
+                if endtime:
+                    kv15stopmessage.messageendtime = endtime.replace(tzinfo=tzlocal())
+                else:
+                    kv15stopmessage.messageendtime = None
 
                 kv15stopmessages.append({'kv15': kv15stopmessage, 'stops': valid_stops, 'user': self.user})
 
@@ -396,7 +404,6 @@ class Kv15ImportForm(forms.Form):
         xml = re.sub(r'\sxmlns="[^"]+"', '', xml, count=1)
         root = ET.fromstring(xml)
         for message in root.findall(".//STOPMESSAGE"):
-            #self.instance.pk = None  # TODO: moet deze door ons gezet worden?
             kv15stopmessage = Kv15Stopmessage()
 
             kv15stopmessage.user = self.user
@@ -411,9 +418,9 @@ class Kv15ImportForm(forms.Form):
 
             try:
                 endtime = parse(message.find('messageendtime').text)
-                kv15stopmessage.messagestarttime = endtime.replace(tzinfo=tzlocal())
+                kv15stopmessage.messageendtime = endtime.replace(tzinfo=tzlocal())
             except:
-                pass  #TODO set as ending of day of starttime in imported message
+                kv15stopmessage.messageendtime = None  #TODO set as ending of day of starttime in imported message
             try:
                 kv15stopmessage.reasontype = message.find('reasontype').text
             except:
