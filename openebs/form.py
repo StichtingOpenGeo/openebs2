@@ -252,7 +252,6 @@ class PlanScenarioForm(forms.Form):
 class Kv15ImportForm(forms.Form):
     def clean(self):
         if 'action' not in self.data:
-            #TODO: check for duplicate key (Dataownercode, messagecodedate, messagecodenumber)
             xml = self.data['import-text']
             if len(xml) == 0:
                 raise ValidationError(_("Bericht mag niet leeg zijn."))
@@ -293,6 +292,11 @@ class Kv15ImportForm(forms.Form):
                     messagecodenumber = message.find('messagecodenumber').text
                 except:
                     raise ValidationError(_("Bericht bevat geen messagecodenumber."))
+
+                # Check for duplicate key (Dataownercode, messagecodedate, messagecodenumber)
+                if Kv15Stopmessage.objects.filter(dataownercode=dataownercode, messagecodedate=messagecodedate,
+                                                  messagecodenumber=messagecodenumber).count() != 0:
+                    raise ValidationError(_("De combinatie dataownercode, messagecodedate en messagecodenumber bestaat al."))
 
                 try:
                     userstopcodes = []
