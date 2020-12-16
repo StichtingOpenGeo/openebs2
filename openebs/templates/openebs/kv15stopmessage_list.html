@@ -30,9 +30,14 @@
   <h2>{% trans "Actieve berichten" %}
       <a href="#deleted" class="title_link_small"><i class="glyphicon glyphicon-trash"></i> {% trans "Ga naar verlopen berichten" %}</a>
       {% if perms.openebs.add_messages and not view_all and not edit_all %}
-      <a class="btn btn-success pull-right" href="{% url 'msg_add' %}">
-        <span class="glyphicon glyphicon-plus-sign"></span> {% trans "Nieuw bericht" %}
-      </a>
+      <div class="btn-group pull-right">
+          <a class="btn btn-success" href="{% url 'msg_add' %}">
+            <span class="glyphicon glyphicon-plus-sign"></span> {% trans "Nieuw bericht" %}
+          </a>
+          <a class="btn btn-primary" href="{% url 'msg_import' %}">
+            <span class="glyphicon glyphicon-plus-sign"></span> {% trans "Importeer bericht" %}
+          </a>
+      </div>
       {% endif %}
   </h2>
 
