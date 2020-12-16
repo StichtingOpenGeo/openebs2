@@ -394,6 +394,7 @@ class Kv15ImportForm(forms.Form):
         xml = self.data['import-text']
         xml = re.sub(r'\sxmlns="[^"]+"', '', xml, count=1)
         root = ET.fromstring(xml)
+        self.kv15stopmessages = []
         for message in root.findall(".//STOPMESSAGE"):
             kv15stopmessage = Kv15Stopmessage()
 
@@ -481,8 +482,8 @@ class Kv15ImportForm(forms.Form):
                 lines.append(Kv1Line.find_line(kv15stopmessage.dataownercode, number.text))
             for line in lines:
                 kv15stopmessage.kv15messageline_set.create(stopmessage=kv15stopmessage, line=line)
-
-            return kv15stopmessage
+            self.kv15stopmessages.append(kv15stopmessage)
+        return self.kv15stopmessages
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)

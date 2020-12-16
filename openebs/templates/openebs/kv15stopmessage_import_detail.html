@@ -4,31 +4,47 @@
  {% block title %}{% trans "Importeer bericht" %}{% endblock %}
 
 {% block content %}
-<h2>{% trans "Bericht" %}</h2>
-<div>
+<form method="post" id="actionform" action="{% url 'msg_import' %}">
+    <h2>{% trans "Bericht(en)" %}
+        {% csrf_token %}
+        <div class="btn-group pull-right">
+            {% csrf_token %}
+            <button type="button" class="btn btn-primary" id="import">Akkoord</button>
+            <button class="btn btn-primary dropdown-toggle" id="importeren" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span></button>
+            <ul class="dropdown-menu">
+                <li><a id="action_create" class="menu-item" value="Importeren en verzenden"/>Importeren en verzenden</a></li>
+                <li><a id="action_remove" class="menu-item" value="Importeren en verwijderen"/>Importeren en verwijderen</a></li>
+            </ul>
+        </div>
+        <input type="hidden" name="action" id="action" value="insert"/>
+        <textarea id="import-text" name="import-text" style="display: none;" rows="25" cols="60">{{ importtext }}</textarea>
+    </h2>
+</form>
+{% for o in object %}
+<p>
     <div class="row">
         <div class="col-sm-6 col-lg-6">
             <div class="panel panel-primary">
                 <div class="panel-heading">
-                    <h3 class="panel-title">{% trans "Omschrijving" %}</h3>
+                    <h3 class="panel-title">{% trans "Omschrijving bericht #" %}{{ o.message.messagecodenumber }}</h3>
                 </div>
                 <div class="panel-body">
                     <div class="control-group row">
                         <label class="col-lg-4">{% trans "Volgnummer" %}</label>
                         <p class="form-control-static col-lg-8">
-                            {{ object.dataownercode }} - {{ object.messagecodedate }} - #{{ object.messagecodenumber }}
+                            {{ o.message.dataownercode }} - {{ o.message.messagecodedate }} - #{{ o.message.messagecodenumber }}
                         </p>
                     </div>
                     <div class="control-group row">
                         <label class="col-lg-4">{% trans "Bericht" %}</label>
                         <p class="form-control-static col-lg-8">
-                            {{ object.messagecontent|default_if_none:"[geen of overschrijf bericht]" }}<br /><br />
+                            {{ o.message.messagecontent|default_if_none:"[geen of overschrijf bericht]" }}<br /><br />
                         </p>
                     </div>
                     <div class="control-group row">
                         <label class="col-lg-4">{% trans "Geldigheid" %}</label>
                         <p class="form-control-static col-lg-8">
-                            {% include "openebs/snippet_message-duration.html" with msg=object only %}
+                            {% include "openebs/snippet_message-duration.html" with msg=o.message only %}
                         </p>
                     </div>
                     <div class="control-group row">
@@ -40,45 +56,27 @@
                     <div class="control-group row">
                         <label class="col-lg-4">{% trans "Type tijdsrooster" %}</label>
                         <p class="form-control-static col-lg-8">
-                            {{ object.get_messagedurationtype_display }}
+                            {{ o.message.get_messagedurationtype_display }}
                         </p>
                     </div>
                     <div class="control-group row">
                         <label class="col-lg-4">{% trans "Type bericht" %}</label>
                         <p class="form-control-static col-lg-8">
-                            {{ object.get_messagetype_display }}
+                            {{ o.message.get_messagetype_display }}
                         </p>
                     </div>
                     <div class="control-group row">
                         <label class="col-lg-4">{% trans "Prioriteit" %}</label>
                         <p class="form-control-static col-lg-8">
-                            {{ object.get_messagepriority_display }}
+                            {{ o.message.get_messagepriority_display }}
                         </p>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-sm-6 col-lg-6">
-            <form method="post" id="actionform" action="{% url 'msg_import' %}">
-                {% csrf_token %}
-                <div class="btn-group pull-right">
-                    {% csrf_token %}
-
-                    <button type="button" class="btn btn-primary" id="import">Akkoord</button>
-                    <button class="btn btn-primary dropdown-toggle" id="importeren" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span></button>
-                    <ul class="dropdown-menu">
-                        <li><a id="action_create" class="menu-item" value="Importeren en verzenden"/>Importeren en verzenden</a></li>
-                        <li><a id="action_remove" class="menu-item" value="Importeren en verwijderen"/>Importeren en verwijderen</a></li>
-                    </ul>
-                </div>
-                <input type="hidden" name="action" id="action" value="insert"/>
-                        <textarea id="import-text" name="import-text" style="display: none;" rows="25" cols="60">{{ importtext }}</textarea>
-
-            </form>
-        </div>
     </div>
 
-    <h3>{% trans "Haltes" %} <span style="font-weight: normal;">({{ kv15messagestop|length }})</span>
+    <h3>{% trans "Haltes" %} <span style="font-weight: normal;">({{ o.kv15messagestop|length }})</span>
         <a class="btn btn-link pull-right" href="{% url 'msg_map' %}?message={{ object.id }}"><i class="glyphicon glyphicon-screenshot"></i> {% trans "Bekijk op kaart" %}</a>
     </h3>
     <table class="table table-bordered table-condensed">
@@ -87,7 +85,7 @@
         <th>Halte</th>
         <th class="col-lg-2 text-right">Haltenummer</th>
     </tr>
-    {% for halte in kv15messagestop %}
+    {% for halte in o.kv15messagestop %}
         <tr>
             <td><img class="user-icon" src="{% get_static_prefix %}img/logos/{{ halte.dataownercode|lower }}.png" /></td>
             <td>{{ halte.name }}</td>
@@ -97,7 +95,8 @@
     </table>
 
 
-</div>
+</p>
+{% endfor %}
 {% endblock %}
 
 {% block js_init %}
