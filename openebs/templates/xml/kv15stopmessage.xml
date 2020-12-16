@@ -10,6 +10,13 @@
             <userstopcode>{{ stop.userstopcode }}</userstopcode>
         {% endfor %}
     </userstopcodes>
+    {% if object.kv15messageline_set.count > 0 %}
+        <lineplanningnumbers>
+            {% for messageline in object.kv15messageline_set.all %}
+                <lineplanningnumber>{{ messageline.line.lineplanningnumber }}</lineplanningnumber>
+            {% endfor %}
+        </lineplanningnumbers>
+    {% endif %}
     <messagepriority>{{ object.messagepriority }}</messagepriority>
     <messagetype>{{ object.messagetype }}</messagetype>
     <messagedurationtype>{{ object.messagedurationtype }}</messagedurationtype>

@@ -9,8 +9,8 @@ from django.utils.timezone import now
 import floppyforms.__future__ as forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
-from kv1.models import Kv1Stop
-from openebs.models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, get_end_service, MessageStatus
+from kv1.models import Kv1Stop, Kv1Line
+from openebs.models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, get_end_service
 
 import xml.etree.ElementTree as ET
 from dateutil.parser import parse
@@ -250,6 +250,7 @@ class PlanScenarioForm(forms.Form):
 
 
 class Kv15ImportForm(forms.Form):
+
     def clean(self):
         if 'action' not in self.data:
             xml = self.data['import-text']
@@ -263,14 +264,9 @@ class Kv15ImportForm(forms.Form):
             except:
                 raise ValidationError(_("Het bericht is geen geldig XML-bericht."))
 
-            try:
-                root.find('STOPMESSAGE')
-            except:
-                raise ValidationError(_("Bericht bevat geen 'Stopmessage'."))
-
             kv15stopmessages = []
             if not root.findall(".//STOPMESSAGE"):
-                raise ValidationError(_("Bericht is geen geldig XML-bericht."))
+                raise ValidationError(_("Bericht bevat geen 'Stopmessage'."))
             for message in root.findall(".//STOPMESSAGE"):
                 """ Check if all required items are present and valid """
                 try:
@@ -308,24 +304,25 @@ class Kv15ImportForm(forms.Form):
                         raise ValidationError(_("Bericht bevat geen userstopcodes."))
                 except:
                     raise ValidationError(_("Bericht bevat geen userstopcodes."))
+
                 stops = ','.join(userstopcodes)
                 valid_stops = Kv1Stop.find_stops_from_haltes(stops)
                 if len(valid_stops) == 0:
-                    raise ValidationError(_("Bericht bevat geen geldige userstopcodes"))
+                    raise ValidationError(_("Bericht bevat geen geldige userstopcodes."))
 
                 try:
                     messagepriority = message.find('messagepriority').text
                 except:
                     raise ValidationError(_("Bericht bevat geen messagepriority."))
                 if not (any(messagepriority in i for i in MESSAGEPRIORITY)):
-                    raise ValidationError(_("Bericht bevat een ongeldige messagepriority"))
+                    raise ValidationError(_("Bericht bevat een ongeldige messagepriority."))
 
                 try:
                     messagetype = message.find('messagetype').text
                 except:
                     raise ValidationError(_("Bericht bevat geen messagetype."))
                 if not (any(messagetype in i for i in MESSAGETYPE)):
-                    raise ValidationError(_("Bericht bevat een ongeldige messagetype"))
+                    raise ValidationError(_("Bericht bevat een ongeldige messagetype."))
                 if messagetype != 'OVERRULE':
                     messagecontent = message.find('messagecontent').text
                     if len(messagecontent) == 0:
@@ -336,7 +333,7 @@ class Kv15ImportForm(forms.Form):
                 except:
                     raise ValidationError(_("Bericht bevat geen messagedurationtype."))
                 if not (any(messagedurationtype in i for i in MESSAGEDURATIONTYPE)):
-                    raise ValidationError(_("Bericht bevat een ongeldige messagedurationtype"))
+                    raise ValidationError(_("Bericht bevat een ongeldige messagedurationtype."))
 
                 try:
                     messagestarttime = message.find('messagestarttime').text
@@ -345,7 +342,7 @@ class Kv15ImportForm(forms.Form):
                 try:
                     starttime = parse(messagestarttime)
                 except:
-                    raise ValidationError(_("Bericht bevat een ongeldige messagestarttime"))
+                    raise ValidationError(_("Bericht bevat een ongeldige messagestarttime."))
 
                 endtime = None
                 try:
@@ -353,13 +350,9 @@ class Kv15ImportForm(forms.Form):
                     try:
                          endtime = parse(messageendtime)
                     except:
-                         raise ValidationError(_("Bericht bevat een ongeldige messageendtime"))
+                         raise ValidationError(_("Bericht bevat een ongeldige messageendtime."))
                 except:
                     pass  # messageendtime is not required
-                # try:
-                #     endtime = parse(messageendtime)
-                # except:
-                #     raise ValidationError(_("Bericht bevat een ongeldige messageendtime"))
 
                 try:
                     messagetimestamp = message.find('messagetimestamp').text
@@ -368,7 +361,7 @@ class Kv15ImportForm(forms.Form):
                 try:
                     timestamp = parse(messagetimestamp)
                 except:
-                    raise ValidationError(_("Bericht bevat een ongeldige messagetimestamp"))
+                    raise ValidationError(_("Bericht bevat een ongeldige messagetimestamp."))
 
                 kv15stopmessage = Kv15Stopmessage()
                 kv15stopmessage.messagecodenumber = messagecodenumber
@@ -393,8 +386,6 @@ class Kv15ImportForm(forms.Form):
 
         else:
             self.import_data()
-        #    if self.data['action'] == 'action_delete':
-        #        return redirect('msg_delete')
 
     def import_data(self):
         """ save data from xml-message in the model.
@@ -420,7 +411,7 @@ class Kv15ImportForm(forms.Form):
                 endtime = parse(message.find('messageendtime').text)
                 kv15stopmessage.messageendtime = endtime.replace(tzinfo=tzlocal())
             except:
-                kv15stopmessage.messageendtime = None  #TODO set as ending of day of starttime in imported message
+                kv15stopmessage.messageendtime = None
             try:
                 kv15stopmessage.reasontype = message.find('reasontype').text
             except:
@@ -482,6 +473,14 @@ class Kv15ImportForm(forms.Form):
             valid_stops = Kv1Stop.find_stops_from_haltes(stops)
             for stop in valid_stops:
                 kv15stopmessage.kv15messagestop_set.create(stopmessage=kv15stopmessage, stop=stop)
+
+            # add line data
+            lines = []
+            lineplanningnumbers = message.findall('./lineplanningnumbers//lineplanningnumber')
+            for number in lineplanningnumbers:
+                lines.append(Kv1Line.find_line(kv15stopmessage.dataownercode, number.text))
+            for line in lines:
+                kv15stopmessage.kv15messageline_set.create(stopmessage=kv15stopmessage, line=line)
 
             return kv15stopmessage
 

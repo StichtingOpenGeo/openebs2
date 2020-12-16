@@ -29,6 +29,12 @@ class Kv1Line(models.Model):
     def __str__(self):
         return "%s - %s" % (self.dataownercode, self.headsign)
 
+    @staticmethod
+    def find_line(dataowner, lineplanningnumber):
+        result = Kv1Line.objects.filter(dataownercode=dataowner, lineplanningnumber=lineplanningnumber)
+        if result.count() == 1:
+            return result[0]
+
 
 class Kv1Stop(models.Model):
     userstopcode = models.CharField(max_length=10)
