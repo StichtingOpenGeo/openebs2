@@ -19,7 +19,11 @@
                             ({{ msg.stops.count }} haltes)</a></li>
                     {% endfor %}
                     </ul>
-                    <p class="text_about_endtime hidden">{% trans "De hieronder ingevoerde eindtijd geldt alleen voor berichten met tijdsrooster 'Eind Tijd'" %}</p>
+                    <p class="text_about_endtime hidden">
+                        {% blocktrans %}
+                            De hieronder ingevoerde eindtijd geldt <strong>alleen</strong> voor berichten met tijdsrooster 'Eind Tijd'.
+                        {% endblocktrans %}
+                    </p>
                 </div>
             </div>
             <div class="panel panel-primary">
