@@ -226,8 +226,9 @@ class PlanScenarioForm(forms.Form):
 
     def clean(self):
         data = super(PlanScenarioForm, self).clean()
-        if data['messageendtime'] <= data['messagestarttime']:
-            raise ValidationError(_("Einde bericht moet na begin zijn"))
+        if 'messageendtime' in data:
+            if data['messageendtime'] <= data['messagestarttime']:
+                raise ValidationError(_("Einde bericht moet na begin zijn"))
         return data
 
     def __init__(self, *args, **kwargs):

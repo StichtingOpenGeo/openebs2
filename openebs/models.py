@@ -293,10 +293,13 @@ class Kv15Scenario(models.Model):
             a.user = user
             a.messagecodedate = now()
             a.messagestarttime = start
-            a.messageendtime = end
+            a.messagedurationtype = msg.messagedurationtype
+            if a.messagedurationtype == 'ENDTIME':
+                a.messageendtime = end
+            else:
+                a.messageendtime = None
             a.messagepriority = msg.messagepriority
             a.messagetype = msg.messagetype
-            a.messagedurationtype = msg.messagedurationtype
             a.messagecontent = msg.messagecontent
             a.reasontype = msg.reasontype
             a.subreasontype = msg.subreasontype
