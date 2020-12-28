@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from kv1.models import Kv1Stop
 from openebs.models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, get_end_service
+from django.utils.dateparse import parse_date
 
 log = logging.getLogger('openebs.forms')
 
@@ -226,9 +227,18 @@ class PlanScenarioForm(forms.Form):
 
     def clean(self):
         data = super(PlanScenarioForm, self).clean()
-        if 'messageendtime' in data:
-            if data['messageendtime'] <= data['messagestarttime']:
-                raise ValidationError(_("Einde bericht moet na begin zijn"))
+        if 'messagestarttime' not in data and 'messageendtime' not in data:
+            raise ValidationError(_("Voer een geldige begin- en eindtijd in"))
+
+        if 'messagestarttime' not in data:
+            raise ValidationError(_("Voer een geldige begintijd in"))
+
+        if 'messageendtime' not in data:
+            raise ValidationError(_("Voer een geldige eindtijd in"))
+
+        if data['messageendtime'] <= data['messagestarttime']:
+            raise ValidationError(_("Einde bericht moet na begin zijn"))
+
         return data
 
     def __init__(self, *args, **kwargs):
