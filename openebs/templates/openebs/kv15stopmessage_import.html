@@ -17,7 +17,6 @@
         <div class="form-group">
             {% csrf_token %}
             <input type="submit" class="btn btn-primary" id="import2" value="{% trans 'Importeren' %}"/>
-            {% comment %}<button type="button" class="btn btn-primary" id="import" onclick="getMessage()">{% trans "Importeren" %}</button>{% endcomment %}
         </div>
     </form>
 </div>
@@ -31,5 +30,3 @@
     <script src="{% static 'bower_components/jquery-ui/ui/minified/selectable.min.js' %}"></script>
     <script src="{% static 'js/import_msg.js' %}"></script>
 {% endblock %}
-{% comment %} {% block js_init %}
-{% endblock %}{% endcomment %}
