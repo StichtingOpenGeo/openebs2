@@ -13,6 +13,8 @@ from openebs.models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, K
 from openebs.models import Kv17JourneyChange
 from utils.time import get_operator_date
 from dateutil import parser
+from django.utils.dateparse import parse_datetime
+
 from datetime import datetime
 
 log = logging.getLogger('openebs.forms')
@@ -22,9 +24,17 @@ class Kv15StopMessageForm(forms.ModelForm):
     def clean(self):
         # TODO Move _all_ halte parsing here!
 
-        endtime = parser.parse(self.data['messageendtime'])
-        if not is_aware(endtime):
-            endtime = make_aware(endtime)
+        try:
+            datetime.strptime(self.data['messagestarttime'], "%d-%m-%Y %H:%M:%S")
+        except:
+            raise ValidationError(_("Voer een geldige begintijd in (dd-mm-jjjj uu:mm:ss)"))
+
+        try:
+            endtime = datetime.strptime(self.data['messageendtime'], "%d-%m-%Y %H:%M:%S")
+            if not is_aware(endtime):
+                endtime = make_aware(endtime)
+        except:
+            raise ValidationError(_("Voer een geldige eindtijd in (dd-mm-jjjj uu:mm:ss)"))
 
         current = datetime.now()
         if not is_aware(current):
