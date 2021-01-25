@@ -12,7 +12,7 @@ from kv15.enum import REASONTYPE, SUBREASONTYPE, ADVICETYPE, SUBADVICETYPE
 from openebs.models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, Kv17Change, get_end_service
 from openebs.models import Kv17JourneyChange
 from utils.time import get_operator_date
-import datetime
+from datetime import datetime
 
 log = logging.getLogger('openebs.forms')
 
@@ -21,17 +21,25 @@ class Kv15StopMessageForm(forms.ModelForm):
     def clean(self):
         # TODO Move _all_ halte parsing here!
 
+        datetimevalidation = []
         try:
             datetime.strptime(self.data['messagestarttime'], "%d-%m-%Y %H:%M:%S")
         except:
-            raise ValidationError(_("Voer een geldige begintijd in (dd-mm-jjjj uu:mm:ss)"))
+            datetimevalidation.append(_("Voer een geldige begintijd in (dd-mm-jjjj uu:mm:ss)"))
+            pass
 
         try:
             endtime = datetime.strptime(self.data['messageendtime'], "%d-%m-%Y %H:%M:%S")
             if not is_aware(endtime):
                 endtime = make_aware(endtime)
         except:
-            raise ValidationError(_("Voer een geldige eindtijd in (dd-mm-jjjj uu:mm:ss)"))
+            datetimevalidation.append(_("Voer een geldige eindtijd in (dd-mm-jjjj uu:mm:ss)"))
+            pass
+
+        if len(datetimevalidation) == 2:
+            raise ValidationError(_("Voer een geldige begin- en eindtijd in (dd-mm-jjjj uu:mm:ss)"))
+        elif len(datetimevalidation) == 1:
+            raise ValidationError(datetimevalidation[0])
 
         current = datetime.now()
         if not is_aware(current):
