@@ -1,5 +1,5 @@
 import logging
-from braces.views import LoginRequiredMixin
+#from braces.views import LoginRequiredMixin
 from datetime import timedelta
 from django.urls import reverse_lazy
 from django.db.models import Q
@@ -11,13 +11,14 @@ from openebs.models import Kv17Change
 from openebs.views_push import Kv17PushMixin
 from openebs.views_utils import FilterDataownerMixin
 from utils.time import get_operator_date
-from utils.views import AccessMixin, ExternalMessagePushMixin, JSONListResponseMixin
+from utils.views import AccessMixin, ExternalMessagePushMixin, JSONListResponseMixin, AccessJsonMixin
 
 log = logging.getLogger('openebs.views.changes')
 
 
 class ChangeListView(AccessMixin, ListView):
     permission_required = 'openebs.view_change'
+    permission_level = 'read'
     model = Kv17Change
 
     def get_context_data(self, **kwargs):
@@ -38,6 +39,7 @@ class ChangeListView(AccessMixin, ListView):
 
 class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
     permission_required = 'openebs.add_change'
+    permission_level = 'write'
     model = Kv17Change
     form_class = Kv17ChangeForm
     success_url = reverse_lazy('change_index')
@@ -100,6 +102,7 @@ class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
 
 class ChangeDeleteView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteView):
     permission_required = 'openebs.add_change'
+    permission_level = 'write'
     model = Kv17Change
     success_url = reverse_lazy('change_index')
 
@@ -120,6 +123,7 @@ class ChangeDeleteView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteV
 class ChangeUpdateView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteView):
     """ This is a really weird view - it's redoing a change that you deleted   """
     permission_required = 'openebs.add_change'
+    permission_level = 'write'
     model = Kv17Change
     success_url = reverse_lazy('change_index')
 
@@ -173,7 +177,9 @@ TODO : This is a big red button view allowing you to cancel all active trips if 
 #         return ret
 
 
-class ActiveJourneysAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+class ActiveJourneysAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_change'
+    permission_level = 'read'
     model = Kv1Journey
     render_object = 'object'
 
