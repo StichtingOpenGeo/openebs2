@@ -211,6 +211,10 @@ span.stop-selection,span.trip-selection{
     margin-left: 4px;
 }
 
+#import-table {
+    width: 25%;
+}
+
 #trips {
     width: 100%;
     table-layout: fixed;
