@@ -12,9 +12,6 @@ from kv15.enum import REASONTYPE, SUBREASONTYPE, ADVICETYPE, SUBADVICETYPE
 from openebs.models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, Kv17Change, get_end_service
 from openebs.models import Kv17JourneyChange
 from utils.time import get_operator_date
-from dateutil import parser
-from django.utils.dateparse import parse_datetime
-
 from datetime import datetime
 
 log = logging.getLogger('openebs.forms')
@@ -40,17 +37,23 @@ class Kv15StopMessageForm(forms.ModelForm):
         if not is_aware(current):
             current = make_aware(current)
 
-        ids = []
+        valid_ids = []
+        nonvalid_ids = []
         for halte in self.data['haltes'].split(','):
             halte_split = halte.split('_')
             if len(halte_split) == 2:
                 stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
                 if stop:
-                    ids.append(stop.pk)
+                    valid_ids.append(stop.pk)
                 else:
-                    raise ValidationError(_("Datafout: halte niet gevonden in database. Meld dit bij een beheerder."))
-        if len(ids) == 0:
-            raise ValidationError(_("Selecteer minimaal een halte"))
+                    nonvalid_ids.append(halte)
+
+        if len(nonvalid_ids) != 0:
+            log.warning("Ongeldige haltes: %s" % ', '.join(nonvalid_ids))
+        if len(valid_ids) == 0 and len(nonvalid_ids) != 0:
+            raise ValidationError(_("Er werd geen geldige halte geselecteerd."))
+        elif len(valid_ids) == 0:
+            raise ValidationError(_("Selecteer minimaal een halte."))
         elif current > endtime:
             raise ValidationError(_("Eindtijd van bericht ligt in het verleden"))
         else:
@@ -132,6 +135,13 @@ class Kv15StopMessageForm(forms.ModelForm):
 
 
 class Kv15ScenarioForm(forms.ModelForm):
+    """ Make sure every scenario has a title / name """
+    def clean(self):
+        if self.data['name'].strip() == '':
+            raise ValidationError(_("Naam scenario mag niet leeg zijn."))
+        else:
+            return self.cleaned_data
+
     class Meta(object):
         model = Kv15Scenario
         exclude = ['dataownercode']
@@ -172,6 +182,10 @@ class Kv15ScenarioMessageForm(forms.ModelForm):
         elif len(ids) == 0:
             # Select at least one stop for a message
             raise ValidationError(_("Selecteer minimaal een halte"))
+        elif ('messagecontent' not in self.cleaned_data or self.cleaned_data['messagecontent'] is None or len(
+                self.cleaned_data['messagecontent'].strip()) == 0) \
+                and self.cleaned_data['messagetype'] != 'OVERRULE':
+            raise ValidationError(_("Bericht mag niet leeg zijn"))
         else:
             return self.cleaned_data
 
