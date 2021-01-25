@@ -115,6 +115,13 @@ class Kv15StopMessageForm(forms.ModelForm):
 
 
 class Kv15ScenarioForm(forms.ModelForm):
+    """ Make sure every scenario has a title / name """
+    def clean(self):
+        if self.data['name'].strip() == '':
+            raise ValidationError(_("Naam scenario mag niet leeg zijn."))
+        else:
+            return self.cleaned_data
+
     class Meta(object):
         model = Kv15Scenario
         exclude = ['dataownercode']
