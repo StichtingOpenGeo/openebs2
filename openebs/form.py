@@ -156,7 +156,7 @@ class Kv15ScenarioMessageForm(forms.ModelForm):
             # Select at least one stop for a message
             raise ValidationError(_("Selecteer minimaal een halte"))
         elif ('messagecontent' not in self.cleaned_data or self.cleaned_data['messagecontent'] is None or len(
-                self.cleaned_data['messagecontent']) < 1) \
+                self.cleaned_data['messagecontent'].strip()) == 0) \
                 and self.cleaned_data['messagetype'] != 'OVERRULE':
             raise ValidationError(_("Bericht mag niet leeg zijn"))
         else:
