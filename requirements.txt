@@ -10,10 +10,11 @@ django-geojson==3.0.0
 pyzmq # Verification feed
 django-braces==1.14.0
 future==0.18.2
+python-dateutil
 #transitfeed # Read Write GTFS
 
 # Dev
-lxml==4.5.0 # Tests - needs libxml2-dev libxslt-dev packages
+lxml==4.6.2 # Tests - needs libxml2-dev libxslt-dev packages
 
 
 

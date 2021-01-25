@@ -79,7 +79,9 @@ class Kv1Journey(models.Model):
         return "%s%s - %s" % (self.dataownercode, self.line.publiclinenumber, self.journeynumber)
 
     @staticmethod
-    def find_from_realtime(dataowner, realtime_id, date=get_operator_date()):
+    def find_from_realtime(dataowner, realtime_id, date=None):
+        if date is None:
+            date = get_operator_date()
         j = realtime_id.split(':')
         log.info("Looking for realtime trip id %s on date %s" % (j, date))
         if len(j) == 3:

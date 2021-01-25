@@ -215,7 +215,7 @@ class Kv15Stopmessage(models.Model):
         return self.kv15messagestop_set.distinct('stop__name').order_by('stop__name')[0:number]
 
     # TODO: Move to config
-    operators_with_other_systems = ["HTM", "SYNTUS"]
+    operators_with_other_systems = ["HTM", "KEOLIS", "SYNTUS"]
 
     def get_latest_number(self):
         """ Get the currently highest number and add one if found or start with 1  """

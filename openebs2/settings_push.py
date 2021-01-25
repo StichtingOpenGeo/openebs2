@@ -18,3 +18,16 @@ PUSH_DEFAULTS = {
 #  }
 
 PUSH_SETTINGS = []
+
+"""
+{'alias' : 'ndovloket',
+     'enabled' : True,
+     'priority' : 2,
+     'failOnFailure' : True,
+     'host' : 'postacc.ndovloket.nl',
+     'subscriberName' : 'openov',
+     'endpoints' : {
+         'KV15' : {'path' : '/OPENOV/KV15messages'},
+         'KV17' : {'path' : '/OPENOV/KV17cvlinfo'}
+     }
+}"""
