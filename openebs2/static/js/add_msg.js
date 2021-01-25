@@ -33,14 +33,14 @@ function writeList(data, status) {
         if (!$('#l'+line.pk).length) {
             row = '<tr class="line" id="l'+line.pk+'"><td>'+line.publiclinenumber+ '</td>';
             row += '<td>'+line.headsign+'</td></tr>';
-            $(row).hide().appendTo("#rows").fadeIn(999);
+            $(row).hide().appendTo("#rows").fadeIn(200);
         }
     });
 
     /* Cleanup */
     $("#rows tr").each(function(index) {
         if ($.inArray($(this).attr('id'), validIds) == -1) {
-            $(this).fadeOut(999).remove()
+            $(this).fadeOut(200).remove()
         }
     });
 }
@@ -172,13 +172,13 @@ function removeStop(id) {
 }
 
 function writeLine(data, status) {
-    $('#stops').fadeOut(200).empty();
+    $('#stops').fadeOut(100).empty();
     out = ""
     $.each(data.object.stop_map, function (i, stop) {
         out += renderRow(stop)
     });
-    $('#stops').append(out)
-    $('#stops').fadeIn(200);
+    $('#stops').hide().append(out);
+    $('#stops').fadeIn(100);
     $('.stop_btn').removeClass('hide');
 }
 
