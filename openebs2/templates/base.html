@@ -100,8 +100,14 @@
         <li class="dropdown">
             {% if user and not user.is_anonymous %}
             <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                {{ user.get_full_name }}
-                <img src="{% get_static_prefix %}img/logos/{{ user.userprofile.company|lower }}.png" class="user-icon"/>
+                {% if user.get_full_name %}
+                    {{ user.get_full_name }}
+                {% else %}
+                    Naamloos
+                {% endif %}
+                {% if user.userprofile.company %}
+                    <img src="{% get_static_prefix %}img/logos/{{ user.userprofile.company|lower }}.png" class="user-icon"/>
+                {% endif %}
                 <b class="caret"></b>
             </a>
             <ul class="dropdown-menu">
