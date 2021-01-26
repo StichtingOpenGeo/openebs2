@@ -258,6 +258,7 @@ function writeHaltesWithMessages(data, status) {
 }
 
 
+
 /* TIME FUNCTIONS */
 function checkMessageTime(event, ui) {
     var starttime = parseDate($("#id_messagestarttime").val());
