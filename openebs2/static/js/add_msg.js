@@ -388,7 +388,7 @@ function getActiveJourneys() {
 function writeActiveJourneys(data, status) {
     if (data.object) {
         $.each(data.object, function (i, journey) {
-            activeJourneys.push(journey.id)
+            activeJourneys.push(journey.journey_id)
         });
     }
 }
