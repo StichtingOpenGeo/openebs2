@@ -1,23 +1,24 @@
 import logging
-from braces.views import LoginRequiredMixin
+#from braces.views import LoginRequiredMixin
 from datetime import timedelta
 from django.urls import reverse_lazy
 from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.views.generic import ListView, CreateView, DeleteView, DetailView
 from kv1.models import Kv1Journey, Kv1Line
-from openebs.form import Kv17ChangeForm
+from openebs.form_kv17 import Kv17ChangeForm
 from openebs.models import Kv17Change
 from openebs.views_push import Kv17PushMixin
 from openebs.views_utils import FilterDataownerMixin
 from utils.time import get_operator_date
-from utils.views import AccessMixin, ExternalMessagePushMixin, JSONListResponseMixin
+from utils.views import AccessMixin, ExternalMessagePushMixin, JSONListResponseMixin, AccessJsonMixin
 
 log = logging.getLogger('openebs.views.changes')
 
 
 class ChangeListView(AccessMixin, ListView):
     permission_required = 'openebs.view_change'
+    permission_level = 'read'
     model = Kv17Change
 
     def get_context_data(self, **kwargs):
@@ -38,9 +39,17 @@ class ChangeListView(AccessMixin, ListView):
 
 class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
     permission_required = 'openebs.add_change'
+    permission_level = 'write'
     model = Kv17Change
     form_class = Kv17ChangeForm
     success_url = reverse_lazy('change_index')
+
+    def get_form_kwargs(self):
+        kwargs = super(ChangeCreateView, self).get_form_kwargs()
+        kwargs.update({
+            'user': self.request.user
+        })
+        return kwargs
 
     def get_context_data(self, **kwargs):
         data = super(ChangeCreateView, self).get_context_data(**kwargs)
@@ -93,6 +102,7 @@ class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
 
 class ChangeDeleteView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteView):
     permission_required = 'openebs.add_change'
+    permission_level = 'write'
     model = Kv17Change
     success_url = reverse_lazy('change_index')
 
@@ -113,6 +123,7 @@ class ChangeDeleteView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteV
 class ChangeUpdateView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteView):
     """ This is a really weird view - it's redoing a change that you deleted   """
     permission_required = 'openebs.add_change'
+    permission_level = 'write'
     model = Kv17Change
     success_url = reverse_lazy('change_index')
 
@@ -166,15 +177,15 @@ TODO : This is a big red button view allowing you to cancel all active trips if 
 #         return ret
 
 
-class ActiveJourneysAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
-    model = Kv1Journey
+class ActiveJourneysAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_change'
+    permission_level = 'read'
+    model = Kv17Change
     render_object = 'object'
 
     def get_object(self):
         # Note, can't set this on the view, because it triggers the queryset cache
-        queryset = self.model.objects.filter(changes__operatingday=get_operator_date(),
-                                             # changes__is_recovered=False, # TODO Fix this - see bug #61
-                                             # These two are double, but just in case
-                                             changes__dataownercode=self.request.user.userprofile.company,
+        queryset = self.model.objects.filter(operatingday=get_operator_date(),
+                                             is_recovered=False, # TODO Fix this - see bug #61
                                              dataownercode=self.request.user.userprofile.company).distinct()
-        return list(queryset.values('id', 'dataownercode'))
+        return list(queryset.values('journey_id', 'dataownercode'))
