@@ -95,6 +95,7 @@ class Kv17ChangeForm(forms.ModelForm):
         exclude = ['dataownercode', 'operatingday', 'line', 'journey', 'is_recovered', 'reinforcement']
 
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
         super(Kv17ChangeForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
