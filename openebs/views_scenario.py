@@ -1,6 +1,6 @@
 from builtins import str
 import logging
-from braces.views import LoginRequiredMixin
+#from braces.views import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
@@ -11,7 +11,7 @@ from openebs.form import PlanScenarioForm, Kv15ScenarioForm
 from openebs.models import Kv15Scenario, MessageStatus
 from openebs.views_push import Kv15PushMixin
 from openebs.views_utils import FilterDataownerMixin, FilterDataownerListMixin
-from utils.views import AccessMixin
+from utils.views import AccessMixin, AccessJsonMixin
 
 log = logging.getLogger('openebs.views.scenario')
 
@@ -19,6 +19,7 @@ log = logging.getLogger('openebs.views.scenario')
 # SCENARIO VIEWS
 class PlanScenarioView(AccessMixin, Kv15PushMixin, FormView):
     permission_required = 'openebs.view_scenario'  # TODO Also add message!
+    permission_level = 'read'
     form_class = PlanScenarioForm
     template_name = 'openebs/kv15scenario_plan.html'
     success_url = reverse_lazy('msg_index')
@@ -57,6 +58,7 @@ class PlanScenarioView(AccessMixin, Kv15PushMixin, FormView):
 
 class ScenarioListView(AccessMixin, FilterDataownerListMixin, ListView):
     permission_required = 'openebs.view_scenario'
+    permission_level = 'read'
     model = Kv15Scenario
 
     def get_queryset(self):
@@ -65,6 +67,7 @@ class ScenarioListView(AccessMixin, FilterDataownerListMixin, ListView):
 
 class ScenarioCreateView(AccessMixin, CreateView):
     permission_required = 'openebs.add_scenario'
+    permission_level = 'write'
     model = Kv15Scenario
     form_class = Kv15ScenarioForm
 
@@ -80,6 +83,7 @@ class ScenarioCreateView(AccessMixin, CreateView):
 
 class ScenarioUpdateView(AccessMixin, FilterDataownerMixin, UpdateView):
     permission_required = 'openebs.add_scenario'
+    permission_level = 'write'
     model = Kv15Scenario
     form_class = Kv15ScenarioForm
     template_name_suffix = '_update'
@@ -91,11 +95,14 @@ class ScenarioUpdateView(AccessMixin, FilterDataownerMixin, UpdateView):
 
 class ScenarioDeleteView(AccessMixin, FilterDataownerMixin, DeleteView):
     permission_required = 'openebs.add_scenario'
+    permission_level = 'write'
     model = Kv15Scenario
     success_url = reverse_lazy('scenario_index')
 
 
-class ScenarioStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
+class ScenarioStopsAjaxView(AccessJsonMixin, GeoJSONLayerView):
+    permission_required = 'openebs.view_scenario'
+    permission_level = 'read'
     model = Kv1Stop
     geometry_field = 'location'
     properties = ['name', 'userstopcode', 'dataownercode', 'messages']

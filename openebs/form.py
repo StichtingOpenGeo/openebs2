@@ -3,7 +3,7 @@ import logging
 from crispy_forms.bootstrap import AccordionGroup, Accordion
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, Field, HTML, Div, Hidden
-from django.utils.timezone import now
+from django.utils.timezone import now, is_aware, make_aware
 import floppyforms.__future__ as forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
@@ -12,6 +12,7 @@ from kv15.enum import REASONTYPE, SUBREASONTYPE, ADVICETYPE, SUBADVICETYPE
 from openebs.models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, Kv17Change, get_end_service
 from openebs.models import Kv17JourneyChange
 from utils.time import get_operator_date
+from datetime import datetime
 
 log = logging.getLogger('openebs.forms')
 
@@ -19,6 +20,31 @@ log = logging.getLogger('openebs.forms')
 class Kv15StopMessageForm(forms.ModelForm):
     def clean(self):
         # TODO Move _all_ halte parsing here!
+
+        datetimevalidation = []
+        try:
+            datetime.strptime(self.data['messagestarttime'], "%d-%m-%Y %H:%M:%S")
+        except:
+            datetimevalidation.append(_("Voer een geldige begintijd in (dd-mm-jjjj uu:mm:ss)"))
+            pass
+
+        try:
+            endtime = datetime.strptime(self.data['messageendtime'], "%d-%m-%Y %H:%M:%S")
+            if not is_aware(endtime):
+                endtime = make_aware(endtime)
+        except:
+            datetimevalidation.append(_("Voer een geldige eindtijd in (dd-mm-jjjj uu:mm:ss)"))
+            pass
+
+        if len(datetimevalidation) == 2:
+            raise ValidationError(_("Voer een geldige begin- en eindtijd in (dd-mm-jjjj uu:mm:ss)"))
+        elif len(datetimevalidation) == 1:
+            raise ValidationError(datetimevalidation[0])
+
+        current = datetime.now()
+        if not is_aware(current):
+            current = make_aware(current)
+
         valid_ids = []
         nonvalid_ids = []
         for halte in self.data['haltes'].split(','):
@@ -36,6 +62,8 @@ class Kv15StopMessageForm(forms.ModelForm):
             raise ValidationError(_("Er werd geen geldige halte geselecteerd."))
         elif len(valid_ids) == 0:
             raise ValidationError(_("Selecteer minimaal een halte."))
+        elif current > endtime:
+            raise ValidationError(_("Eindtijd van bericht ligt in het verleden"))
         else:
             return self.cleaned_data
 
@@ -115,6 +143,13 @@ class Kv15StopMessageForm(forms.ModelForm):
 
 
 class Kv15ScenarioForm(forms.ModelForm):
+    """ Make sure every scenario has a title / name """
+    def clean(self):
+        if self.data['name'].strip() == '':
+            raise ValidationError(_("Naam scenario mag niet leeg zijn."))
+        else:
+            return self.cleaned_data
+
     class Meta(object):
         model = Kv15Scenario
         exclude = ['dataownercode']
@@ -155,6 +190,10 @@ class Kv15ScenarioMessageForm(forms.ModelForm):
         elif len(ids) == 0:
             # Select at least one stop for a message
             raise ValidationError(_("Selecteer minimaal een halte"))
+        elif ('messagecontent' not in self.cleaned_data or self.cleaned_data['messagecontent'] is None or len(
+                self.cleaned_data['messagecontent'].strip()) == 0) \
+                and self.cleaned_data['messagetype'] != 'OVERRULE':
+            raise ValidationError(_("Bericht mag niet leeg zijn"))
         else:
             return self.cleaned_data
 
@@ -241,7 +280,9 @@ class Kv17ChangeForm(forms.ModelForm):
 
         valid_journeys = 0
         for journey in self.data['journeys'].split(',')[0:-1]:
-            journey_qry = Kv1Journey.objects.filter(pk=journey, dates__date=get_operator_date())
+            journey_qry = Kv1Journey.objects.filter(pk=journey,
+                                                    dates__date=get_operator_date(),
+                                                    dataownercode=self.user.userprofile.company)
             if journey_qry.count() == 0:
                 raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
                 
@@ -303,6 +344,7 @@ class Kv17ChangeForm(forms.ModelForm):
         exclude = ['dataownercode', 'operatingday', 'line', 'journey', 'is_recovered', 'reinforcement']
 
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
         super(Kv17ChangeForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False

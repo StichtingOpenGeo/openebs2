@@ -11,7 +11,7 @@ from djgeojson.views import GeoJSONLayerView
 from utils.calender import CountCalendar
 from utils.time import get_operator_date
 from utils.views import JSONListResponseMixin
-from kv1.models import Kv1Line, Kv1Stop, Kv1JourneyDate
+from kv1.models import Kv1Line, Kv1Stop, Kv1JourneyDate, ImportStatus
 from dateutil.relativedelta import relativedelta
 
 # Views for adding messages and related lookups
@@ -25,7 +25,7 @@ class LineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
             .order_by('lineplanningnumber') \
             .values('pk', 'dataownercode', 'headsign', 'lineplanningnumber', 'publiclinenumber')
         needle = self.kwargs.get('search', '') or ''
-        qry = qry.filter(Q(headsign__icontains=needle) | Q(publiclinenumber__startswith=needle))
+        qry = qry.filter(Q(headsign__icontains=needle) | Q(publiclinenumber__istartswith=needle))
         return qry
 
 
@@ -147,6 +147,7 @@ class DataImportView(LoginRequiredMixin, StaffuserRequiredMixin, ListView):
         context['calendar'] = mark_safe(
             cal.formatmonth(date_now.year, date_now.month, ) + '<br />' + cal.formatmonth(date_next.year,
                                                                                           date_next.month, ))
+        context['import'] = ImportStatus.objects.all().order_by('-importDate')
         return context
 
     def get_queryset(self):

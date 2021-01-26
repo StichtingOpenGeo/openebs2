@@ -31,6 +31,7 @@ class ScenarioContentMixin(BaseFormView):
 
 class ScenarioMessageCreateView(AccessMixin, ScenarioContentMixin, CreateView):
     permission_required = 'openebs.add_scenario'
+    permission_level = 'write'
     model = Kv15ScenarioMessage
     form_class = Kv15ScenarioMessageForm
 
@@ -62,6 +63,7 @@ class ScenarioMessageCreateView(AccessMixin, ScenarioContentMixin, CreateView):
 
 class ScenarioMessageUpdateView(AccessMixin, FilterDataownerMixin, ScenarioContentMixin, UpdateView):
     permission_required = 'openebs.add_scenario'
+    permission_level = 'write'
     model = Kv15ScenarioMessage
     form_class = Kv15ScenarioMessageForm
     template_name_suffix = '_update'
@@ -89,4 +91,5 @@ class ScenarioMessageUpdateView(AccessMixin, FilterDataownerMixin, ScenarioConte
 
 class ScenarioMessageDeleteView(AccessMixin, ScenarioContentMixin, DeleteView):
     permission_required = 'openebs.add_scenario'
+    permission_level = 'write'
     model = Kv15ScenarioMessage

@@ -6,7 +6,7 @@ from kv1.models import Kv1Stop
 connection.use_debug_cursor = False
 
 import logging
-from io import StringIO
+from io import BytesIO
 from gzip import GzipFile
 from django.contrib.auth.models import User
 from django.core.management import BaseCommand
@@ -30,10 +30,17 @@ class Command(BaseCommand):
     def receive_message(self, sub):
         multipart = sub.recv_multipart()
         try:
-            content = GzipFile('', 'r', 0, StringIO(''.join(multipart[1:]))).read()
+            contents = b''.join(multipart[1:])
+            contents = GzipFile('','r',0,BytesIO(contents)).read()
+            contents = contents.decode('UTF-8')
         except:
-            content = ''.join(multipart[1:])
-        self.parse_message(content)
+            contents = b''.join(multipart[1:])
+            contents = contents.decode('UTF-8')
+        try:
+            self.parse_message(contents)
+        except:
+            print(contents)
+            raise
 
     def parse_message(self, content):
         for line in content.split('\r\n')[:-1]:
@@ -48,7 +55,7 @@ class Command(BaseCommand):
             else:
                 row = {}
                 values = line.split('|')
-                for k, v in map(None, keys, values):
+                for k, v in zip(keys, values):
                     if v == '\\0':
                         row[k] = None
                     else:

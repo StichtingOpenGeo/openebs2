@@ -8,7 +8,8 @@ connection.use_debug_cursor = False
 from django.contrib.gis.geos import Point
 from django.core.management import BaseCommand
 from django.utils.datetime_safe import datetime
-from kv1.models import Kv1Line, Kv1Stop
+from kv1.models import Kv1Line, Kv1Stop, ImportStatus
+from django.utils.timezone import make_aware
 
 
 class Command(BaseCommand):
@@ -27,6 +28,11 @@ class Command(BaseCommand):
         print("==========================\n\nSTEP 2: Stops")
         self.do_stops()
 
+        self.get_status()
+
+        # hier schrijven we in het model ImportStatus
+        ImportStatus.objects.create(importDate=make_aware(datetime.now()), status=self.import_status)
+
     def do_lines(self):
         with open(self.folder+'/openebs_lines.csv') as routes_file:
             routes_reader = csv.DictReader(routes_file, delimiter=',', quotechar='"')
@@ -35,6 +41,7 @@ class Command(BaseCommand):
                     self.do_line(row)
                 except Error as error:
                     self.log("Issue parsing line: %s (with row: %s)" % (error, row))
+                    self.import_errors += 1
 
     def do_line(self, row):
         linenumber = row['operator_id'].split(':')
@@ -59,6 +66,7 @@ class Command(BaseCommand):
                         self.log("Did %s stops" % i)
                 except Error as error:
                     self.log("Issue parsing stop: %s (with row: %s)" % (error, row))
+                    self.import_errors += 1
 
     @staticmethod
     def do_stop(row):
@@ -73,3 +81,16 @@ class Command(BaseCommand):
 
     def log(self, text):
         self.stdout.write("%s - import_rid: %s" % (datetime.now().isoformat(), text))
+
+    def __init__(self):
+        super().__init__()
+        self.import_errors = 0
+        self.import_status = ""
+
+    def get_status(self):
+        if self.import_errors == 0:
+            self.import_status = "Succesvol"
+        elif self.import_errors == 1:
+            self.import_status = "Er was " + str(self.import_errors) + " fout."
+        else:
+            self.import_status = "Er waren " + str(self.import_errors) + " fouten."
