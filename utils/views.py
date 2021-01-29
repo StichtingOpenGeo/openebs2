@@ -145,6 +145,44 @@ class AccessMixin(BracesAccessMixin):
             request, *args, **kwargs)
 
 
+class AccessJsonMixin(BracesAccessMixin):  # TODO change if 'geweigerd' message should be different for json-pages
+    """
+    This is based on the braces LoginRequiredMixin and PermissionRequiredMixin but will only raise the exception
+    if the user is logged in
+    """
+    permission_required = None  # Default required perms to none
+
+    def dispatch(self, request, *args, **kwargs):
+        # Make sure that the permission_required attribute is set on the
+        # view, or raise a configuration error.
+        if self.permission_required is None:
+            raise ImproperlyConfigured(
+                "'PermissionRequiredMixin' requires "
+                "'permission_required' attribute to be set.")
+
+        # Check to see if the request's user has the required permission.
+        has_permission = request.user.has_perm(self.permission_required)
+
+        if request.user.is_authenticated:
+            if not has_permission:  # If the user lacks the permission
+                log.info("User %s requested %s but doesn't have permission" % (self.request.user, request.get_full_path()))
+                return redirect(reverse('app_nopermission'))
+
+            if not hasattr(request.user, 'userprofile') or \
+                    not hasattr(request.user.userprofile, 'company'):
+                log.info("User %s requested %s but doesn't have an userprofile or operator" % (
+                self.request.user, request.get_full_path()))
+                return redirect(reverse('app_nopermission'))
+
+        else:
+            return redirect_to_login(request.get_full_path(),
+                                     self.get_login_url(),
+                                     self.get_redirect_field_name())
+
+        return super(AccessJsonMixin, self).dispatch(
+            request, *args, **kwargs)
+
+
 def handler403(request, exception):
     response = render(request, 'openebs/nopermission.html', {})
     response.status_code = 404

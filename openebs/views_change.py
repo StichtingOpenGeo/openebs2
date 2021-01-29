@@ -1,5 +1,4 @@
 import logging
-from braces.views import LoginRequiredMixin
 from datetime import timedelta
 from django.urls import reverse_lazy
 from django.db.models import Q
@@ -11,7 +10,7 @@ from openebs.models import Kv17Change
 from openebs.views_push import Kv17PushMixin
 from openebs.views_utils import FilterDataownerMixin
 from utils.time import get_operator_date
-from utils.views import AccessMixin, ExternalMessagePushMixin, JSONListResponseMixin
+from utils.views import AccessMixin, ExternalMessagePushMixin, JSONListResponseMixin, AccessJsonMixin
 
 log = logging.getLogger('openebs.views.changes')
 
@@ -173,7 +172,8 @@ TODO : This is a big red button view allowing you to cancel all active trips if 
 #         return ret
 
 
-class ActiveJourneysAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+class ActiveJourneysAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_change'
     model = Kv1Journey
     render_object = 'object'
 

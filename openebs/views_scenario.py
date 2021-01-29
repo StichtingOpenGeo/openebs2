@@ -1,6 +1,5 @@
 from builtins import str
 import logging
-from braces.views import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
@@ -11,7 +10,7 @@ from openebs.form import PlanScenarioForm, Kv15ScenarioForm
 from openebs.models import Kv15Scenario, MessageStatus
 from openebs.views_push import Kv15PushMixin
 from openebs.views_utils import FilterDataownerMixin, FilterDataownerListMixin
-from utils.views import AccessMixin
+from utils.views import AccessMixin, AccessJsonMixin
 
 log = logging.getLogger('openebs.views.scenario')
 
@@ -95,7 +94,8 @@ class ScenarioDeleteView(AccessMixin, FilterDataownerMixin, DeleteView):
     success_url = reverse_lazy('scenario_index')
 
 
-class ScenarioStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
+class ScenarioStopsAjaxView(AccessJsonMixin, GeoJSONLayerView):
+    permission_required = 'openebs.view_scenario'
     model = Kv1Stop
     geometry_field = 'location'
     properties = ['name', 'userstopcode', 'dataownercode', 'messages']
