@@ -215,3 +215,7 @@ span.stop-selection,span.trip-selection{
     width: 100%;
     table-layout: fixed;
 }
+
+#import-table {
+    width: 25%;
+}
