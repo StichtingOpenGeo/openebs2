@@ -2,7 +2,6 @@
 import logging
 from datetime import timedelta
 
-#from braces.views import LoginRequiredMixin
 from django.contrib.gis.db.models import Extent
 from django.urls import reverse_lazy
 from django.db.models import Q, Count

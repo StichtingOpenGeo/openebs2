@@ -1,15 +1,15 @@
-from braces.views import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DeleteView, UpdateView, CreateView
 from openebs.models import Kv1StopFilter, Kv1StopFilterStop
+from utils.views import AccessMixin
 
 
-class FilterListView(LoginRequiredMixin, ListView):
+class FilterListView(AccessMixin, ListView):
     permission_required = 'openebs.edit_filters'
     model = Kv1StopFilter
 
 
-class FilterCreateView(LoginRequiredMixin, CreateView):
+class FilterCreateView(AccessMixin, CreateView):
     permission_required = 'openebs.edit_filters'
     model = Kv1StopFilter
     success_url = reverse_lazy('filter_list')
@@ -17,7 +17,7 @@ class FilterCreateView(LoginRequiredMixin, CreateView):
 
 
 # TODO: Make this JSON
-class FilterStopCreateView(LoginRequiredMixin, CreateView):
+class FilterStopCreateView(AccessMixin, CreateView):
     permission_required = 'openebs.edit_filters'
     model = Kv1StopFilterStop
     success_url = reverse_lazy('filter_list')
@@ -25,19 +25,19 @@ class FilterStopCreateView(LoginRequiredMixin, CreateView):
 
 
 # TODO: Make this JSON
-class FilterStopDeleteView(LoginRequiredMixin, DeleteView):
+class FilterStopDeleteView(AccessMixin, DeleteView):
     permission_required = 'openebs.edit_filters'
     model = Kv1StopFilterStop
     success_url = reverse_lazy('filter_list')
 
 
-class FilterDeleteView(LoginRequiredMixin, DeleteView):
+class FilterDeleteView(AccessMixin, DeleteView):
     permission_required = 'openebs.edit_filters'
     model = Kv1StopFilter
     success_url = reverse_lazy('filter_list')
 
 
-class FilterUpdateView(LoginRequiredMixin, UpdateView):
+class FilterUpdateView(AccessMixin, UpdateView):
     permission_required = 'openebs.edit_filters'
     model = Kv1StopFilter
     fields = ['name']
