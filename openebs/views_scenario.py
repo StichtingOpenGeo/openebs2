@@ -62,7 +62,8 @@ class ScenarioListView(AccessMixin, FilterDataownerListMixin, ListView):
     model = Kv15Scenario
 
     def get_queryset(self):
-        return super(ScenarioListView, self).get_queryset().order_by('name').annotate(Count('messages'));
+        return super(ScenarioListView, self).get_queryset().filter(dataownercode=self.request.user.userprofile.company)\
+            .order_by('name').annotate(Count('messages'))
 
 
 class ScenarioCreateView(AccessMixin, CreateView):
