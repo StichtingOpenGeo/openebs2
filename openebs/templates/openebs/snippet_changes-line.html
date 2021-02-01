@@ -24,8 +24,26 @@
                 {{ msg.journey.journeynumber }} <small>(Vertrek {{ msg.journey.departuretime|seconds_time|date:"H:i"}})</small>
             {% elif all_lines %}
                 {{ all_lines }}
+                {% if msg.begintime and msg.endtime %}
+                    <small>(van {{ msg.begintime|date:"H:i" }} tot {{ msg.endtime|date:"H:i" }})</small>
+                {% elif msg.begintime %}
+                    <small>(vanaf {{ msg.begintime|date:"H:i" }})</small>
+                {% elif msg.endtime %}
+                    <small>(tot {{ msg.endtime|date:"H:i" }})</small>
+                {% else %}
+                    <small>(hele dag)</small>
+                {% endif %}
             {% else %}
               {% trans "Alle ritten" %}
+                {% if msg.begintime and msg.endtime %}
+                    <small>(van {{ msg.begintime|date:"H:i" }} tot {{ msg.endtime|date:"H:i" }})</small>
+                {% elif msg.begintime %}
+                    <small>(vanaf {{ msg.begintime|date:"H:i" }})</small>
+                {% elif msg.endtime %}
+                    <small>(tot {{ msg.endtime|date:"H:i" }})</small>
+                {% else %}
+                    <small>(hele dag)</small>
+                {% endif %}
             {% endif %}
           </td>
           <td>
