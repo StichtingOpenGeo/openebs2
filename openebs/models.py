@@ -31,6 +31,11 @@ def get_end_service():
     return (now() + timedelta(days=1)).replace(hour=2, minute=0, second=0, microsecond=0)
 
 
+def get_start_service():
+    # Hmm, this is GMT
+    return (now()).replace(hour=2, minute=0, second=0, microsecond=0)
+
+
 class UserProfile(models.Model):
     """ Store additional user data as we don't really want a custom user model perse """
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -391,8 +396,10 @@ class Kv17Change(models.Model):
     """
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
     operatingday = models.DateField(verbose_name=_("Datum"))
-    line = models.ForeignKey(Kv1Line, verbose_name=_("Lijn"), on_delete=models.CASCADE)
-    journey = models.ForeignKey(Kv1Journey, verbose_name=_("Rit"), related_name="changes",
+    begintime = models.DateTimeField(null=True, blank=True, default=get_start_service, verbose_name=_("Ingangstijd"))
+    endtime = models.DateTimeField(null=True, blank=True, default=get_end_service, verbose_name=_("Eindtijd"))
+    line = models.ForeignKey(Kv1Line, null=True, verbose_name=_("Lijn"), on_delete=models.CASCADE)
+    journey = models.ForeignKey(Kv1Journey, null=True, verbose_name=_("Rit"), related_name="changes",
                                 on_delete=models.CASCADE)  # "A journey has changes"
     reinforcement = models.IntegerField(default=0, verbose_name=_("Versterkingsnummer"))  # Never fill this for now
     is_cancel = models.BooleanField(default=True, verbose_name=_("Opgeheven?"),
@@ -400,6 +407,8 @@ class Kv17Change(models.Model):
     is_recovered = models.BooleanField(default=False, verbose_name=_("Teruggedraaid?"))
     created = models.DateTimeField(auto_now_add=True)
     recovered = models.DateTimeField(null=True, blank=True)  # Not filled till recovered
+    is_alljourneysofline = models.BooleanField(default=False, verbose_name=_("Alle ritten"))
+    is_alllines = models.BooleanField(default=False, verbose_name=_("Alle lijnen"))
 
     def delete(self):
         self.is_recovered = True
@@ -419,17 +428,39 @@ class Kv17Change(models.Model):
     class Meta(object):
         verbose_name = _('Ritaanpassing')
         verbose_name_plural = _("Ritaanpassingen")
-        unique_together = ('operatingday', 'line', 'journey', 'reinforcement')
+        unique_together = ('dataownercode', 'operatingday', 'line', 'journey', 'reinforcement', 'is_alljourneysofline',
+                           'is_alllines', 'is_recovered', 'begintime')
         permissions = (
             ("view_change", _("Ritaanpassingen bekijken")),
             ("add_change", _("Ritaanpassingen aanmaken")),
+            ("cancel_lines", _("Lijnen annuleren")),
+            ("cancel_alllines", _("Vervoerder annuleren")),
         )
 
     def __str__(self):
-        return "%s Lijn %s Rit# %s" % (self.operatingday, self.line, self.journey.journeynumber)
+        if not self.journey:
+            journeynumber = "Alle ritten"
+        else:
+            journeynumber = self.journey.journeynumber
+
+        if not self.line:
+            line = "Alle lijnen"
+        else:
+            line = self.line
+        return "%s Lijn %s Rit# %s" % (self.operatingday, line, journeynumber)
 
     def realtime_id(self):
-        return "%s:%s:%s" % (self.dataownercode, self.line.lineplanningnumber, self.journey.journeynumber)
+        if not self.journey:
+            journeynumber = "Alle ritten"
+        else:
+            journeynumber = self.journey.journeynumber
+
+        if not self.line:
+            lineplanningnumber = "Alle lijnen"
+        else:
+            lineplanningnumber = self.line.lineplanningnumber
+
+        return "%s:%s:%s" % (self.dataownercode, lineplanningnumber, journeynumber)
 
 
 class Kv17JourneyChange(models.Model):
