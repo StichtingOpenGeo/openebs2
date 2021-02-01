@@ -219,3 +219,16 @@ span.stop-selection,span.trip-selection{
 #import-table {
     width: 25%;
 }
+
+.line_warning {
+    background-color: #def2f9;
+}
+
+.all_selected {
+    background: #dff0d8;
+}
+
+#id_operatingday {
+    margin-bottom: 15px;
+}
+

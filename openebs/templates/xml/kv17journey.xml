@@ -1,9 +1,25 @@
 <KV17JOURNEY>
     <dataownercode>{{ object.dataownercode }}</dataownercode>
-    <lineplanningnumber>{{ object.line.lineplanningnumber }}</lineplanningnumber>
-    <operatingday>{{ object.operatingday|date:"Y-m-d" }}</operatingday>
-    <journeynumber>{{ object.journey.journeynumber }}</journeynumber>
-    <reinforcementnumber>{{ object.reinforcement }}</reinforcementnumber>
+    {% if object.is_alljourneysofline or object.is_alllines %}
+        {% if object.is_alllines  %}
+            <allLines/>
+        {% else %}
+            <allJourneysOfLine/>
+            <lineplanningnumber>{{ object.line.lineplanningnumber }}</lineplanningnumber>
+        {% endif %}
+        {% if begintime %}
+            <begintime>{{ begintime }}</begintime>
+        {% endif %}
+        {% if endtime %}
+            <endtime>{{ endtime }}</endtime>
+        {% endif %}
+        <operatingday>{{ object.operatingday|date:"Y-m-d" }}</operatingday>
+    {% else %}
+        <lineplanningnumber>{{ object.line.lineplanningnumber }}</lineplanningnumber>
+        <operatingday>{{ object.operatingday|date:"Y-m-d" }}</operatingday>
+        <journeynumber>{{ object.journey.journeynumber }}</journeynumber>
+        <reinforcementnumber>{{ object.reinforcement }}</reinforcementnumber>
+    {% endif %}
 </KV17JOURNEY>
 {% if object.is_cancel or object.is_recovered %}
 <KV17MUTATEJOURNEY>

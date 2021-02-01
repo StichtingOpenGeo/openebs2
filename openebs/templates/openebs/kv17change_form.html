@@ -1,12 +1,16 @@
 {% extends "base.html" %}
 {% load static crispy_forms_tags i18n %}
 
- {% block title %}{% trans "Nieuwe ritaanpassing" %}{% endblock %}
+{% block title %}{% trans "Nieuwe ritaanpassing" %}{% endblock %}
 
 {% block content %}
-    <div class="row">
-        <div class="col-lg-3">
-        <h2>Lijn</h2>
+<div class="row">
+    <div class="col-sm-4">
+        <h2>Lijn
+            {% if perms.openebs.cancel_alllines %}
+                <button type="button" onclick="selectAllLines()" id="all_lines" class="btn btn-warning btn-right" style="float: right;" >{% trans "Hele vervoerder" %}</input></button>
+            {% endif %}
+        </h2>
         <div class="input-group">
             <span class="input-group-addon"><span class="glyphicon glyphicon-search"></span></span>
             <input type="text" class="form-control" id="line_search" placeholder="{% trans 'Lijnnummer of eindbestemming' %}">
@@ -25,11 +29,12 @@
             </tbody>
         </table>
     </div>
-    <div class="col-lg-5">
-        <h2>Ritten <span title="Dienstregelingsdatum">{{ operator_date|date:"d-m-Y" }}</span> </h2>
-        <div id="line_cancel_box" class="text-center" style="display: none;">
-            <a id="line_cancel" class="btn btn-danger">{% trans "Alle ritten opheffen" %}</a>
-        </div>
+    <div class="col-sm-5">
+        <h2>Ritten <span title="Dienstregelingsdatum" id="operating_day_text">{{ operator_date|date:"d-m-Y" }}</span>
+            {% if perms.openebs.cancel_lines %}
+                <button type="button" onclick="selectAllTrips()" id="all_journeys" class="btn btn-warning btn-right" style="float: right;" disabled>{% trans "Alle ritten" %}</button>
+            {% endif %}
+        </h2>
         <table class="table openebs-trips" id="trips">
             <thead>
                 <tr>
@@ -42,7 +47,7 @@
             </tbody>
         </table>
     </div>
-    <div class="col-lg-4">
+    <div class="col-sm-3" id="ritaanpassing">
         <h2>{% trans "Ritaanpassing" %}</h2>
         {% if journey_errors > 0 %}
             <div class="alert alert-warning">
@@ -56,32 +61,46 @@
                     <span class="label label-danger">{% trans "Opheffen" %}</span>
                 </p><br />
                 <input type="hidden" id="journeys" name="journeys" />
+                <input type="hidden" id="lines" name="lines" />
             </div>
             <div class="control-group">
-                <label>{% trans "Rit" %}</label>
-                <p class="form-control-static" id="rit-list">
-                    {% if form.instance.journey %}
-                        <span class="label label-danger rit-recover" id="l{{form.instance.line.publiclinenumber}}">Rit {{ form.instance.journey.journeynumber }}</span>
-                    {% elif journeys %}
-                        {% for j in journeys %}
-                            <span class="label label-danger rit-preload" id="st{{j.pk}}">Rit {{ j.journeynumber }} <span class="trip-remove glyphicon glyphicon-remove"></span></span>
+                <div class = "lijn-overzicht" style="display: none;">
+                    <label>{% trans "Lijn" %}</label>
+                    <p class="form-control-static" id="lijn-list" >
+                    {% if form.instance.line %}
+                        <span class="label label-danger lijn-recover" id="line{{form.instance.line.lineplanningnumber}}">Lijn {{ form.instance.line.publiclinenumber }}</span>
+                    {% elif lijnen %}
+                        {% for l in lijnen %}
+                            <span class="label label-danger lijn-preload" id="st{{l.lineplanningnumber}}">{% trans "Lijn" %}{{ l.publiclinenumber }}<span class="lijn-remove glyphicon glyphicon-remove"></span></span>
                         {% endfor %}
-                    {% else %}
-                        <em class="help">{% trans "Klik een rit om een selectie te maken" %}</em>
                     {% endif %}
                 </p><br />
+                </div>
+                <div class = "rit-overzicht" style="display: block;">
+                    <label>{% trans "Rit(ten)" %}</label>
+                    <p class="form-control-static" id="rit-list">
+                        {% if form.instance.journey %}
+                            <span class="label label-danger rit-recover" id="l{{form.instance.line.publiclinenumber}}">Rit {{ form.instance.journey.journeynumber }}</span>
+                        {% elif journeys %}
+                            {% for j in journeys %}
+                                <span class="label label-danger rit-preload" id="st{{j.pk}}">Rit {{ j.journeynumber }} <span class="trip-remove glyphicon glyphicon-remove"></span></span>
+                            {% endfor %}
+                        {% else %}
+                            <em class="help">{% trans "Klik een rit om een selectie te maken" %}</em>
+                        {% endif %}
+                    </p><br />
+                </div>
             </div>
             <div class="clearfix"></div>
             <br />
             {% crispy form form.helper %}
             <div class="form-group">
-                    <br />
-                    <button type="submit" class="btn btn-primary">{% trans "Doorvoeren" %}</button>
+                <br />
+                <button type="submit" class="btn btn-primary">{% trans "Doorvoeren" %}</button>
             </div>
         </form>
     </div>
 </div>
-
 {% endblock %}
 
 {% block extra_js %}
@@ -92,7 +111,7 @@
     <script src="{% static 'js/add_msg_journey.js' %}"></script>
 {% endblock %}
 {% block js_init %}
-    getActiveJourneys();
+    changeOperatingDayTrips();
     loadPreselectedJourneys();
     $('#line_search').on('keyup', changeSearch);
     $( "body" ).on('click', ".line", showTrips);
@@ -101,4 +120,7 @@
       selected: selectTrip,
     });
     $('#rit-list').on('click', '.trip-remove', removeTripFromX);
+    $('#lijn-list').on('click', '.line-remove', removeLineFromX);
+    $('#id_operatingday').change(changeOperatingDayTrips);
+    $('#id_begintime_part, #id_endtime_part').change(changeOfRange);
 {% endblock %}

@@ -3,14 +3,14 @@ import logging
 from django.urls import reverse_lazy
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
-from django.views.generic import FormView, ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import FormView, ListView, CreateView, UpdateView, DeleteView, DetailView
 from djgeojson.views import GeoJSONLayerView
 from kv1.models import Kv1Stop
-from openebs.form import PlanScenarioForm, Kv15ScenarioForm
+from openebs.form import PlanScenarioForm, Kv15ScenarioForm, Kv15ScenarioMessage
 from openebs.models import Kv15Scenario, MessageStatus
 from openebs.views_push import Kv15PushMixin
 from openebs.views_utils import FilterDataownerMixin, FilterDataownerListMixin
-from utils.views import AccessMixin, AccessJsonMixin
+from utils.views import AccessMixin, AccessJsonMixin, JSONListResponseMixin
 
 log = logging.getLogger('openebs.views.scenario')
 
@@ -59,7 +59,7 @@ class ScenarioListView(AccessMixin, FilterDataownerListMixin, ListView):
     model = Kv15Scenario
 
     def get_queryset(self):
-        return super(ScenarioListView, self).get_queryset().order_by('name').annotate(Count('messages'));
+        return super(ScenarioListView, self).get_queryset().order_by('name').annotate(Count('messages'))
 
 
 class ScenarioCreateView(AccessMixin, CreateView):
@@ -105,3 +105,14 @@ class ScenarioStopsAjaxView(AccessJsonMixin, GeoJSONLayerView):
         qry = qry.filter(kv15scenariostop__message__scenario=self.kwargs.get('scenario', None),
                          kv15scenariostop__message__scenario__dataownercode=self.request.user.userprofile.company)
         return qry
+
+
+class ScenarioMessageAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_scenario'
+    model = Kv15ScenarioMessage
+    render_object = 'object'
+
+    def get_object(self):
+        queryset = self.model.objects.filter(scenario=self.kwargs.get('scenario', None),
+                                             dataownercode=self.request.user.userprofile.company).distinct()
+        return list(queryset.values('id', 'messagedurationtype'))
