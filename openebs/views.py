@@ -41,9 +41,9 @@ class MessageListView(AccessMixin, ListView):
             stop_list = Kv1StopFilter.objects.get(id=context['filter']).stops.values_list('stop')
 
         # Get the currently active messages
-        active = self.model.objects.filter(messageendtime__gt=now(), isdeleted=False) \
-                                    .annotate(Count('stops'))\
-                                    .order_by('-messagetimestamp')
+        active = self.model.objects.filter(Q(messageendtime__gt=now()) | Q(messageendtime=None), isdeleted=False) \
+                                   .annotate(Count('stops'))\
+                                   .order_by('-messagetimestamp')
         if context['filter'] != -1:
             active = active.filter(kv15messagestop__stop__in=stop_list)
 
