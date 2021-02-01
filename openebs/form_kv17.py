@@ -12,6 +12,7 @@ from openebs.models import Kv17Change
 from openebs.models import Kv17JourneyChange
 from django.utils.dateparse import parse_date
 from datetime import datetime, timedelta
+from django.db.models import Q
 
 
 log = logging.getLogger('openebs.forms')
@@ -61,12 +62,9 @@ class Kv17ChangeForm(forms.ModelForm):
                 if journey_qry.count() == 0:
                     raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
 
-                if Kv17Change.objects.filter(dataownercode=dataownercode,
-                                             journey__pk=journey,
-                                             line=journey_qry[0].line,
-                                             operatingday=operatingday,
-                                             is_recovered=False).count() != 0:
-                    raise ValidationError(_("Een of meer geselecteerde ritten zijn al aangepast"))
+                database = Kv17Change.objects.filter(dataownercode=dataownercode,
+                                                     operatingday=operatingday,
+                                                     is_recovered=False)
 
                 # delete recovered if query is the same.
                 Kv17Change.objects.filter(dataownercode=dataownercode,
@@ -74,6 +72,13 @@ class Kv17ChangeForm(forms.ModelForm):
                                           line=journey_qry[0].line,
                                           operatingday=operatingday,
                                           is_recovered=True).delete()
+            if database.filter(is_alllines=True):
+                raise ValidationError(_("De gehele vervoerder is al opgeheven."))
+            elif database.filter(
+                    Q(is_alljourneysofline=True) & Q(line=journey_qry[0].line)):
+                raise ValidationError(_("Deze lijn is al opgeheven."))
+            elif database.filter(journey__pk=journey):
+                raise ValidationError(_("Een of meer geselecteerde ritten zijn al aangepast."))
 
         else:
             raise ValidationError(_("Er werd geen rit geselecteerd."))
@@ -93,15 +98,27 @@ class Kv17ChangeForm(forms.ModelForm):
                     if line_qry.count() == 0:
                         raise ValidationError(_("Geen lijn gevonden."))
 
-                    if Kv17Change.objects.filter(dataownercode=dataownercode,
-                                                 operatingday=operatingday,
-                                                 line=line_qry[0],
-                                                 is_alljourneysofline=True,
-                                                 is_recovered=False).count() != 0:
-                        raise ValidationError(_("De gehele lijn is al aangepast"))
+                    database_alljourneys = Kv17Change.objects.filter(dataownercode=dataownercode,
+                                                                     is_alljourneysofline=True,
+                                                                     line=line_qry[0],
+                                                                     operatingday=operatingday,
+                                                                     is_recovered=False)
+
+                    database_alllines = Kv17Change.objects.filter(dataownercode=dataownercode,
+                                                                  is_alllines=True,
+                                                                  operatingday=operatingday,
+                                                                  is_recovered=False)
+
+                    if database_alllines:
+                        raise ValidationError(_(
+                            "De gehele vervoerder is al aangepast."))
+                    elif database_alljourneys:
+                        raise ValidationError(_(
+                            "Een of meer geselecteerde lijnen zijn al aangepast."))
 
                     # delete recovered if query is the same.
                     Kv17Change.objects.filter(dataownercode=dataownercode,
+                                              is_alljourneysofline=True,
                                               line=line_qry[0],
                                               operatingday=operatingday,
                                               is_recovered=True).delete()
