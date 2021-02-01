@@ -7,17 +7,17 @@ from django.template import loader
 from django.views.generic import TemplateView
 
 try:
-    from braces.views import AccessMixin
+    from braces.views import AccessMixin as BracesAccessMixin
 except:
-    from braces.views._access import AccessMixin
+    from braces.views._access import AccessMixin as BracesAccessMixin
 
 from braces.views import JSONResponseMixin
 from django.conf import settings
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ImproperlyConfigured
-from django.core.urlresolvers import reverse
-from django.shortcuts import redirect
-from push import Push
+from django.urls import reverse
+from django.shortcuts import redirect, render
+from utils.push import Push
 from django.db.models.query import QuerySet
 
 log = logging.getLogger('openebs.views.mixins')
@@ -37,7 +37,7 @@ class JSONListResponseMixin(JSONResponseMixin):
 
 
 class ExternalMessagePushMixin(object):
-    message_type = None # Abstract
+    message_type = None  # Abstract
     namespace = ''
     dossier = ''
     pushers = []
@@ -49,6 +49,11 @@ class ExternalMessagePushMixin(object):
         """
         Push message _msg_ to GOVI and other subscribers, and return if it was successful
         """
+        if len(self.pushers) == 0:
+            log.warning("No pushers have been defined")
+            if settings.DEBUG:
+                return True
+
         success = False
         for pusher in self.pushers:
             code, content = pusher.push(msg)
@@ -67,18 +72,18 @@ class ExternalMessagePushMixin(object):
     @staticmethod
     def parse_error(content):
         if content is not None and content != "":
-            regex = re.compile("<tmi8:ResponseError>(.*)</tmi8:ResponseError>", re.MULTILINE | re.LOCALE | re.DOTALL)
+            regex = re.compile("<tmi8:ResponseError>(.*)</tmi8:ResponseError>", re.MULTILINE | re.DOTALL)
             r = regex.search(content)
             return r.groups()[0] if r is not None else ""
         return "?"
 
     def get_pushers(self, settings, defaults):
-        '''
+        """
         Setup the push class - storage for all things related to a specific subscriber channel (meaning an endpoint)
-        '''
+        """
         push_list = []
         for destination in sorted(settings, key=lambda k: k['priority']):
-            if destination['enabled'] == False:
+            if not destination['enabled']:
                 continue
             if self.message_type is None or self.message_type not in destination['endpoints']:
                 raise ImproperlyConfigured("Endpoint type isn't registered")
@@ -89,7 +94,11 @@ class ExternalMessagePushMixin(object):
 
             endpoint = destination['endpoints'][self.message_type]
 
-            p = Push(destination['host'], endpoint['path'], self.namespace, self.dossier, destination['subscriberName'])
+            p = Push(destination['host'], endpoint['path'],
+                     self.namespace,
+                     self.dossier,
+                     destination['subscriberName'],
+                     destination['https'] if 'https' in destination else False)
             p.alias = destination.get('alias', destination['host'])
             p.fail_on_failure = destination.get('failOnFailure', True)
             p.debug = destination.get('debug', defaults.get('debug', False))
@@ -98,7 +107,7 @@ class ExternalMessagePushMixin(object):
         return push_list
 
 
-class AccessMixin(AccessMixin):
+class AccessMixin(BracesAccessMixin):
     """
     This is based on the braces LoginRequiredMixin and PermissionRequiredMixin but will only raise the exception
     if the user is logged in
@@ -116,10 +125,17 @@ class AccessMixin(AccessMixin):
         # Check to see if the request's user has the required permission.
         has_permission = request.user.has_perm(self.permission_required)
 
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             if not has_permission:  # If the user lacks the permission
                 log.info("User %s requested %s but doesn't have permission" % (self.request.user, request.get_full_path()))
                 return redirect(reverse('app_nopermission'))
+
+            if not hasattr(request.user, 'userprofile') or \
+                    not hasattr(request.user.userprofile, 'company'):
+                log.info("User %s requested %s but doesn't have an userprofile or operator" % (
+                self.request.user, request.get_full_path()))
+                return redirect(reverse('app_nopermission'))
+
         else:
             return redirect_to_login(request.get_full_path(),
                                      self.get_login_url(),
@@ -129,16 +145,57 @@ class AccessMixin(AccessMixin):
             request, *args, **kwargs)
 
 
-class ErrorView(TemplateView):
+class AccessJsonMixin(BracesAccessMixin):  # TODO change if 'geweigerd' message should be different for json-pages
     """
-    This fixes an issue in Django - https://code.djangoproject.com/ticket/24829
-    TODO - This is fixed in 1.9, remove it then
+    This is based on the braces LoginRequiredMixin and PermissionRequiredMixin but will only raise the exception
+    if the user is logged in
     """
+    permission_required = None  # Default required perms to none
+
     def dispatch(self, request, *args, **kwargs):
-        response = super(ErrorView, self).dispatch(request, *args, **kwargs)
-        if isinstance(response, HttpResponseNotAllowed):
-            context = RequestContext(request)
-            response.content = loader.render_to_string("openebs/notfound.html", context_instance=context)
+        # Make sure that the permission_required attribute is set on the
+        # view, or raise a configuration error.
+        if self.permission_required is None:
+            raise ImproperlyConfigured(
+                "'PermissionRequiredMixin' requires "
+                "'permission_required' attribute to be set.")
+
+        # Check to see if the request's user has the required permission.
+        has_permission = request.user.has_perm(self.permission_required)
+
+        if request.user.is_authenticated:
+            if not has_permission:  # If the user lacks the permission
+                log.info("User %s requested %s but doesn't have permission" % (self.request.user, request.get_full_path()))
+                return redirect(reverse('app_nopermission'))
+
+            if not hasattr(request.user, 'userprofile') or \
+                    not hasattr(request.user.userprofile, 'company'):
+                log.info("User %s requested %s but doesn't have an userprofile or operator" % (
+                self.request.user, request.get_full_path()))
+                return redirect(reverse('app_nopermission'))
+
         else:
-            response.render()
-        return response
+            return redirect_to_login(request.get_full_path(),
+                                     self.get_login_url(),
+                                     self.get_redirect_field_name())
+
+        return super(AccessJsonMixin, self).dispatch(
+            request, *args, **kwargs)
+
+
+def handler403(request, exception):
+    response = render(request, 'openebs/nopermission.html', {})
+    response.status_code = 404
+    return response
+
+
+def handler404(request, exception):
+    response = render(request, 'openebs/notfound.html', {})
+    response.status_code = 404
+    return response
+
+
+def handler500(request):
+    response = render(request, 'openebs/servererror.html', {})
+    response.status_code = 500
+    return response

@@ -30,3 +30,24 @@ Tool for posting KV15 messages
 
 *Upgrade*
 Tip: to upgrade permissions do ```python manage.py syncdb --all```
+
+Additional functionality
+-----------------------
+
+*Batch cancel & restore of trips*
+To facilitate batch cancelling of trips, console commands for processing files of the following format: (including a header row)
+````
+privatecode,validdate
+ARR:1011:1001,2018-01-04
+````
+Each trip in the file will be searched for and if found, cancelled.
+
+To use:
+1. Login to the server and make sure you are using the correct python (openebs virtualenv must be activated)
+
+1. Setup the file with trips you need
+
+1. Run `python manage.py batch_cancel file.csv`
+
+Additionally, cancelled trips may be recovered from a file of the same format. Each trip in the file will be searched for and if found, restored.
+Use the command `python manage.py batch_restore file.csv`

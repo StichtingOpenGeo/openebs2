@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n static %}
 
 {% block title %}Berichten{% endblock %}
 
@@ -50,7 +50,7 @@
   {% for msg in active_list %}
       <tr class="{% if msg.is_future %}warning{% endif %}">
         {% if view_all %}
-            <td><img src="{{ STATIC_URL }}img/logos/{{ msg.dataownercode|lower }}.png" class="user-icon" /></td>
+            <td><img src="{% get_static_prefix %}img/logos/{{ msg.dataownercode|lower }}.png" class="user-icon" /></td>
         {% endif %}
         <td>{{ msg.messagecodenumber }}
             {% include "openebs/snippet_message-external.html" with msg=msg only %}
@@ -115,7 +115,7 @@
   {% for msg in archive_list %}
     <tr class="{% if msg.isdeleted %}danger{% endif %}">
         {% if view_all %}
-            <td><img src="{{ STATIC_URL }}img/logos/{{ msg.dataownercode|lower }}.png" class="user-icon" /></td>
+            <td><img src="{% get_static_prefix %}img/logos/{{ msg.dataownercode|lower }}.png" class="user-icon" /></td>
         {% endif %}
         <td>{{ msg.messagecodenumber }}
             {% include "openebs/snippet_message-external.html" with msg=msg only %}

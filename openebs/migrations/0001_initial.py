@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                 ('messagecodenumber', models.IntegerField()),
                 ('message', models.CharField(max_length=255)),
                 ('ipaddress', models.CharField(max_length=100)),
-                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Logbericht',
@@ -37,14 +37,14 @@ class Migration(migrations.Migration):
             name='Kv15MessageLine',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('line', models.ForeignKey(to='kv1.Kv1Line')),
+                ('line', models.ForeignKey(to='kv1.Kv1Line', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
             name='Kv15MessageStop',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('stop', models.ForeignKey(related_name='messages', to='kv1.Kv1Stop')),
+                ('stop', models.ForeignKey(related_name='messages', to='kv1.Kv1Stop', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -83,7 +83,7 @@ class Migration(migrations.Migration):
                 ('subadvicetype', models.CharField(blank=True, max_length=10, verbose_name='Advies', choices=[(b'0', b'geen'), (b'1', b'niet reizen'), (b'2', b'reizen met ander ov'), (b'3_1', b'overstappen in'), (b'3_2', b'reizen via'), (b'3_3', b'in-/uitstappen')])),
                 ('advicecontent', models.CharField(max_length=255, verbose_name='Uitleg advies', blank=True)),
                 ('updated', models.DateTimeField(auto_now=True)),
-                ('scenario', models.ForeignKey(related_name='messages', to='openebs.Kv15Scenario')),
+                ('scenario', models.ForeignKey(related_name='messages', to='openebs.Kv15Scenario', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Scenario bericht',
@@ -94,8 +94,8 @@ class Migration(migrations.Migration):
             name='Kv15ScenarioStop',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('message', models.ForeignKey(related_name='stops', to='openebs.Kv15ScenarioMessage')),
-                ('stop', models.ForeignKey(to='kv1.Kv1Stop')),
+                ('message', models.ForeignKey(related_name='stops', to='openebs.Kv15ScenarioMessage', on_delete=models.CASCADE)),
+                ('stop', models.ForeignKey(to='kv1.Kv1Stop', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -136,7 +136,7 @@ class Migration(migrations.Migration):
                 ('isdeleted', models.BooleanField(default=False, verbose_name='Verwijderd?')),
                 ('status', models.SmallIntegerField(default=0, verbose_name='Status', choices=[(0, 'Opgeslagen'), (1, 'Verstuurd'), (2, 'Teruggemeld'), (5, 'Verwijderd'), (6, 'Verwijdering verstuurd'), (7, 'Verwijdering teruggemeld'), (11, 'Fout bij versturen'), (12, 'Fout bij versturen verwijdering')])),
                 ('stops', models.ManyToManyField(to='kv1.Kv1Stop', through='openebs.Kv15MessageStop')),
-                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'KV15 Bericht',
@@ -154,8 +154,8 @@ class Migration(migrations.Migration):
                 ('is_recovered', models.BooleanField(default=False, verbose_name='Teruggedraaid?')),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('recovered', models.DateTimeField(null=True, blank=True)),
-                ('journey', models.ForeignKey(related_name='changes', verbose_name='Rit', to='kv1.Kv1Journey')),
-                ('line', models.ForeignKey(verbose_name='Lijn', to='kv1.Kv1Line')),
+                ('journey', models.ForeignKey(related_name='changes', verbose_name='Rit', to='kv1.Kv1Journey', on_delete=models.CASCADE)),
+                ('line', models.ForeignKey(verbose_name='Lijn', to='kv1.Kv1Line', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Ritaanpassing',
@@ -173,7 +173,7 @@ class Migration(migrations.Migration):
                 ('advicetype', models.SmallIntegerField(blank=True, null=True, verbose_name='Type advies', choices=[(0, b'Onbekend'), (1, b'Algemeen Advies'), (255, b'Ongedefineerd')])),
                 ('subadvicetype', models.CharField(blank=True, max_length=10, verbose_name='Advies', choices=[(b'0', b'geen'), (b'1', b'niet reizen'), (b'2', b'reizen met ander ov'), (b'3_1', b'overstappen in'), (b'3_2', b'reizen via'), (b'3_3', b'in-/uitstappen')])),
                 ('advicecontent', models.CharField(max_length=255, verbose_name='Uitleg advies', blank=True)),
-                ('change', models.ForeignKey(related_name='journey_details', to='openebs.Kv17Change')),
+                ('change', models.ForeignKey(related_name='journey_details', to='openebs.Kv17Change', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Ritaanpassingsdetails',
@@ -201,8 +201,8 @@ class Migration(migrations.Migration):
                 ('advicetype', models.SmallIntegerField(blank=True, null=True, verbose_name='Type advies', choices=[(0, b'Onbekend'), (1, b'Algemeen Advies'), (255, b'Ongedefineerd')])),
                 ('subadvicetype', models.CharField(blank=True, max_length=10, verbose_name='Advies', choices=[(b'0', b'geen'), (b'1', b'niet reizen'), (b'2', b'reizen met ander ov'), (b'3_1', b'overstappen in'), (b'3_2', b'reizen via'), (b'3_3', b'in-/uitstappen')])),
                 ('advicecontent', models.CharField(max_length=255, verbose_name='Uitleg advies', blank=True)),
-                ('change', models.ForeignKey(to='openebs.Kv17Change')),
-                ('stop', models.ForeignKey(to='kv1.Kv1Stop')),
+                ('change', models.ForeignKey(to='openebs.Kv17Change', on_delete=models.CASCADE)),
+                ('stop', models.ForeignKey(to='kv1.Kv1Stop', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Halteaanpassing',
@@ -226,8 +226,8 @@ class Migration(migrations.Migration):
             name='Kv1StopFilterStop',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('filter', models.ForeignKey(related_name='stops', to='openebs.Kv1StopFilter')),
-                ('stop', models.ForeignKey(to='kv1.Kv1Stop')),
+                ('filter', models.ForeignKey(related_name='stops', to='openebs.Kv1StopFilter', on_delete=models.CASCADE)),
+                ('stop', models.ForeignKey(to='kv1.Kv1Stop', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -235,23 +235,23 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('company', models.CharField(max_length=10, verbose_name='Vervoerder', choices=[(b'ARR', b'Arriva'), (b'VTN', b'Veolia'), (b'CXX', b'Connexxion'), (b'EBS', b'EBS'), (b'GVB', b'GVB'), (b'HTM', b'HTM'), (b'NS', b'Nederlandse Spoorwegen'), (b'RET', b'RET'), (b'SYNTUS', b'Syntus'), (b'QBUZZ', b'Qbuzz'), (b'TCR', b'Taxi Centrale Renesse'), (b'GOVI', b'GOVI')])),
-                ('user', models.OneToOneField(to=settings.AUTH_USER_MODEL)),
+                ('user', models.OneToOneField(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
             ],
         ),
         migrations.AddField(
             model_name='kv15schedule',
             name='stopmessage',
-            field=models.ForeignKey(to='openebs.Kv15Stopmessage'),
+            field=models.ForeignKey(to='openebs.Kv15Stopmessage', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='kv15messagestop',
             name='stopmessage',
-            field=models.ForeignKey(to='openebs.Kv15Stopmessage'),
+            field=models.ForeignKey(to='openebs.Kv15Stopmessage', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='kv15messageline',
             name='stopmessage',
-            field=models.ForeignKey(to='openebs.Kv15Stopmessage'),
+            field=models.ForeignKey(to='openebs.Kv15Stopmessage', on_delete=models.CASCADE),
         ),
         migrations.AlterUniqueTogether(
             name='kv17change',

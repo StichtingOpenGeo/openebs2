@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import jsonfield
 from django.db import models, migrations
-import json_field.fields
 import django.contrib.gis.db.models.fields
 
 
@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('date', models.DateField()),
-                ('journey', models.ForeignKey(related_name='dates', to='kv1.Kv1Journey')),
+                ('journey', models.ForeignKey(related_name='dates', to='kv1.Kv1Journey', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Ritdag',
@@ -47,7 +47,7 @@ class Migration(migrations.Migration):
                 ('stoptype', models.CharField(default=b'INTERMEDIATE', max_length=12, choices=[(b'FIRST', b'Beginhalte'), (b'INTERMEDIATE', b'Tussenhalte'), (b'LAST', b'Eindhalte')])),
                 ('targetarrival', models.TimeField()),
                 ('targetdeparture', models.TimeField()),
-                ('journey', models.ForeignKey(related_name='stops', to='kv1.Kv1Journey')),
+                ('journey', models.ForeignKey(related_name='stops', to='kv1.Kv1Journey', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Rithalte',
@@ -62,7 +62,7 @@ class Migration(migrations.Migration):
                 ('lineplanningnumber', models.CharField(max_length=10)),
                 ('publiclinenumber', models.CharField(max_length=10)),
                 ('headsign', models.CharField(max_length=100)),
-                ('stop_map', json_field.fields.JSONField(default='null', help_text='Enter a valid JSON object')),
+                ('stop_map', jsonfield.JSONField(default='null', help_text='Enter a valid JSON object')),
             ],
             options={
                 'verbose_name': 'Lijn',
@@ -95,12 +95,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='kv1journeystop',
             name='stop',
-            field=models.ForeignKey(to='kv1.Kv1Stop'),
+            field=models.ForeignKey(to='kv1.Kv1Stop', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='kv1journey',
             name='line',
-            field=models.ForeignKey(related_name='journeys', to='kv1.Kv1Line'),
+            field=models.ForeignKey(related_name='journeys', to='kv1.Kv1Line', on_delete=models.CASCADE),
         ),
         migrations.AlterUniqueTogether(
             name='kv1journeystop',

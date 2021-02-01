@@ -17,3 +17,4 @@ class Kv6PushMixin(ExternalMessagePushMixin):
     message_type = 'KV6'
     namespace = 'http://bison.connekt.nl/tmi8/kv6/msg'
     dossier = 'KV6posinfo'
+

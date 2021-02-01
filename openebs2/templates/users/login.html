@@ -15,7 +15,7 @@
                 </p>
             {% endif %}
             <div class="row">
-            <form method="post" class="form col-md-8" action="{% url 'django.contrib.auth.views.login' %}">
+            <form method="post" class="form col-md-8" action="{% url 'app_login' %}">
                 {% csrf_token %}
                 {{ form|crispy }}
                 <div class="form-group">

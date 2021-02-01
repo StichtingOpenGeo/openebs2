@@ -9,6 +9,7 @@ class LineAdmin(admin.ModelAdmin):
     list_filter = ('dataownercode', 'publiclinenumber')
     search_fields = ('headsign',)
 
+
 admin.site.register(Kv1Line, LineAdmin)
 
 
@@ -19,21 +20,26 @@ class StopAdmin(OSMGeoAdmin):
     search_fields = ('name', 'userstopcode',)
     default_zoom = 30
 
+
 admin.site.register(Kv1Stop, StopAdmin)
+
 
 class JourneyStopInline(admin.StackedInline):
     model = Kv1JourneyStop
     raw_id_fields = ('stop',)
     extra = 1
 
+
 class JourneyDatesInline(admin.TabularInline):
     model = Kv1JourneyDate
     extra = 1
 
+
 class JourneyAdmin(admin.ModelAdmin):
     model = Kv1Journey
     inlines = [JourneyStopInline, JourneyDatesInline]
-    list_display = ('dataownercode', 'line', 'journeynumber', )
-    list_filter = ('dataownercode', )
+    list_display = ('dataownercode', 'line', 'journeynumber',)
+    list_filter = ('dataownercode',)
+
 
 admin.site.register(Kv1Journey, JourneyAdmin)

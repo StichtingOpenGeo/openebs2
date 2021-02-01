@@ -4,6 +4,7 @@ from os.path import isfile, join, splitext, split
 from django.core.management import BaseCommand
 from kv1.models import Kv1Line
 
+
 class Command(BaseCommand):
     REGEX_BASE = 'id=\"'+'([A-Z]{3,10}_[0-9]{3,10})' + '">' + '(.*?)' + '</'
     REGEX_EMPTY = '<td></td>'
@@ -15,21 +16,24 @@ class Command(BaseCommand):
     re_left = re.compile(REGEX_BASE+'.*'+REGEX_EMPTY)
     re_right = re.compile(REGEX_EMPTY+'.*'+REGEX_BASE)
 
+    def add_arguments(self, parser):
+        parser.add_argument('filename', nargs='+', type=str)
+
     def handle(self, *args, **options):
-        self.parse_directory(args[0])
+        self.parse_directory(options['filename'])
 
     def parse_directory(self, dir):
-        for filename in self.get_files(dir):
+        for filename in self.get_files(dir[0]):
             self.parse_line(filename)
 
     def get_files(self, dir):
-        return [ join(dir,f) for f in listdir(dir) if isfile(join(dir,f)) and splitext(join(dir,f))[1] == ".html" ]
+        return [join(dir,f) for f in listdir(dir) if isfile(join(dir,f)) and splitext(join(dir,f))[1] == ".html" ]
 
     def parse_line(self, filename):
         # Determine operator and planning number
         line_split = splitext(split(filename)[1])[0].split('_')
         qry = Kv1Line.objects.filter(dataownercode=line_split[0], lineplanningnumber=line_split[1])
-        if qry.count() == 1:
+        if qry.count() != 0:
             l = qry[0]
         else:
             l = Kv1Line()
@@ -67,6 +71,6 @@ class Command(BaseCommand):
             errors += 1
 
         if errors > 1:
-            print "Failed on file %s (%s x)" % (file.name, errors)
+            print("Failed on file %s (%s x)" % (file.name, errors))
 
         return json.dumps(output)

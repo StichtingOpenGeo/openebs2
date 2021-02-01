@@ -1,16 +1,15 @@
+from builtins import object
 import logging
 from crispy_forms.bootstrap import AccordionGroup, Accordion
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit, Layout, Field, HTML, Div, Hidden
-from django.utils.timezone import now
-import floppyforms as forms
+from crispy_forms.layout import Submit, Layout, Field, HTML, Div
+from django.utils.timezone import now, is_aware, make_aware
+import floppyforms.__future__ as forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
-from kv1.models import Kv1Stop, Kv1Journey
-from kv15.enum import REASONTYPE, SUBREASONTYPE, ADVICETYPE, SUBADVICETYPE
-from models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, Kv17Change, get_end_service
-from openebs.models import Kv17JourneyChange
-from utils.time import get_operator_date
+from kv1.models import Kv1Stop
+from openebs.models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, get_end_service
+from datetime import datetime
 
 log = logging.getLogger('openebs.forms')
 
@@ -18,53 +17,88 @@ log = logging.getLogger('openebs.forms')
 class Kv15StopMessageForm(forms.ModelForm):
     def clean(self):
         # TODO Move _all_ halte parsing here!
-        ids = []
+
+        datetimevalidation = []
+        try:
+            datetime.strptime(self.data['messagestarttime'], "%d-%m-%Y %H:%M:%S")
+        except:
+            datetimevalidation.append(_("Voer een geldige begintijd in (dd-mm-jjjj uu:mm:ss)"))
+            pass
+
+        try:
+            endtime = datetime.strptime(self.data['messageendtime'], "%d-%m-%Y %H:%M:%S")
+            if not is_aware(endtime):
+                endtime = make_aware(endtime)
+        except:
+            datetimevalidation.append(_("Voer een geldige eindtijd in (dd-mm-jjjj uu:mm:ss)"))
+            pass
+
+        if len(datetimevalidation) == 2:
+            raise ValidationError(_("Voer een geldige begin- en eindtijd in (dd-mm-jjjj uu:mm:ss)"))
+        elif len(datetimevalidation) == 1:
+            raise ValidationError(datetimevalidation[0])
+
+        current = datetime.now()
+        if not is_aware(current):
+            current = make_aware(current)
+
+        valid_ids = []
+        nonvalid_ids = []
         for halte in self.data['haltes'].split(','):
             halte_split = halte.split('_')
             if len(halte_split) == 2:
                 stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
                 if stop:
-                    ids.append(stop.pk)
+                    valid_ids.append(stop.pk)
                 else:
-                    raise ValidationError(_("Datafout: halte niet gevonden in database. Meld dit bij een beheerder."))
-        if len(ids) == 0:
-            raise ValidationError(_("Selecteer minimaal een halte"))
+                    nonvalid_ids.append(halte)
+
+        if len(nonvalid_ids) != 0:
+            log.warning("Ongeldige haltes: %s" % ', '.join(nonvalid_ids))
+        if len(valid_ids) == 0 and len(nonvalid_ids) != 0:
+            raise ValidationError(_("Er werd geen geldige halte geselecteerd."))
+        elif len(valid_ids) == 0:
+            raise ValidationError(_("Selecteer minimaal een halte."))
+        elif current > endtime:
+            raise ValidationError(_("Eindtijd van bericht ligt in het verleden"))
         else:
             return self.cleaned_data
 
     def clean_messagecontent(self):
         # Improve: Strip spaces from message
-        if len(self.cleaned_data['messagecontent']) < 1 and self.cleaned_data['messagetype'] != 'OVERRULE':
+        if ('messagecontent' not in self.cleaned_data or self.cleaned_data['messagecontent'] is None or len(
+                self.cleaned_data['messagecontent']) < 1) \
+                and self.cleaned_data['messagetype'] != 'OVERRULE':
             raise ValidationError(_("Bericht mag niet leeg zijn"))
         return self.cleaned_data['messagecontent']
 
-    class Meta:
+    class Meta(object):
         model = Kv15Stopmessage
-        exclude = ['messagecodenumber', 'status', 'stops', 'messagecodedate', 'isdeleted', 'id', 'dataownercode', 'user']
+        exclude = ['messagecodenumber', 'status', 'stops', 'messagecodedate', 'isdeleted', 'id', 'dataownercode',
+                   'user']
         widgets = {
-            'messagecontent': forms.Textarea(attrs={'cols' : 50, 'rows' : 6, 'class' : 'col-lg-6', 'maxlength':255 }),
-            'reasoncontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
-            'effectcontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
-            'measurecontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
-            'advicecontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
+            'messagecontent': forms.Textarea(attrs={'cols': 50, 'rows': 6, 'class': 'col-lg-6', 'maxlength': 255}),
+            'reasoncontent': forms.Textarea(attrs={'cols': 40, 'rows': 4, 'class': 'col-lg-6'}),
+            'effectcontent': forms.Textarea(attrs={'cols': 40, 'rows': 4, 'class': 'col-lg-6'}),
+            'measurecontent': forms.Textarea(attrs={'cols': 40, 'rows': 4, 'class': 'col-lg-6'}),
+            'advicecontent': forms.Textarea(attrs={'cols': 40, 'rows': 4, 'class': 'col-lg-6'}),
 
             # This is awful, but is neccesary because otherwise we don't get nice bootstrappy widgets
-            'messagepriority' : forms.RadioSelect,
-            'messagedurationtype' : forms.RadioSelect,
-            'messagetype' : forms.RadioSelect,
-            'messagestarttime' : forms.DateTimeInput,
-            'messageendtime' : forms.DateTimeInput,
-            'reasontype' : forms.RadioSelect,
-            'subreasontype' : forms.Select,
-            'effecttype' : forms.RadioSelect,
-            'subeffecttype' : forms.Select,
-            'measuretype' : forms.RadioSelect,
-            'submeasuretype' : forms.Select,
-            'advicetype' : forms.RadioSelect,
-            'subadvicetype' : forms.Select,
-            'messagetimestamp' : forms.DateTimeInput
+            'messagepriority': forms.RadioSelect,
+            'messagedurationtype': forms.RadioSelect,
+            'messagetype': forms.RadioSelect,
+            'messagestarttime': forms.DateTimeInput,
+            'messageendtime': forms.DateTimeInput,
+            'reasontype': forms.RadioSelect,
+            'subreasontype': forms.Select,
+            'effecttype': forms.RadioSelect,
+            'subeffecttype': forms.Select,
+            'measuretype': forms.RadioSelect,
+            'submeasuretype': forms.Select,
+            'advicetype': forms.RadioSelect,
+            'subadvicetype': forms.Select,
+            'messagetimestamp': forms.DateTimeInput
         }
-
 
     def __init__(self, *args, **kwargs):
         super(Kv15StopMessageForm, self).__init__(*args, **kwargs)
@@ -72,44 +106,52 @@ class Kv15StopMessageForm(forms.ModelForm):
         self.helper.form_tag = False
         self.helper.layout = Layout(
             Div(HTML('<span class="charcount badge badge-success pull-right">0</span>'),
-                Field('messagecontent'),  css_class='countwrapper'),
-                'messagestarttime',
-                'messageendtime',
+                Field('messagecontent'), css_class='countwrapper'),
+            'messagestarttime',
+            'messageendtime',
             Accordion(
                 AccordionGroup(_('Bericht instellingen'),
-                    'messagepriority',
-                    'messagetype',
-                    'messagedurationtype'
-                ),
+                               'messagepriority',
+                               'messagetype',
+                               'messagedurationtype'
+                               ),
                 AccordionGroup(_('Oorzaak'),
-                   'reasontype',
-                   'subreasontype',
-                   'reasoncontent'
-                ),
+                               'reasontype',
+                               'subreasontype',
+                               'reasoncontent'
+                               ),
                 AccordionGroup(_('Effect'),
-                   'effecttype',
-                   'subeffecttype',
-                   'effectcontent'
-                ),
+                               'effecttype',
+                               'subeffecttype',
+                               'effectcontent'
+                               ),
                 AccordionGroup(_('Gevolg'),
-                   'measuretype',
-                   'submeasuretype',
-                   'measurecontent'
-                ),
+                               'measuretype',
+                               'submeasuretype',
+                               'measurecontent'
+                               ),
                 AccordionGroup(_('Advies'),
-                   'advicetype',
-                   'subadvicetype',
-                   'advicecontent'
-                )
+                               'advicetype',
+                               'subadvicetype',
+                               'advicecontent'
+                               )
             )
         )
 
+
 class Kv15ScenarioForm(forms.ModelForm):
-    class Meta:
+    """ Make sure every scenario has a title / name """
+    def clean(self):
+        if self.data['name'].strip() == '':
+            raise ValidationError(_("Naam scenario mag niet leeg zijn."))
+        else:
+            return self.cleaned_data
+
+    class Meta(object):
         model = Kv15Scenario
         exclude = ['dataownercode']
         widgets = {
-            'description': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
+            'description': forms.Textarea(attrs={'cols': 40, 'rows': 4, 'class': 'col-lg-6'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -133,7 +175,7 @@ class Kv15ScenarioMessageForm(forms.ModelForm):
                 if stop:
                     ids.append(stop.pk)
         qry = Kv1Stop.objects.filter(kv15scenariostop__message__scenario=self.data['scenario'], pk__in=ids)
-        if self.instance.pk is not None: # Exclude ourselves if we've been saved
+        if self.instance.pk is not None:  # Exclude ourselves if we've been saved
             qry = qry.exclude(kv15scenariostop__message=self.instance.pk)
 
         if qry.count() > 0:
@@ -145,34 +187,38 @@ class Kv15ScenarioMessageForm(forms.ModelForm):
         elif len(ids) == 0:
             # Select at least one stop for a message
             raise ValidationError(_("Selecteer minimaal een halte"))
+        elif ('messagecontent' not in self.cleaned_data or self.cleaned_data['messagecontent'] is None or len(
+                self.cleaned_data['messagecontent'].strip()) == 0) \
+                and self.cleaned_data['messagetype'] != 'OVERRULE':
+            raise ValidationError(_("Bericht mag niet leeg zijn"))
         else:
             return self.cleaned_data
 
-    class Meta:
+    class Meta(object):
         model = Kv15ScenarioMessage
         exclude = ['dataownercode']
         widgets = {
             'scenario': forms.HiddenInput,
-            'messagecontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
-            'reasoncontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
-            'effectcontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
-            'measurecontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
-            'advicecontent': forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}),
+            'messagecontent': forms.Textarea(attrs={'cols': 40, 'rows': 4, 'class': 'col-lg-6'}),
+            'reasoncontent': forms.Textarea(attrs={'cols': 40, 'rows': 4, 'class': 'col-lg-6'}),
+            'effectcontent': forms.Textarea(attrs={'cols': 40, 'rows': 4, 'class': 'col-lg-6'}),
+            'measurecontent': forms.Textarea(attrs={'cols': 40, 'rows': 4, 'class': 'col-lg-6'}),
+            'advicecontent': forms.Textarea(attrs={'cols': 40, 'rows': 4, 'class': 'col-lg-6'}),
 
             # This is awful, but is neccesary because otherwise we don't get nice bootstrappy widgets
-            'messagepriority' : forms.RadioSelect,
-            'messagetype' : forms.RadioSelect,
-            'messagedurationtype' : forms.RadioSelect,
-            'messagestarttime' : forms.DateTimeInput,
-            'messageendtime' : forms.DateTimeInput,
-            'reasontype' : forms.RadioSelect,
-            'subreasontype' : forms.Select,
-            'effecttype' : forms.RadioSelect,
-            'subeffecttype' : forms.Select,
-            'measuretype' : forms.RadioSelect,
-            'submeasuretype' : forms.Select,
-            'advicetype' : forms.RadioSelect,
-            'subadvicetype' : forms.Select
+            'messagepriority': forms.RadioSelect,
+            'messagetype': forms.RadioSelect,
+            'messagedurationtype': forms.RadioSelect,
+            'messagestarttime': forms.DateTimeInput,
+            'messageendtime': forms.DateTimeInput,
+            'reasontype': forms.RadioSelect,
+            'subreasontype': forms.Select,
+            'effecttype': forms.RadioSelect,
+            'subeffecttype': forms.Select,
+            'measuretype': forms.RadioSelect,
+            'submeasuretype': forms.Select,
+            'advicetype': forms.RadioSelect,
+            'subadvicetype': forms.Select
         }
 
     def __init__(self, *args, **kwargs):
@@ -182,121 +228,33 @@ class Kv15ScenarioMessageForm(forms.ModelForm):
         self.helper.layout = Layout(
             'scenario',
             Div(HTML('<span class="charcount badge badge-success pull-right">0</span>'),
-                Field('messagecontent'),  css_class='countwrapper'),
+                Field('messagecontent'), css_class='countwrapper'),
             Accordion(
                 AccordionGroup(_('Bericht instellingen'),
-                    'messagepriority',
-                    'messagetype',
-                    'messagedurationtype'
-                ),
+                               'messagepriority',
+                               'messagetype',
+                               'messagedurationtype'
+                               ),
                 AccordionGroup(_('Oorzaak'),
-                   'reasontype',
-                   'subreasontype',
-                   'reasoncontent'
-                ),
+                               'reasontype',
+                               'subreasontype',
+                               'reasoncontent'
+                               ),
                 AccordionGroup(_('Effect'),
-                   'effecttype',
-                   'subeffecttype',
-                   'effectcontent'
-                ),
+                               'effecttype',
+                               'subeffecttype',
+                               'effectcontent'
+                               ),
                 AccordionGroup(_('Gevolg'),
-                   'measuretype',
-                   'submeasuretype',
-                   'measurecontent'
-                ),
+                               'measuretype',
+                               'submeasuretype',
+                               'measurecontent'
+                               ),
                 AccordionGroup(_('Advies'),
-                   'advicetype',
-                   'subadvicetype',
-                   'advicecontent'
-                )
-            )
-        )
-
-class Kv17ChangeForm(forms.ModelForm):
-    # This is duplication, but should work
-    reasontype = forms.ChoiceField(choices=REASONTYPE, label=_("Type oorzaak"), required=False)
-    subreasontype = forms.ChoiceField(choices=SUBREASONTYPE, label=_("Oorzaak"), required=False)
-    reasoncontent = forms.CharField(max_length=255, label=_("Uitleg oorzaak"), required=False,
-                                    widget=forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}))
-    advicetype = forms.ChoiceField(choices=ADVICETYPE, label=_("Type advies"), required=False)
-    subadvicetype = forms.ChoiceField(choices=SUBADVICETYPE, label=_("Advies"), required=False)
-    advicecontent = forms.CharField(max_length=255, label=_("Uitleg advies"), required=False,
-                                    widget=forms.Textarea(attrs={'cols' : 40, 'rows' : 4, 'class' : 'col-lg-6'}))
-
-    def clean(self):
-        cleaned_data = super(Kv17ChangeForm, self).clean()
-        if 'journeys' not in self.data:
-            raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
-
-        valid_journeys = 0
-        for journey in self.data['journeys'].split(',')[0:-1]:
-            journey_qry = Kv1Journey.objects.filter(pk=journey, dates__date=get_operator_date())
-            if journey_qry.count() == 0:
-                raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
-            if Kv17Change.objects.filter(journey__pk=journey, line=journey_qry[0].line, operatingday=get_operator_date()).count() != 0:
-                raise ValidationError(_("Een of meer geselecteerde ritten zijn al aangepast"))
-            valid_journeys += 1
-
-        if valid_journeys == 0:
-            raise ValidationError(_("Er zijn geen ritten geselecteerd om op te heffen"))
-
-        return cleaned_data
-
-    def save(self, force_insert=False, force_update=False, commit=True):
-        ''' Save each of the journeys in the model. This is a disaster, we return the XML
-        TODO: Figure out a better solution fo this! '''
-        xml_output = []
-        for journey in self.data['journeys'].split(',')[0:-1]:
-            qry = Kv1Journey.objects.filter(id=journey, dates__date=get_operator_date())
-            if qry.count() == 1:
-                self.instance.pk = None
-                self.instance.journey = qry[0]
-                self.instance.line = qry[0].line
-                self.instance.operatingday = get_operator_date()
-                self.instance.is_cancel = True
-
-                # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
-                if self.instance.journey.dataownercode == self.instance.dataownercode:
-                    self.instance.save()
-
-                    # Add details
-                    if self.data['reasontype'] != '0' or self.data['advicetype'] != '0':
-                        Kv17JourneyChange(change=self.instance, reasontype=self.data['reasontype'],
-                                          subreasontype=self.data['subreasontype'],
-                                          reasoncontent=self.data['reasoncontent'],
-                                          advicetype=self.data['advicetype'],
-                                          subadvicetype=self.data['subadvicetype'],
-                                          advicecontent=self.data['advicecontent']).save()
-
-                    xml_output.append(self.instance.to_xml())
-                else:
-                    log.error("Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
-                              (self.instance.journey.dataownercode, self.instance.dataownercode))
-            else:
-                log.error("Failed to find journey %s" % journey)
-
-        return xml_output
-
-    class Meta:
-        model = Kv17Change
-        exclude = [ 'dataownercode', 'operatingday', 'line', 'journey', 'is_recovered', 'reinforcement']
-
-    def __init__(self, *args, **kwargs):
-        super(Kv17ChangeForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-        self.helper.layout = Layout(
-            Accordion(
-                AccordionGroup(_('Oorzaak'),
-                       'reasontype',
-                       'subreasontype',
-                       'reasoncontent'
-                ),
-                AccordionGroup(_('Advies'),
-                       'advicetype',
-                       'subadvicetype',
-                       'advicecontent'
-                )
+                               'advicetype',
+                               'subadvicetype',
+                               'advicecontent'
+                               )
             )
         )
 
@@ -307,6 +265,15 @@ class PlanScenarioForm(forms.Form):
 
     def clean(self):
         data = super(PlanScenarioForm, self).clean()
+        if 'messagestarttime' not in data and 'messageendtime' not in data:
+            raise ValidationError(_("Voer een geldige begin- en eindtijd in"))
+
+        if 'messagestarttime' not in data:
+            raise ValidationError(_("Voer een geldige begintijd in"))
+
+        if 'messageendtime' not in data:
+            raise ValidationError(_("Voer een geldige eindtijd in"))
+
         if data['messageendtime'] <= data['messagestarttime']:
             raise ValidationError(_("Einde bericht moet na begin zijn"))
         return data
@@ -321,20 +288,4 @@ class PlanScenarioForm(forms.Form):
                 Div(Field('messageendtime'), css_class="col-sm-6 col-lg-6"),
                 css_class="row"),
             Submit('submit', _("Plan alle berichten in"))
-        )
-
-class CancelLinesForm(forms.Form):
-    verify_ok = forms.BooleanField(initial=True, widget=forms.HiddenInput)
-
-    def clean_verify_ok(self):
-        if self.cleaned_data.get('verify_ok') is not True:
-            raise ValidationError(_("Je moet goedkeuring geven om alle lijnen op te heffen"))
-
-    def __init__(self, *args, **kwargs):
-        super(CancelLinesForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_tag = 'journey_redbutton'
-        self.helper.layout = Layout(
-            Hidden('verify_ok', 'true'),
-            Submit('submit', _("Hef alle ritten op"), css_class="text-center btn-danger btn-tall col-sm-3 pull-right")
         )

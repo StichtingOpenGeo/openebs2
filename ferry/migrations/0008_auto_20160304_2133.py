@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='ferrykv6messages',
             name='ferry',
-            field=models.ForeignKey(default=1, to='ferry.FerryLine'),
+            field=models.ForeignKey(default=1, to='ferry.FerryLine', on_delete=models.CASCADE),
             preserve_default=False,
         ),
         migrations.AlterUniqueTogether(

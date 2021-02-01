@@ -2,8 +2,8 @@
 import logging
 from datetime import timedelta
 
-from braces.views import LoginRequiredMixin
-from django.core.urlresolvers import reverse_lazy
+from django.contrib.gis.db.models import Extent
+from django.urls import reverse_lazy
 from django.db.models import Q, Count
 from django.shortcuts import redirect
 from django.views.generic import ListView, UpdateView, DetailView
@@ -16,7 +16,7 @@ from kv1.models import Kv1Stop
 from openebs.views_push import Kv15PushMixin
 from openebs.views_utils import FilterDataownerMixin
 from utils.client import get_client_ip
-from utils.views import JSONListResponseMixin, AccessMixin
+from utils.views import JSONListResponseMixin, AccessMixin, AccessJsonMixin
 from openebs.models import Kv15Stopmessage, Kv15Log, MessageStatus, Kv1StopFilter
 from openebs.form import Kv15StopMessageForm
 
@@ -41,9 +41,9 @@ class MessageListView(AccessMixin, ListView):
             stop_list = Kv1StopFilter.objects.get(id=context['filter']).stops.values_list('stop')
 
         # Get the currently active messages
-        active = self.model.objects.filter(messageendtime__gt=now, isdeleted=False) \
-                                    .annotate(Count('stops'))\
-                                    .order_by('-messagetimestamp')
+        active = self.model.objects.filter(Q(messageendtime__gt=now()) | Q(messageendtime=None), isdeleted=False) \
+                                   .annotate(Count('stops'))\
+                                   .order_by('-messagetimestamp')
         if context['filter'] != -1:
             active = active.filter(kv15messagestop__stop__in=stop_list)
 
@@ -52,8 +52,8 @@ class MessageListView(AccessMixin, ListView):
         context['active_list'] = active
 
         # Add the no longer active messages
-        archive = self.model.objects.filter(Q(messageendtime__lt=now) | Q(isdeleted=True),
-                                            messagestarttime__gt=now() - timedelta(days=3)) \
+        archive = self.model.objects.filter(Q(messageendtime__lt=now()) | Q(isdeleted=True),
+                                            messagestarttime__gt=(now() - timedelta(days=3))) \
                                     .annotate(Count('stops'))\
                                     .order_by('-messagetimestamp')
 
@@ -218,11 +218,12 @@ class MessageDetailsView(AccessMixin, FilterDataownerMixin, DetailView):
 
 
 # AJAX Views
-class ActiveStopsAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+class ActiveStopsAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_messages'
     model = Kv1Stop
     render_object = 'object'
 
-    def get_object(self):
+    def get_object(self, **kwargs):
         # Note, can't set this on the view, because it triggers the queryset cache
         queryset = self.model.objects.filter(messages__stopmessage__messagestarttime__lte=now(),
                                              messages__stopmessage__messageendtime__gte=now(),
@@ -233,7 +234,8 @@ class ActiveStopsAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView)
         return list(queryset.values('dataownercode', 'userstopcode'))
 
 
-class MessageStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
+class MessageStopsAjaxView(AccessJsonMixin, GeoJSONLayerView):
+    permission_required = 'openebs.view_messages'
     model = Kv1Stop
     geometry_field = 'location'
     properties = ['name', 'userstopcode', 'dataownercode']
@@ -248,13 +250,14 @@ class MessageStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
         return qry
 
 
-class MessageStopsBoundAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+class MessageStopsBoundAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_messages'
     model = Kv1Stop
     render_object = 'object'
 
-    def get_object(self):
+    def get_object(self, **kwargs):
         qry = self.get_queryset()
-        return {'extent': qry.extent()}
+        return {'extent': qry.aggregate(Extent('location')).get('location__extent')}
 
     def get_queryset(self):
         qry = super(MessageStopsBoundAjaxView, self).get_queryset()
@@ -264,4 +267,3 @@ class MessageStopsBoundAjaxView(LoginRequiredMixin, JSONListResponseMixin, Detai
             qry = qry.filter(kv15stopmessage__dataownercode=self.request.user.userprofile.company)
 
         return qry
-

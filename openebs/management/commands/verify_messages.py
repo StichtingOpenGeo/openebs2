@@ -6,7 +6,7 @@ from kv1.models import Kv1Stop
 connection.use_debug_cursor = False
 
 import logging
-from StringIO import StringIO
+from io import BytesIO
 from gzip import GzipFile
 from django.contrib.auth.models import User
 from django.core.management import BaseCommand
@@ -21,19 +21,26 @@ class Command(BaseCommand):
     log = logging.getLogger('openebs.kv8verify')
 
     def handle(self, *args, **options):
-        print 'Setting up a ZeroMQ SUB: %s\n' % (settings.GOVI_VERIFY_FEED)
+        print('Setting up a ZeroMQ SUB: %s\n' % (settings.GOVI_VERIFY_FEED))
         sub = Command.setup_subscription()
-        print "Started at %s, further messages are in your logfile" % (datetime.now().isoformat('T'))
+        print("Started at %s, further messages are in your logfile" % (datetime.now().isoformat('T')))
         while True:
             self.receive_message(sub)
 
     def receive_message(self, sub):
         multipart = sub.recv_multipart()
         try:
-            content = GzipFile('', 'r', 0, StringIO(''.join(multipart[1:]))).read()
+            contents = b''.join(multipart[1:])
+            contents = GzipFile('','r',0,BytesIO(contents)).read()
+            contents = contents.decode('UTF-8')
         except:
-            content = ''.join(multipart[1:])
-        self.parse_message(content)
+            contents = b''.join(multipart[1:])
+            contents = contents.decode('UTF-8')
+        try:
+            self.parse_message(contents)
+        except:
+            print(contents)
+            raise
 
     def parse_message(self, content):
         for line in content.split('\r\n')[:-1]:
@@ -48,12 +55,12 @@ class Command(BaseCommand):
             else:
                 row = {}
                 values = line.split('|')
-                for k, v in map(None, keys, values):
+                for k, v in zip(keys, values):
                     if v == '\\0':
                         row[k] = None
                     else:
                         row[k] = v
-                #self.log.debug("Got new message of type %s" % type)
+                # self.log.debug("Got new message of type %s" % type)
                 if type == 'GENERALMESSAGEUPDATE':
                     self.process_message(row, False)
                 elif type == 'GENERALMESSAGEDELETE':
@@ -115,17 +122,19 @@ class Command(BaseCommand):
         for stop in stops:
             message_stop, created = Kv15MessageStop.objects.get_or_create(stopmessage=msg, stop=stop)
             if created:
-                self.log.debug("Stop added to message: %s|%s#%s (Stop/TPC %s)" % (msg.dataownercode, msg.messagecodedate, msg.messagecodenumber, row['TimingPointCode']))
+                self.log.debug("Stop added to message: %s|%s#%s (Stop/TPC %s)" % (
+                msg.dataownercode, msg.messagecodedate, msg.messagecodenumber, row['TimingPointCode']))
                 message_stop.save()
         if len(stops) == 0:
-            self.log.error("Tried to add stops to message but couldn't find matching TPC: %s|%s#%s (Stop/TPC %s)" % (msg.dataownercode, msg.messagecodedate, msg.messagecodenumber, row['TimingPointCode']))
+            self.log.error("Tried to add stops to message but couldn't find matching TPC: %s|%s#%s (Stop/TPC %s)" % (
+            msg.dataownercode, msg.messagecodedate, msg.messagecodenumber, row['TimingPointCode']))
 
     @staticmethod
     def setup_subscription():
         context = zmq.Context()
         sub = context.socket(zmq.SUB)
         sub.connect(settings.GOVI_VERIFY_FEED)
-        sub.setsockopt(zmq.SUBSCRIBE, settings.GOVI_VERIFY_SUB)
+        sub.setsockopt_string(zmq.SUBSCRIBE, settings.GOVI_VERIFY_SUB)
         return sub
 
     @staticmethod

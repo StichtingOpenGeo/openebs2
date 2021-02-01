@@ -18,6 +18,7 @@ from django.utils.timezone import now
 
 register = template.Library()
 
+
 @register.filter
 def partition(thelist, n):
     """
@@ -45,19 +46,20 @@ def partition(thelist, n):
     except (ValueError, TypeError):
         return [thelist]
     p = len(thelist) / n
-    return [thelist[p*i:p*(i+1)] for i in range(n - 1)] + [thelist[p*(i+1):]]
+    return [thelist[p * i:p * (i + 1)] for i in range(n - 1)] + [thelist[p * (i + 1):]]
+
 
 @register.filter
 def partition_horizontal(thelist, n):
     """
-    Break a list into ``n`` peices, but "horizontally." That is, 
+    Break a list into ``n`` peices, but "horizontally." That is,
     ``partition_horizontal(range(10), 3)`` gives::
-    
+
         [[1, 2, 3],
          [4, 5, 6],
          [7, 8, 9],
          [10]]
-        
+
     Clear as mud?
     """
     try:
@@ -67,8 +69,9 @@ def partition_horizontal(thelist, n):
         return [thelist]
     newlists = [list() for i in range(n)]
     for i, val in enumerate(thelist):
-        newlists[i%n].append(val)
+        newlists[i % n].append(val)
     return newlists
+
 
 # From https://djangosnippets.org/snippets/401/
 @register.filter
@@ -111,14 +114,15 @@ def rows_distributed(thelist, n):
     rows = []
     for i in range(n):
         if remainder:
-            start, end = (split+1)*i, (split+1)*(i+1)
+            start, end = (split + 1) * i, (split + 1) * (i + 1)
         else:
-            start, end = split*i+offset, split*(i+1)+offset
+            start, end = split * i + offset, split * (i + 1) + offset
         rows.append(thelist[start:end])
         if remainder:
             remainder -= 1
             offset += 1
     return rows
+
 
 @register.filter
 def seconds_time(seconds):

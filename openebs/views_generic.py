@@ -1,6 +1,6 @@
 import logging
 from braces.views import SuperuserRequiredMixin, LoginRequiredMixin
-from django.core.urlresolvers import reverse_lazy
+from django.urls import reverse_lazy
 from django.views.generic import RedirectView, TemplateView
 from kv15.enum import DATAOWNERCODE
 

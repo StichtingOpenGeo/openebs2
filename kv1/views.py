@@ -1,3 +1,5 @@
+import json
+
 from braces.views import LoginRequiredMixin, StaffuserRequiredMixin
 from datetime import timedelta, datetime
 from django.db.models import Q, Count
@@ -6,12 +8,12 @@ from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from django.views.generic import ListView, DetailView
 from djgeojson.views import GeoJSONLayerView
-from openebs.models import Kv15Stopmessage
 from utils.calender import CountCalendar
 from utils.time import get_operator_date
 from utils.views import JSONListResponseMixin
-from kv1.models import Kv1Line, Kv1Stop, Kv1Journey, Kv1JourneyDate
-
+from kv1.models import Kv1Line, Kv1Stop, Kv1JourneyDate, ImportStatus
+from dateutil.relativedelta import relativedelta
+from django.utils.dateparse import parse_date
 
 # Views for adding messages and related lookups
 class LineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
@@ -23,8 +25,9 @@ class LineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
         qry = qry.filter(dataownercode=self.request.user.userprofile.company) \
             .order_by('lineplanningnumber') \
             .values('pk', 'dataownercode', 'headsign', 'lineplanningnumber', 'publiclinenumber')
-        needle = unicode(self.kwargs.get('search', '') or '')
-        qry = qry.filter(Q(headsign__icontains=needle) | Q(publiclinenumber__startswith=needle))
+        needle = self.kwargs.get('search', '') or ''
+        qry = qry.filter(Q(headsign__icontains=needle) | Q(publiclinenumber__istartswith=needle) |
+                         Q(lineplanningnumber__istartswith=needle))
         return qry
 
 
@@ -38,8 +41,8 @@ class LineStopView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
         """
         obj = get_object_or_404(self.model, pk=self.kwargs.get('pk', None))
         if obj:
-            return {'stop_map': obj.stop_map}
-        return obj
+            return {'stop_map': obj.stop_map if isinstance(obj.stop_map, list) else json.loads(obj.stop_map)}
+        return obj # TODO?
 
 
 class LineTripView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
@@ -50,11 +53,15 @@ class LineTripView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
         """
         Forces our output as json and do some queries
         """
+        operating_day = get_operator_date()
+        if 'operatingday' in self.request.GET:
+            operating_day = parse_date(self.request.GET['operatingday'])
+
         obj = get_object_or_404(self.model, pk=self.kwargs.get('pk', None))
         if obj:
             # Note, the list() is required to serialize correctly
             # We're filtering on todays trips #
-            journeys = obj.journeys.filter(dates__date=get_operator_date()).order_by('departuretime') \
+            journeys = obj.journeys.filter(dates__date=operating_day).order_by('departuretime') \
                 .values('id', 'journeynumber', 'direction', 'departuretime')
             return {'trips_1': list(journeys.filter(direction=1)), 'trips_2': list(journeys.filter(direction=2))}
         return obj
@@ -142,10 +149,11 @@ class DataImportView(LoginRequiredMixin, StaffuserRequiredMixin, ListView):
         context = super(DataImportView, self).get_context_data(**kwargs)
         cal = CountCalendar(context['object_list'])
         date_now = datetime.now()
-        date_next = date_now + timedelta(weeks=4)
+        date_next = date_now + relativedelta(months=1)
         context['calendar'] = mark_safe(
-            cal.formatmonth(date_now.year, date_now.month) + '<br />' + cal.formatmonth(date_next.year,
-                                                                                        date_next.month))
+            cal.formatmonth(date_now.year, date_now.month, ) + '<br />' + cal.formatmonth(date_next.year,
+                                                                                          date_next.month, ))
+        context['import'] = ImportStatus.objects.all().order_by('-importDate')
         return context
 
     def get_queryset(self):

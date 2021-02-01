@@ -1,7 +1,6 @@
 # Django settings for openebs2 project.
 
 DEBUG = False
-TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
     ('Stefan de Konink', 'stefan@opengeo.nl'),
@@ -55,23 +54,28 @@ LOGIN_URL = 'app_login'
 LOGOUT_URL = 'app_logout'
 LOGIN_REDIRECT_URL = 'msg_index'  # This is temporary
 
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    ('django.template.loaders.cached.Loader', (
-        'django.template.loaders.filesystem.Loader',
-        'django.template.loaders.app_directories.Loader',
-    )),
-)
-
-TEMPLATE_DIRS = (
-    "openebs2/templates",
-)
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': ["openebs2/templates"],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'debug': DEBUG,
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
 
 # Crispy = form addon
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 CRISPY_FAIL_SILENTLY = not DEBUG
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -104,14 +108,12 @@ INSTALLED_APPS = (
     'utils',  # Load our custom filters
 
     # Libs
-    'json_field',
     'floppyforms',
     'crispy_forms',
     'leaflet',
     # 'debug_toolbar',
 
     # Admin & tools
-    'django_admin_bootstrapped',
     'django.contrib.admin',
 )
 
@@ -207,11 +209,12 @@ FERRY_FULL_REASONCONTENT = "Boot is vol"
 
 # Push settings
 try:
-    from settings_push import *
+    from openebs2.settings_push import *
 except ImportError:
     PUSH_SETTINGS = False
 
 try:
-    from local_settings import *
+    from openebs2.local_settings import *
 except ImportError:
+    raise
     pass

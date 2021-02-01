@@ -23,71 +23,83 @@ class TestKv17MessageXmlModel(XmlTest):
 
         cls.line = Kv1Line(dataownercode='HTM', lineplanningnumber="1001", publiclinenumber="1", headsign="Naar Huis")
         cls.line.save()
-        cls.journey = Kv1Journey(dataownercode='HTM', line=cls.line, journeynumber=100, scheduleref=1, departuretime=900, direction=1)
+        cls.journey = Kv1Journey(dataownercode='HTM', line=cls.line, journeynumber=100, scheduleref=1,
+                                 departuretime=900, direction=1)
         cls.journey.save()
 
     def test_output_cancel_recover(self):
-        change = Kv17Change(dataownercode='HTM', line=self.line, journey=self.journey, operatingday=datetime(2016, 04, 01))
+        change = Kv17Change(dataownercode='HTM', line=self.line, journey=self.journey,
+                            operatingday=datetime(2016, 4, 1))
         change.save()
 
         # Have to pad with "DOSSIER" since otherwise we have invalid XML
-        self.assertXmlEqual("<DOSSIER>%s</DOSSIER>" % change.to_xml(), self.getCompareXML('openebs/tests/output/kv17_cancel.xml'))
+        self.assertXmlEqual("<DOSSIER>%s</DOSSIER>" % change.to_xml(),
+                            self.getCompareXML('openebs/tests/output/kv17_cancel.xml'))
 
         change.delete()
-        self.assertXmlEqual("<DOSSIER>%s</DOSSIER>" % change.to_xml(), self.getCompareXML('openebs/tests/output/kv17_recover.xml'))
+        self.assertXmlEqual("<DOSSIER>%s</DOSSIER>" % change.to_xml(),
+                            self.getCompareXML('openebs/tests/output/kv17_recover.xml'))
 
     def test_output_reasons(self):
-        change = Kv17Change(dataownercode='HTM', line=self.line, journey=self.journey, operatingday=datetime(2016, 04, 01))
+        change = Kv17Change(dataownercode='HTM', line=self.line, journey=self.journey,
+                            operatingday=datetime(2016, 4, 1))
         change.save()
-        Kv17JourneyChange(change=change, reasontype="1", subreasontype="24_13", advicetype="1", subadvicetype="3_1").save()
+        Kv17JourneyChange(change=change, reasontype="1", subreasontype="24_13", advicetype="1",
+                          subadvicetype="3_1").save()
 
         # Have to pad with "DOSSIER" since otherwise we have invalid XML
-        self.assertXmlEqual("<DOSSIER>%s</DOSSIER>" % change.to_xml(), self.getCompareXML('openebs/tests/output/kv17_reason_basic.xml'))
+        self.assertXmlEqual("<DOSSIER>%s</DOSSIER>" % change.to_xml(),
+                            self.getCompareXML('openebs/tests/output/kv17_reason_basic.xml'))
 
     def test_output_reasons_full(self):
-        change = Kv17Change(dataownercode='HTM', line=self.line, journey=self.journey, operatingday=datetime(2016, 04, 01))
+        change = Kv17Change(dataownercode='HTM', line=self.line, journey=self.journey,
+                            operatingday=datetime(2016, 4, 1))
         change.save()
-        Kv17JourneyChange(change=change, reasontype="1", subreasontype="24_13", reasoncontent="Er stond een paard in de gang...",
-                          advicetype="1", subadvicetype="3_1", advicecontent="Kom na carnaval maar terug: Ole!")\
+        Kv17JourneyChange(change=change, reasontype="1", subreasontype="24_13",
+                          reasoncontent="Er stond een paard in de gang...",
+                          advicetype="1", subadvicetype="3_1", advicecontent="Kom na carnaval maar terug: Ole!") \
             .save()
 
         # Have to pad with "DOSSIER" since otherwise we have invalid XML
-        self.assertXmlEqual("<DOSSIER>%s</DOSSIER>" % change.to_xml(), self.getCompareXML('openebs/tests/output/kv17_reason_full.xml'))
+        self.assertXmlEqual("<DOSSIER>%s</DOSSIER>" % change.to_xml(),
+                            self.getCompareXML('openebs/tests/output/kv17_reason_full.xml'))
 
     def test_output_mutationmessage(self):
-        journey = Kv1Journey(dataownercode='HTM', line=self.line, journeynumber=101, scheduleref=1, departuretime=905, direction=1)
+        journey = Kv1Journey(dataownercode='HTM', line=self.line, journeynumber=101, scheduleref=1, departuretime=905,
+                             direction=1)
         journey.save()
 
-        change = Kv17Change(dataownercode='HTM', line=self.line, journey=journey, operatingday=datetime(2016, 04, 01),
+        change = Kv17Change(dataownercode='HTM', line=self.line, journey=journey, operatingday=datetime(2016, 4, 1),
                             is_cancel=False)
         change.save()
         stop_change = Kv17StopChange(change=change, type=5, stop=self.haltes[0], stoporder=1,
-                       reasontype=3, subreasontype=7, reasoncontent="Boot is vol")
+                                     reasontype=3, subreasontype=7, reasoncontent="Boot is vol")
         stop_change.save()
 
         # Have to pad with "DOSSIER" since otherwise we have invalid XML
-        self.assertXmlEqual( "<DOSSIER>%s</DOSSIER>" % change.to_xml(),
-                             self.getCompareXML('openebs/tests/output/kv17_mutationmessage.xml'))
-        stop_change.advicetype=1
-        stop_change.subadvicetype=3
-        stop_change.advicecontent="Pak de volgende boot"
+        self.assertXmlEqual("<DOSSIER>%s</DOSSIER>" % change.to_xml(),
+                            self.getCompareXML('openebs/tests/output/kv17_mutationmessage.xml'))
+        stop_change.advicetype = 1
+        stop_change.subadvicetype = 3
+        stop_change.advicecontent = "Pak de volgende boot"
         stop_change.save()
 
-        self.assertXmlEqual( "<DOSSIER>%s</DOSSIER>" % change.to_xml(),
-                             self.getCompareXML('openebs/tests/output/kv17_mutationmessage_complete.xml'))
+        self.assertXmlEqual("<DOSSIER>%s</DOSSIER>" % change.to_xml(),
+                            self.getCompareXML('openebs/tests/output/kv17_mutationmessage_complete.xml'))
 
         change.delete()
-        self.assertXmlEqual( "<DOSSIER>%s</DOSSIER>" % change.to_xml(),
-                             self.getCompareXML('openebs/tests/output/kv17_mutationmessage_recover.xml'))
+        self.assertXmlEqual("<DOSSIER>%s</DOSSIER>" % change.to_xml(),
+                            self.getCompareXML('openebs/tests/output/kv17_mutationmessage_recover.xml'))
 
     def test_output_mutationmessage_and_cancel(self):
-        journey = Kv1Journey(dataownercode='HTM', line=self.line, journeynumber=101, scheduleref=1, departuretime=905, direction=1)
+        journey = Kv1Journey(dataownercode='HTM', line=self.line, journeynumber=101, scheduleref=1, departuretime=905,
+                             direction=1)
         journey.save()
 
-        change = Kv17Change(dataownercode='HTM', line=self.line, journey=journey, operatingday=datetime(2016, 04, 01))
+        change = Kv17Change(dataownercode='HTM', line=self.line, journey=journey, operatingday=datetime(2016, 4, 1))
         change.save()
         stop_change = Kv17StopChange(change=change, type=5, stop=self.haltes[0], stoporder=1,
                                      reasontype=3, subreasontype=7, reasoncontent="Boot is vol en vaart niet")
         stop_change.save()
-        self.assertXmlEqual( "<DOSSIER>%s</DOSSIER>" % change.to_xml(),
-                             self.getCompareXML('openebs/tests/output/kv17_mutationmessage_cancel.xml'))
+        self.assertXmlEqual("<DOSSIER>%s</DOSSIER>" % change.to_xml(),
+                            self.getCompareXML('openebs/tests/output/kv17_mutationmessage_cancel.xml'))

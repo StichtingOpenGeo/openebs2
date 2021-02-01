@@ -2,6 +2,7 @@ PUSH_DEFAULTS = {
     'timeout': 10,  # Seconds
     'debug': True  # Logs everything
 }
+
 PUSH_SETTINGS = [
     {'alias' : 'govi',
      'enabled' : True,

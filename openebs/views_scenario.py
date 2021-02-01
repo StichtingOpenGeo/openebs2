@@ -1,16 +1,16 @@
+from builtins import str
 import logging
-from braces.views import LoginRequiredMixin
-from django.core.urlresolvers import reverse_lazy
+from django.urls import reverse_lazy
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
-from django.views.generic import FormView, ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import FormView, ListView, CreateView, UpdateView, DeleteView, DetailView
 from djgeojson.views import GeoJSONLayerView
 from kv1.models import Kv1Stop
-from openebs.form import PlanScenarioForm, Kv15ScenarioForm
+from openebs.form import PlanScenarioForm, Kv15ScenarioForm, Kv15ScenarioMessage
 from openebs.models import Kv15Scenario, MessageStatus
 from openebs.views_push import Kv15PushMixin
 from openebs.views_utils import FilterDataownerMixin, FilterDataownerListMixin
-from utils.views import AccessMixin
+from utils.views import AccessMixin, AccessJsonMixin, JSONListResponseMixin
 
 log = logging.getLogger('openebs.views.scenario')
 
@@ -59,7 +59,7 @@ class ScenarioListView(AccessMixin, FilterDataownerListMixin, ListView):
     model = Kv15Scenario
 
     def get_queryset(self):
-        return super(ScenarioListView, self).get_queryset().order_by('name').annotate(Count('messages'));
+        return super(ScenarioListView, self).get_queryset().order_by('name').annotate(Count('messages'))
 
 
 class ScenarioCreateView(AccessMixin, CreateView):
@@ -71,7 +71,7 @@ class ScenarioCreateView(AccessMixin, CreateView):
         if self.request.user:  # TODO Improve this construct
             form.instance.dataownercode = self.request.user.userprofile.company
 
-        return super(CreateView, self).form_valid(form)
+        return super(ScenarioCreateView, self).form_valid(form)
 
     def get_success_url(self):
         return reverse_lazy('scenario_edit', args=[self.object.id])
@@ -94,7 +94,8 @@ class ScenarioDeleteView(AccessMixin, FilterDataownerMixin, DeleteView):
     success_url = reverse_lazy('scenario_index')
 
 
-class ScenarioStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
+class ScenarioStopsAjaxView(AccessJsonMixin, GeoJSONLayerView):
+    permission_required = 'openebs.view_scenario'
     model = Kv1Stop
     geometry_field = 'location'
     properties = ['name', 'userstopcode', 'dataownercode', 'messages']
@@ -104,3 +105,14 @@ class ScenarioStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
         qry = qry.filter(kv15scenariostop__message__scenario=self.kwargs.get('scenario', None),
                          kv15scenariostop__message__scenario__dataownercode=self.request.user.userprofile.company)
         return qry
+
+
+class ScenarioMessageAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_scenario'
+    model = Kv15ScenarioMessage
+    render_object = 'object'
+
+    def get_object(self):
+        queryset = self.model.objects.filter(scenario=self.kwargs.get('scenario', None),
+                                             dataownercode=self.request.user.userprofile.company).distinct()
+        return list(queryset.values('id', 'messagedurationtype'))

@@ -89,7 +89,7 @@
     </tr>
     {% for halte in object.kv15messagestop_set.all %}
         <tr>
-            <td><img class="user-icon" src="{{ STATIC_URL }}img/logos/{{ halte.stop.dataownercode|lower }}.png" /></td>
+            <td><img class="user-icon" src="{% get_static_prefix %}img/logos/{{ halte.stop.dataownercode|lower }}.png" /></td>
             <td>{{ halte.stop.name }}</td>
             <td class="text-right">{{ halte.stop.userstopcode }}</td>
         </tr>

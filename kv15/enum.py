@@ -8,9 +8,11 @@ DATAOWNERCODE = (
     ('NS',  'Nederlandse Spoorwegen'),
     ('RET', 'RET'),
     ('SYNTUS', 'Syntus'),
+    ('KEOLIS', 'Keolis'),
     ('QBUZZ', 'Qbuzz'),
     ('TCR', 'Taxi Centrale Renesse'),
-    ('GOVI', 'GOVI')
+    ('GOVI', 'GOVI'),
+    ('WSF', 'Westerschelde Ferry')
 )
 
 MESSAGEPRIORITY = (

@@ -1,4 +1,4 @@
-import httplib
+import http.client as httplib
 import logging
 import socket
 
@@ -13,7 +13,7 @@ class Push:
     fail_on_failure = False
     debug = True
 
-    def __init__(self, host, endpoint, namespace, dossiername, subscriberid = 'openOV'):
+    def __init__(self, host, endpoint, namespace, dossiername, subscriberid='openOV', use_https=False):
         self.log = logging.getLogger("openebs.push")
         self.host = host
         self.endpoint = endpoint
@@ -21,13 +21,14 @@ class Push:
         self.namespace = namespace
         self.dossiername = dossiername
         self.timestamp = now()
+        self.use_https = use_https
 
     def __str__(self):
         data = {'namespace': self.namespace,
                 'subscriberid': self.subscriberid,
                 'dossiername': self.dossiername,
-                'timestamp':self.timestamp.isoformat('T'),
-                'content' : self.content
+                'timestamp': self.timestamp.isoformat('T'),
+                'content': self.content
                 }
 
         wrapper = """<%(dossiername)s>
@@ -52,7 +53,6 @@ class Push:
 %(content)s
 </VV_TM_PUSH>""" % data
 
-
         return etree.tostring(etree.XML(xml), pretty_print=True)
 
     def push(self, content):
@@ -63,15 +63,20 @@ class Push:
         # Calculate XML with wrapper/header
         content = self.__str__()
         if self.debug:
-            self.log.debug("Pushing message:\n"+content)
+            self.log.debug("Pushing message:\n%s" % (content,))
 
         response_code = -1
         response_content = None
         error = False
         if self.enabled:
-            self.log.debug("Posting to %s (%s%s)" % (self.alias, self.host, self.endpoint))
+            self.log.debug("Posting to %s (%s://%s%s)" % (
+            self.alias, 'https' if self.use_https else 'http', self.host, self.endpoint,))
+            conn = None
             try:
-                conn = httplib.HTTPConnection(self.host, timeout=self.timeout)
+                if self.use_https:
+                    conn = httplib.HTTPSConnection(self.host, timeout=self.timeout, port=443)
+                else:
+                    conn = httplib.HTTPConnection(self.host, timeout=self.timeout)
                 conn.request("POST", self.endpoint, content, {"Content-type": "application/xml"})
             except socket.timeout:
                 error = True
@@ -80,13 +85,14 @@ class Push:
                 error = True
                 self.log.error("Got exception while connecting to %s: %s" % (self.alias, ex))
 
-            if not error:
+            if not error and conn is not None:
                 response = conn.getresponse()
                 response_code = response.status
-                response_content = response.read()
+                response_content = response.read().decode('utf-8')
                 conn.close()
 
             if self.debug:
-                self.log.debug("Connecting to %s and got response code %s and content: %s" % (self.alias, response_code, response_content))
+                self.log.debug("Connecting to %s and got response code %s and content: %s" % (
+                self.alias, response_code, response_content))
 
-        return (response_code, response_content)
+        return response_code, response_content

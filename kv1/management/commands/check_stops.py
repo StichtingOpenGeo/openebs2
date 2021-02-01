@@ -1,7 +1,5 @@
-import re, json
-from os import listdir
-from os.path import isfile, join, splitext, split
 from django.core.management import BaseCommand
+
 from kv1.models import Kv1Line, Kv1Stop
 
 
@@ -23,4 +21,4 @@ class Command(BaseCommand):
                     if stop not in missing_stops:
                         if Kv1Stop.objects.filter(dataownercode=stop[0], userstopcode=stop[1]).count() == 0:
                             missing_stops.append(stop)
-                            print "Found missing stop %s %s " % (stop[0], stop[1])
+                            print("Found missing stop %s %s " % (stop[0], stop[1]))

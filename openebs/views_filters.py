@@ -1,5 +1,5 @@
 from braces.views import LoginRequiredMixin
-from django.core.urlresolvers import reverse_lazy
+from django.urls import reverse_lazy
 from django.views.generic import ListView, DeleteView, UpdateView, CreateView
 from openebs.models import Kv1StopFilter, Kv1StopFilterStop
 
@@ -44,4 +44,3 @@ class FilterUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return reverse_lazy('filter_edit', args=(self.object.id, ))
-
