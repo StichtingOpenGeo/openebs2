@@ -21,6 +21,7 @@ from kv1.models import Kv1Stop, Kv1Line, Kv1Journey
 
 from kv15.enum import *
 from openebs2.settings import EXTERNAL_MESSAGE_USER_ID
+from utils.time import datetime_32h
 
 log = logging.getLogger('openebs.views')
 
@@ -421,9 +422,11 @@ class Kv17Change(models.Model):
 
     def to_xml(self):
         """
-        This xml will reflect the status of the object - wheter we've been canceled or recovered
+        This xml will reflect the status of the object - whether we've been canceled or recovered
         """
-        return render_to_string('xml/kv17journey.xml', {'object': self}).replace(os.linesep, '')
+        return render_to_string('xml/kv17journey.xml',
+                                {'object': self, 'begintime': datetime_32h(self.operatingday, self.begintime),
+                                 'endtime': datetime_32h(self.operatingday, self.endtime)}).replace(os.linesep, '')
 
     class Meta(object):
         verbose_name = _('Ritaanpassing')

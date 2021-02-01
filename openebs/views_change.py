@@ -12,6 +12,7 @@ from openebs.views_utils import FilterDataownerMixin
 from utils.time import get_operator_date, get_operator_date_aware
 from utils.views import AccessMixin, JSONListResponseMixin, AccessJsonMixin
 from django.utils.dateparse import parse_date
+from django.utils.timezone import now
 
 log = logging.getLogger('openebs.views.changes')
 
@@ -33,16 +34,20 @@ class ChangeListView(AccessMixin, ListView):
         change_day = operatingday + timedelta(days=change)
 
         # Get the currently active changes
-        context['active_list'] = self.model.objects.filter(operatingday__gte=change_day, is_recovered=False,
+        context['active_list'] = self.model.objects.filter(Q(endtime__gte=now()) | Q(endtime__isnull=True) &
+                                                           Q(operatingday__gte=change_day),
+                                                           is_recovered=False,
                                                            dataownercode=self.request.user.userprofile.company)
-        context['active_list'] = context['active_list'].order_by('line__publiclinenumber', 'line__lineplanningnumber',
-                                                                 '-operatingday', '-journey__departuretime')
+        context['active_list'] = context['active_list'].order_by('line__publiclinenumber', 'line__headsign',
+                                                                 'operatingday', 'journey__departuretime')
 
         # Add the no longer active changes
-        context['archive_list'] = self.model.objects.filter(Q(operatingday__lt=operatingday) | Q(is_recovered=True),
+        context['archive_list'] = self.model.objects.filter(Q(endtime__lt=now()) | Q(is_recovered=True) |
+                                                            (Q(endtime__isnull=True) & Q(operatingday__lt=change_day)),
                                                             dataownercode=self.request.user.userprofile.company,
                                                             created__gt=operatingday-timedelta(days=3))
-        context['archive_list'] = context['archive_list'].order_by('-operatingday')
+        context['archive_list'] = context['archive_list'].order_by('-operatingday', 'line__publiclinenumber',
+                                                                   '-journey__departuretime')
         return context
 
 
@@ -212,10 +217,14 @@ class ActiveLinesAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
 
         # Note, can't set this on the view, because it triggers the queryset cache
         queryset = self.model.objects.filter(Q(is_alljourneysofline=True) | Q(is_alllines=True),
-                                             operatingday=operating_day,
-                                             is_recovered=False,
+                                             operatingday=operating_day, is_recovered=False,
                                              dataownercode=self.request.user.userprofile.company).distinct()
-        return list({'id': x['line'], 'dataownercode': x['dataownercode'],
-                     'alljourneysofline': x['is_alljourneysofline'],
-                     'all_lines': x['is_alllines']} for x in
-                    queryset.values('line', 'dataownercode', 'is_alljourneysofline', 'is_alllines'))
+        # TODO: is it possible to apply a function on a value of a queryset?
+        start_of_day = datetime.combine(operating_day, datetime.min.time()).timestamp()
+        return list({'id': x['line'],
+                     'begintime': int(x['begintime'].timestamp() - start_of_day) if x['begintime'] is not None else None,
+                     'endtime': int(x['endtime'].timestamp() - start_of_day) if x['endtime'] is not None else None,
+                     'dataownercode': x['dataownercode'], 'alljourneysofline': x['is_alljourneysofline'],
+                     'all_lines': x['is_alllines']}
+                    for x in queryset.values('line', 'begintime', 'endtime', 'dataownercode', 'is_alljourneysofline',
+                    'is_alllines'))

@@ -224,3 +224,11 @@ span.stop-selection,span.trip-selection{
     background-color: #def2f9;
 }
 
+.all_selected {
+    background: #dff0d8;
+}
+
+#id_operatingday {
+    margin-bottom: 15px;
+}
+
