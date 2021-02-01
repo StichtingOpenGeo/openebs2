@@ -2,6 +2,10 @@
 var selectedTrips = [];
 var activeJourneys = [];
 var activeLine = null;
+var selectedLines = [];
+var cancelledLines = [];
+var currentLineMeasures = null;
+var lijnList = [];
 
 function changeSearch(event) {
     if ($("#line_search").val().length > 0) {
@@ -17,9 +21,21 @@ function writeList(data, status) {
     $.each(data.object_list, function (i, line) {
         validIds.push('l'+line.pk)
         if (!$('#l'+line.pk).length) {
-            row = '<tr class="line" id="l'+line.pk+'"><td>'+line.publiclinenumber+ '</td>';
-            row += '<td>'+line.headsign+'</td></tr>';
-            $(row).hide().appendTo("#rows").fadeIn(200);
+            if (line.publiclinenumber) { // not all lines with a lineplanningnumber has a publiclinenumber or headsign
+                var out = ''
+                if (line.publiclinenumber != line.lineplanningnumber) {
+                out += "<strong>"+line.publiclinenumber+"</strong>"
+                out += " / "
+                out += "<small>"+line.lineplanningnumber+"</small>"
+                    row = '<tr class="line" id="l'+line.pk+'"><td>'+out+'</td>';
+                } else {
+                    out += "<strong>"+line.publiclinenumber+"</strong>"
+                    out += '<span class="hidden"><small>'+line.lineplanningnumber+'</small>'
+                    row = '<tr class="line" id="l'+line.pk+'"><td>'+out+'</td>';
+                }
+                row += '<td>'+line.headsign+'</td></tr>';
+                $(row).hide().appendTo("#rows").fadeIn(200);
+            }
         }
     });
 
@@ -38,7 +54,6 @@ function showTrips(event) {
     activeLine = $(this).attr('id').substring(1);
 
     showTripsOnChange();
-
     $('#line').val(activeLine);
     $(this).addClass('success');
 }
@@ -51,9 +66,20 @@ function loadPreselectedJourneys() {
 }
 
 function selectTrip(event, ui) {
+    if ($.inArray($("#all_journeys").text(), selectedTrips) != -1) {
+        emptyJourneyList();
+        $('.lijn-overzicht').css("display","none");
+        emptyLineList();
+    }
+    $("#trips td.all_selected").removeClass('all_selected');
+    $('.lijn-overzicht').css("display","none");
+    $('.rit-overzicht').css("display","block");
+    $('#lijn-list span').remove();
+
     var ritnr = $(ui.selected).attr('id').substring(1);
-    if ($.inArray(parseInt(ritnr), activeJourneys) != -1) /* Note our array stores numbers, so convert */
-        return;
+    if ($.inArray(parseInt(ritnr), activeJourneys) != -1 /* Note our array stores numbers, so convert */
+       || $(ui.selected).hasClass("line_warning")) /* TODO: ritnr array selection faster than class selection? This disables trip that have been line cancelled. */
+       return;
 
     var id = $.inArray(ritnr, selectedTrips);
     if (id == -1) {
@@ -70,7 +96,17 @@ function selectTrip(event, ui) {
 }
 
 function removeTripFromX(event, ui) {
-    removeTrip($(this).parent().attr('id').substring(2));
+    if ($.inArray($("#all_journeys").text(), selectedTrips) != -1) {
+        $('#rit-list span').empty();
+        $('#rit-list .help').show();
+        $("#journeys").val('')
+        $('#lijn-list').empty();
+        lijnList = [];
+        $("#lines").val('')
+        $('.lijn-overzicht').css("display","none");
+    } else {
+        removeTrip($(this).parent().attr('id').substring(2));
+    }
 }
 
 function removeTrip(ritnr) {
@@ -95,7 +131,6 @@ function writeTripList() {
 }
 
 function writeTrips(data, status) {
-    tripRows = null;
     maxLen = Math.max(data.object.trips_1.length, data.object.trips_2.length);
     if (maxLen > 0) {
         $('#trips tbody').fadeOut(100).empty();
@@ -112,9 +147,11 @@ function writeTrips(data, status) {
         $('#trips tbody').hide().append(tripRows);
         $('#trips thead').fadeIn(200);
         $('#trips tbody').fadeIn(200);
+        $("#all_journeys").removeAttr('disabled');
     } else {
         $('#trips thead').hide();
         $('#trips tbody').text("Geen ritten in database.");
+        $('#all_journeys').attr('disabled','disabled');
     }
 }
 
@@ -130,8 +167,13 @@ function renderTripCell(trip) {
     if (trip == null)
         return "<td>&nbsp;</td>";
 
+    $('#trips td.warning').removeClass('warning');
+    $('#trips td.line_warning').removeClass('line_warning');
+
     if ($.inArray(trip.id, activeJourneys) != -1) {
         out = '<td class="trip warning" id="t'+trip.id+'">'
+    } else if (currentLineMeasures.length > 0) {
+        out = '<td class="trip line_warning" id="t'+trip.id+'">'
     } else {
         out = '<td class="trip" id="t'+trip.id+'">'
     }
@@ -139,6 +181,9 @@ function renderTripCell(trip) {
     out += "&nbsp;<small>Vertrek "+convertSecondsToTime(trip.departuretime)+"</small>"
     if ($.inArray(trip.id, activeJourneys) != -1) {
         out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Rit is al opgeheven"></span>'
+    }
+    if (currentLineMeasures.length > 0) {
+    out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Lijn is al opgeheven"></span>'
     }
     out += "</td>"
     return out
@@ -167,19 +212,147 @@ function changeOperatingDayTrips() {
     selectedTrips = [];
     activeJourneys  = [];
     $("#journeys").val('');
-    getActiveJourneys();
+    getActiveLines();
     var operating_day_text = $("#id_operatingday option:selected" ).text();
     $("#operating_day_text").text(operating_day_text);
 }
 
 function showTripsOnChange() {
     if (activeLine != null) {
+        currentLineMeasures = cancelledLines.filter(l => l.id == activeLine || l.id === null);
         var operating_day = $("#id_operatingday").val();
         $.ajax({ url: '/line/'+activeLine+'/ritten',
          data: {'operatingday': operating_day},
             success : writeTrips
         });
     }
+}
+
+function getActiveLines() {
+var operating_day = $("#id_operatingday").val();
+    if (operating_day != null) {
+        $.ajax({ url: '/ritaanpassing/lijnen.json',
+            data: {'operatingday': operating_day},
+            success : saveLines
+        });
+    } else {
+        cancelledLines = [];
+        $('#trips thead').hide();
+        $('#trips tbody').addClass('empty_database');
+        $('#trips tbody').text("Er staan geen ritten in de database.");
+    }
+}
+
+function saveLines(data, status) {
+    if (data.object) {
+        cancelledLines = data.object;
+    } else {
+        cancelledLines = [];
+    }
+    getActiveJourneys();
+}
+
+function selectAllTrips() {
+    selectedTrips = []
+    activeJourneys = []
+    $('#journeys').val('');
+    $('#rit-list span').empty();
+    $("#trips tr td").removeClass('success');
+    $('#rit-list .help').hide();
+    $('.lijn-overzicht').css("display","block");
+
+    var ritnr = $("#all_journeys").text();
+    var dellink = '<span class="trip-remove glyphicon glyphicon-remove"></span>';
+    $('#rit-list').append('<span id="st'+ritnr+'" class="pull-left trip-selection label label-danger">'+ritnr+' '+dellink+'</span>');
+    selectedTrips.push(ritnr);
+
+    if ($.inArray(activeLine, selectedLines) == -1) {
+        var label = $('#rows tr.success').find("strong").text();
+        var lijn = $('#rows tr.success').find("small").text();
+        var dellink_line = '<span class="line-remove glyphicon glyphicon-remove"></span>';
+        $('#lijn-list').append('<span id="st'+label+'" class="pull-left line-selection label label-danger">'+label+' '+dellink_line+'</span>');
+        lijnList.push(lijn);
+        writeLineList();
+    }
+    writeTripList();
+
+    /* in case of a small screen with everything below each other instead of next to */
+    document.querySelector('#ritaanpassing').scrollIntoView({
+        behavior: 'smooth'
+    });
+}
+
+function writeLineList() {
+    var id = $.inArray(activeLine, selectedLines);
+    if (activeLine !== '' && id == -1) {
+        selectedLines.push(activeLine);
+        var out = "";
+        $.each(selectedLines, function(index, val) {
+            out += val+',';
+        });
+        $("#lines").val(out);
+    }
+}
+
+function emptyLineList() {
+    lijnList = [];
+    $("#lijn-list").empty();
+    $("#lines").val('');
+    selectedLines = [];
+    cancelledLines = [];
+    currentLineMeasures = [];
+    $('#lijn-list span').remove();
+    $('.lijn-overzicht').css("display","none");
+}
+
+function removeLineFromX(event, ui) {
+    if ($.inArray($("#all_lines").text(), selectedLines) != -1) {
+        $('.rit-overzicht').css("display","block");
+        $('#rit-list .help').show();
+        $('#lijn-list').empty();
+        lijnList = [];
+        $("#lines").val('')
+        $('.lijn-overzicht').css("display","none");
+    } else {
+        removeLine($(this).parent().attr('id').substring(2));
+    }
+}
+
+function removeLine(lijn) {
+    var id = $.inArray(lijn, lijnList);
+
+    if (id != -1) {
+        $('#st'+lijn).remove();
+        selectedLines.splice(id, 1);
+        lijnList.splice(id, 1);
+        var out = "";
+        $.each(selectedLines, function(index, val) {
+            out += val+',';
+        });
+        $("#lines").val(out);
+
+    }
+    if (selectedLines.length == 0) {
+        $('#rit-list .help').show();
+        $('#rit-list span').remove();
+        $('.lijn-overzicht').css("display","none");
+        $("#journeys").val('');
+    }
+}
+
+function emptyJourneyList() {
+    selectedTrips = [];
+    activeJourneys = [];
+    allTrips = [];
+    tripSelection = [];
+    selectTripMeasures = [];
+    $("#rit-list span").remove();
+    $('.rit-overzicht').css("display","block");
+    $('#rit-list .help').show();
+    $('#trips thead').show();
+    $('#trips tbody').show();
+    $("#trips tr td").removeClass('ui-selected success');
+    $("#journeys").val('');
 }
 
 /* TIME FUNCTIONS */

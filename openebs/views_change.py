@@ -22,6 +22,7 @@ class ChangeListView(AccessMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super(ChangeListView, self).get_context_data(**kwargs)
+        operatingday = get_operator_date_aware()
 
         # active list updates at 4 am.
         if datetime.now().hour < 4:
@@ -29,7 +30,7 @@ class ChangeListView(AccessMixin, ListView):
         else:
             change = 0
 
-        change_day = get_operator_date() + timedelta(days=change)
+        change_day = operatingday + timedelta(days=change)
 
         # Get the currently active changes
         context['active_list'] = self.model.objects.filter(operatingday__gte=change_day, is_recovered=False,
@@ -38,9 +39,9 @@ class ChangeListView(AccessMixin, ListView):
                                                                  '-operatingday', '-journey__departuretime')
 
         # Add the no longer active changes
-        context['archive_list'] = self.model.objects.filter(Q(operatingday__lt=get_operator_date_aware()) | Q(is_recovered=True),
+        context['archive_list'] = self.model.objects.filter(Q(operatingday__lt=operatingday) | Q(is_recovered=True),
                                                             dataownercode=self.request.user.userprofile.company,
-                                                            created__gt=get_operator_date_aware()-timedelta(days=3))
+                                                            created__gt=operatingday-timedelta(days=3))
         context['archive_list'] = context['archive_list'].order_by('-operatingday')
         return context
 
@@ -199,3 +200,22 @@ class ActiveJourneysAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView)
                                              is_recovered=False,
                                              dataownercode=self.request.user.userprofile.company).distinct()
         return list(queryset.values('journey_id', 'dataownercode', 'is_recovered'))
+
+
+class ActiveLinesAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_change'
+    model = Kv17Change
+    render_object = 'object'
+
+    def get_object(self):
+        operating_day = parse_date(self.request.GET['operatingday']) if 'operatingday' in self.request.GET else get_operator_date()
+
+        # Note, can't set this on the view, because it triggers the queryset cache
+        queryset = self.model.objects.filter(Q(is_alljourneysofline=True) | Q(is_alllines=True),
+                                             operatingday=operating_day,
+                                             is_recovered=False,
+                                             dataownercode=self.request.user.userprofile.company).distinct()
+        return list({'id': x['line'], 'dataownercode': x['dataownercode'],
+                     'alljourneysofline': x['is_alljourneysofline'],
+                     'all_lines': x['is_alllines']} for x in
+                    queryset.values('line', 'dataownercode', 'is_alljourneysofline', 'is_alllines'))

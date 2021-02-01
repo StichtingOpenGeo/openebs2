@@ -219,3 +219,8 @@ span.stop-selection,span.trip-selection{
 #import-table {
     width: 25%;
 }
+
+.line_warning {
+    background-color: #def2f9;
+}
+

@@ -1,19 +1,45 @@
 {% load i18n filters %}
-<h4>{% trans "Lijn" %} {{ line.grouper.publiclinenumber }} <small>{{ line.grouper.headsign }}</small></h4>
-  <table class="table table-condensed table-bordered">
+{% if line.grouper.publiclinenumber %}
+    <h4>{% trans "Lijn" %} {{ line.grouper.publiclinenumber }} <small>{{ line.grouper.headsign }}</small></h4>
+{% else %}
+<h4>{% trans "Alle lijnen" %}</h4>
+    {% trans "Alle ritten van vervoerder" as all_lines %}
+{% endif %}
+
+<table class="table table-condensed table-bordered">
   <tr>
       <th class="col-sm-2">{% trans "Ritdatum" %}</th>
-      <th class="col-sm-2">{% trans "Vertrektijd" %}</th>
       <th class="col-sm-4">{% trans "Ritnummer" %}</th>
       <th class="col-sm-1"></th>
   </tr>
   {% for msg in line.list %}
       <tr>
           <td>{{ msg.operatingday|date:"d-m-Y" }}</td>
-          <td>{{ msg.journey.departuretime|seconds_time|date:"H:i"}}</td>
-          <td>{{ msg.journey.journeynumber }}</td>
           <td>
-            {% if perms.openebs.add_change %}
+            {% if msg.journey %}
+                {{ msg.journey.journeynumber }} <small>(Vertrek {{ msg.journey.departuretime|seconds_time|date:"H:i"}})</small>
+            {% elif all_lines %}
+                {{ all_lines }}
+            {% else %}
+              {% trans "Alle ritten" %}
+            {% endif %}
+          </td>
+          <td>
+            {% if msg.journey and perms.openebs.add_change %}
+                <form method="post" action="{% url 'change_delete' msg.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-xs btn-danger pull-right">
+                        <span class="glyphicon glyphicon-trash"></span>
+                    </button>
+                </form>
+            {% elif msg.line and perms.openebs.cancel_lines %}
+                <form method="post" action="{% url 'change_delete' msg.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-xs btn-danger pull-right">
+                        <span class="glyphicon glyphicon-trash"></span>
+                    </button>
+                </form>
+            {% elif not msg.journey or not msg.line and perms.openebs.cancel_alllines %}
                 <form method="post" action="{% url 'change_delete' msg.id %}">
                     {% csrf_token %}
                     <button class="btn btn-xs btn-danger pull-right">
