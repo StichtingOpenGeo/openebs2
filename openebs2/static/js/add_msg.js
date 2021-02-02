@@ -263,7 +263,7 @@ function checkMessageTime(event, ui) {
 
     if (starttime >= endtime) {
         if ($(this).attr('id') == "id_messagestarttime") {
-            endtime.setDate(endtime.getDate()+1);
+            endtime.setDate(starttime.getDate()+1);
             $("#id_messageendtime").val(formatDate(endtime));
         } else {
             starttime.setDate(endtime.getDate()-1);
