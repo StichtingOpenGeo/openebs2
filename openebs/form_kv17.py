@@ -33,7 +33,7 @@ class Kv17ChangeForm(forms.ModelForm):
     advicecontent = forms.CharField(max_length=255, label=_("Uitleg advies"), required=False,
                                     widget=forms.Textarea(attrs={'cols': 40, 'rows': 4, 'class': 'col-lg-6'}))
 
-    def clean(self):
+    def clean(self):  # should be redundant after jquery filter in html-form, but just in case
         cleaned_data = super(Kv17ChangeForm, self).clean()
         operatingday = parse_date(self.data['operatingday'])
         if operatingday is None:
