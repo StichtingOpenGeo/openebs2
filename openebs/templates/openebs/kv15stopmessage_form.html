@@ -29,11 +29,13 @@
                        value="{% for halte in object.kv15messagestop_set.all %}{{ halte.stop.dataownercode }}_{{ halte.stop.userstopcode }},{% endfor %}" />
                 {% endif %}
             </div>
+            <div id="error_list" class="hidden"></div>
+
             <div class="clearfix"></div>
             {% crispy form form.helper %}
             <div class="form-group">
-                    <br />
-                    <button type="submit" class="btn btn-primary">{% trans "Toevoegen" %}</button>
+                <br />
+                <button type="button" class="btn btn-primary" onclick="formValidation()">{% trans "Doorvoeren" %}</button>
             </div>
         </form>
     </div>

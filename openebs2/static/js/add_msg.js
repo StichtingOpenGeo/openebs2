@@ -256,6 +256,49 @@ function writeHaltesWithMessages(data, status) {
     });
 }
 
+function formValidation() {
+    validationerrors = []
+
+    // check for empty messagecontent
+    if ($('#id_messagecontent').val().trim().length == 0) {
+        validationerrors.push("Bericht mag niet leeg zijn.");
+    }
+
+    // check if begin- and endtime is filled correctly
+    var dates = [$('#id_messagestarttime').val().trim(), $('#id_messageendtime').val().trim()]
+    $.each(dates, function(i, date) {
+        var dateparts = date.split(' ')[0].split('-');
+        if (dateparts.length !== 3 ||
+            dateparts[0].length == 0 || dateparts[0].length > 2 ||
+            dateparts[1].length == 0 || dateparts[1].length > 2 || dateparts[2].length !== 4) {
+            if (i == 0) {
+                validationerrors.push("Voer een geldige begintijd in (dd-mm-jjjj uu:mm:ss)")
+            } else {
+                validationerrors.push("Voer een geldige eindtijd in (dd-mm-jjjj uu:mm:ss)")
+            }
+        }
+    });
+
+    // check if stops are filled
+    if ($('#haltes').val().length == 0) {
+        validationerrors.push("Selecteer minimaal een halte.")
+    }
+
+    if (validationerrors.length == 0) {
+        $(".form").submit();
+    } else {
+        if (!$("#error_list").hasClass('hidden')) {
+            $("#error_list").empty();
+        }
+        $.each(validationerrors, function(i, error) {
+            $("#error_list").append('<p><span class="glyphicon glyphicon-flag" style="color:red"><em class="help" style="color: red"> '+error+'</em></span></p>');
+        });
+        if ($("#error_list").hasClass('hidden')) {
+            $("#error_list").removeClass('hidden');
+        }
+    }
+}
+
 /* TIME FUNCTIONS */
 function checkMessageTime(event, ui) {
     var starttime = parseDate($("#id_messagestarttime").val());
