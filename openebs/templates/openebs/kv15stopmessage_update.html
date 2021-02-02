@@ -23,6 +23,7 @@
                 <input type="hidden" id="haltes" name="haltes"
                        value="{% for halte in object.kv15messagestop_set.all %}{{ halte.stop.dataownercode }}_{{ halte.stop.userstopcode }},{% endfor %}" />
             </div>
+            <div id="error_list" class="hidden"></div>
             <div class="clearfix"></div>
             {% csrf_token %}
             {% crispy form form.helper %}
@@ -33,7 +34,7 @@
                 </p>
             </div>
             <div class="form-group">
-                <button type="submit" class="btn btn-primary">{% trans "Opslaan" %}</button>
+                <button type="button" class="btn btn-primary" onclick="formValidation()">{% trans "Opslaan" %}</button>
             </div>
         </form>
     </div>
