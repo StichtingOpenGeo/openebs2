@@ -90,13 +90,15 @@
                         {% endif %}
                     </p><br />
                 </div>
+                <div id="error_list" class="hidden"></div>
+
             </div>
             <div class="clearfix"></div>
             <br />
             {% crispy form form.helper %}
             <div class="form-group">
                 <br />
-                <button type="submit" class="btn btn-primary">{% trans "Doorvoeren" %}</button>
+                <button type="button" class="btn btn-primary" onclick="formValidation()">{% trans "Doorvoeren" %}</button>
             </div>
         </form>
     </div>
