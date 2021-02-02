@@ -65,7 +65,6 @@ class Kv15StopMessageForm(forms.ModelForm):
             return self.cleaned_data
 
     def clean_messagecontent(self):
-        # Improve: Strip spaces from message
         if ('messagecontent' not in self.cleaned_data or self.cleaned_data['messagecontent'] is None or len(
                 self.cleaned_data['messagecontent'].strip()) == 0) \
                 and self.cleaned_data['messagetype'] != 'OVERRULE':
