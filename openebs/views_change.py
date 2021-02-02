@@ -79,7 +79,7 @@ class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
         journey_errors = 0
         journeys = []
         for journey in self.request.GET['journey'].split(','):
-            if journey == "":
+            if len(journey.strip()) == 0:
                 continue
             log.info("Finding journey %s for '%s'" % (journey, self.request.user))
             j = Kv1Journey.find_from_realtime(self.request.user.userprofile.company, journey)
