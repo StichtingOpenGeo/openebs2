@@ -274,8 +274,27 @@ class PlanScenarioForm(forms.Form):
         if 'messageendtime' not in data:
             raise ValidationError(_("Voer een geldige eindtijd in"))
 
+        datetimevalidation = []
+        try:
+            datetime.strptime(self.data['messagestarttime'], "%d-%m-%Y %H:%M:%S")
+        except:
+            datetimevalidation.append(_("Voer een geldige begintijd in (dd-mm-jjjj uu:mm:ss)"))
+            pass
+
+        try:
+            datetime.strptime(self.data['messageendtime'], "%d-%m-%Y %H:%M:%S")
+        except:
+            datetimevalidation.append(_("Voer een geldige eindtijd in (dd-mm-jjjj uu:mm:ss)"))
+            pass
+
+        if len(datetimevalidation) == 2:
+            raise ValidationError(_("Voer een geldige begin- en eindtijd in (dd-mm-jjjj uu:mm:ss)"))
+        elif len(datetimevalidation) == 1:
+            raise ValidationError(datetimevalidation[0])
+
         if data['messageendtime'] <= data['messagestarttime']:
             raise ValidationError(_("Einde bericht moet na begin zijn"))
+
         return data
 
     def __init__(self, *args, **kwargs):
