@@ -42,7 +42,7 @@ class FerryKv6Messages(models.Model):
         ARRIVED = 10
 
     STATUS = (
-        (Status.READY, _("Gereerd voor vertrek")),
+        (Status.READY, _("Gereed voor vertrek")),
         (Status.DEPARTED, _("Vertrokken")),
         (Status.ARRIVED, _("Aankomst")),
     )
