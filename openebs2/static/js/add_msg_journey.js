@@ -535,76 +535,34 @@ function changeOfRange() {
 }
 
 function formValidation() {
-    // check if operatingday is filled
-    validationerrors = []
-    operatingday = $('#id_operatingday').val();
-    if (operatingday === null) {
-        validationerrors.push("Er staan geen ritten in de database.")
-    }
-    // check if journeys are filled
-    if ($('#lines').val().length == 0 && $('#journeys').val().length == 0) {
-        validationerrors.push("Er zijn geen ritten geselecteerd om op te heffen.")
-    } else if ($('#lines').val().length !== 0) {
-        var begintime = null;
-        var endtime = null;
-        if ($('#id_begintime_part').val().length !== 0) {
-            begintime = stringToTime($('#id_begintime_part').val());
-        }
-        if ($('#id_endtime_part').val().length !== 0) {
-            endtime = stringToTime($('#id_endtime_part').val());
-        }
-
-        if (begintime !== null && endtime !== null) {
-            if (endtime >= 25200 && endtime < begintime) {
-                validationerrors.push("Eindtijd valt op volgende operationele dag.")
+    $.ajax({url: '/ritaanpassing/validatie.json',
+            data: {'operatingday': $('#id_operatingday').val(),
+                   'lines': $('#lines').val(),
+                   'journeys': $('#journeys').val(),
+                   'begintime': $('#id_begintime_part').val(),
+                   'endtime': $('#id_endtime_part').val(),
+            },
+            success : function(result) {
+                var validationerrors = result.object;
+                if (validationerrors.length == 0) {
+                    $(".form").submit();
+                } else {
+                    if (validationerrors.length == 0) {
+                        $(".form").submit();
+                    } else {
+                        if (!$("#error_list").hasClass('hidden')) {
+                            $("#error_list").empty();
+                        }
+                        $.each(validationerrors, function(i, error) {
+                            $("#error_list").append('<p><span class="glyphicon glyphicon-flag" style="color:red"><em class="help" style="color: red"> '+error+'</em></span></p>');
+                        });
+                        if ($("#error_list").hasClass('hidden')) {
+                            $("#error_list").removeClass('hidden');
+                        }
+                    }
+                }
             }
-        }
-        var is_active = 0;
-        $.each(selectedLines, function(i, line_id) {
-            if (line_id == 'Hele vervoerder') {
-                line_id = null;
-            }
-            check_results = check_for_active_lines(line_id, begintime, endtime);
-            if (check_results !== 0) {
-                is_active += 1;
-            }
-        });
-        if (is_active > 0) {
-            validationerrors.push("De ingangstijd valt al binnen een geplande operatie.");
-        }
-    }
-
-    if (validationerrors.length == 0) {
-        $(".form").submit();
-    } else {
-        if (!$("#error_list").hasClass('hidden')) {
-            $("#error_list").empty();
-        }
-        $.each(validationerrors, function(i, error) {
-            $("#error_list").append('<p><span class="glyphicon glyphicon-flag" style="color:red"><em class="help" style="color: red"> '+error+'</em></span></p>');
-        });
-        if ($("#error_list").hasClass('hidden')) {
-            $("#error_list").removeClass('hidden');
-        }
-    }
-}
-
-function check_for_active_lines(line_id, begintime, endtime) {
-    count = 0;
-    cancelledLines.filter(measure => {
-        if (measure.id === line_id || measure.id === null) {
-            if (measure.begintime === null && measure.endtime === null) {
-                count += 1;
-            } else if (measure.begintime === null && measure.endtime > begintime) {
-                count += 1;
-            } else if (measure.begintime <= begintime && measure.endtime === null) {
-                count += 1;
-            } else if (measure.begintime <= begintime && measure.endtime >= begintime) {
-                count += 1;
-            }
-        }
     });
-    return count;
 }
 
 /* TIME FUNCTIONS */
