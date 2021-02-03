@@ -2,6 +2,8 @@
 var selectedStops = []
 var scenarioStops = []
 var blockedStops = [] /* Already have messages set */
+var messageData = [] /* all info from blocked stops */
+var activeLine = null /* lineplanningnumber */
 
 function changeSearch(event) {
     if ($("#line_search").val().length > 0) {
@@ -58,14 +60,18 @@ function showStops(event) {
 }
 
 function selectStop(event, ui) {
-    $('#halte-list .help').remove()
+    var stop_id = $(ui.selected).attr('id').slice(1,-1);
+    if ($.inArray(stop_id, blockedStops) != -1 & $('#id_messagetype_3').parent().hasClass('active') === false) { // if blocked and no OVERRULE
+        return
+    }
     if (doSelectStop(ui.selected)) {
+        $('#halte-list .help').addClass('hidden');
         writeHaltesField();
     }
 }
 
 function selectStopFromBall(obj) {
-    $('#halte-list .help').remove()
+    $('#halte-list .help').addClass('hidden');
     var did = false
     var parent = $(this).parents('.stopRow');
     var left = $(parent).find(".stop-left");
@@ -85,6 +91,7 @@ function selectStopFromBall(obj) {
 }
 
 function selectAllVisibleStops() {
+    $('#halte-list .help').addClass('hidden');
     $('#stops .stop').each(function(index, value) {
         /* Check this is not already selected */
         index = $(this).attr('id').slice(0, -1);
@@ -166,13 +173,19 @@ function removeStop(id) {
         $("#s"+id).remove();
         $("#"+id+"l, #"+id+"r").removeClass('success')
         $("#"+id+"l .stop-check, #"+id+"r .stop-check").remove()
+        if (selectedStops.length == 0) {
+            $('#halte-list .help').removeClass('hidden');
+        }
         writeHaltesField()
     }
 }
 
 function writeLine(data, status) {
+    //$('#stops').removeClass('msg_warning');
     $('#stops').fadeOut(100).empty();
     out = ""
+    blockedStops = [];
+
     $.each(data.object.stop_map, function (i, stop) {
         out += renderRow(stop)
     });
@@ -182,6 +195,21 @@ function writeLine(data, status) {
 }
 
 function renderRow(row) {
+    var pathname = window.location.pathname;
+    if (pathname.indexOf('scenario') == -1) {
+        var currentStopMeasures = [];
+        var messagestarttime = epoch(parseDate($('#id_messagestarttime').val()));
+        var messageendtime = epoch(parseDate($('#id_messageendtime').val()));
+
+        messageData.filter(measure => {
+            if (measure.starttime <= messagestarttime) {
+                if (measure.endtime >= messagestarttime || measure.endtime === null) {
+                    stop = measure.dataownercode + '_' + measure.userstopcode;
+                    currentStopMeasures.push([stop, measure.starttime, measure.endtime, measure.message]);
+                }
+            }
+        });
+    }
     out = '<tr class="stopRow">';
     if (row.left != null) {
         if ($.inArray(row.left.id, scenarioStops) != -1) {
@@ -191,11 +219,24 @@ function renderRow(row) {
             if ($.inArray('s'+row.left.id, selectedStops) != -1) {
                 out += '<td class="stop stop-left success" id="'+id+'">'+row.left.name+'<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;'
             } else {
-                out += '<td class="stop stop-left" id="'+id+'">'+row.left.name;
-                if ($.inArray(row.left.id, blockedStops) != -1) {
-                    out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al bericht"></span>'
+                var pathname = window.location.pathname;
+                if (pathname.indexOf('scenario') == -1) {
+                    var selected = currentStopMeasures.filter(message => message[0] === row.left.id);
+                    if (selected.length > 0) {
+                        out += '<td class="stop stop-left msg_warning" id="'+id+'">'+row.left.name;
+                        out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze begintijd"></span>';
+                        blockedStops.push(row.left.id);
+                    } else {
+                        out += '<td class="stop stop-left" id="'+id+'">'+row.left.name;
+                    }
+                    out += '</td>';
+                } else {
+                    out += '<td class="stop stop-left" id="'+id+'">'+row.left.name;
+                    if ($.inArray(row.left.id, blockedStops) != -1) {
+                        out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al bericht"></span>'
+                    }
+                    out += '</td>';
                 }
-                out += '</td>';
             }
         }
     } else {
@@ -216,11 +257,24 @@ function renderRow(row) {
             if ($.inArray('s'+row.right.id, selectedStops) != -1) {
                 out += '<td class="stop stop-right success" id="'+id+'">'+row.right.name+'<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;</td>';
             } else {
-                out += '<td class="stop stop-right" id="'+id+'">'+row.right.name;
-                if ($.inArray(row.right.id, blockedStops) != -1) {
-                    out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al bericht"></span>'
+                var pathname = window.location.pathname;
+                if (pathname.indexOf('scenario') == -1) {
+                    var selected = currentStopMeasures.filter(message => message[0] === row.right.id);
+                    if (selected.length > 0) {
+                        out += '<td class="stop stop-right msg_warning" id="'+id+'">'+row.right.name;
+                        out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze begintijd"></span>'
+                        blockedStops.push(row.right.id);
+                    } else {
+                        out += '<td class="stop stop-right" id="'+id+'">'+row.right.name;
+                    }
+                    out += '</td>';
+                } else {
+                    out += '<td class="stop stop-right" id="'+id+'">'+row.right.name;
+                    if ($.inArray(row.right.id, blockedStops) != -1) {
+                        out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al bericht"></span>'
+                    }
+                    out += '</td>';
                 }
-                out += '</td>';
             }
         }
     } else {
@@ -252,10 +306,11 @@ function getHaltesWithMessages() {
 }
 
 function writeHaltesWithMessages(data, status) {
-    $.each(data.object, function (i, halte) {
-        stop = halte['dataownercode']+ '_' + halte['userstopcode']
-        blockedStops.push(stop)
-    });
+    messageData = data.object;
+    //$.each(data.object, function (i, halte) {
+    //    stop = halte['dataownercode']+ '_' + halte['userstopcode']
+    //    blockedStops.push(stop)
+    //});
 }
 
 function formValidation() {
@@ -337,6 +392,40 @@ function formValidation() {
      });
 }
 
+function showStopsOnChange() {
+    $('.stopRow span').remove();
+    $('.stop').removeClass('msg_warning');
+    blockedStops = [];
+    if (messageData.length > 0) {
+        const filtered = messageData.filter(message => {
+            start_epoch = epoch(parseDate($('#id_messagestarttime').val()));
+            end_epoch = epoch(parseDate($('#id_messageendtime').val()));
+            if (message.starttime <= start_epoch) {
+                if (message.endtime >= start_epoch || message.endtime === null) {
+                    return true
+                }
+            }
+        });
+        var stops = [];
+        if (filtered.length > 0) {
+            filtered.filter(message => {
+                if ($.inArray(message.userstopcode, stops) == -1) {
+                    stops.push(message.userstopcode);
+                    blockedStops.push(message.dataownercode+"_"+message.userstopcode);
+                }
+            });
+
+            $.each(stops, function(i, stop) {
+                $('[id*='+stop+']').addClass('msg_warning')
+                $('[id*='+stop+']').append('<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze begintijd"></span>');
+                            });
+        }
+    }
+    //filterCurrentHalteList();
+    $('.stopRow td.success').append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;');
+    writeHaltesField();
+
+}
 
 /* TIME FUNCTIONS */
 function checkMessageTime(event, ui) {
@@ -436,4 +525,8 @@ function showEndTime() {
    enddate.setDate(enddate.getDate()+1);
    $('#id_messageendtime').val(formatDate(enddate));
 
+}
+
+function epoch(date) {
+    return Date.parse(date) / 1000;
 }

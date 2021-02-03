@@ -232,3 +232,6 @@ span.stop-selection,span.trip-selection{
     margin-bottom: 15px;
 }
 
+.msg_warning {
+    background-color: #fcf8e3;
+}

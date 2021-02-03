@@ -225,13 +225,21 @@ class ActiveStopsAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
 
     def get_object(self, **kwargs):
         # Note, can't set this on the view, because it triggers the queryset cache
-        queryset = self.model.objects.filter(messages__stopmessage__messagestarttime__lte=now(),
-                                             messages__stopmessage__messageendtime__gte=now(),
+        queryset = self.model.objects.filter(#messages__stopmessage__messagestarttime__lte=now(),
+                                             Q(messages__stopmessage__messageendtime__gte=now()) |
+                                             Q(messages__stopmessage__messageendtime=None),
                                              messages__stopmessage__isdeleted=False,
                                              # These two are double, but just in case
                                              messages__stopmessage__dataownercode=self.request.user.userprofile.company,
                                              dataownercode=self.request.user.userprofile.company).distinct()
-        return list(queryset.values('dataownercode', 'userstopcode'))
+        return list({'dataownercode': x['dataownercode'],
+                     'userstopcode': x['userstopcode'],
+                     'starttime': int(x['messages__stopmessage__messagestarttime'].timestamp()),
+                     'endtime': int(x['messages__stopmessage__messageendtime'].timestamp()) if
+                        x['messages__stopmessage__messageendtime'] is not None else None,
+                     'message': x['messages__stopmessage__messagecontent']} for x in
+                    queryset.values('dataownercode', 'userstopcode', 'messages__stopmessage__messagestarttime',
+                                    'messages__stopmessage__messageendtime', 'messages__stopmessage__messagecontent'))
 
 
 class MessageStopsAjaxView(AccessJsonMixin, GeoJSONLayerView):

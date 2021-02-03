@@ -21,6 +21,7 @@ $('body').on('click', '#id_messagestarttime,#id_messageendtime', function() {
 });
 $('body').on('change', '#id_messagestarttime,#id_messageendtime', calculateTime);
 $('body').on('change', '#id_messagestarttime,#id_messageendtime', checkMessageTime);
+$('body').on('change', '#id_messagestarttime,#id_messageendtime', showStopsOnChange);
 $('body').on('change', '#id_messagedurationtype_1', function() {
     hideEndTime();
 });
