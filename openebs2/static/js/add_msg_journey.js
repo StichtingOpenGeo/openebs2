@@ -154,7 +154,8 @@ function writeTrips(data, status) {
     tripSelection = data.object.trips_1.concat(data.object.trips_2);
     maxLen = Math.max(data.object.trips_1.length, data.object.trips_2.length);
     if (maxLen > 0) {
-        $('#trips tbody').fadeOut(100).empty();
+        $('#trips tbody').fadeOut(100);
+        $('#trips tr').not('.help').remove();
         tripRows = null;
         for (i = 0; i <= maxLen; i = i + 1) {
             a = null;
@@ -168,6 +169,7 @@ function writeTrips(data, status) {
         $('#trips tbody').hide().append(tripRows);
         $('#trips thead').fadeIn(200);
         $('#trips tbody').fadeIn(200);
+        $('#trips tr.help').hide();
         $("#all_journeys").removeAttr('disabled');
     } else {
         $('#trips thead').hide();
@@ -375,6 +377,7 @@ function removeLineFromX(event, ui) {
         $('#rit-list .help').show();
         $('#trips thead').show();
         $('#trips tbody').show();
+        $('#trips tr.help').show();
     } else {
         lijnnr =$(this).parent().attr('id').replace('st', '');
         //remove from selectTripMeasures & allTrips
@@ -401,6 +404,10 @@ function removeLineFromX(event, ui) {
         });
         removeLine($(this).parent().attr('id').substring(2));
         colorSelectedRange();
+    }
+    if ($('#lines').val().length == 0) {
+        $('#div_id_begintime_part').addClass('hidden');
+        $('#div_id_endtime_part').addClass('hidden');
     }
 }
 
@@ -447,7 +454,7 @@ function selectAllLines() {
         $('#div_id_begintime_part').removeClass('hidden');
         $('#div_id_endtime_part').removeClass('hidden');
     }
-    $('#trips tbody tr').remove();
+    $('#trips tr').not('.help').remove();
     $('.rit-overzicht').css("display","none");
     $('#trips thead').hide();
     $('#trips tbody').hide();
