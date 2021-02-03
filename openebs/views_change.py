@@ -1,10 +1,10 @@
 import logging
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, time
 from django.urls import reverse_lazy
 from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.views.generic import ListView, CreateView, DeleteView, DetailView
-from kv1.models import Kv1Journey
+from kv1.models import Kv1Journey, Kv1Line
 from openebs.form_kv17 import Kv17ChangeForm
 from openebs.models import Kv17Change
 from openebs.views_push import Kv17PushMixin
@@ -12,7 +12,8 @@ from openebs.views_utils import FilterDataownerMixin
 from utils.time import get_operator_date, get_operator_date_aware
 from utils.views import AccessMixin, JSONListResponseMixin, AccessJsonMixin
 from django.utils.dateparse import parse_date
-from django.utils.timezone import now
+from django.utils.timezone import now, make_aware
+
 
 log = logging.getLogger('openebs.views.changes')
 
@@ -228,3 +229,129 @@ class ActiveLinesAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
                      'all_lines': x['is_alllines']}
                     for x in queryset.values('line', 'begintime', 'endtime', 'dataownercode', 'is_alljourneysofline',
                     'is_alllines'))
+
+
+class ChangeValidationAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.add_change'
+    model = Kv17Change
+    render_object = 'object'
+
+    def get_object(self):  # should be redundant after jquery filter in html-form, but just in case
+        change_validation = []
+        operatingday = parse_date(self.request.GET.get('operatingday'))
+        journeys = self.request.GET.get('journeys')
+        lines = self.request.GET.get('lines')
+        begintime_part = self.request.GET.get('begintime')
+        endtime_part = self.request.GET.get('endtime')
+
+        if operatingday is None:
+            change_validation.append("Er staan geen ritten in de database")
+
+        if begintime_part != '':
+            hh, mm = begintime_part.split(':')
+            begintime = make_aware(datetime.combine(operatingday, time(int(hh), int(mm))))
+        else:
+            begintime = None
+
+        if endtime_part != '':
+            hh_e, mm_e = endtime_part.split(':')
+            endtime = make_aware(datetime.combine(operatingday, time(int(hh_e), int(mm_e))))
+            if begintime:
+                if begintime > endtime:  # if endtime before begintime
+                    endtime = endtime + timedelta(days=1)  # endtime is next day
+                    if endtime.time() >= time(6, 0):  # and after 6 am: validation error
+                        change_validation.append("Eindtijd valt op volgende operationele dag")
+        else:
+            endtime = None
+
+        dataownercode = self.request.user.userprofile.company
+        if 'Alle ritten' in journeys:
+            change_validation = self.clean_all_journeys(operatingday, dataownercode, lines, begintime, endtime,
+                                                        change_validation)
+        elif 'Hele vervoerder' in lines:
+            change_validation = self.clean_all_lines(operatingday, dataownercode, begintime, endtime, change_validation)
+        else:
+            change_validation = self.clean_journeys(operatingday, dataownercode, journeys, change_validation)
+
+        return change_validation
+
+    def clean_journeys(self, operatingday, dataownercode, journeys, change_validation):
+        valid_journeys = 0
+        if journeys != '':
+            for journey in journeys.split(',')[0:-1]:
+                journey_qry = Kv1Journey.objects.filter(dataownercode=dataownercode, pk=journey, dates__date=operatingday)
+                if journey_qry.count() == 0:
+                    change_validation.append("Een of meer geselecteerde ritten zijn ongeldig")
+                else:
+                    valid_journeys += 1
+
+                # delete recovered if query is the same.
+                Kv17Change.objects.filter(dataownercode=dataownercode, journey__pk=journey, line=journey_qry[0].line,
+                                          operatingday=operatingday, is_recovered=True).delete()
+        if valid_journeys == 0:
+            change_validation.append("Er zijn geen ritten geselecteerd om op te heffen")
+
+        return change_validation
+
+    def clean_all_journeys(self, operatingday, dataownercode, lines, begintime, endtime, change_validation):
+        if lines != '':
+            for line in lines.split(',')[0:-1]:
+                line_qry = Kv1Line.objects.filter(pk=line)
+
+                if line_qry.count() == 0:
+                    change_validation.append("Geen lijn gevonden.")
+                    continue
+
+                database_alljourneys = Kv17Change.objects.filter(dataownercode=dataownercode,
+                                                                 is_alljourneysofline=True, line=line_qry[0],
+                                                                 operatingday=operatingday, is_recovered=False)
+
+                database_alllines = Kv17Change.objects.filter(dataownercode=dataownercode,
+                                                              is_alllines=True, operatingday=operatingday,
+                                                              is_recovered=False)
+
+                # delete recovered if query is the same.
+                Kv17Change.objects.filter(dataownercode=dataownercode, is_alljourneysofline=True, line=line_qry[0],
+                                          operatingday=operatingday, begintime=begintime, endtime=endtime,
+                                          is_recovered=True).delete()
+
+                if operatingday == datetime.today().date():
+                    begintime = make_aware(datetime.now()) if begintime is None else begintime
+                else:
+                    begintime = make_aware(datetime.combine(operatingday, time((int(4))))) \
+                        if begintime is None else begintime
+
+                if database_alllines:
+                    if database_alllines.filter(Q(endtime__gt=begintime) | Q(endtime=None),
+                                                Q(begintime__lte=begintime) | Q(begintime=None)):
+                        change_validation.append(
+                            "De gehele vervoerder is al aangepast voor de aangegeven ingangstijd.")
+
+                elif database_alljourneys:
+                    if database_alljourneys.filter(Q(endtime__gt=begintime) | Q(endtime=None),
+                                                   Q(begintime__lte=begintime) | Q(begintime=None)):
+                        change_validation.append(
+                            "Een of meer geselecteerde lijnen zijn al aangepast voor de aangegeven ingangstijd.")
+
+        return change_validation
+
+    def clean_all_lines(self, operatingday, dataownercode, begintime, endtime, change_validation):
+        database_alllines = Kv17Change.objects.filter(dataownercode=dataownercode, is_alllines=True,
+                                                      operatingday=operatingday, is_recovered=False)
+
+        # delete recovered if query is the same.
+        Kv17Change.objects.filter(dataownercode=dataownercode, is_alllines=True, is_recovered=True,
+                                  operatingday=operatingday, begintime=begintime, endtime=endtime).delete()
+
+        if database_alllines:
+            if operatingday == datetime.today().date():
+                begintime = make_aware(datetime.now()) if begintime is None else begintime
+            else:
+                begintime = make_aware(datetime.combine(operatingday, time((int(4))))) \
+                    if begintime is None else begintime
+
+            if database_alllines.filter(Q(endtime__gt=begintime) | Q(endtime=None),
+                                        Q(begintime__lte=begintime) | Q(begintime=None)):
+                change_validation.append("De ingangstijd valt al binnen een geplande operatie.")
+
+        return change_validation
