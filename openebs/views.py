@@ -1,6 +1,6 @@
 # Create your views here.
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from django.contrib.gis.db.models import Extent
 from django.urls import reverse_lazy
@@ -8,7 +8,7 @@ from django.db.models import Q, Count
 from django.shortcuts import redirect
 from django.views.generic import ListView, UpdateView, DetailView
 from django.views.generic.edit import CreateView, DeleteView
-from django.utils.timezone import now
+from django.utils.timezone import now, is_aware, make_aware
 
 from djgeojson.views import GeoJSONLayerView
 
@@ -267,3 +267,65 @@ class MessageStopsBoundAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailVi
             qry = qry.filter(kv15stopmessage__dataownercode=self.request.user.userprofile.company)
 
         return qry
+
+
+class MessageValidationAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.add_messages'
+    model = Kv15Stopmessage
+    render_object = 'object'
+
+    def get_object(self, **kwargs):
+
+        message_validation = []
+        starttime = self.request.GET.get('messagestarttime')
+        endtime = self.request.GET.get('messageendtime')
+        messagecontent = self.request.GET.get('messagecontent')
+        messagetype = self.request.GET.get('messagetype')
+        haltes = self.request.GET.get('haltes')
+
+        if len(messagecontent.strip()) == 0 and messagetype != 'OVERRULE':
+            message_validation.append("Bericht mag niet leeg zijn")
+
+        datetimevalidation = []
+        try:
+            datetime.strptime(starttime, "%d-%m-%Y %H:%M:%S")
+        except:
+            datetimevalidation.append("Voer een geldige begintijd in (dd-mm-jjjj uu:mm:ss)")
+
+        try:
+            endtime = datetime.strptime(endtime, "%d-%m-%Y %H:%M:%S")
+            if not is_aware(endtime):
+                endtime = make_aware(endtime)
+        except:
+            datetimevalidation.append("Voer een geldige eindtijd in (dd-mm-jjjj uu:mm:ss)")
+
+        if len(datetimevalidation) == 2:
+            message_validation.append("Voer een geldige begin- en eindtijd in (dd-mm-jjjj uu:mm:ss)")
+        elif len(datetimevalidation) == 1:
+            message_validation.append(datetimevalidation[0])
+
+        current = datetime.now()
+        if not is_aware(current):
+            current = make_aware(current)
+
+        valid_ids = []
+        nonvalid_ids = []
+        for halte in haltes.split(','):
+            halte_split = halte.split('_')
+            if len(halte_split) == 2:
+                stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
+                if stop:
+                    valid_ids.append(stop.pk)
+                else:
+                    nonvalid_ids.append(halte)
+
+        if len(nonvalid_ids) != 0:
+            log.warning("Ongeldige haltes: %s" % ', '.join(nonvalid_ids))
+        if len(valid_ids) == 0 and len(nonvalid_ids) != 0:
+            message_validation.append("Er werd geen geldige halte geselecteerd.")
+        elif len(valid_ids) == 0:
+            message_validation.append("Selecteer minimaal een halte.")
+        elif current > endtime:
+            message_validation.append("Eindtijd van bericht ligt in het verleden")
+
+        return message_validation
