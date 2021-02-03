@@ -210,20 +210,19 @@ function renderTripCell(trip) {
         }
     });
 
-    if ($.inArray(trip.id, activeJourneys) != -1) {
-        out = '<td class="trip warning" id="t'+trip.id+'">';
-    } else if (currentTripMeasures.length > 0) {
+    if (currentTripMeasures.length > 0) {
         out = '<td class="trip line_warning" id="t'+trip.id+'">';
+    } else if ($.inArray(trip.id, activeJourneys) != -1) {
+        out = '<td class="trip warning" id="t'+trip.id+'">';
     } else {
         out = '<td class="trip" id="t'+trip.id+'">';
     }
     out += "<strong>Rit "+trip.journeynumber+"</strong>";
     out += "&nbsp;<small>Vertrek "+convertSecondsToTime(trip.departuretime)+"</small>";
-    if ($.inArray(trip.id, activeJourneys) != -1) {
-        out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Rit is al opgeheven"></span>';
-    }
     if (currentTripMeasures.length > 0) {
         out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Lijn is al opgeheven"></span>';
+    } else if ($.inArray(trip.id, activeJourneys) != -1) {
+        out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Rit is al opgeheven"></span>';
     }
     out += "</td>";
     return out;
