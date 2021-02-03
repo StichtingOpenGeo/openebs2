@@ -277,8 +277,6 @@ class MessageValidationAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailVi
     def get_object(self, **kwargs):
 
         message_validation = []
-        starttime = self.request.GET.get('messagestarttime')
-        endtime = self.request.GET.get('messageendtime')
         messagecontent = self.request.GET.get('messagecontent')
         messagetype = self.request.GET.get('messagetype')
         haltes = self.request.GET.get('haltes')
@@ -286,27 +284,32 @@ class MessageValidationAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailVi
         if len(messagecontent.strip()) == 0 and messagetype != 'OVERRULE':
             message_validation.append("Bericht mag niet leeg zijn")
 
-        datetimevalidation = []
-        try:
-            datetime.strptime(starttime, "%d-%m-%Y %H:%M:%S")
-        except:
-            datetimevalidation.append("Voer een geldige begintijd in (dd-mm-jjjj uu:mm:ss)")
+        if hasattr(self.request.GET, 'messagestarttime'):
+            starttime = self.request.GET.get('messagestarttime')
+            endtime = self.request.GET.get('messageendtime')
+            datetimevalidation = []
+            try:
+                datetime.strptime(starttime, "%d-%m-%Y %H:%M:%S")
+            except:
+                datetimevalidation.append("Voer een geldige begintijd in (dd-mm-jjjj uu:mm:ss)")
 
-        try:
-            endtime = datetime.strptime(endtime, "%d-%m-%Y %H:%M:%S")
-            if not is_aware(endtime):
-                endtime = make_aware(endtime)
-        except:
-            datetimevalidation.append("Voer een geldige eindtijd in (dd-mm-jjjj uu:mm:ss)")
+            try:
+                endtime = datetime.strptime(endtime, "%d-%m-%Y %H:%M:%S")
+                if not is_aware(endtime):
+                    endtime = make_aware(endtime)
+            except:
+                datetimevalidation.append("Voer een geldige eindtijd in (dd-mm-jjjj uu:mm:ss)")
 
-        if len(datetimevalidation) == 2:
-            message_validation.append("Voer een geldige begin- en eindtijd in (dd-mm-jjjj uu:mm:ss)")
-        elif len(datetimevalidation) == 1:
-            message_validation.append(datetimevalidation[0])
+            if len(datetimevalidation) == 2:
+                message_validation.append("Voer een geldige begin- en eindtijd in (dd-mm-jjjj uu:mm:ss)")
+            elif len(datetimevalidation) == 1:
+                message_validation.append(datetimevalidation[0])
 
-        current = datetime.now()
-        if not is_aware(current):
-            current = make_aware(current)
+            current = datetime.now()
+            if not is_aware(current):
+                current = make_aware(current)
+            if current > endtime:
+                message_validation.append("Eindtijd van bericht ligt in het verleden")
 
         valid_ids = []
         nonvalid_ids = []
@@ -325,7 +328,5 @@ class MessageValidationAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailVi
             message_validation.append("Er werd geen geldige halte geselecteerd.")
         elif len(valid_ids) == 0:
             message_validation.append("Selecteer minimaal een halte.")
-        elif current > endtime:
-            message_validation.append("Eindtijd van bericht ligt in het verleden")
 
         return message_validation
