@@ -31,9 +31,11 @@ function writeList(data, status) {
     $.each(data.object_list, function (i, line) {
         validIds.push('l'+line.pk)
         if (!$('#l'+line.pk).length) {
-            row = '<tr class="line" id="l'+line.pk+'"><td>'+line.publiclinenumber+ '</td>';
-            row += '<td>'+line.headsign+'</td></tr>';
-            $(row).hide().appendTo("#rows").fadeIn(200);
+            if (line.publiclinenumber) { // not all lines with a lineplanningnumber has a publiclinenumber or headsign
+                row = '<tr class="line" id="l'+line.pk+'"><td>'+line.publiclinenumber+ '</td>';
+                row += '<td>'+line.headsign+'</td></tr>';
+                $(row).hide().appendTo("#rows").fadeIn(200);
+            }
         }
     });
 
@@ -301,7 +303,7 @@ function formValidation() {
 
 function formValidation() {
     validationerrors = []
-
+    /*
     // check for empty messagecontent
     if ($('#id_messagecontent').val().trim().length == 0) {
         validationerrors.push("Bericht mag niet leeg zijn.");
@@ -341,6 +343,34 @@ function formValidation() {
             $("#error_list").removeClass('hidden');
         }
     }
+    */
+    var pathname = window.location.pathname;
+    if (pathname.indexOf('scenario') == -1) {
+        $.ajax({url: '/bericht/validatie.json',
+                data: {'messagestarttime': $('#id_messagestarttime').val().trim(),
+                       'messageendtime': $('#id_messageendtime').val().trim(),
+                       'messagecontent': $('#id_messagecontent').val().trim(),
+                       'messagetype': $("input[name='messagetype']:checked").val(),
+                       'haltes': $('#haltes').val(),
+                },
+                success : function(result) {
+                    var validationerrors = result.object;
+                    if (validationerrors.length == 0) {
+                        $(".form").submit();
+                    } else {
+                        if (!$("#error_list").hasClass('hidden')) {
+                            $("#error_list").empty();
+                        }
+                        $.each(validationerrors, function(i, error) {
+                            $("#error_list").append('<p><span class="glyphicon glyphicon-flag" style="color:red"><em class="help" style="color: red"> '+error+'</em></span></p>');
+                        });
+                        if ($("#error_list").hasClass('hidden')) {
+                            $("#error_list").removeClass('hidden');
+                        }
+                    }
+                }
+         });
+    }  // TODO: else validate scenariomessage
 }
 
 
