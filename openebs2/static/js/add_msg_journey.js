@@ -155,6 +155,7 @@ function writeTrips(data, status) {
     maxLen = Math.max(data.object.trips_1.length, data.object.trips_2.length);
     if (maxLen > 0) {
         $('#trips tbody').fadeOut(100);
+        $('#trips tbody').text("");
         $('#trips tr').not('.help').remove();
         tripRows = null;
         for (i = 0; i <= maxLen; i = i + 1) {
