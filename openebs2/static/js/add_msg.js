@@ -388,14 +388,16 @@ function showStopsOnChange() {
 function checkMessageTime(event, ui) {
     var starttime = parseDate($("#id_messagestarttime").val());
     var endtime   = parseDate($("#id_messageendtime").val());
-
-    if (starttime >= endtime) {
-        if ($(this).attr('id') == "id_messagestarttime") {
-            endtime.setDate(starttime.getDate()+1);
-            $("#id_messageendtime").val(formatDate(endtime));
-        } else {
-            starttime.setDate(endtime.getDate()-1);
-            $("#id_messagestarttime").val(formatDate(starttime));
+    if (starttime != 'Invalid Date') {
+        if (starttime >= endtime) {
+            var new_endtime = starttime;
+            if ($(this).attr('id') == "id_messagestarttime") {
+                new_endtime.setDate(new_endtime.getDate()+1);
+                $("#id_messageendtime").val(formatDate(new_endtime));
+            } else {
+                starttime.setDate(endtime.getDate()-1);
+                $("#id_messagestarttime").val(formatDate(starttime));
+            }
         }
     }
 }
@@ -476,12 +478,19 @@ function hideEndTime() {
 }
 
 function showEndTime() {
-   $('#div_id_messageendtime').show();
-   var enddate = new Date();
-   enddate.setHours(3, 0, 0);
-   enddate.setDate(enddate.getDate()+1);
-   $('#id_messageendtime').val(formatDate(enddate));
+    $('#div_id_messageendtime').show();
+    var enddate = new Date();
+    enddate.setHours(3, 0, 0);
 
+    var startdate = parseDate($('#id_messagestarttime').val());
+    if (startdate != 'Invalid Date') {
+        var new_enddate = startdate;
+        new_enddate.setDate(new_enddate.getDate()+1);
+        $("#id_messageendtime").val(formatDate(new_enddate));
+    } else {
+        enddate.setDate(enddate.getDate()+1);
+        $('#id_messageendtime').val(formatDate(enddate));
+    }
 }
 
 function epoch(date) {
