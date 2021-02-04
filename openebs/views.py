@@ -292,17 +292,20 @@ class MessageValidationAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailVi
         if len(messagecontent.strip()) == 0 and messagetype != 'OVERRULE':
             message_validation.append("Bericht mag niet leeg zijn")
 
-        if hasattr(self.request.GET, 'messagestarttime'):
+        if 'messagestarttime' in self.request.GET:
             starttime = self.request.GET.get('messagestarttime')
             endtime = self.request.GET.get('messageendtime')
             datetimevalidation = []
             try:
-                datetime.strptime(starttime, "%d-%m-%Y %H:%M:%S")
+                starttime = datetime.strptime(starttime, "%d-%m-%Y %H:%M:%S")
             except:
                 datetimevalidation.append("Voer een geldige begintijd in (dd-mm-jjjj uu:mm:ss)")
 
             try:
                 endtime = datetime.strptime(endtime, "%d-%m-%Y %H:%M:%S")
+                if endtime < starttime:
+                    message_validation.append("De eindtijd moet na de begintijd zijn.")
+
                 if not is_aware(endtime):
                     endtime = make_aware(endtime)
             except:
