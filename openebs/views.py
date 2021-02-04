@@ -303,9 +303,6 @@ class MessageValidationAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailVi
 
             try:
                 endtime = datetime.strptime(endtime, "%d-%m-%Y %H:%M:%S")
-                if endtime < starttime:
-                    message_validation.append("De eindtijd moet na de begintijd zijn.")
-
                 if not is_aware(endtime):
                     endtime = make_aware(endtime)
             except:
@@ -315,6 +312,9 @@ class MessageValidationAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailVi
                 message_validation.append("Voer een geldige begin- en eindtijd in (dd-mm-jjjj uu:mm:ss)")
             elif len(datetimevalidation) == 1:
                 message_validation.append(datetimevalidation[0])
+            elif len(datetimevalidation) == 0:
+                if endtime < starttime:
+                    message_validation.append("De eindtijd moet na de begintijd zijn.")
 
             current = datetime.now()
             if not is_aware(current):
