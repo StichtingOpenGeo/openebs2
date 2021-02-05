@@ -314,19 +314,23 @@ function writeHaltesWithMessages(data, status) {
 }
 
 function formValidation() {
-    validationerrors = []
-
+    var pathname = window.location.pathname;
     var validationdata = $('.form').serializeArray().reduce(function(obj, item) {
         obj[item.name] = item.value;
         return obj;
     }, {});
     validationdata['csrfmiddlewaretoken'] = document.getElementsByName('csrfmiddlewaretoken')[0].value;
 
-    $.ajax({url: window.location.pathname,
+    $.ajax({url: pathname,
             data: validationdata,
             method: 'POST',
             success : function(result) {
-                window.location.href = '/bericht'
+                if (pathname.indexOf('scenario') !== -1) {
+                    var base_href = pathname.split('bericht')[0];
+                    window.location.href = base_href + 'bewerk';
+                } else {
+                    window.location.href = '/bericht';
+                }
             },
             error: function(result) {
                 var response = result.responseJSON;
