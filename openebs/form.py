@@ -15,6 +15,63 @@ log = logging.getLogger('openebs.forms')
 
 
 class Kv15StopMessageForm(forms.ModelForm):
+    def clean(self):
+        # TODO Move _all_ halte parsing here!
+        datetimevalidation = []
+        try:
+            datetime.strptime(self.data['messagestarttime'], "%d-%m-%Y %H:%M:%S")
+        except:
+            datetimevalidation.append(_("Voer een geldige begintijd in (dd-mm-jjjj uu:mm:ss)"))
+
+        try:
+            endtime = datetime.strptime(self.data['messageendtime'], "%d-%m-%Y %H:%M:%S")
+            if not is_aware(endtime):
+                endtime = make_aware(endtime)
+        except:
+            datetimevalidation.append(_("Voer een geldige eindtijd in (dd-mm-jjjj uu:mm:ss)"))
+
+        validationerrors = []
+        if len(datetimevalidation) == 2:
+            validationerrors.append(ValidationError(_("Voer een geldige begin- en eindtijd in (dd-mm-jjjj uu:mm:ss)")))
+        elif len(datetimevalidation) == 1:
+            validationerrors.append(ValidationError(datetimevalidation[0]))
+
+        current = datetime.now()
+        if not is_aware(current):
+            current = make_aware(current)
+        if current > endtime:
+            validationerrors.append(ValidationError(_("Eindtijd van bericht ligt in het verleden")))
+
+        valid_ids = []
+        nonvalid_ids = []
+        for halte in self.data['haltes'].split(','):
+            halte_split = halte.split('_')
+            if len(halte_split) == 2:
+                stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
+                if stop:
+                    valid_ids.append(stop.pk)
+                else:
+                    nonvalid_ids.append(halte)
+
+        if len(nonvalid_ids) != 0:
+            log.warning("Ongeldige haltes: %s" % ', '.join(nonvalid_ids))
+        if len(valid_ids) == 0 and len(nonvalid_ids) != 0:
+            validationerrors.append(ValidationError(_("Er werd geen geldige halte geselecteerd.")))
+        elif len(valid_ids) == 0:
+            validationerrors.append(ValidationError(_("Selecteer minimaal een halte.")))
+
+        if len(validationerrors) != 0:
+            raise ValidationError(validationerrors)
+        else:
+            return self.cleaned_data
+
+    def clean_messagecontent(self):
+        # Improve: Strip spaces from message
+        if ('messagecontent' not in self.cleaned_data or self.cleaned_data['messagecontent'] is None or len(
+                self.cleaned_data['messagecontent']) < 1) \
+                and self.cleaned_data['messagetype'] != 'OVERRULE':
+            raise ValidationError(_("Bericht mag niet leeg zijn"))
+        return self.cleaned_data['messagecontent']
 
     class Meta(object):
         model = Kv15Stopmessage

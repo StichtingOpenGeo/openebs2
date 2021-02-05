@@ -235,3 +235,7 @@ span.stop-selection,span.trip-selection{
 .msg_warning {
     background-color: #fcf8e3;
 }
+
+.error-label label {
+    color: #a94442;
+}

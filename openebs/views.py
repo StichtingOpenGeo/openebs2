@@ -16,7 +16,7 @@ from kv1.models import Kv1Stop
 from openebs.views_push import Kv15PushMixin
 from openebs.views_utils import FilterDataownerMixin
 from utils.client import get_client_ip
-from utils.views import JSONListResponseMixin, AccessMixin, AccessJsonMixin
+from utils.views import JSONListResponseMixin, AccessMixin, AccessJsonMixin, JsonableResponseMixin
 from openebs.models import Kv15Stopmessage, Kv15Log, MessageStatus, Kv1StopFilter
 from openebs.form import Kv15StopMessageForm
 
@@ -73,7 +73,7 @@ class MessageListView(AccessMixin, ListView):
                (not user.is_superuser and (user.has_perm("openebs.view_all") or user.has_perm("openebs.edit_all")))
 
 
-class MessageCreateView(AccessMixin, Kv15PushMixin, CreateView):
+class MessageCreateView(JsonableResponseMixin, AccessMixin, Kv15PushMixin, CreateView):
     permission_required = 'openebs.add_messages'
     model = Kv15Stopmessage
     form_class = Kv15StopMessageForm
@@ -275,72 +275,3 @@ class MessageStopsBoundAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailVi
             qry = qry.filter(kv15stopmessage__dataownercode=self.request.user.userprofile.company)
 
         return qry
-
-
-class MessageValidationAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
-    permission_required = 'openebs.add_messages'
-    model = Kv15Stopmessage
-    render_object = 'object'
-
-    def get_object(self, **kwargs):
-
-        message_validation = []
-        messagecontent = self.request.GET.get('messagecontent')
-        messagetype = self.request.GET.get('messagetype')
-        haltes = self.request.GET.get('haltes')
-
-        if len(messagecontent.strip()) == 0 and messagetype != 'OVERRULE':
-            message_validation.append("Bericht mag niet leeg zijn")
-
-        if 'messagestarttime' in self.request.GET:
-            starttime = self.request.GET.get('messagestarttime')
-            endtime = self.request.GET.get('messageendtime')
-            datetimevalidation = []
-            try:
-                starttime = datetime.strptime(starttime, "%d-%m-%Y %H:%M:%S")
-                if not is_aware(starttime):
-                    starttime = make_aware(starttime)
-            except:
-                datetimevalidation.append("Voer een geldige begintijd in (dd-mm-jjjj uu:mm:ss)")
-
-            try:
-                endtime = datetime.strptime(endtime, "%d-%m-%Y %H:%M:%S")
-                if not is_aware(endtime):
-                    endtime = make_aware(endtime)
-            except:
-                datetimevalidation.append("Voer een geldige eindtijd in (dd-mm-jjjj uu:mm:ss)")
-
-            if len(datetimevalidation) == 2:
-                message_validation.append("Voer een geldige begin- en eindtijd in (dd-mm-jjjj uu:mm:ss)")
-            elif len(datetimevalidation) == 1:
-                message_validation.append(datetimevalidation[0])
-            elif len(datetimevalidation) == 0:
-
-                if endtime < starttime:
-                    message_validation.append("De eindtijd moet na de begintijd zijn.")
-
-            current = datetime.now()
-            if not is_aware(current):
-                current = make_aware(current)
-            if current > endtime:
-                message_validation.append("Eindtijd van bericht ligt in het verleden")
-
-        valid_ids = []
-        nonvalid_ids = []
-        for halte in haltes.split(','):
-            halte_split = halte.split('_')
-            if len(halte_split) == 2:
-                stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
-                if stop:
-                    valid_ids.append(stop.pk)
-                else:
-                    nonvalid_ids.append(halte)
-
-        if len(nonvalid_ids) != 0:
-            log.warning("Ongeldige haltes: %s" % ', '.join(nonvalid_ids))
-        if len(valid_ids) == 0 and len(nonvalid_ids) != 0:
-            message_validation.append("Er werd geen geldige halte geselecteerd.")
-        elif len(valid_ids) == 0:
-            message_validation.append("Selecteer minimaal een halte.")
-
-        return message_validation

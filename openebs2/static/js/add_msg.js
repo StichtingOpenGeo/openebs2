@@ -316,34 +316,43 @@ function writeHaltesWithMessages(data, status) {
 function formValidation() {
     validationerrors = []
 
-    var pathname = window.location.pathname;
-    if (pathname.indexOf('scenario') == -1) {
-        validationdata = {'messagestarttime': $('#id_messagestarttime').val().trim(),
-                          'messageendtime': $('#id_messageendtime').val().trim(),
-                          'messagecontent': $('#id_messagecontent').val().trim(),
-                          'messagetype': $("input[name='messagetype']:checked").val(),
-                          'haltes': $('#haltes').val()}
-    } else {
-        validationdata = {'messagecontent': $('#id_messagecontent').val().trim(),
-                          'messagetype': $("input[name='messagetype']:checked").val(),
-                          'haltes': $('#haltes').val()}
-    }
-    $.ajax({url: '/bericht/validatie.json',
+    var validationdata = $('.form').serializeArray().reduce(function(obj, item) {
+        obj[item.name] = item.value;
+        return obj;
+    }, {});
+    validationdata['csrfmiddlewaretoken'] = document.getElementsByName('csrfmiddlewaretoken')[0].value;
+
+    $.ajax({url: window.location.pathname,
             data: validationdata,
+            method: 'POST',
             success : function(result) {
-                var validationerrors = result.object;
-                if (validationerrors.length == 0) {
-                    $(".form").submit();
-                } else {
-                    if (!$("#error_list").hasClass('hidden')) {
+                window.location.href = '/bericht'
+            },
+            error: function(result) {
+                var response = result.responseJSON;
+                if (!$("#error_list").hasClass('hidden')) {
                         $("#error_list").empty();
-                    }
-                    $.each(validationerrors, function(i, error) {
+                        $(".has-error").removeClass('has-error');
+                        $(".error-label").removeClass('error-label');
+                }
+                $.each(response, function(field, errorlist) {
+                    $.each(errorlist, function(idx, error) {
+                        error = error.toLowerCase();
+                        if (error.indexOf('begin') !== -1) {
+                            $('#div_id_messagestarttime').addClass('has-error');
+                        } else if (error.indexOf('bericht') !== -1) {
+                            $('#div_id_messagecontent').addClass('has-error');
+                        } else if (error.indexOf('halte') !== -1) {
+                            $('#div_id_haltes').addClass('error-label');
+                        }
+                        if (error.indexOf('eind') !== -1) {
+                            $('#div_id_messageendtime').addClass('has-error');
+                        }
                         $("#error_list").append('<p><span class="glyphicon glyphicon-flag" style="color:red"><em class="help" style="color: red"> '+error+'</em></span></p>');
                     });
-                    if ($("#error_list").hasClass('hidden')) {
-                        $("#error_list").removeClass('hidden');
-                    }
+                });
+                if ($("#error_list").hasClass('hidden')) {
+                    $("#error_list").removeClass('hidden');
                 }
             }
      });

@@ -9,7 +9,7 @@
     <div class="col-lg-4">
         <h2>{% trans "Bericht" %}</h2>
         <form method="post" class="form" action="{% url 'msg_add' %}">
-            <div class="control-group">
+            <div class="control-group" id="div_id_haltes">
                 <label>{% trans "Haltes" %}</label>
                 <p class="form-control-static" id="halte-list">
                     {% if prefilled_stop %}
