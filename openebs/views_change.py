@@ -157,8 +157,8 @@ class ChangeUpdateView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteV
         else:
             log.error("Failed to send redo request to subscribers: %s" % obj)
             # We failed to push, recover our redo operation by restoring previous state
-            obj.is_recovered = self.get_object.is_recovered
-            obj.recovered = self.get_object.recovered
+            obj.is_recovered = self.get_object().is_recovered
+            obj.recovered = self.get_object().recovered
             obj.save()  # Note, this won't work locally!
         return HttpResponseRedirect(self.get_success_url())
 
