@@ -121,7 +121,7 @@ class MessageCreateView(JsonableResponseMixin, AccessMixin, Kv15PushMixin, Creat
         return ret
 
 
-class MessageUpdateView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, UpdateView):
+class MessageUpdateView(JsonableResponseMixin, AccessMixin, Kv15PushMixin, FilterDataownerMixin, UpdateView):
     permission_required = 'openebs.add_messages'
     permission_level = 'write'
     model = Kv15Stopmessage

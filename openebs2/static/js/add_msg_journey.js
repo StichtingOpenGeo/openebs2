@@ -363,7 +363,6 @@ function emptyLineList() {
     $("#lijn-list").empty();
     $("#lines").val('');
     selectedLines = [];
-    //cancelledLines = [];
     currentLineMeasures = [];
     $('#lijn-list span').remove();
     $('.lijn-overzicht').css("display","none");
@@ -491,6 +490,9 @@ function colorSelectedRange() {
         var end_hour = parseInt($('#id_endtime_part').val().split(':')[0])*3600;
         var end_minutes = parseInt($('#id_endtime_part').val().split(':')[1])*60;
         selection_endtime = end_hour+end_minutes;
+        if ($('#id_begintime_part').val().length !=0 && selection_endtime < selection_begintime) {
+            selection_endtime += 24*3600;
+        }
     };
 
     selectTripMeasures = [];
@@ -535,31 +537,42 @@ function changeOfRange() {
 }
 
 function formValidation() {
-    $.ajax({url: '/ritaanpassing/validatie.json',
-            data: {'operatingday': $('#id_operatingday').val(),
-                   'lines': $('#lines').val(),
-                   'journeys': $('#journeys').val(),
-                   'begintime': $('#id_begintime_part').val(),
-                   'endtime': $('#id_endtime_part').val(),
-            },
+    var validationdata = $('.form').serializeArray().reduce(function(obj, item) {
+        obj[item.name] = item.value;
+        return obj;
+    }, {});
+    validationdata['csrfmiddlewaretoken'] = document.getElementsByName('csrfmiddlewaretoken')[0].value;
+
+    $.ajax({url: window.location.pathname,
+            data: validationdata,
+            method: 'POST',
             success : function(result) {
-                var validationerrors = result.object;
-                if (validationerrors.length == 0) {
-                    $(".form").submit();
-                } else {
-                    if (validationerrors.length == 0) {
-                        $(".form").submit();
-                    } else {
-                        if (!$("#error_list").hasClass('hidden')) {
-                            $("#error_list").empty();
+                window.location.href = '/ritaanpassing';
+            },
+            error: function(result) {
+                var response = result.responseJSON;
+                if (!$("#error_list").hasClass('hidden')) {
+                        $("#error_list").empty();
+                        $(".has-error").removeClass('has-error');
+                        $(".error-label").removeClass('error-label');
+                }
+                $.each(response, function(field, errorlist) {
+                    $.each(errorlist, function(idx, error) {
+                        error = error.toLowerCase();
+                        if (error.indexOf('ingangstijd') !== -1) {
+                            $('#div_id_messagestarttime').addClass('has-error');
+                        } else if (error.indexOf('eind') !== -1) {
+                            $('#div_id_messageendtime').addClass('has-error');
+                        } else if (error.indexOf('rit') !== -1 && error.indexOf('database') === -1) {
+                            $('#div_id_ritten').addClass('error-label');
+                        } else if (error.indexOf('lijn') !== -1 && error.indexOf('database') === -1) {
+                            $('#div_id_lijnen').addClass('error-label');
                         }
-                        $.each(validationerrors, function(i, error) {
-                            $("#error_list").append('<p><span class="glyphicon glyphicon-flag" style="color:red"><em class="help" style="color: red"> '+error+'</em></span></p>');
-                        });
-                        if ($("#error_list").hasClass('hidden')) {
-                            $("#error_list").removeClass('hidden');
-                        }
-                    }
+                        $("#error_list").append('<p><span class="glyphicon glyphicon-flag" style="color:red"><em class="help" style="color: red"> '+error+'</em></span></p>');
+                    });
+                });
+                if ($("#error_list").hasClass('hidden')) {
+                    $("#error_list").removeClass('hidden');
                 }
             }
     });

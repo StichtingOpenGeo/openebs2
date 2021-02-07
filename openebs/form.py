@@ -21,18 +21,18 @@ class Kv15StopMessageForm(forms.ModelForm):
         try:
             datetime.strptime(self.data['messagestarttime'], "%d-%m-%Y %H:%M:%S")
         except:
-            datetimevalidation.append(_("Voer een geldige begintijd in (dd-mm-jjjj uu:mm:ss)"))
+            datetimevalidation.append(_("Voer een geldige begintijd in (dd-mm-jjjj uu:mm:ss)."))
 
         try:
             endtime = datetime.strptime(self.data['messageendtime'], "%d-%m-%Y %H:%M:%S")
             if not is_aware(endtime):
                 endtime = make_aware(endtime)
         except:
-            datetimevalidation.append(_("Voer een geldige eindtijd in (dd-mm-jjjj uu:mm:ss)"))
+            datetimevalidation.append(_("Voer een geldige eindtijd in (dd-mm-jjjj uu:mm:ss)."))
 
         validationerrors = []
         if len(datetimevalidation) == 2:
-            validationerrors.append(ValidationError(_("Voer een geldige begin- en eindtijd in (dd-mm-jjjj uu:mm:ss)")))
+            validationerrors.append(ValidationError(_("Voer een geldige begin- en eindtijd in (dd-mm-jjjj uu:mm:ss).")))
         elif len(datetimevalidation) == 1:
             validationerrors.append(ValidationError(datetimevalidation[0]))
 
@@ -40,7 +40,7 @@ class Kv15StopMessageForm(forms.ModelForm):
         if not is_aware(current):
             current = make_aware(current)
         if current > endtime:
-            validationerrors.append(ValidationError(_("Eindtijd van bericht ligt in het verleden")))
+            validationerrors.append(ValidationError(_("Eindtijd van bericht ligt in het verleden.")))
 
         valid_ids = []
         nonvalid_ids = []
@@ -66,11 +66,12 @@ class Kv15StopMessageForm(forms.ModelForm):
             return self.cleaned_data
 
     def clean_messagecontent(self):
-        # Improve: Strip spaces from message
-        if ('messagecontent' not in self.cleaned_data or self.cleaned_data['messagecontent'] is None or len(
-                self.cleaned_data['messagecontent']) < 1) \
+        if 'messagetype' not in self.cleaned_data:
+            raise ValidationError(_("Type bericht moet zijn ingevuld."))
+        elif ('messagecontent' not in self.cleaned_data or self.cleaned_data['messagecontent'] is None or len(
+                self.cleaned_data['messagecontent'].strip()) < 1) \
                 and self.cleaned_data['messagetype'] != 'OVERRULE':
-            raise ValidationError(_("Bericht mag niet leeg zijn"))
+            raise ValidationError(_("Bericht mag niet leeg zijn."))
         return self.cleaned_data['messagecontent']
 
     class Meta(object):
@@ -178,20 +179,24 @@ class Kv15ScenarioMessageForm(forms.ModelForm):
         qry = Kv1Stop.objects.filter(kv15scenariostop__message__scenario=self.data['scenario'], pk__in=ids)
         if self.instance.pk is not None:  # Exclude ourselves if we've been saved
             qry = qry.exclude(kv15scenariostop__message=self.instance.pk)
-
+        validationerrors = []
         if qry.count() > 0:
             # Check that this stop isn't already in a messages for this scenario. If not, write a nice message
             out = ""
             for stop in qry:
                 out += "%s, " % stop.name
-            raise ValidationError(_("Halte(s) ' %s ' bestaan al voor dit scenario") % out)
+            validationerrors.append(ValidationError(_("Halte(s) ' %s ' bestaan al voor dit scenario.") % out))
         elif len(ids) == 0:
             # Select at least one stop for a message
-            raise ValidationError(_("Selecteer minimaal een halte"))
+            validationerrors.append(ValidationError(_("Selecteer minimaal een halte.")))
+        if 'messagetype' not in self.cleaned_data:
+            validationerrors.append(ValidationError(_("Type bericht moet zijn ingevuld.")))
         elif ('messagecontent' not in self.cleaned_data or self.cleaned_data['messagecontent'] is None or len(
                 self.cleaned_data['messagecontent'].strip()) == 0) \
                 and self.cleaned_data['messagetype'] != 'OVERRULE':
-            raise ValidationError(_("Bericht mag niet leeg zijn"))
+            validationerrors.append(ValidationError(_("Bericht mag niet leeg zijn.")))
+        if len(validationerrors) != 0:
+            raise ValidationError(validationerrors)
         else:
             return self.cleaned_data
 

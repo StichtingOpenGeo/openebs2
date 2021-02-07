@@ -181,7 +181,6 @@ function removeStop(id) {
 }
 
 function writeLine(data, status) {
-    //$('#stops').removeClass('msg_warning');
     $('#stops').fadeOut(100).empty();
     out = ""
     blockedStops = [];
@@ -222,12 +221,10 @@ function renderRow(row) {
                 var pathname = window.location.pathname;
                 if (pathname.indexOf('scenario') == -1) {
                     var selected = currentStopMeasures.filter(message => message[0] === row.left.id);
+                    out += '<td class="stop stop-left" id="'+id+'">'+row.left.name;
                     if (selected.length > 0) {
-                        out += '<td class="stop stop-left msg_warning" id="'+id+'">'+row.left.name;
                         out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze begintijd"></span>';
                         blockedStops.push(row.left.id);
-                    } else {
-                        out += '<td class="stop stop-left" id="'+id+'">'+row.left.name;
                     }
                     out += '</td>';
                 } else {
@@ -260,12 +257,11 @@ function renderRow(row) {
                 var pathname = window.location.pathname;
                 if (pathname.indexOf('scenario') == -1) {
                     var selected = currentStopMeasures.filter(message => message[0] === row.right.id);
+                    out += '<td class="stop stop-right" id="'+id+'">'+row.right.name;
+
                     if (selected.length > 0) {
-                        out += '<td class="stop stop-right msg_warning" id="'+id+'">'+row.right.name;
                         out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze begintijd"></span>'
                         blockedStops.push(row.right.id);
-                    } else {
-                        out += '<td class="stop stop-right" id="'+id+'">'+row.right.name;
                     }
                     out += '</td>';
                 } else {
@@ -301,16 +297,10 @@ function writeScenarioStops(data, status) {
 
 function getHaltesWithMessages() {
     $.ajax('/bericht/haltes.json', {
-            success : writeHaltesWithMessages
-     })
-}
-
-function writeHaltesWithMessages(data, status) {
-    messageData = data.object;
-    //$.each(data.object, function (i, halte) {
-    //    stop = halte['dataownercode']+ '_' + halte['userstopcode']
-    //    blockedStops.push(stop)
-    //});
+            success : function(data) {
+                messageData = data.object;
+            }
+     });
 }
 
 function formValidation() {
@@ -341,18 +331,21 @@ function formValidation() {
                 }
                 $.each(response, function(field, errorlist) {
                     $.each(errorlist, function(idx, error) {
+                        $("#error_list").append('<p><span class="glyphicon glyphicon-flag" style="color:#a94442"><em class="help" style="color: #a94442"> '+error+'</em></span></p>');
                         error = error.toLowerCase();
                         if (error.indexOf('begin') !== -1) {
                             $('#div_id_messagestarttime').addClass('has-error');
+                        }
+                        if (error.indexOf('eind') !== -1) {
+                            $('#div_id_messageendtime').addClass('has-error');
+                        } else if (error.indexOf('type') !== -1) {
+                            $('#div_id_messagetype').addClass('has-error');
                         } else if (error.indexOf('bericht') !== -1) {
                             $('#div_id_messagecontent').addClass('has-error');
                         } else if (error.indexOf('halte') !== -1) {
                             $('#div_id_haltes').addClass('error-label');
                         }
-                        if (error.indexOf('eind') !== -1) {
-                            $('#div_id_messageendtime').addClass('has-error');
-                        }
-                        $("#error_list").append('<p><span class="glyphicon glyphicon-flag" style="color:red"><em class="help" style="color: red"> '+error+'</em></span></p>');
+
                     });
                 });
                 if ($("#error_list").hasClass('hidden')) {
@@ -364,7 +357,6 @@ function formValidation() {
 
 function showStopsOnChange() {
     $('.stopRow span').remove();
-    $('.stop').removeClass('msg_warning');
     blockedStops = [];
     if (messageData.length > 0) {
         const filtered = messageData.filter(message => {
@@ -386,12 +378,13 @@ function showStopsOnChange() {
             });
 
             $.each(stops, function(i, stop) {
-                $('[id*='+stop+']').addClass('msg_warning')
-                $('[id*='+stop+']').append('<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze begintijd"></span>');
-                            });
+                $('.stop [id*='+stop+']').append('<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze begintijd"></span>');
+                //if (window.location.pathname.indexOf('bewerken') !== -1) {
+                //    $('.stop-selection [id*='+stop+']').append('<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze begintijd"></span>');
+                //}
+            });
         }
     }
-    //filterCurrentHalteList();
     $('.stopRow td.success').append('<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;');
     writeHaltesField();
 
