@@ -154,7 +154,9 @@ function writeTrips(data, status) {
     tripSelection = data.object.trips_1.concat(data.object.trips_2);
     maxLen = Math.max(data.object.trips_1.length, data.object.trips_2.length);
     if (maxLen > 0) {
-        $('#trips tbody').fadeOut(100).empty();
+        $('#trips tbody').fadeOut(100);
+        $('#trips tbody').text("");
+        $('#trips tr').not('.help').remove();
         tripRows = null;
         for (i = 0; i <= maxLen; i = i + 1) {
             a = null;
@@ -168,6 +170,7 @@ function writeTrips(data, status) {
         $('#trips tbody').hide().append(tripRows);
         $('#trips thead').fadeIn(200);
         $('#trips tbody').fadeIn(200);
+        $('#trips tr.help').hide();
         $("#all_journeys").removeAttr('disabled');
     } else {
         $('#trips thead').hide();
@@ -208,20 +211,19 @@ function renderTripCell(trip) {
         }
     });
 
-    if ($.inArray(trip.id, activeJourneys) != -1) {
-        out = '<td class="trip warning" id="t'+trip.id+'">';
-    } else if (currentTripMeasures.length > 0) {
+    if (currentTripMeasures.length > 0) {
         out = '<td class="trip line_warning" id="t'+trip.id+'">';
+    } else if ($.inArray(trip.id, activeJourneys) != -1) {
+        out = '<td class="trip warning" id="t'+trip.id+'">';
     } else {
         out = '<td class="trip" id="t'+trip.id+'">';
     }
     out += "<strong>Rit "+trip.journeynumber+"</strong>";
     out += "&nbsp;<small>Vertrek "+convertSecondsToTime(trip.departuretime)+"</small>";
-    if ($.inArray(trip.id, activeJourneys) != -1) {
-        out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Rit is al opgeheven"></span>';
-    }
     if (currentTripMeasures.length > 0) {
         out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Lijn is al opgeheven"></span>';
+    } else if ($.inArray(trip.id, activeJourneys) != -1) {
+        out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Rit is al opgeheven"></span>';
     }
     out += "</td>";
     return out;
@@ -361,7 +363,6 @@ function emptyLineList() {
     $("#lijn-list").empty();
     $("#lines").val('');
     selectedLines = [];
-    cancelledLines = [];
     currentLineMeasures = [];
     $('#lijn-list span').remove();
     $('.lijn-overzicht').css("display","none");
@@ -375,6 +376,7 @@ function removeLineFromX(event, ui) {
         $('#rit-list .help').show();
         $('#trips thead').show();
         $('#trips tbody').show();
+        $('#trips tr.help').show();
     } else {
         lijnnr =$(this).parent().attr('id').replace('st', '');
         //remove from selectTripMeasures & allTrips
@@ -401,6 +403,10 @@ function removeLineFromX(event, ui) {
         });
         removeLine($(this).parent().attr('id').substring(2));
         colorSelectedRange();
+    }
+    if ($('#lines').val().length == 0) {
+        $('#div_id_begintime_part').addClass('hidden');
+        $('#div_id_endtime_part').addClass('hidden');
     }
 }
 
@@ -447,7 +453,7 @@ function selectAllLines() {
         $('#div_id_begintime_part').removeClass('hidden');
         $('#div_id_endtime_part').removeClass('hidden');
     }
-    $('#trips tbody tr').remove();
+    $('#trips tr').not('.help').remove();
     $('.rit-overzicht').css("display","none");
     $('#trips thead').hide();
     $('#trips tbody').hide();
@@ -484,6 +490,9 @@ function colorSelectedRange() {
         var end_hour = parseInt($('#id_endtime_part').val().split(':')[0])*3600;
         var end_minutes = parseInt($('#id_endtime_part').val().split(':')[1])*60;
         selection_endtime = end_hour+end_minutes;
+        if ($('#id_begintime_part').val().length !=0 && selection_endtime < selection_begintime) {
+            selection_endtime += 24*3600;
+        }
     };
 
     selectTripMeasures = [];
@@ -527,6 +536,48 @@ function changeOfRange() {
     colorSelectedRange();
 }
 
+function formValidation() {
+    var validationdata = $('.form').serializeArray().reduce(function(obj, item) {
+        obj[item.name] = item.value;
+        return obj;
+    }, {});
+    validationdata['csrfmiddlewaretoken'] = document.getElementsByName('csrfmiddlewaretoken')[0].value;
+
+    $.ajax({url: window.location.pathname,
+            data: validationdata,
+            method: 'POST',
+            success : function(result) {
+                window.location.href = '/ritaanpassing';
+            },
+            error: function(result) {
+                var response = result.responseJSON;
+                if (!$("#error_list").hasClass('hidden')) {
+                        $("#error_list").empty();
+                        $(".has-error").removeClass('has-error');
+                        $(".error-label").removeClass('error-label');
+                }
+                $.each(response, function(field, errorlist) {
+                    $.each(errorlist, function(idx, error) {
+                        error = error.toLowerCase();
+                        if (error.indexOf('ingangstijd') !== -1) {
+                            $('#div_id_messagestarttime').addClass('has-error');
+                        } else if (error.indexOf('eind') !== -1) {
+                            $('#div_id_messageendtime').addClass('has-error');
+                        } else if (error.indexOf('rit') !== -1 && error.indexOf('database') === -1) {
+                            $('#div_id_ritten').addClass('error-label');
+                        } else if (error.indexOf('lijn') !== -1 && error.indexOf('database') === -1) {
+                            $('#div_id_lijnen').addClass('error-label');
+                        }
+                        $("#error_list").append('<p><span class="glyphicon glyphicon-flag" style="color:red"><em class="help" style="color: red"> '+error+'</em></span></p>');
+                    });
+                });
+                if ($("#error_list").hasClass('hidden')) {
+                    $("#error_list").removeClass('hidden');
+                }
+            }
+    });
+}
+
 /* TIME FUNCTIONS */
 function convertSecondsToTime(seconds) {
     var hours   = Math.floor(seconds / 3600);
@@ -548,4 +599,10 @@ function padTime(i) {
     } else {
         return '00';
     }
+}
+
+function stringToTime(timestring) {
+    timestring = timestring.split(/:/);
+    var time = timestring[0] * 3600 + timestring[1] * 60;
+    return time;
 }

@@ -232,3 +232,14 @@ span.stop-selection,span.trip-selection{
     margin-bottom: 15px;
 }
 
+.msg_warning {
+    background-color: #fcf8e3;
+}
+
+.error-label label {
+    color: #a94442;
+}
+
+.stop_warning {
+    background-color: #f67f7f;
+}

@@ -148,7 +148,7 @@ class Kv15Stopmessage(models.Model):
 
     def __str__(self):
         message = self.messagecontent
-        if message == "":
+        if not message or len(message.strip()) == 0:
             message = _("<geen bericht>")
         return "%s|%s#%s : %s" % (self.dataownercode, self.messagecodedate, self.messagecodenumber, message)
 
@@ -373,7 +373,7 @@ class Kv15ScenarioMessage(models.Model):
 
     def __str__(self):
         message = self.messagecontent
-        if message == "":
+        if not message or len(message.strip()) == 0:
             message = _("<geen bericht>")
         return "%s : %s" % (self.scenario.name, message)
 

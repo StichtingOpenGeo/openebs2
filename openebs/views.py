@@ -1,6 +1,6 @@
 # Create your views here.
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from django.contrib.gis.db.models import Extent
 from django.urls import reverse_lazy
@@ -8,7 +8,7 @@ from django.db.models import Q, Count
 from django.shortcuts import redirect
 from django.views.generic import ListView, UpdateView, DetailView
 from django.views.generic.edit import CreateView, DeleteView
-from django.utils.timezone import now
+from django.utils.timezone import now, is_aware, make_aware
 
 from djgeojson.views import GeoJSONLayerView
 
@@ -16,7 +16,7 @@ from kv1.models import Kv1Stop
 from openebs.views_push import Kv15PushMixin
 from openebs.views_utils import FilterDataownerMixin
 from utils.client import get_client_ip
-from utils.views import JSONListResponseMixin, AccessMixin, AccessJsonMixin
+from utils.views import JSONListResponseMixin, AccessMixin, AccessJsonMixin, JsonableResponseMixin
 from openebs.models import Kv15Stopmessage, Kv15Log, MessageStatus, Kv1StopFilter
 from openebs.form import Kv15StopMessageForm
 
@@ -75,7 +75,7 @@ class MessageListView(AccessMixin, ListView):
                (not user.is_superuser and (user.has_perm("openebs.view_all") or user.has_perm("openebs.edit_all")))
 
 
-class MessageCreateView(AccessMixin, Kv15PushMixin, CreateView):
+class MessageCreateView(JsonableResponseMixin, AccessMixin, Kv15PushMixin, CreateView):
     permission_required = 'openebs.add_messages'
     model = Kv15Stopmessage
     form_class = Kv15StopMessageForm
@@ -123,7 +123,7 @@ class MessageCreateView(AccessMixin, Kv15PushMixin, CreateView):
         return ret
 
 
-class MessageUpdateView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, UpdateView):
+class MessageUpdateView(JsonableResponseMixin, AccessMixin, Kv15PushMixin, FilterDataownerMixin, UpdateView):
     permission_required = 'openebs.add_messages'
     permission_level = 'write'
     model = Kv15Stopmessage
@@ -227,13 +227,22 @@ class ActiveStopsAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
 
     def get_object(self, **kwargs):
         # Note, can't set this on the view, because it triggers the queryset cache
-        queryset = self.model.objects.filter(messages__stopmessage__messagestarttime__lte=now(),
-                                             messages__stopmessage__messageendtime__gte=now(),
+        queryset = self.model.objects.filter(#messages__stopmessage__messagestarttime__lte=now(),
+                                             Q(messages__stopmessage__messageendtime__gte=now()) |
+                                             Q(messages__stopmessage__messageendtime=None),
                                              messages__stopmessage__isdeleted=False,
                                              # These two are double, but just in case
                                              messages__stopmessage__dataownercode=self.request.user.userprofile.company,
                                              dataownercode=self.request.user.userprofile.company).distinct()
-        return list(queryset.values('dataownercode', 'userstopcode'))
+        return list({'message_id': x['messages__stopmessage__id'], 'dataownercode': x['dataownercode'],
+                     'userstopcode': x['userstopcode'],
+                     'starttime': int(x['messages__stopmessage__messagestarttime'].timestamp()),
+                     'endtime': int(x['messages__stopmessage__messageendtime'].timestamp()) if
+                                x['messages__stopmessage__messageendtime'] is not None else None,
+                     'message': x['messages__stopmessage__messagecontent']} for x in
+                    queryset.values('messages__stopmessage__id', 'dataownercode', 'userstopcode',
+                                    'messages__stopmessage__messagestarttime', 'messages__stopmessage__messageendtime',
+                                    'messages__stopmessage__messagecontent'))
 
 
 class MessageStopsAjaxView(AccessJsonMixin, GeoJSONLayerView):

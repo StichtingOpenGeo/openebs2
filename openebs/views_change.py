@@ -10,9 +10,10 @@ from openebs.models import Kv17Change
 from openebs.views_push import Kv17PushMixin
 from openebs.views_utils import FilterDataownerMixin
 from utils.time import get_operator_date, get_operator_date_aware
-from utils.views import AccessMixin, JSONListResponseMixin, AccessJsonMixin
+from utils.views import AccessMixin, JSONListResponseMixin, AccessJsonMixin, JsonableResponseMixin
 from django.utils.dateparse import parse_date
 from django.utils.timezone import now
+
 
 log = logging.getLogger('openebs.views.changes')
 
@@ -51,7 +52,7 @@ class ChangeListView(AccessMixin, ListView):
         return context
 
 
-class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
+class ChangeCreateView(JsonableResponseMixin, AccessMixin, Kv17PushMixin, CreateView):
     permission_required = 'openebs.add_change'
     model = Kv17Change
     form_class = Kv17ChangeForm
@@ -79,7 +80,7 @@ class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
         journey_errors = 0
         journeys = []
         for journey in self.request.GET['journey'].split(','):
-            if journey == "":
+            if len(journey.strip()) == 0:
                 continue
             log.info("Finding journey %s for '%s'" % (journey, self.request.user))
             j = Kv1Journey.find_from_realtime(self.request.user.userprofile.company, journey)

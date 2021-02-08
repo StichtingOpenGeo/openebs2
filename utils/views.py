@@ -19,6 +19,7 @@ from django.urls import reverse
 from django.shortcuts import redirect, render
 from utils.push import Push
 from django.db.models.query import QuerySet
+from django.http import JsonResponse
 
 log = logging.getLogger('openebs.views.mixins')
 
@@ -181,6 +182,33 @@ class AccessJsonMixin(BracesAccessMixin):  # TODO change if 'geweigerd' message 
 
         return super(AccessJsonMixin, self).dispatch(
             request, *args, **kwargs)
+
+
+class JsonableResponseMixin:
+    """
+    Mixin to add JSON support to a form.
+    Must be used with an object-based FormView (e.g. CreateView)
+    """
+
+    def form_invalid(self, form):
+        response = super().form_invalid(form)
+        if self.request.is_ajax():
+            return JsonResponse(form.errors, status=400)
+        else:
+            return response
+
+    def form_valid(self, form):
+        # We make sure to call the parent's form_valid() method because
+        # it might do some processing (in the case of CreateView, it will
+        # call form.save() for example).
+        response = super().form_valid(form)
+        if self.request.is_ajax():
+            data = {
+                'pk': self.object.pk,
+            }
+            return JsonResponse(data)
+        else:
+            return response
 
 
 def handler403(request, exception):

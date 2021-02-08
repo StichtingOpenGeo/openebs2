@@ -64,7 +64,7 @@
                 <input type="hidden" id="lines" name="lines" />
             </div>
             <div class="control-group">
-                <div class = "lijn-overzicht" style="display: none;">
+                <div class = "lijn-overzicht" id="div_id_lijnen" style="display: none;">
                     <label>{% trans "Lijn" %}</label>
                     <p class="form-control-static" id="lijn-list" >
                     {% if form.instance.line %}
@@ -76,7 +76,7 @@
                     {% endif %}
                 </p><br />
                 </div>
-                <div class = "rit-overzicht" style="display: block;">
+                <div class = "rit-overzicht" id="div_id_ritten" style="display: block;">
                     <label>{% trans "Rit(ten)" %}</label>
                     <p class="form-control-static" id="rit-list">
                         {% if form.instance.journey %}
@@ -90,13 +90,15 @@
                         {% endif %}
                     </p><br />
                 </div>
+                <div id="error_list" class="hidden"></div>
+
             </div>
             <div class="clearfix"></div>
             <br />
             {% crispy form form.helper %}
             <div class="form-group">
                 <br />
-                <button type="submit" class="btn btn-primary">{% trans "Doorvoeren" %}</button>
+                <button type="button" class="btn btn-primary" onclick="formValidation()">{% trans "Doorvoeren" %}</button>
             </div>
         </form>
     </div>

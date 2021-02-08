@@ -1,5 +1,9 @@
 {% load i18n %}
-{{ msg.messagestarttime|date:"H:i" }} -
+{% if msg.is_future %}
+    {{ msg.messagestarttime|date:"d-m-Y H:i" }} -
+{% else %}
+    {{ msg.messagestarttime|date:"H:i" }} -
+{% endif %}
 {% if msg.get_message_duration == 0 %}
     {{ msg.messageendtime|date:"H:i" }}
 {% elif msg.get_message_duration == 1 %}

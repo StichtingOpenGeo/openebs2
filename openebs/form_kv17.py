@@ -13,7 +13,7 @@ from openebs.models import Kv17JourneyChange
 from django.utils.dateparse import parse_date
 from datetime import datetime, timedelta, time
 from django.db.models import Q
-from django.utils.timezone import make_aware, utc
+from django.utils.timezone import make_aware
 
 
 log = logging.getLogger('openebs.forms')
@@ -36,11 +36,12 @@ class Kv17ChangeForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super(Kv17ChangeForm, self).clean()
         operatingday = parse_date(self.data['operatingday'])
+        validationerrors = []
         if operatingday is None:
-            raise ValidationError(_("Er staan geen ritten in de database"))
+            validationerrors.append(ValidationError(_("Er staan geen ritten in de database")))
 
         if 'journeys' not in self.data:
-            raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
+            validationerrors.append(ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig")))
 
         if self.data['begintime_part'] != '':
             hh, mm = self.data['begintime_part'].split(':')
@@ -55,52 +56,48 @@ class Kv17ChangeForm(forms.ModelForm):
                 if begintime > endtime:  # if endtime before begintime
                     endtime = endtime + timedelta(days=1)  # endtime is next day
                     if endtime.time() >= time(6, 0):  # and after 6 am: validation error
-                        raise ValidationError(_("Eindtijd valt op volgende operationele dag"))
+                        validationerrors.append(ValidationError(_("Eindtijd valt op volgende operationele dag")))
         else:
             endtime = None
 
         dataownercode = self.user.userprofile.company
         if 'Alle ritten' in self.data['journeys']:
-            valid_journeys = self.clean_all_journeys(operatingday, dataownercode, begintime, endtime)
+            validationerrors = self.clean_all_journeys(operatingday, dataownercode, begintime, endtime, validationerrors)
         elif 'Hele vervoerder' in self.data['lines']:
-            valid_journeys = self.clean_all_lines(operatingday, dataownercode, begintime, endtime)
+            validationerrors = self.clean_all_lines(operatingday, dataownercode, begintime, endtime, validationerrors)
         else:
-            valid_journeys = self.clean_journeys(operatingday, dataownercode)
+            validationerrors = self.clean_journeys(operatingday, dataownercode, validationerrors)
 
-        if valid_journeys == 0:
-            raise ValidationError(_("Er zijn geen ritten geselecteerd om op te heffen"))
+        if len(validationerrors) != 0:
+            raise ValidationError(validationerrors)
+        else:
+            return cleaned_data
 
-        return cleaned_data
-
-    def clean_journeys(self, operatingday, dataownercode):
-        valid_journeys = 0
+    def clean_journeys(self, operatingday, dataownercode, validationerrors):
         if self.data['journeys'] != '':
             for journey in self.data['journeys'].split(',')[0:-1]:
-                journey_qry = Kv1Journey.objects.filter(dataownercode=dataownercode, pk=journey, dates__date=operatingday)
+                journey_qry = Kv1Journey.objects.filter(dataownercode=dataownercode, pk=journey,
+                                                        dates__date=operatingday)
                 if journey_qry.count() == 0:
-                    raise ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig"))
+                    validationerrors.append(ValidationError(_("Een of meer geselecteerde ritten zijn ongeldig")))
 
                 # delete recovered if query is the same.
                 Kv17Change.objects.filter(dataownercode=dataownercode, journey__pk=journey, line=journey_qry[0].line,
                                           operatingday=operatingday, is_recovered=True).delete()
 
         else:
-            raise ValidationError(_("Er werd geen rit geselecteerd."))
+            validationerrors.append(ValidationError(_("Er werd geen rit geselecteerd.")))
 
-        valid_journeys += 1
+        return validationerrors
 
-        return valid_journeys
-
-    def clean_all_journeys(self, operatingday, dataownercode, begintime, endtime):
-        valid_journeys = 0
-
+    def clean_all_journeys(self, operatingday, dataownercode, begintime, endtime, validationerrors):
         if 'lines' in self.data:
             if self.data['lines'] != '':
                 for line in self.data['lines'].split(',')[0:-1]:
                     line_qry = Kv1Line.objects.filter(pk=line)
 
                     if line_qry.count() == 0:
-                        raise ValidationError(_("Geen lijn gevonden."))
+                        validationerrors.append(ValidationError(_("Er werd geen lijn gevonden in de database.")))
 
                     database_alljourneys = Kv17Change.objects.filter(dataownercode=dataownercode,
                                                                      is_alljourneysofline=True, line=line_qry[0],
@@ -124,24 +121,20 @@ class Kv17ChangeForm(forms.ModelForm):
                     if database_alllines:
                         if database_alllines.filter(Q(endtime__gt=begintime) | Q(endtime=None),
                                                     Q(begintime__lte=begintime) | Q(begintime=None)):
-                            raise ValidationError(_(
-                                "De gehele vervoerder is al aangepast voor de aangegeven ingangstijd."))
+                            validationerrors.append(ValidationError(_(
+                                "De gehele vervoerder is al aangepast voor de aangegeven ingangstijd.")))
 
                     elif database_alljourneys:
                         if database_alljourneys.filter(Q(endtime__gt=begintime) | Q(endtime=None),
                                                        Q(begintime__lte=begintime) | Q(begintime=None)):
-                            raise ValidationError(_(
-                                "Een of meer geselecteerde lijnen zijn al aangepast voor de aangegeven ingangstijd."))
+                            validationerrors.append(ValidationError(_(
+                                "Een of meer geselecteerde lijnen zijn al aangepast voor de aangegeven ingangstijd.")))
         else:
-            raise ValidationError(_("Geen geldige lijn geselecteerd"))
+            validationerrors.append(ValidationError(_("Geen geldige lijn geselecteerd")))
 
-        valid_journeys += 1
+        return validationerrors
 
-        return valid_journeys
-
-    def clean_all_lines(self, operatingday, dataownercode, begintime, endtime):
-        valid_journeys = 0
-
+    def clean_all_lines(self, operatingday, dataownercode, begintime, endtime, validationerrors):
         database_alllines = Kv17Change.objects.filter(dataownercode=dataownercode, is_alllines=True,
                                                       operatingday=operatingday, is_recovered=False)
 
@@ -158,11 +151,9 @@ class Kv17ChangeForm(forms.ModelForm):
 
             if database_alllines.filter(Q(endtime__gt=begintime) | Q(endtime=None),
                                         Q(begintime__lte=begintime) | Q(begintime=None)):
-                raise ValidationError(_("De ingangstijd valt al binnen een geplande operatie."))
+                validationerrors.append(ValidationError(_("De ingangstijd valt al binnen een geplande operatie.")))
 
-        valid_journeys += 1
-
-        return valid_journeys
+        return validationerrors
 
     def save(self, force_insert=False, force_update=False, commit=True):
         ''' Save each of the journeys in the model. This is a disaster, we return the XML

@@ -19,8 +19,9 @@ $( "#stops" ).on('click', ".stop-img.stop-right", selectStopFromBall);
 $('body').on('click', '#id_messagestarttime,#id_messageendtime', function() {
     $(this).select();
 });
-$('body').on('blur', '#id_messagestarttime,#id_messageendtime', calculateTime);
-$('body').on('blur', '#id_messagestarttime,#id_messageendtime', checkMessageTime);
+$('body').on('change', '#id_messagestarttime,#id_messageendtime', calculateTime);
+$('body').on('change', '#id_messagestarttime,#id_messageendtime', checkMessageTime);
+$('body').on('change', '#id_messagestarttime,#id_messageendtime', showStopsOnChange);
 $('body').on('change', '#id_messagedurationtype_1', function() {
     hideEndTime();
 });
