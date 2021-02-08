@@ -7,8 +7,10 @@ from django.utils.timezone import now, is_aware, make_aware
 import floppyforms.__future__ as forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
+from django.db.models import Q
+
 from kv1.models import Kv1Stop
-from openebs.models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, get_end_service
+from openebs.models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, get_end_service, Kv15MessageStop
 from datetime import datetime
 
 log = logging.getLogger('openebs.forms')
@@ -19,7 +21,9 @@ class Kv15StopMessageForm(forms.ModelForm):
         # TODO Move _all_ halte parsing here!
         datetimevalidation = []
         try:
-            datetime.strptime(self.data['messagestarttime'], "%d-%m-%Y %H:%M:%S")
+            starttime = datetime.strptime(self.data['messagestarttime'], "%d-%m-%Y %H:%M:%S")
+            if not is_aware(starttime):
+                starttime = make_aware(starttime)
         except:
             datetimevalidation.append(_("Voer een geldige begintijd in (dd-mm-jjjj uu:mm:ss)."))
 
@@ -50,6 +54,19 @@ class Kv15StopMessageForm(forms.ModelForm):
                 stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
                 if stop:
                     valid_ids.append(stop.pk)
+                    if starttime:
+                        if 'messagetype' in self.data and self.data['messagetype'] != 'OVERRULE':
+                            dataownercode = self.instance.dataownercode
+                            if len(valid_ids) > 0:
+                                msg_count = Kv15MessageStop.objects.filter(~Q(stopmessage__id=self.instance.id),
+                                                                           stopmessage__dataownercode=dataownercode,
+                                                                           stop__id=stop.pk,
+                                                                           stopmessage__messagestarttime__lte=starttime,
+                                                                           stopmessage__messageendtime__gte=starttime,
+                                                                           stopmessage__isdeleted=False).count()
+                                if msg_count > 0:
+                                    validationerrors.append(
+                                        ValidationError(_("Halte heeft al een bericht voor deze begintijd.")))
                 else:
                     nonvalid_ids.append(halte)
 

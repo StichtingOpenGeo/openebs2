@@ -9,7 +9,7 @@
     <div class="col-lg-4">
         <h2>{% trans "Bewerk bericht" %}</h2>
         <form method="post" class="form" action="{% url 'msg_edit' object.pk %}">
-            <div class="control-group">
+            <div class="control-group" id="div_id_haltes">
                 <label>{% trans "Haltes" %}</label>
                 <p class="form-control-static" id="halte-list">
                     {% if object.kv15messagestop_set.count > 0 %}

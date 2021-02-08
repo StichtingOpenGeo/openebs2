@@ -239,3 +239,7 @@ span.stop-selection,span.trip-selection{
 .error-label label {
     color: #a94442;
 }
+
+.stop_warning {
+    background-color: #f67f7f;
+}

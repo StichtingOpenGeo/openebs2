@@ -340,10 +340,12 @@ function formValidation() {
                             $('#div_id_messageendtime').addClass('has-error');
                         } else if (error.indexOf('type') !== -1) {
                             $('#div_id_messagetype').addClass('has-error');
+                        }
+
+                        if (error.indexOf('halte') !== -1) {
+                            $('#div_id_haltes').addClass('error-label');
                         } else if (error.indexOf('bericht') !== -1) {
                             $('#div_id_messagecontent').addClass('has-error');
-                        } else if (error.indexOf('halte') !== -1) {
-                            $('#div_id_haltes').addClass('error-label');
                         }
 
                     });
@@ -357,9 +359,15 @@ function formValidation() {
 
 function showStopsOnChange() {
     $('.stopRow span').remove();
+    if (!$("#error_list").hasClass('hidden')) {
+        $("#error_list").empty();
+        $("#error_list").addClass('hidden');
+        $('[id^=ss'+stop+']').removeClass('stop_warning');
+        $('#div_id_haltes').addClass('error-label');
+    }
     blockedStops = [];
     if (messageData.length > 0) {
-        const filtered = messageData.filter(message => {
+        const filtered_messagedata = messageData.filter(message => {
             start_epoch = epoch(parseDate($('#id_messagestarttime').val()));
             end_epoch = epoch(parseDate($('#id_messageendtime').val()));
             if (message.starttime <= start_epoch) {
@@ -368,6 +376,17 @@ function showStopsOnChange() {
                 }
             }
         });
+        if (window.location.pathname.indexOf('bewerken') !== -1 && window.location.pathname.indexOf('scenario') === -1) { // remove current message_id from current when updating message
+            var current_id = window.location.pathname.split('/')[2];
+            var filtered = filtered_messagedata.filter(message => {
+                if (message.message_id != current_id) {
+                    return true
+                }
+            });
+        } else {
+            var filtered = filtered_messagedata;
+        }
+
         var stops = [];
         if (filtered.length > 0) {
             filtered.filter(message => {
@@ -377,11 +396,15 @@ function showStopsOnChange() {
                 }
             });
 
-            $.each(stops, function(i, stop) {
-                $('.stop [id*='+stop+']').append('<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze begintijd"></span>');
-                //if (window.location.pathname.indexOf('bewerken') !== -1) {
-                //    $('.stop-selection [id*='+stop+']').append('<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze begintijd"></span>');
-                //}
+            $.each(blockedStops, function(i, stop) {
+                $('[id^=s'+stop+']').append('<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al een bericht voor deze begintijd"></span>');
+                if ($.inArray('s'+stop, selectedStops) !== -1) {
+                    $('[id^=ss'+stop+']').addClass('stop_warning');
+                    $('[id^=s'+stop+']').addClass('stop_warning');
+                    $('#div_id_haltes').addClass('error-label');
+                    $("#error_list").append('<p><span class="glyphicon glyphicon-flag" style="color:#a94442"><em class="help" style="color: #a94442"> Halte heeft al een bericht voor deze begintijd</em></span></p>');
+                    $("#error_list").removeClass('hidden');
+                }
             });
         }
     }
