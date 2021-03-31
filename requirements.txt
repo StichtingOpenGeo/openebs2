@@ -14,7 +14,7 @@ python-dateutil
 #transitfeed # Read Write GTFS
 
 # Dev
-lxml==4.6.2 # Tests - needs libxml2-dev libxslt-dev packages
+lxml==4.6.3 # Tests - needs libxml2-dev libxslt-dev packages
 
 
 
