@@ -14,6 +14,6 @@ class Command(BaseCommand):
         two_days_from_now = make_aware(datetime.now() + timedelta(days=2))
         journey_qry = Kv1Journey.objects.filter(dates__date__gte=two_days_from_now)
         if journey_qry.count() == 0:
-            subject = f"Geen nieuwe ritten in database vanaf {datetime.strftime(two_days_from_now, '%d-%m-%Y')}"
+            subject = f"OpenEBS: Geen nieuwe ritten in database vanaf {datetime.strftime(two_days_from_now, '%d-%m-%Y')}"
             message = f"Er staan geen nieuwe ritten in de database met een datum groter of gelijk aan {datetime.strftime(two_days_from_now, '%d-%m-%Y')}"
             mail_admins(subject, message)
