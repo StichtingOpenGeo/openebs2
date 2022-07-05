@@ -473,7 +473,6 @@ function selectAllLines() {
     $('.lijn-overzicht').css("display","block");
     $('#all_journeys').attr('disabled','disabled');
 
-
     /* in case of a small screen with everything below each other instead of beside */
     document.querySelector('#ritaanpassing').scrollIntoView({
         behavior: 'smooth'
