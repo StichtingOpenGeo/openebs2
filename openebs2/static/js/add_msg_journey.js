@@ -254,8 +254,17 @@ function changeOperatingDayTrips() {
     emptyLineList();
     emptyJourneyList();
     getActiveLines();
-    var operating_day_text = $("#id_operatingday option:selected" ).text();
-    $("#operating_day_text").text(operating_day_text);
+    if ($("#id_operatingday").text === undefined || ($("#id_operatingday").length == 1 ) && $("#id_operatingday option:selected" ).text() !== $("#operating_day_text").text()) {
+        $('#trips tr.help').remove();
+        $('#trips tr.empty_dates').show();
+        $('#line_search').attr('disabled','disabled');
+        $('#all_lines').attr('disabled','disabled');
+        $('.btn-primary').attr('disabled','disabled');
+    }
+    else {
+        var operating_day_text = $("#id_operatingday option:selected" ).text();
+        $("#operating_day_text").text(operating_day_text);
+    }
 }
 
 function showTripsOnChange() {
@@ -463,6 +472,8 @@ function selectAllLines() {
     $('#lines').val('Hele vervoerder');
     $('.lijn-overzicht').css("display","block");
     $('#all_journeys').attr('disabled','disabled');
+    $('#all_journeys').attr('disabled','disabled');
+
 
     /* in case of a small screen with everything below each other instead of beside */
     document.querySelector('#ritaanpassing').scrollIntoView({
