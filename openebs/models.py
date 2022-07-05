@@ -214,7 +214,10 @@ class Kv15Stopmessage(models.Model):
         return self.messagestarttime > now()
 
     def is_editable(self):
-        return self.messageendtime > now() and self.isdeleted == False
+        if self.isdeleted:
+            return False
+        else:
+            return self.messageendtime is None or self.messageendtime > now()
 
     def is_external(self):
         return self.user_id == Kv15Stopmessage.get_external_user_id()

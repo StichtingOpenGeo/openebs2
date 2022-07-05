@@ -232,3 +232,6 @@ span.stop-selection,span.trip-selection{
     margin-bottom: 15px;
 }
 
+.empty_dates {
+    display: none;
+}

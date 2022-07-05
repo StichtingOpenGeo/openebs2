@@ -61,7 +61,9 @@ class MessageListView(AccessMixin, ListView):
             archive = archive.filter(kv15messagestop__stop__in=stop_list)
 
         if not context['view_all']:
-            archive = archive.filter(dataownercode=self.request.user.userprofile.company)
+            archive = archive.filter(dataownercode=self.request.user.userprofile.company)[:50]
+        else:
+            archive = archive[:50]
         context['archive_list'] = archive
 
         return context
