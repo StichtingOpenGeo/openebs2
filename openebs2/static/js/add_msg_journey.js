@@ -472,7 +472,6 @@ function selectAllLines() {
     $('#lines').val('Hele vervoerder');
     $('.lijn-overzicht').css("display","block");
     $('#all_journeys').attr('disabled','disabled');
-    $('#all_journeys').attr('disabled','disabled');
 
 
     /* in case of a small screen with everything below each other instead of beside */
