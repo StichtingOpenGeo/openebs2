@@ -254,7 +254,7 @@ function changeOperatingDayTrips() {
     emptyLineList();
     emptyJourneyList();
     getActiveLines();
-    if ($("#id_operatingday").text === undefined || ($("#id_operatingday").length == 1 ) && $("#id_operatingday option:selected" ).text() !== $("#operating_day_text").text()) {
+    if ($("#id_operatingday").text === undefined || ($("#id_operatingday option").length == 1 && $("#id_operatingday option:selected" ).text() !== $("#operating_day_text").text())) {
         $('#trips tr.help').remove();
         $('#trips tr.empty_dates').show();
         $('#line_search').attr('disabled','disabled');
