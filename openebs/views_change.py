@@ -4,7 +4,7 @@ from django.urls import reverse_lazy
 from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.views.generic import ListView, CreateView, DeleteView, DetailView
-from kv1.models import Kv1Journey
+from kv1.models import Kv1Journey, Kv1Line
 from openebs.form_kv17 import Kv17ChangeForm
 from openebs.models import Kv17Change
 from openebs.views_push import Kv17PushMixin
@@ -67,9 +67,19 @@ class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
     def get_context_data(self, **kwargs):
         data = super(ChangeCreateView, self).get_context_data(**kwargs)
         data['operator_date'] = get_operator_date()
+        data['first_lines'] = self.get_first_lines()
         if 'journey' in self.request.GET:
             self.add_journeys_from_request(data)
         return data
+
+    def get_first_lines(self):
+        first_lines = list(Kv1Line.objects.filter(dataownercode=self.request.user.userprofile.company)
+                                          .exclude(headsign='')
+                                          .order_by('headsign')
+                                          .values('pk', 'dataownercode', 'headsign', 'lineplanningnumber',
+                                                  'publiclinenumber')[:10]
+                           )
+        return first_lines
 
     def add_journeys_from_request(self, data):
         operating_day = parse_date(
