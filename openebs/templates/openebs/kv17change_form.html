@@ -23,9 +23,24 @@
                 </tr>
             </thead>
             <tbody id="rows">
+                {% if first_lines %}
+                    {% for first_line in first_lines %}
+                        <tr class="line" id="l{{ first_line.pk }}">
+                            <td><strong>{{ first_line.publiclinenumber }}</strong>
+                                {% if first_line.publiclinenumber != first_line.lineplanningnumber %}
+                                     / <small>{{ first_line.lineplanningnumber }}</small>
+                                {% else %}
+                                    <span class="hidden"><small>{{ first_line.lineplanningnumber }}</small></span>
+                                {% endif %}
+                            </td>
+                            <td>{{ first_line.headsign }}</td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
                 <tr>
                     <td colspan="2" class="text-center"><em>{% trans "Typ een eindbestemming of lijnnummer om een lijn te zoeken" %}</em></td>
                 </tr>
+                {% endif %}
             </tbody>
         </table>
     </div>
