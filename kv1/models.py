@@ -34,7 +34,7 @@ class Kv1Stop(models.Model):
     userstopcode = models.CharField(max_length=10)
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
     timingpointcode = models.CharField(max_length=10)  # Note, unique, but not per stop
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=102)
     location = models.PointField()
 
     class Meta(object):
