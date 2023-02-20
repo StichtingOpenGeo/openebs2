@@ -155,7 +155,7 @@ class Kv1JourneyDate(models.Model):
 
 class ImportStatus (models.Model):
     importDate = models.DateTimeField()
-    status = models.CharField(max_length=10)
+    status = models.CharField(max_length=25)
 
     def __str__(self):
         return "%s (%s)" % (self.importDate, self.status)
