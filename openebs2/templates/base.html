@@ -82,6 +82,9 @@
                     <li><a href="{% url 'company_change' %}?company=QBUZZ">
                         <img src="{% static "img/logos/qbuzz.png" %}" class="user-icon"/> QBuzz
                     </a></li>
+                    <li><a href="{% url 'company_change' %}?company=KEOLIS">
+                        <img src="{% static "img/logos/keolis.png" %}" class="user-icon"/> Keolis
+                    </a></li>
                     <li><a href="{% url 'company_change' %}?company=SYNTUS">
                         <img src="{% static "img/logos/syntus.png" %}" class="user-icon"/> Syntus
                     </a></li>
@@ -97,8 +100,16 @@
         <li class="dropdown">
             {% if user and not user.is_anonymous %}
             <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                {{ user.get_full_name }}
-                <img src="{% get_static_prefix %}img/logos/{{ user.userprofile.company|lower }}.png" class="user-icon"/>
+                {% if user.get_full_name %}
+                    {{ user.get_full_name }}
+                {% elif user.username %}
+                    {{ user.username }}
+                {% else %}
+                    Naamloos
+                {% endif %}
+                {% if user.userprofile.company %}
+                    <img src="{% get_static_prefix %}img/logos/{{ user.userprofile.company|lower }}.png" class="user-icon"/>
+                {% endif %}
                 <b class="caret"></b>
             </a>
             <ul class="dropdown-menu">

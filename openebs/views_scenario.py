@@ -1,9 +1,9 @@
 from builtins import str
 import logging
-from braces.views import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.db.models import Count
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
+from django.views import View
 from django.views.generic import FormView, ListView, CreateView, UpdateView, DeleteView, DetailView
 from djgeojson.views import GeoJSONLayerView
 from kv1.models import Kv1Stop
@@ -11,7 +11,7 @@ from openebs.form import PlanScenarioForm, Kv15ScenarioForm
 from openebs.models import Kv15Scenario, MessageStatus, Kv15ScenarioMessage, Kv15ScenarioStop
 from openebs.views_push import Kv15PushMixin
 from openebs.views_utils import FilterDataownerMixin, FilterDataownerListMixin
-from utils.views import AccessMixin, JSONListResponseMixin
+from utils.views import AccessMixin, AccessJsonMixin, JSONListResponseMixin
 from django.contrib.gis.db.models import Extent
 
 log = logging.getLogger('openebs.views.scenario')
@@ -61,7 +61,7 @@ class ScenarioListView(AccessMixin, FilterDataownerListMixin, ListView):
     model = Kv15Scenario
 
     def get_queryset(self):
-        return super(ScenarioListView, self).get_queryset().order_by('name').annotate(Count('messages'));
+        return super(ScenarioListView, self).get_queryset().order_by('name').annotate(Count('messages'))
 
 
 class ScenarioCreateView(AccessMixin, CreateView):
@@ -96,7 +96,8 @@ class ScenarioDeleteView(AccessMixin, FilterDataownerMixin, DeleteView):
     success_url = reverse_lazy('scenario_index')
 
 
-class ScenarioStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
+class ScenarioStopsAjaxView(AccessJsonMixin, GeoJSONLayerView):
+    permission_required = 'openebs.view_scenario'
     model = Kv1Stop
     geometry_field = 'location'
     properties = ['name', 'userstopcode', 'dataownercode', 'timingpointcode', 'messages']
@@ -108,7 +109,45 @@ class ScenarioStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
         return qry
 
 
-class ScenarioStopsBoundAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+class ScenarioMessageAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_scenario'
+    model = Kv15ScenarioMessage
+    render_object = 'object'
+
+    def get_object(self):
+        queryset = self.model.objects.filter(scenario=self.kwargs.get('scenario', None),
+                                             dataownercode=self.request.user.userprofile.company).distinct()
+        return list(queryset.values('id', 'messagedurationtype'))
+
+
+class ScenarioCloneView(AccessMixin, FilterDataownerMixin, View):
+    permission_required = 'openebs.add_scenario'
+    model = Kv15Scenario
+    form_class = Kv15ScenarioForm
+
+    def get(self, request, pk):
+        duplicate = Kv15Scenario.objects.filter(id=pk)[0]
+        duplicate.id = None
+        duplicate.name += ' - KOPIE'
+        duplicate.save()
+        # find related messages
+        scenario_details = Kv15ScenarioMessage.objects.filter(scenario_id=pk)
+        for related_message in scenario_details:
+            # find related stops for the message and duplicate these first while a message_id is still known
+            message_id = related_message.id
+            related_message.pk = None
+            related_message.scenario = duplicate
+            related_message.save()
+            stop_details = Kv15ScenarioStop.objects.filter(message_id=message_id)
+            for related_stop in stop_details:
+                related_stop.pk = None
+                related_stop.message = related_message
+                related_stop.save()
+
+        return redirect("scenario_edit", pk=duplicate.pk)
+
+
+class ScenarioStopsBoundAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
     """ sets coordinates for map """
     model = Kv1Stop
     render_object = 'object'
@@ -151,7 +190,7 @@ class ScenarioMessagesForStopView(LoginRequiredMixin, JSONListResponseMixin, Det
         return list(self.get_queryset())
 
 
-class ScenarioMessagesAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+class ScenarioMessagesAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
     """ sets coordinates for map """
     permission_required = 'openebs.view_scenario'
     model = Kv1Stop

@@ -2,7 +2,6 @@
 import logging
 from datetime import timedelta
 
-from braces.views import LoginRequiredMixin
 from django.contrib.gis.db.models import Extent
 from django.urls import reverse_lazy
 from django.db.models import Q, Count
@@ -17,7 +16,7 @@ from kv1.models import Kv1Stop
 from openebs.views_push import Kv15PushMixin
 from openebs.views_utils import FilterDataownerMixin
 from utils.client import get_client_ip
-from utils.views import JSONListResponseMixin, AccessMixin
+from utils.views import JSONListResponseMixin, AccessMixin, AccessJsonMixin
 from openebs.models import Kv15Stopmessage, Kv15Log, MessageStatus, Kv1StopFilter
 from openebs.form import Kv15StopMessageForm
 
@@ -42,9 +41,9 @@ class MessageListView(AccessMixin, ListView):
             stop_list = Kv1StopFilter.objects.get(id=context['filter']).stops.values_list('stop')
 
         # Get the currently active messages
-        active = self.model.objects.filter(messageendtime__gt=now(), isdeleted=False) \
-                                    .annotate(Count('stops'))\
-                                    .order_by('-messagetimestamp')
+        active = self.model.objects.filter(Q(messageendtime__gt=now()) | Q(messageendtime=None), isdeleted=False) \
+                                   .annotate(Count('stops'))\
+                                   .order_by('-messagetimestamp')
         if context['filter'] != -1:
             active = active.filter(kv15messagestop__stop__in=stop_list)
 
@@ -62,7 +61,9 @@ class MessageListView(AccessMixin, ListView):
             archive = archive.filter(kv15messagestop__stop__in=stop_list)
 
         if not context['view_all']:
-            archive = archive.filter(dataownercode=self.request.user.userprofile.company)
+            archive = archive.filter(dataownercode=self.request.user.userprofile.company)[:50]
+        else:
+            archive = archive[:50]
         context['archive_list'] = archive
 
         return context
@@ -219,7 +220,8 @@ class MessageDetailsView(AccessMixin, FilterDataownerMixin, DetailView):
 
 
 # AJAX Views
-class ActiveStopsAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+class ActiveStopsAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_messages'
     model = Kv1Stop
     render_object = 'object'
 
@@ -234,7 +236,8 @@ class ActiveStopsAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView)
         return list(queryset.values('dataownercode', 'userstopcode'))
 
 
-class MessageStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
+class MessageStopsAjaxView(AccessJsonMixin, GeoJSONLayerView):
+    permission_required = 'openebs.view_messages'
     model = Kv1Stop
     geometry_field = 'location'
     properties = ['name', 'userstopcode', 'dataownercode']
@@ -249,7 +252,8 @@ class MessageStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
         return qry
 
 
-class MessageStopsBoundAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+class MessageStopsBoundAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_messages'
     model = Kv1Stop
     render_object = 'object'
 

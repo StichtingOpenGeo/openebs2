@@ -1,17 +1,18 @@
 import logging
-from braces.views import LoginRequiredMixin
-from datetime import timedelta
+from datetime import timedelta, datetime
 from django.urls import reverse_lazy
 from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.views.generic import ListView, CreateView, DeleteView, DetailView
 from kv1.models import Kv1Journey, Kv1Line
-from openebs.form import Kv17ChangeForm
+from openebs.form_kv17 import Kv17ChangeForm
 from openebs.models import Kv17Change
 from openebs.views_push import Kv17PushMixin
 from openebs.views_utils import FilterDataownerMixin
-from utils.time import get_operator_date
-from utils.views import AccessMixin, ExternalMessagePushMixin, JSONListResponseMixin
+from utils.time import get_operator_date, get_operator_date_aware
+from utils.views import AccessMixin, JSONListResponseMixin, AccessJsonMixin
+from django.utils.dateparse import parse_date
+from django.utils.timezone import now
 
 log = logging.getLogger('openebs.views.changes')
 
@@ -22,17 +23,31 @@ class ChangeListView(AccessMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super(ChangeListView, self).get_context_data(**kwargs)
+        operatingday = get_operator_date_aware()
+
+        # active list updates at 4 am.
+        if datetime.now().hour < 4:
+            change = -1
+        else:
+            change = 0
+
+        change_day = operatingday + timedelta(days=change)
 
         # Get the currently active changes
-        context['active_list'] = self.model.objects.filter(operatingday=get_operator_date(), is_recovered=False,
+        context['active_list'] = self.model.objects.filter(Q(endtime__gte=now()) | Q(endtime__isnull=True) &
+                                                           Q(operatingday__gte=change_day),
+                                                           is_recovered=False,
                                                            dataownercode=self.request.user.userprofile.company)
-        context['active_list'] = context['active_list'].order_by('line__publiclinenumber', 'line__lineplanningnumber', 'journey__departuretime', 'created')
+        context['active_list'] = context['active_list'].order_by('line__publiclinenumber', 'line__headsign',
+                                                                 'operatingday', 'journey__departuretime')
 
         # Add the no longer active changes
-        context['archive_list'] = self.model.objects.filter(Q(operatingday__lt=get_operator_date()) | Q(is_recovered=True),
+        context['archive_list'] = self.model.objects.filter(Q(endtime__lt=now()) | Q(is_recovered=True) |
+                                                            (Q(endtime__isnull=True) & Q(operatingday__lt=change_day)),
                                                             dataownercode=self.request.user.userprofile.company,
-                                                            created__gt=get_operator_date()-timedelta(days=3))
-        context['archive_list'] = context['archive_list'].order_by('-created')
+                                                            created__gt=operatingday-timedelta(days=3))
+        context['archive_list'] = context['archive_list'].order_by('-operatingday', 'line__publiclinenumber',
+                                                                   '-journey__departuretime')
         return context
 
 
@@ -42,14 +57,35 @@ class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
     form_class = Kv17ChangeForm
     success_url = reverse_lazy('change_index')
 
+    def get_form_kwargs(self):
+        kwargs = super(ChangeCreateView, self).get_form_kwargs()
+        kwargs.update({
+            'user': self.request.user
+        })
+        return kwargs
+
     def get_context_data(self, **kwargs):
         data = super(ChangeCreateView, self).get_context_data(**kwargs)
         data['operator_date'] = get_operator_date()
+        data['first_lines'] = self.get_first_lines()
         if 'journey' in self.request.GET:
             self.add_journeys_from_request(data)
         return data
 
+    def get_first_lines(self):
+        first_lines = list(Kv1Line.objects.filter(dataownercode=self.request.user.userprofile.company)
+                                          .exclude(headsign='')
+                                          .order_by('headsign')
+                                          .values('pk', 'dataownercode', 'headsign', 'lineplanningnumber',
+                                                  'publiclinenumber')[:10]
+                           )
+        return first_lines
+
     def add_journeys_from_request(self, data):
+        operating_day = parse_date(
+            self.request.GET['operatingday']) if 'operatingday' in self.request.GET else get_operator_date()
+        data['operator_date'] = operating_day
+
         journey_errors = 0
         journeys = []
         for journey in self.request.GET['journey'].split(','):
@@ -131,8 +167,8 @@ class ChangeUpdateView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteV
         else:
             log.error("Failed to send redo request to subscribers: %s" % obj)
             # We failed to push, recover our redo operation by restoring previous state
-            obj.is_recovered = self.get_object.is_recovered
-            obj.recovered = self.get_object.recovered
+            obj.is_recovered = self.object.is_recovered
+            obj.recovered = self.object.recovered
             obj.save()  # Note, this won't work locally!
         return HttpResponseRedirect(self.get_success_url())
 
@@ -166,15 +202,39 @@ TODO : This is a big red button view allowing you to cancel all active trips if 
 #         return ret
 
 
-class ActiveJourneysAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
-    model = Kv1Journey
+class ActiveJourneysAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_change'
+    model = Kv17Change
     render_object = 'object'
 
     def get_object(self):
+        operating_day = parse_date(self.request.GET['operatingday']) if 'operatingday' in \
+                                                                        self.request.GET else get_operator_date()
         # Note, can't set this on the view, because it triggers the queryset cache
-        queryset = self.model.objects.filter(changes__operatingday=get_operator_date(),
-                                             # changes__is_recovered=False, # TODO Fix this - see bug #61
-                                             # These two are double, but just in case
-                                             changes__dataownercode=self.request.user.userprofile.company,
+        queryset = self.model.objects.filter(operatingday=operating_day,
+                                             is_recovered=False,
                                              dataownercode=self.request.user.userprofile.company).distinct()
-        return list(queryset.values('id', 'dataownercode'))
+        return list(queryset.values('journey_id', 'dataownercode', 'is_recovered'))
+
+
+class ActiveLinesAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_change'
+    model = Kv17Change
+    render_object = 'object'
+
+    def get_object(self):
+        operating_day = parse_date(self.request.GET['operatingday']) if 'operatingday' in self.request.GET else get_operator_date()
+
+        # Note, can't set this on the view, because it triggers the queryset cache
+        queryset = self.model.objects.filter(Q(is_alljourneysofline=True) | Q(is_alllines=True),
+                                             operatingday=operating_day, is_recovered=False,
+                                             dataownercode=self.request.user.userprofile.company).distinct()
+        # TODO: is it possible to apply a function on a value of a queryset?
+        start_of_day = datetime.combine(operating_day, datetime.min.time()).timestamp()
+        return list({'id': x['line'],
+                     'begintime': int(x['begintime'].timestamp() - start_of_day) if x['begintime'] is not None else None,
+                     'endtime': int(x['endtime'].timestamp() - start_of_day) if x['endtime'] is not None else None,
+                     'dataownercode': x['dataownercode'], 'alljourneysofline': x['is_alljourneysofline'],
+                     'all_lines': x['is_alllines']}
+                    for x in queryset.values('line', 'begintime', 'endtime', 'dataownercode', 'is_alljourneysofline',
+                    'is_alllines'))
