@@ -7,7 +7,8 @@ from openebs.views_change import ChangeListView, ChangeCreateView, ChangeDeleteV
 from openebs.views_filters import FilterListView, FilterDeleteView, FilterUpdateView, FilterCreateView, \
     FilterStopCreateView, FilterStopDeleteView
 from openebs.views_generic import ChangeCompanyView, TemplateRequestView
-from openebs.views_scenario import ScenarioListView, ScenarioCreateView, ScenarioUpdateView, ScenarioDeleteView, PlanScenarioView, ScenarioStopsAjaxView, clone_scenario, ScenarioMessageAjaxView
+from openebs.views_scenario import ScenarioListView, ScenarioCreateView, ScenarioUpdateView, ScenarioDeleteView, \
+    PlanScenarioView, ScenarioStopsAjaxView, ScenarioMessageAjaxView, clone_scenario
 from openebs.views_scenario_msg import ScenarioMessageCreateView, ScenarioMessageUpdateView, ScenarioMessageDeleteView
 
 
