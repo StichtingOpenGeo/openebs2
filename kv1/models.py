@@ -34,7 +34,7 @@ class Kv1Stop(models.Model):
     userstopcode = models.CharField(max_length=10)
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
     timingpointcode = models.CharField(max_length=10)  # Note, unique, but not per stop
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=102)
     location = models.PointField()
 
     class Meta(object):
@@ -79,7 +79,9 @@ class Kv1Journey(models.Model):
         return "%s%s - %s" % (self.dataownercode, self.line.publiclinenumber, self.journeynumber)
 
     @staticmethod
-    def find_from_realtime(dataowner, realtime_id, date=get_operator_date()):
+    def find_from_realtime(dataowner, realtime_id, date=None):
+        if date is None:
+            date = get_operator_date()
         j = realtime_id.split(':')
         log.info("Looking for realtime trip id %s on date %s" % (j, date))
         if len(j) == 3:
@@ -149,3 +151,11 @@ class Kv1JourneyDate(models.Model):
         verbose_name = _("Ritdag")
         verbose_name_plural = _("Ritdag")
         unique_together = (('journey', 'date'))
+
+
+class ImportStatus (models.Model):
+    importDate = models.DateTimeField()
+    status = models.CharField(max_length=25)
+
+    def __str__(self):
+        return "%s (%s)" % (self.importDate, self.status)

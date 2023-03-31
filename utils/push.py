@@ -47,7 +47,7 @@ class Push:
 
         xml = """<VV_TM_PUSH xmlns="%(namespace)s">
 <SubscriberID>%(subscriberid)s</SubscriberID>
-<Version>BISON 8.1.0.0</Version>
+<Version>BISON 8.3.0.0</Version>
 <DossierName>%(dossiername)s</DossierName>
 <Timestamp>%(timestamp)s</Timestamp>
 %(content)s
