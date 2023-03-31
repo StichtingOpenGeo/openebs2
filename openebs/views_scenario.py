@@ -2,12 +2,13 @@ from builtins import str
 import logging
 from django.urls import reverse_lazy
 from django.db.models import Count
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
+from django.views import View
 from django.views.generic import FormView, ListView, CreateView, UpdateView, DeleteView, DetailView
 from djgeojson.views import GeoJSONLayerView
 from kv1.models import Kv1Stop
-from openebs.form import PlanScenarioForm, Kv15ScenarioForm, Kv15ScenarioMessage
-from openebs.models import Kv15Scenario, MessageStatus
+from openebs.form import PlanScenarioForm, Kv15ScenarioForm
+from openebs.models import Kv15Scenario, MessageStatus, Kv15ScenarioMessage, Kv15ScenarioStop
 from openebs.views_push import Kv15PushMixin
 from openebs.views_utils import FilterDataownerMixin, FilterDataownerListMixin
 from utils.views import AccessMixin, AccessJsonMixin, JSONListResponseMixin
@@ -116,3 +117,30 @@ class ScenarioMessageAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView
         queryset = self.model.objects.filter(scenario=self.kwargs.get('scenario', None),
                                              dataownercode=self.request.user.userprofile.company).distinct()
         return list(queryset.values('id', 'messagedurationtype'))
+
+
+class ScenarioCloneView(AccessMixin, FilterDataownerMixin, View):
+    permission_required = 'openebs.add_scenario'
+    model = Kv15Scenario
+    form_class = Kv15ScenarioForm
+
+    def get(self, request, pk):
+        duplicate = Kv15Scenario.objects.filter(id=pk)[0]
+        duplicate.id = None
+        duplicate.name += ' - KOPIE'
+        duplicate.save()
+        # find related messages
+        scenario_details = Kv15ScenarioMessage.objects.filter(scenario_id=pk)
+        for related_message in scenario_details:
+            # find related stops for the message and duplicate these first while a message_id is still known
+            message_id = related_message.id
+            related_message.pk = None
+            related_message.scenario = duplicate
+            related_message.save()
+            stop_details = Kv15ScenarioStop.objects.filter(message_id=message_id)
+            for related_stop in stop_details:
+                related_stop.pk = None
+                related_stop.message = related_message
+                related_stop.save()
+
+        return redirect("scenario_edit", pk=duplicate.pk)
