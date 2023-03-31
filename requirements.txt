@@ -5,7 +5,7 @@ psycopg2==2.8.5
 git+https://github.com/jazzband/django-floppyforms.git
 django-crispy-forms==1.9.0
 jsonfield==3.1.0
-django-leaflet==0.26.0
+django-leaflet==0.28.3
 django-geojson==3.0.0
 pyzmq # Verification feed
 django-braces==1.14.0
