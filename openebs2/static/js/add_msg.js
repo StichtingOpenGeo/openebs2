@@ -169,7 +169,8 @@ function writeList(data, status, item) {
 
                 } else {
                     $(row).hide().appendTo('#rows').fadeIn(200);
-                }            }
+                }
+            }
         }
     });
 
@@ -337,7 +338,6 @@ function doSelectStop(obj) {
         }
     }
     return false;   // TODO: check if return true should be added somewhere here
-
 }
 
 /* Write data to the form field */
@@ -464,7 +464,6 @@ function removeStopsOfLine(event) {
 
     if (Object.keys(lineSelectionOfStop).length == 0) {
         $('#halte-list .help').removeClass('hidden');
-
     }
     $('#'+$(this).parent().parent().attr('id')).remove();
 
@@ -531,7 +530,7 @@ function removeStop(id, line) {
 }
 
 function writeLine(data, status) {
-    $('#stops').fadeOut(100).empty(); // was changed in searchStop --> check if still needs to change
+    $('#stops').fadeOut(100).empty();
     out = ""
     if (stop_searching == true) {
         $.each(data.object.stop_map, function (i, stop) {
@@ -668,10 +667,6 @@ function writeScenarioStops(data, status) {
 }
 
 function getHaltesWithMessages(event) {
-    //if ($(this).attr('id') !== undefined) {
-    //    activeLine = $(this).attr('id').substring(1);
-    //    currentLine = $(this).find("small").text();
-    //}
     if (stop_searching == false) {
         activeLine = $(this).attr('id').substring(1);
         currentLine = $(this).find("small").text();
@@ -751,7 +746,7 @@ function writeHaltesWithLine(call) {
             var headsign = stop[0];
             $('.lijn'+lijn).append('<span class="stop-selection pull-left label label-primary" id="s'+halte_id+'-'+lijn+'">'+headsign+delLink+'</span');
         });
-        if (selectedStops.length === 0) {
+         if (selectedStops.length === 0) {
             $('#halte-list .help').removeClass('hidden');
         } else {
             $('#halte-list .help').addClass('hidden');

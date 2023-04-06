@@ -47,7 +47,7 @@ class Push:
 
         xml = """<VV_TM_PUSH xmlns="%(namespace)s">
 <SubscriberID>%(subscriberid)s</SubscriberID>
-<Version>BISON 8.1.0.0</Version>
+<Version>BISON 8.3.0.0</Version>
 <DossierName>%(dossiername)s</DossierName>
 <Timestamp>%(timestamp)s</Timestamp>
 %(content)s
@@ -86,10 +86,13 @@ class Push:
                 self.log.error("Got exception while connecting to %s: %s" % (self.alias, ex))
 
             if not error and conn is not None:
-                response = conn.getresponse()
-                response_code = response.status
-                response_content = response.read().decode('utf-8')
-                conn.close()
+                try:
+                    response = conn.getresponse()
+                    response_code = response.status
+                    response_content = response.read().decode('utf-8')
+                    conn.close()
+                except Exception as ex:
+                    self.log.error("Got exception while waiting for response from %s: %s" % (self.alias, ex))
 
             if self.debug:
                 self.log.debug("Connecting to %s and got response code %s and content: %s" % (
