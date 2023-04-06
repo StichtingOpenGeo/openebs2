@@ -6,7 +6,7 @@ from django.contrib.gis.db.models import Extent
 from django.urls import reverse_lazy
 from django.db.models import Q, Count
 from django.shortcuts import redirect
-from django.views.generic import ListView, UpdateView, DetailView
+from django.views.generic import FormView, ListView, UpdateView, DetailView, TemplateView
 from django.views.generic.edit import CreateView, DeleteView
 from django.utils.timezone import now
 
@@ -18,7 +18,9 @@ from openebs.views_utils import FilterDataownerMixin
 from utils.client import get_client_ip
 from utils.views import JSONListResponseMixin, AccessMixin, AccessJsonMixin
 from openebs.models import Kv15Stopmessage, Kv15Log, MessageStatus, Kv1StopFilter
-from openebs.form import Kv15StopMessageForm
+from openebs.form import Kv15StopMessageForm, Kv15ImportForm
+
+from django.shortcuts import render
 
 
 log = logging.getLogger('openebs.views')
@@ -269,3 +271,66 @@ class MessageStopsBoundAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailVi
             qry = qry.filter(kv15stopmessage__dataownercode=self.request.user.userprofile.company)
 
         return qry
+
+
+class MessageImportView(AccessMixin, Kv15PushMixin, FormView):
+    permission_required = 'openebs.add_messages'
+    form_class = Kv15ImportForm
+    template_name = 'openebs/kv15stopmessage_import.html'
+    success_url = reverse_lazy('msg_import_add')
+
+    def get_form_kwargs(self):
+        kwargs = super(MessageImportView, self).get_form_kwargs()
+        kwargs.update({
+            'user': self.request.user
+        })
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super(MessageImportView, self).get_context_data(**kwargs)
+        if 'import-text' in self.request.POST:
+            context['importtext'] = self.request.POST['import-text']
+        else:
+            context['importtext'] = ''
+
+        return context
+
+    def form_valid(self, form):
+        context = super(MessageImportView, self).get_context_data()
+
+        if 'action' not in self.request.POST:
+            if hasattr(form, 'cleaned_data'):
+                context['importtext'] = self.request.POST['import-text']
+                context['object'] = []
+                i = 0
+                for message in form.cleaned_data:
+                    message['kv15'].pk = 9999 + i
+                    context['object'].append({'message': message['kv15'], 'kv15messagestop': message['stops']})
+                    i += 1
+
+                return render(self.request, 'openebs/kv15stopmessage_import_detail.html', context)
+        else:
+            for stopmessage in form.kv15stopmessages:
+                if self.push_message(stopmessage.to_xml()):
+                    stopmessage.set_status(MessageStatus.SENT)
+                    log.info("Sent message to subscribers: %s" % stopmessage)
+                else:
+                    stopmessage.set_status(MessageStatus.ERROR_SEND)
+                    log.error("Failed to send message to subscribers: %s" % stopmessage)
+
+                if self.request.POST['action'] == 'action_remove':
+                    msg = Kv15Stopmessage.objects.filter(dataownercode=stopmessage.dataownercode,
+                                                         messagecodedate=stopmessage.messagecodedate,
+                                                         messagecodenumber=stopmessage.messagecodenumber)[0]
+                    if self.push_message(msg.to_xml_delete()):
+                        msg.set_status(MessageStatus.DELETED)
+                        Kv15Stopmessage.objects.filter(pk=msg.pk).update(isdeleted=True)
+                        log.error("Deleted message succesfully communicated to subscribers: %s" % msg)
+                    else:
+                        msg.set_status(MessageStatus.ERROR_SEND_DELETE)
+                        log.error("Failed to send delete request to subscribers: %s" % msg)
+
+        return redirect(reverse_lazy('msg_index'))
+
+    def form_invalid(self, form):
+        return render(self.request, 'openebs/kv15stopmessage_import.html', self.get_context_data())
