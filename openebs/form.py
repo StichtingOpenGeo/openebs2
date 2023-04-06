@@ -174,9 +174,9 @@ class Kv15ScenarioMessageForm(forms.ModelForm):
                 stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
                 if stop:
                     ids.append(stop.pk)
-        qry = Kv1Stop.objects.filter(kv15scenariostop__message__scenario=self.data['scenario'], pk__in=ids)
+        qry = Kv1Stop.objects.filter(scenario_stop__message__scenario=self.data['scenario'], pk__in=ids)
         if self.instance.pk is not None:  # Exclude ourselves if we've been saved
-            qry = qry.exclude(kv15scenariostop__message=self.instance.pk)
+            qry = qry.exclude(scenario_stop__message=self.instance.pk)
 
         if qry.count() > 0:
             # Check that this stop isn't already in a messages for this scenario. If not, write a nice message

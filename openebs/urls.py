@@ -8,8 +8,10 @@ from openebs.views_filters import FilterListView, FilterDeleteView, FilterUpdate
     FilterStopCreateView, FilterStopDeleteView
 from openebs.views_generic import ChangeCompanyView, TemplateRequestView
 from openebs.views_scenario import ScenarioListView, ScenarioCreateView, ScenarioUpdateView, ScenarioDeleteView, \
-    PlanScenarioView, ScenarioStopsAjaxView, ScenarioMessageAjaxView, ScenarioCloneView
-from openebs.views_scenario_msg import ScenarioMessageCreateView, ScenarioMessageUpdateView, ScenarioMessageDeleteView
+    PlanScenarioView, ScenarioStopsAjaxView, ScenarioMessageAjaxView, ScenarioCloneView, ScenarioStopsBoundAjaxView, \
+    ScenarioMessagesForStopView, ScenarioActiveMessagesAjaxView
+from openebs.views_scenario_msg import ScenarioMessageCreateView, ScenarioMessageUpdateView, ScenarioMessageDeleteView, \
+    ScenarioMessageDetailsView
 
 
 urlpatterns = [
@@ -44,6 +46,11 @@ urlpatterns = [
     url(r'^scenario/(?P<scenario>\d+)/bericht/(?P<pk>\d+)/verwijderen', ScenarioMessageDeleteView.as_view(), name="scenario_msg_delete"),
     url(r'^scenario/(?P<scenario>\d+)/haltes.geojson', ScenarioStopsAjaxView.as_view(), name="scenario_stops_ajax"),
     url(r'^scenario/(?P<scenario>\d+)/durationtypes.json', ScenarioMessageAjaxView.as_view(), name="scenario_durations_ajax"),
+    url(r'^scenario/(?P<scenario>\d+)/bericht/(?P<pk>\d+)/bekijken', ScenarioMessageDetailsView.as_view(), name="scenario_msg_view"),
+    url(r'^scenario/(?P<scenario>\d+)/halte_bereik.geojson', ScenarioStopsBoundAjaxView.as_view(), name="scenario_bounds_ajax"),  # Map bounds to zoom
+    url(r'^scenario/(?P<scenario>\d+)/kaart', TemplateRequestView.as_view(template_name='openebs/kv15scenario_map.html'), name='scenario_msg_map'),
+    url(r'^scenario/(?P<scenario>\d+)/(?P<tpc>\w+)/messages.json$', ScenarioMessagesForStopView.as_view(), name="scenariomsg_stop_json"),
+    url(r'^scenario/(?P<scenario>\d+)/messages.json$', ScenarioActiveMessagesAjaxView.as_view(), name="scenario_message_ids"),
 
     # Kv17 views
     url(r'^ritaanpassing$', ChangeListView.as_view(), name="change_index"),

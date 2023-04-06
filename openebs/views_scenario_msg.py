@@ -1,7 +1,7 @@
 import logging
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404
-from django.views.generic import CreateView, UpdateView, DeleteView
+from django.views.generic import CreateView, UpdateView, DeleteView, DetailView
 from django.views.generic.edit import BaseFormView
 from kv1.models import Kv1Stop
 from openebs.form import Kv15ScenarioMessageForm
@@ -89,4 +89,10 @@ class ScenarioMessageUpdateView(AccessMixin, FilterDataownerMixin, ScenarioConte
 
 class ScenarioMessageDeleteView(AccessMixin, ScenarioContentMixin, DeleteView):
     permission_required = 'openebs.add_scenario'
+    model = Kv15ScenarioMessage
+
+
+class ScenarioMessageDetailsView(AccessMixin, FilterDataownerMixin, DetailView):
+    permission_required = 'openebs.view_messages'
+    permission_level = 'read'
     model = Kv15ScenarioMessage

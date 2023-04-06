@@ -35,10 +35,12 @@
             return str;
         });
 
-        Handlebars.registerHelper('makeStopMessageLink', function(num) {
-            return "{% url "msg_view" 999 %}".replace("999", num);
-        });
+        var stop_list = {}
+        var scenario = window.location.href.split('/')[4];
 
+        Handlebars.registerHelper('makeScenarioMessageLink', function(num) {
+            return "{% url 'scenario_msg_view' scenario 999 %}".replace("999", num);
+        });
         (function() {
             $('#map').css("height", ($(window).height() - $("nav.navbar").height()));
             resize();
@@ -81,12 +83,14 @@
         }
 
         function onMapFeature(feature, layer) {
+
             if (feature.properties && feature.properties.name) {
+                var scenario = window.location.href.split('/')[4];
                 var popup = L.popup().setContent("<em>Data wordt geladen...</em>")
                 layer.bindPopup(popup);
                 layer.on('click', function(e) {
                     var popup = e.target._popup;
-                    $.get("{% url "msg_stop_json" 999 %}".replace("999", feature.properties.timingpointcode)).done(function(data) {
+                    $.get("{% url 'scenariomsg_stop_json' scenario 999 %}".replace("999", feature.properties.timingpointcode)).done(function(data) {
                         popup.setContent(table_template(_.merge(data, feature.properties)));
                         popup.update();
                     });
@@ -104,6 +108,8 @@
 
         var leafletMap;
         var markerIndex = {}
+
+        setColorsForMessages(scenario);
 
         function getColorsForDataownercode(dataownercode) {
             switch (dataownercode) {
@@ -123,8 +129,6 @@
                     return ['#00477F', '#FF0000'];
                 case "QBUZZ":
                     return ['#FF7C00', '#000'];
-                case "KEOLIS":
-                    return ['#FF9700', '#000066'];
                 case "SYNTUS":
                     return ['#FF9700', '#000066'];
                 default:
@@ -132,6 +136,37 @@
             }
         }
 
+        function setColorsForMessages(scenario) {
+            // Download message_ids via Ajax and set color for scenario_message
+            // Create dict per stop
+            stop_list = {};
+
+            $.ajax("{% url 'scenario_message_ids' scenario=scenario %}", {
+                success : function(data, err, xhr) {
+                    var my_array = data.object;
+                    var x = Object.keys(my_array);
+                    var colordict = {};
+                    $.each(x, function(idx, message_id) {
+                        rgbcode = [];
+                        rgbcode.push(parseInt(60*(8*message_id)+250));
+                        rgbcode.push(parseInt(30*(2*message_id)));
+                        rgbcode.push(parseInt(50+(6*message_id)));
+
+                        red = (parseInt(rgbcode[0],10).toString(16)).slice(-2);
+                        green = (parseInt(rgbcode[1],10).toString(16)).slice(-2);
+                        blue = (parseInt(rgbcode[2],10).toString(16)).slice(-2);
+                        hexcolor = "#" + red + green + blue;
+                        colordict[message_id] = hexcolor;
+                    });
+                    stop_list = {};
+                    $.each(my_array, function(message_id, stops) {
+                        $.each(stops, function (i, stop) {
+                            stop_list[stop] = colordict[message_id]
+                        });
+                    });
+                }
+            })
+        }
 
         function main_map_init (map, options) {
             leafletMap = map;
@@ -140,23 +175,31 @@
             }
 
             // Download GeoJSON via Ajax
-            $.getJSON("{% url 'msg_geojson' %}", function (data) {
-                // Add GeoJSON layer
-                L.geoJson(data, {
-                    onEachFeature: onMapFeature,
-                    pointToLayer: function (feature, lnglat) {
-                        var colors = getColorsForDataownercode(feature.properties.dataownercode);
-                        halteMarkerOptions.fillColor = colors[0];
-                        halteMarkerOptions.color = colors[1];
-                        // TODO: remove hack when Django is upgraded
-                        var latlng = new L.LatLng(lnglat.lng, lnglat.lat);
-                        return L.circleMarker(latlng, halteMarkerOptions);
+            var scenario = window.location.href.split('/')[4];
+
+            $.getJSON("{% url 'scenario_stops_ajax' scenario=scenario %}", function (myLayerData) {
+                function createHalteMarker (feature, lnglat) {
+                    var colors = getColorsForDataownercode(feature.properties.dataownercode);
+                    halteMarkerOptions.fillColor = stop_list[feature.properties.userstopcode];
+                    halteMarkerOptions.color = '#000';
+
+                    let myIcon = L.icon(halteMarkerOptions);
+                    // TODO: remove hack when Django is upgraded
+                    var latlng = new L.LatLng(lnglat.lng, lnglat.lat);
+                    return L.circleMarker(latlng, halteMarkerOptions);
+                }
+                if (myLayerData.features.length > 0) {
+                    let myLayerOptions = {
+                        onEachFeature: onMapFeature,
+                        pointToLayer: createHalteMarker
                     }
-                }).addTo(map);
+                    group = L.geoJson(myLayerData, myLayerOptions);
+                    group.addTo(map);
+                }
             });
 
-        {% if request.GET.message %}
-            $.ajax("{% url 'msg_bounds_ajax' request.GET.message %}", {
+
+            $.ajax("{% url 'scenario_bounds_ajax' scenario=scenario %}", {
                 success : function(data, err, xhr) {
                     var array = data.object.extent,
                             south = [array[1], array[0]],
@@ -169,7 +212,6 @@
                     }
                 }
             })
-        {% endif %}
 
             table_template = Handlebars.compile($("#table-template").html());
             button_template = Handlebars.compile($("#button-template").html());
@@ -180,16 +222,15 @@
         <h3>{{ name }}</h3>
         <strong>TPC:</strong> {{ timingpointcode }}
         <table class="table table-bordered table-striped">
-            <tr><th><strong>Volgnummer</strong></th><th><strong>Inhoud</strong></th></tr>
+            <tr><th><strong>Scenario</strong></th><th><strong>Bericht</strong></th></tr>
             {{#each object}}
             <tr>
-                <td><a href="{{ makeStopMessageLink kv15stopmessage__id }}"><img src="/static/img/logos/{{ toLowerCase kv15stopmessage__dataownercode }}.png" class="icon_small" />
-                    - {{ kv15stopmessage__messagecodenumber }}</a>
-                </td>
-                <td>{{ shorten kv15stopmessage__messagecontent }}</td></tr>
+                <td><a href="{{ makeScenarioMessageLink scenario_stop__message__id }}"><img src="/static/img/logos/{{ toLowerCase scenario_stop__message__dataownercode }}.png" class="icon_small" />
+                    - {{ scenario_stop__message__scenario__name }}</a></td>
+                <td>{{ shorten scenario_stop__message__messagecontent }}</td>
+            </tr>
             {{/each}}
         </table>
-        <a class="btn btn-xs btn-link" href="{% endverbatim %}{% url 'msg_add' %}{% verbatim %}?id={{ id }}"><i class="glyphicon glyphicon-plus"></i> Plaats bericht op deze halte</a>
     </script>
     <script id="button-template" type="text/x-handlebars-template">
         <h3>{{ name }}</h3>
