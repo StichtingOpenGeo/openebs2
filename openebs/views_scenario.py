@@ -1,5 +1,7 @@
 from builtins import str
 import logging
+
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.urls import reverse_lazy
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect
@@ -149,6 +151,7 @@ class ScenarioCloneView(AccessMixin, FilterDataownerMixin, View):
 
 class ScenarioStopsBoundAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
     """ sets coordinates for map """
+    permission_required = 'openebs.view_scenario'
     model = Kv1Stop
     render_object = 'object'
 
@@ -157,20 +160,21 @@ class ScenarioStopsBoundAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailV
         return {'extent': qry.aggregate(Extent('location')).get('location__extent')}
 
     def get_queryset(self):
-        qry = super(ScenarioStopsBoundAjaxView, self).get_queryset()
-        qry = qry.filter(dataownercode=self.request.user.userprofile.company)
-        qry = qry.filter(scenario_stop__message__scenario__id=self.kwargs.get('scenario', None))
-        print(qry.values().count())
-
+        qry = Kv1Stop.objects.filter(dataownercode=self.request.user.userprofile.company,
+                                     scenario_stop__message__scenario__id=self.kwargs.get('scenario', None))
         return qry
 
 
-class ScenarioMessagesForStopView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+class ScenarioMessagesForStopView(AccessJsonMixin, JSONListResponseMixin, DetailView):
     """
     Show scenario messages on an active stop on the map, creates JSON
     """
+    permission_required = 'openebs.view_scenario'
     model = Kv1Stop
     render_object = 'object'
+
+    def get_object(self):
+        return list(self.get_queryset())
 
     def get_queryset(self):
         tpc = self.kwargs.get('tpc', None)
@@ -183,39 +187,31 @@ class ScenarioMessagesForStopView(LoginRequiredMixin, JSONListResponseMixin, Det
                                         timingpointcode=tpc)
         if not self.request.user.has_perm("openebs.view_all"):
             qry = qry.filter(dataownercode=self.request.user.userprofile.company)
-        return qry.values('id', 'dataownercode', 'scenario_stop__message__messagecontent', 'scenario_stop__message__scenario__name',
-                          'scenario_stop__message__id', 'scenario_stop__message__dataownercode')
-
-    def get_object(self):
-        return list(self.get_queryset())
+        return qry.values('id', 'dataownercode', 'scenario_stop__message__messagecontent',
+                          'scenario_stop__message__scenario__name', 'scenario_stop__message__id',
+                          'scenario_stop__message__dataownercode')
 
 
-class ScenarioMessagesAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+
+
+class ScenarioActiveMessagesAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
     """ sets coordinates for map """
     permission_required = 'openebs.view_scenario'
     model = Kv1Stop
     render_object = 'object'
 
     def get_object(self, **kwargs):
-        return self.get_queryset()
+        messages_with_userstopcodes = self.get_queryset()
+        message_stops = {}
+        for message in messages_with_userstopcodes:
+            message_stops[message['scenario_stop__message_id']] = message['message_stops']
+        return message_stops
 
     def get_queryset(self):
         scenario_id = self.kwargs.get('scenario', None)
         dataownercode = self.request.user.userprofile.company
-        message_ids = Kv15ScenarioMessage.objects.filter(dataownercode=dataownercode,
-                                                         scenario_id=scenario_id)
-        x = list(message_ids.values_list('id', flat=True))
-        qry = super(ScenarioMessagesAjaxView, self).get_queryset()
-        qry = qry.filter(dataownercode=dataownercode)
-        qry = qry.filter(scenario_stop__message__id__in=x)
-        #z = qry.values_list('userstopcode', 'scenario_stop__message__id')
-        z = list(qry.values_list('scenario_stop__message__id').distinct())
-        my_dict = {}
-        for item in z:
-            my_list = []
-            i = list(qry.filter(scenario_stop__message__id=item[0]).values_list('userstopcode'))
-            for stop in i:
-                my_list.append(stop[0])
-            my_dict[item[0]] = my_list
-        #my_dict = z
-        return my_dict
+        qry = Kv1Stop.objects.filter(dataownercode=dataownercode, scenario_stop__isnull=False,
+                                     scenario_stop__message__scenario_id=scenario_id)\
+                             .values('scenario_stop__message_id')\
+                             .annotate(message_stops=ArrayAgg('userstopcode'))
+        return qry
