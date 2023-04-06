@@ -278,7 +278,6 @@ function removeStopsOfLine(event) {
 
     if (Object.keys(lineSelectionOfStop).length == 0) {
         $('#halte-list .help').removeClass('hidden');
-
     }
     $('#'+$(this).parent().parent().attr('id')).remove();
 
@@ -435,7 +434,7 @@ function writeHaltesWithMessages(data, status) {
 }
 
 function lineRelated() {
-  line_related = document.getElementById('lijngebonden').checked;
+    line_related = document.getElementById('lijngebonden').checked;
     writeHaltesField();
 }
 
