@@ -144,10 +144,12 @@
                 // Add GeoJSON layer
                 L.geoJson(data, {
                     onEachFeature: onMapFeature,
-                    pointToLayer: function (feature, latlng) {
+                    pointToLayer: function (feature, lnglat) {
                         var colors = getColorsForDataownercode(feature.properties.dataownercode);
                         halteMarkerOptions.fillColor = colors[0];
                         halteMarkerOptions.color = colors[1];
+                        // TODO: remove hack when Django is upgraded
+                        var latlng = new L.LatLng(lnglat.lng, lnglat.lat);
                         return L.circleMarker(latlng, halteMarkerOptions);
                     }
                 }).addTo(map);
