@@ -242,7 +242,6 @@ class Kv15Stopmessage(models.Model):
         return result
 
     def get_message_duration(self):
-        x = (self.messageendtime.date() - self.messagestarttime.date()).days
         return (self.messageendtime.date() - self.messagestarttime.date()).days
 
     @staticmethod
