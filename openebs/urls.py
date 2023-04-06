@@ -1,7 +1,7 @@
 from django.conf.urls import url
 from django.views.generic import RedirectView
 from openebs.views import MessageListView, MessageCreateView, MessageDeleteView, MessageUpdateView, ActiveStopsAjaxView, MessageDetailsView, MessageStopsAjaxView, \
-    MessageStopsBoundAjaxView, MessageResendView, MessageImportView
+    MessageStopsBoundAjaxView, MessageResendView, MessageImportView, ActiveMessageAjaxView
 from openebs.views_change import ChangeListView, ChangeCreateView, ChangeDeleteView, ActiveJourneysAjaxView, \
     ChangeUpdateView, ActiveLinesAjaxView
 from openebs.views_filters import FilterListView, FilterDeleteView, FilterUpdateView, FilterCreateView, \
@@ -11,7 +11,7 @@ from openebs.views_scenario import ScenarioListView, ScenarioCreateView, Scenari
     PlanScenarioView, ScenarioStopsAjaxView, ScenarioMessageAjaxView, ScenarioCloneView, ScenarioStopsBoundAjaxView, \
     ScenarioMessagesForStopView, ScenarioActiveMessagesAjaxView
 from openebs.views_scenario_msg import ScenarioMessageCreateView, ScenarioMessageUpdateView, ScenarioMessageDeleteView, \
-    ScenarioMessageDetailsView
+    ScenarioMessageDetailsView, ScenarioMessageAjaxView
 
 
 urlpatterns = [
@@ -31,6 +31,7 @@ urlpatterns = [
     url(r'^bericht/(?P<pk>\d+)/haltes.geojson', MessageStopsAjaxView.as_view(), name="msg_stops_ajax"), # LEGACY: map
     url(r'^bericht/(?P<pk>\d+)/halte_bereik.geojson', MessageStopsBoundAjaxView.as_view(), name="msg_bounds_ajax"), # Map bounds to zoom
     url(r'^bericht/importeren', MessageImportView.as_view(), name="msg_import"),
+    url(r'^bericht/(?P<pk>\d+)/haltes$', ActiveMessageAjaxView.as_view(), name="msg_active"),
 
     # This next view is used as URL when adding a message (name is not used)
     url(r'^bericht/haltes.json', ActiveStopsAjaxView.as_view(), name="active_stops_ajax"),
@@ -52,6 +53,7 @@ urlpatterns = [
     url(r'^scenario/(?P<scenario>\d+)/kaart', TemplateRequestView.as_view(template_name='openebs/kv15scenario_map.html'), name='scenario_msg_map'),
     url(r'^scenario/(?P<scenario>\d+)/(?P<tpc>\w+)/messages.json$', ScenarioMessagesForStopView.as_view(), name="scenariomsg_stop_json"),
     url(r'^scenario/(?P<scenario>\d+)/messages.json$', ScenarioActiveMessagesAjaxView.as_view(), name="scenario_message_ids"),
+    url(r'^scenario/(?P<scenario>\d+)/bericht/(?P<pk>\d+)/haltes', ScenarioMessageAjaxView.as_view(), name="scenario_msg_stops"),
 
     # Kv17 views
     url(r'^ritaanpassing$', ChangeListView.as_view(), name="change_index"),

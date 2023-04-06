@@ -10,7 +10,11 @@
         <h2>{% trans "Bericht" %}</h2>
         <form method="post" class="form" action="{% url 'msg_add' %}">
             <div class="control-group">
-                <label>{% trans "Haltes" %}</label>
+                <div class="custom-control custom-checkbox mb-3">
+                    <strong>Haltes</strong>
+                    <input class="pull-right" id="lijngebonden" type="checkbox" data-toggle="toggle" checked="checked" onclick="lineRelated()">
+                    <label class="custom-control-label pull-right" for="lijngebonden">Lijngebonden</label>
+                </div>
                 <p class="form-control-static" id="halte-list">
                     {% if prefilled_stop %}
                         <span class="stop-selection pull-left label label-primary" id="ss{{ prefilled_stop.dataownercode }}_{{ prefilled_stop.userstopcode }}">{{ prefilled_stop.name }} (?)<span class="stop-remove glyphicon glyphicon-remove"></span></span>
@@ -22,12 +26,15 @@
                         <em class="help">{% trans "Klik haltenamen om een selectie te maken" %}</em>
                     {% endif %}
                 </p><br />
+                <input type="hidden" id="line_related" name="lijngebonden" value="true" />
+                <input type="hidden" id="lines" name="lines" />
                 {% if prefilled_stop %}
                     <input type="hidden" id="haltes" name="haltes" value="{{ prefilled_stop.dataownercode }}_{{ prefilled_stop.userstopcode }}," />
                 {% else %}
                     <input type="hidden" id="haltes" name="haltes"
                        value="{% for halte in object.kv15messagestop_set.all %}{{ halte.stop.dataownercode }}_{{ halte.stop.userstopcode }},{% endfor %}" />
                 {% endif %}
+                <br />
             </div>
             <div class="clearfix"></div>
             {% crispy form form.helper %}

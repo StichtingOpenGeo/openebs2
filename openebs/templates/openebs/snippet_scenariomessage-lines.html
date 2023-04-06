@@ -1,0 +1,9 @@
+{% for messageline in msg.lines.all %}
+    <span class="pull-left label label-primary" id="line-list-html">
+        {% if messageline.line.lineplanningnumber == messageline.line.publiclinenumber %}
+            {{ messageline.line.lineplanningnumber }}
+        {% else %}
+            {{ messageline.line.publiclinenumber }} ({{ messageline.line.lineplanningnumber }})
+        {% endif %}
+    </span>
+{% endfor %}

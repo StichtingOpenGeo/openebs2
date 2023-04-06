@@ -13,7 +13,7 @@ from openebs.models import Kv17JourneyChange
 from django.utils.dateparse import parse_date
 from datetime import datetime, timedelta, time
 from django.db.models import Q
-from django.utils.timezone import make_aware, utc
+from django.utils.timezone import make_aware
 
 
 log = logging.getLogger('openebs.forms')

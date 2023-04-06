@@ -11,6 +11,7 @@ $( "#id_messagecontent" ).trigger( "keyup" );
 $( "body" ).on('click', ".line", showStops);
 $( "body" ).on('click', ".stop-remove", selectionRemoveStop);
 $( "body" ).on('click', ".stop.success", lineRemoveStop);
+$( "body" ).on('click', ".line-remove", removeStopsOfLine);
 $( "body" ).on('click', "#stops_all", selectAllVisibleStops);
 $( "body" ).on('click', "#stops_none", deselectAllVisibleStops);
 $( "#stops" ).on('click', ".stop-img.stop-both", selectStopFromBall);

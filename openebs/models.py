@@ -392,6 +392,12 @@ class Kv15ScenarioStop(models.Model):
     stop = models.ForeignKey(Kv1Stop, related_name="scenario_stop",  on_delete=models.CASCADE)
 
 
+class Kv15ScenarioLine(models.Model):
+    """ For the template, this links a line """
+    message = models.ForeignKey(Kv15ScenarioMessage, related_name='lines', on_delete=models.CASCADE)
+    line = models.ForeignKey(Kv1Line, on_delete=models.CASCADE)
+
+
 class Kv15ScenarioInstance(models.Model):
     """ This keeps track of instances of scenarios to be able to easily clean them up """
     scenario = models.ForeignKey(Kv15Scenario, on_delete=models.CASCADE)
