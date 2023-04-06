@@ -1,5 +1,4 @@
 # Create your views here.
-import json
 import logging
 from datetime import timedelta
 
@@ -7,7 +6,7 @@ from django.contrib.gis.db.models import Extent
 from django.urls import reverse_lazy
 from django.db.models import Q, Count
 from django.shortcuts import redirect
-from django.views.generic import FormView, ListView, UpdateView, DetailView, TemplateView
+from django.views.generic import FormView, ListView, UpdateView, DetailView
 from django.views.generic.edit import CreateView, DeleteView
 from django.utils.timezone import now
 
@@ -18,7 +17,7 @@ from openebs.views_push import Kv15PushMixin
 from openebs.views_utils import FilterDataownerMixin
 from utils.client import get_client_ip
 from utils.views import JSONListResponseMixin, AccessMixin, AccessJsonMixin
-from openebs.models import Kv15Stopmessage, Kv15Log, MessageStatus, Kv1StopFilter, Kv15MessageStop, Kv15MessageLine
+from openebs.models import Kv15Stopmessage, Kv15Log, MessageStatus, Kv1StopFilter
 from openebs.form import Kv15StopMessageForm, Kv15ImportForm
 
 from django.shortcuts import render
@@ -370,7 +369,8 @@ class MessageImportView(AccessMixin, Kv15PushMixin, FormView):
         return render(self.request, 'openebs/kv15stopmessage_import.html', self.get_context_data())
 
 
-class ActiveMessageAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+class ActiveMessageAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_messages'
     model = Kv15Stopmessage
     render_object = 'object'
 
