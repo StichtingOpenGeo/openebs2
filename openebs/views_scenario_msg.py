@@ -49,7 +49,7 @@ class ScenarioMessageCreateView(AccessMixin, ScenarioContentMixin, CreateView):
         if self.kwargs.get('scenario', None):  # This ensures the scenario can never be spoofed
             # TODO Register difference between this and the scenario we've validated on
             form.instance.scenario = get_object_or_404(Kv15Scenario, pk=self.kwargs.get('scenario', None),
-                                                       dataownercode=self.request.user.userprofile.company)
+                                                              dataownercode=self.request.user.userprofile.company)
 
         ret = super(ScenarioMessageCreateView, self).form_valid(form)
 
@@ -123,6 +123,12 @@ class ScenarioMessageDeleteView(AccessMixin, ScenarioContentMixin, DeleteView):
     model = Kv15ScenarioMessage
 
 
+class ScenarioMessageDetailsView(AccessMixin, FilterDataownerMixin, DetailView):
+    permission_required = 'openebs.view_messages'
+    permission_level = 'read'
+    model = Kv15ScenarioMessage
+
+
 class ScenarioMessageAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
     model = Kv15ScenarioMessage
     render_object = 'object'
@@ -133,7 +139,6 @@ class ScenarioMessageAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailV
 
     def get_queryset(self):
         qry = super(ScenarioMessageAjaxView, self).get_queryset()
-        #message = self.kwargs.get('pk', None)
         qry = qry.filter(id=self.kwargs.get('pk', None))
         dataownercode = qry.values('dataownercode')[0]['dataownercode']
         lines = []
@@ -170,6 +175,3 @@ class ScenarioMessageAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailV
             if len(extra_stops) > 0:
                 line_stops['x/Onbekend'] = extra_stops
         return line_stops
-
-
-

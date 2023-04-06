@@ -75,7 +75,6 @@ function showStops(event) {
 }
 
 function selectStop(event, ui) {
-    //$('#halte-list .help').hide();
     $('#halte-list .help').addClass('hidden');
 
     if (doSelectStop(ui.selected)) {
@@ -84,7 +83,6 @@ function selectStop(event, ui) {
 }
 
 function selectStopFromBall(obj) {
-    //$('#halte-list .help').hide();
     $('#halte-list .help').addClass('hidden');
 
     var did = false
@@ -106,7 +104,6 @@ function selectStopFromBall(obj) {
 }
 
 function selectAllVisibleStops() {
-    //$('#halte-list .help').hide();
     $('#halte-list .help').addClass('hidden');
 
     $('#stops .stop').each(function(index, value) {

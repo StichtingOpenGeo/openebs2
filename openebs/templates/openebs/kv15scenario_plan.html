@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static crispy_forms_tags leaflet_tags i18n %}
 
- {% block title %}{% trans "Scenario inplannen" %}{% endblock %}
+{% block title %}{% trans "Scenario inplannen" %}{% endblock %}
 
 {% block content %}
     <h2>{% trans "Scenario" %} <em>{{scenario.name}}</em> {% trans " inplannen" %}</h2>
@@ -19,6 +19,11 @@
                             ({{ msg.stops.count }} haltes)</a></li>
                     {% endfor %}
                     </ul>
+                    <p class="text_about_endtime hidden">
+                        {% blocktrans %}
+                            De hieronder ingevoerde eindtijd geldt <strong>alleen</strong> voor berichten met tijdsrooster 'Eind Tijd'.
+                        {% endblocktrans %}
+                    </p>
                 </div>
             </div>
             <div class="panel panel-primary">
@@ -55,8 +60,6 @@
         </div>
     </div>
     <br />
-
-
 {% endblock %}
 
 {% block extra_css %}
@@ -65,19 +68,35 @@
 
 {% block extra_js %}
     {% leaflet_js %}
+    <script src="{% static 'bower_components/jquery-ui/ui/minified/core.min.js' %}"></script>
+    <script src="{% static 'bower_components/jquery-ui/ui/minified/widget.min.js' %}"></script>
+    <script src="{% static 'bower_components/jquery-ui/ui/minified/mouse.min.js' %}"></script>
+    <script src="{% static 'bower_components/jquery-ui/ui/minified/selectable.min.js' %}"></script>
+    <script src="{% static 'js/plan_scenario.js' %}"></script>
 {% endblock %}
 
-{% block js_init %}$('.halte-count').popover({ trigger: 'hover' });{% endblock %}
+{% block js_init %}
+    getScenarioMessages('{{ scenario.id }}');
+    $('.halte-count').popover({ trigger: 'hover' });
+    $('body').on('change', '#id_messagestarttime', function() {
+        updateEndtime();
+    });
+{% endblock %}
 
 {% block js %}
     function main_map_init (map, options) {
         map.setView(new L.LatLng(52.05, 4.32), 12);
         var dataurl = "{% url 'scenario_stops_ajax' scenario.id %}";
         $.getJSON(dataurl, function (data) {
-            group = L.geoJson(data);
+
+            // TODO: remove hack when Django is upgraded
+            group = L.geoJSON(data, {
+                        coordsToLatLng: function (coords) {
+                            return new L.LatLng(coords[0], coords[1], coords[2]);
+                        }
+                    });
             group.addTo(map);
             map.fitBounds(group.getBounds());
         });
-
     }
 {% endblock %}
