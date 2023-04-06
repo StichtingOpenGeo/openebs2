@@ -4,14 +4,14 @@ import logging
 import re
 from crispy_forms.bootstrap import AccordionGroup, Accordion
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit, Layout, Field, HTML, Div#, Hidden
-from django.utils.timezone import now
+from crispy_forms.layout import Submit, Layout, Field, HTML, Div
+from django.utils.timezone import now, is_aware, make_aware
 import floppyforms.__future__ as forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from kv1.models import Kv1Stop, Kv1Line
 from openebs.models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, get_end_service
-
+from datetime import datetime
 import xml.etree.ElementTree as ET
 from dateutil.parser import parse
 from kv15.enum import MESSAGEPRIORITY, MESSAGETYPE, MESSAGEDURATIONTYPE
@@ -22,6 +22,31 @@ log = logging.getLogger('openebs.forms')
 class Kv15StopMessageForm(forms.ModelForm):
     def clean(self):
         # TODO Move _all_ halte parsing here!
+
+        datetimevalidation = []
+        try:
+            datetime.strptime(self.data['messagestarttime'], "%d-%m-%Y %H:%M:%S")
+        except:
+            datetimevalidation.append(_("Voer een geldige begintijd in (dd-mm-jjjj uu:mm:ss)"))
+            pass
+
+        try:
+            endtime = datetime.strptime(self.data['messageendtime'], "%d-%m-%Y %H:%M:%S")
+            if not is_aware(endtime):
+                endtime = make_aware(endtime)
+        except:
+            datetimevalidation.append(_("Voer een geldige eindtijd in (dd-mm-jjjj uu:mm:ss)"))
+            pass
+
+        if len(datetimevalidation) == 2:
+            raise ValidationError(_("Voer een geldige begin- en eindtijd in (dd-mm-jjjj uu:mm:ss)"))
+        elif len(datetimevalidation) == 1:
+            raise ValidationError(datetimevalidation[0])
+
+        current = datetime.now()
+        if not is_aware(current):
+            current = make_aware(current)
+
         valid_ids = []
         nonvalid_ids = []
         for halte in self.data['haltes'].split(','):
@@ -39,6 +64,8 @@ class Kv15StopMessageForm(forms.ModelForm):
             raise ValidationError(_("Er werd geen geldige halte geselecteerd."))
         elif len(valid_ids) == 0:
             raise ValidationError(_("Selecteer minimaal een halte."))
+        elif current > endtime:
+            raise ValidationError(_("Eindtijd van bericht ligt in het verleden"))
         else:
             return self.cleaned_data
 
@@ -118,6 +145,13 @@ class Kv15StopMessageForm(forms.ModelForm):
 
 
 class Kv15ScenarioForm(forms.ModelForm):
+    """ Make sure every scenario has a title / name """
+    def clean(self):
+        if self.data['name'].strip() == '':
+            raise ValidationError(_("Naam scenario mag niet leeg zijn."))
+        else:
+            return self.cleaned_data
+
     class Meta(object):
         model = Kv15Scenario
         exclude = ['dataownercode']
@@ -145,9 +179,9 @@ class Kv15ScenarioMessageForm(forms.ModelForm):
                 stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
                 if stop:
                     ids.append(stop.pk)
-        qry = Kv1Stop.objects.filter(kv15scenariostop__message__scenario=self.data['scenario'], pk__in=ids)
+        qry = Kv1Stop.objects.filter(scenario_stop__message__scenario=self.data['scenario'], pk__in=ids)
         if self.instance.pk is not None:  # Exclude ourselves if we've been saved
-            qry = qry.exclude(kv15scenariostop__message=self.instance.pk)
+            qry = qry.exclude(scenario_stop__message=self.instance.pk)
 
         if qry.count() > 0:
             # Check that this stop isn't already in a messages for this scenario. If not, write a nice message
@@ -158,6 +192,10 @@ class Kv15ScenarioMessageForm(forms.ModelForm):
         elif len(ids) == 0:
             # Select at least one stop for a message
             raise ValidationError(_("Selecteer minimaal een halte"))
+        elif ('messagecontent' not in self.cleaned_data or self.cleaned_data['messagecontent'] is None or len(
+                self.cleaned_data['messagecontent'].strip()) == 0) \
+                and self.cleaned_data['messagetype'] != 'OVERRULE':
+            raise ValidationError(_("Bericht mag niet leeg zijn"))
         else:
             return self.cleaned_data
 
@@ -232,6 +270,15 @@ class PlanScenarioForm(forms.Form):
 
     def clean(self):
         data = super(PlanScenarioForm, self).clean()
+        if 'messagestarttime' not in data and 'messageendtime' not in data:
+            raise ValidationError(_("Voer een geldige begin- en eindtijd in"))
+
+        if 'messagestarttime' not in data:
+            raise ValidationError(_("Voer een geldige begintijd in"))
+
+        if 'messageendtime' not in data:
+            raise ValidationError(_("Voer een geldige eindtijd in"))
+
         if data['messageendtime'] <= data['messagestarttime']:
             raise ValidationError(_("Einde bericht moet na begin zijn"))
         return data

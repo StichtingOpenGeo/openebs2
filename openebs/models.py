@@ -21,6 +21,7 @@ from kv1.models import Kv1Stop, Kv1Line, Kv1Journey
 
 from kv15.enum import *
 from openebs2.settings import EXTERNAL_MESSAGE_USER_ID
+from utils.time import datetime_32h
 
 log = logging.getLogger('openebs.views')
 
@@ -29,6 +30,11 @@ log = logging.getLogger('openebs.views')
 def get_end_service():
     # Hmm, this is GMT
     return (now() + timedelta(days=1)).replace(hour=2, minute=0, second=0, microsecond=0)
+
+
+def get_start_service():
+    # Hmm, this is GMT
+    return (now()).replace(hour=2, minute=0, second=0, microsecond=0)
 
 
 class UserProfile(models.Model):
@@ -146,6 +152,9 @@ class Kv15Stopmessage(models.Model):
             message = _("<geen bericht>")
         return "%s|%s#%s : %s" % (self.dataownercode, self.messagecodedate, self.messagecodenumber, message)
 
+    def realtime_id(self):
+        return "%s:%s:%s" % (self.dataownercode, self.messagecodedate, self.messagecodenumber)
+
     def clean(self):
         # Validate the object
         if self.messagedurationtype == 'REMOVE':
@@ -205,7 +214,10 @@ class Kv15Stopmessage(models.Model):
         return self.messagestarttime > now()
 
     def is_editable(self):
-        return self.messageendtime > now() and self.isdeleted == False
+        if self.isdeleted:
+            return False
+        else:
+            return self.messageendtime is None or self.messageendtime > now()
 
     def is_external(self):
         return self.user_id == Kv15Stopmessage.get_external_user_id()
@@ -215,7 +227,7 @@ class Kv15Stopmessage(models.Model):
         return self.kv15messagestop_set.distinct('stop__name').order_by('stop__name')[0:number]
 
     # TODO: Move to config
-    operators_with_other_systems = ["HTM", "SYNTUS"]
+    operators_with_other_systems = ["HTM", "KEOLIS", "SYNTUS"]
 
     def get_latest_number(self):
         """ Get the currently highest number and add one if found or start with 1  """
@@ -294,10 +306,13 @@ class Kv15Scenario(models.Model):
             a.user = user
             a.messagecodedate = now()
             a.messagestarttime = start
-            a.messageendtime = end
+            a.messagedurationtype = msg.messagedurationtype
+            if a.messagedurationtype == 'ENDTIME':
+                a.messageendtime = end
+            else:
+                a.messageendtime = None
             a.messagepriority = msg.messagepriority
             a.messagetype = msg.messagetype
-            a.messagedurationtype = msg.messagedurationtype
             a.messagecontent = msg.messagecontent
             a.reasontype = msg.reasontype
             a.subreasontype = msg.subreasontype
@@ -363,6 +378,10 @@ class Kv15ScenarioMessage(models.Model):
             message = _("<geen bericht>")
         return "%s : %s" % (self.scenario.name, message)
 
+    def get_distinct_stop_names(self, number=15):
+        """ Get a unique sample of stop names to use when we've got too many """
+        return self.stops.distinct('stop__name').order_by('stop__name')[0:number]
+
     class Meta(object):
         verbose_name = _('Scenario bericht')
         verbose_name_plural = _("Scenario berichten")
@@ -371,7 +390,7 @@ class Kv15ScenarioMessage(models.Model):
 class Kv15ScenarioStop(models.Model):
     """ For the template, this links a stop """
     message = models.ForeignKey(Kv15ScenarioMessage, related_name='stops', on_delete=models.CASCADE)
-    stop = models.ForeignKey(Kv1Stop, on_delete=models.CASCADE)
+    stop = models.ForeignKey(Kv1Stop, related_name="scenario_stop",  on_delete=models.CASCADE)
 
 
 class Kv15ScenarioInstance(models.Model):
@@ -386,8 +405,10 @@ class Kv17Change(models.Model):
     """
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
     operatingday = models.DateField(verbose_name=_("Datum"))
-    line = models.ForeignKey(Kv1Line, verbose_name=_("Lijn"), on_delete=models.CASCADE)
-    journey = models.ForeignKey(Kv1Journey, verbose_name=_("Rit"), related_name="changes",
+    begintime = models.DateTimeField(null=True, blank=True, default=get_start_service, verbose_name=_("Ingangstijd"))
+    endtime = models.DateTimeField(null=True, blank=True, default=get_end_service, verbose_name=_("Eindtijd"))
+    line = models.ForeignKey(Kv1Line, null=True, verbose_name=_("Lijn"), on_delete=models.CASCADE)
+    journey = models.ForeignKey(Kv1Journey, null=True, verbose_name=_("Rit"), related_name="changes",
                                 on_delete=models.CASCADE)  # "A journey has changes"
     reinforcement = models.IntegerField(default=0, verbose_name=_("Versterkingsnummer"))  # Never fill this for now
     is_cancel = models.BooleanField(default=True, verbose_name=_("Opgeheven?"),
@@ -395,6 +416,8 @@ class Kv17Change(models.Model):
     is_recovered = models.BooleanField(default=False, verbose_name=_("Teruggedraaid?"))
     created = models.DateTimeField(auto_now_add=True)
     recovered = models.DateTimeField(null=True, blank=True)  # Not filled till recovered
+    is_alljourneysofline = models.BooleanField(default=False, verbose_name=_("Alle ritten"))
+    is_alllines = models.BooleanField(default=False, verbose_name=_("Alle lijnen"))
 
     def delete(self):
         self.is_recovered = True
@@ -407,24 +430,48 @@ class Kv17Change(models.Model):
 
     def to_xml(self):
         """
-        This xml will reflect the status of the object - wheter we've been canceled or recovered
+        This xml will reflect the status of the object - whether we've been canceled or recovered
         """
-        return render_to_string('xml/kv17journey.xml', {'object': self}).replace(os.linesep, '')
+        return render_to_string('xml/kv17journey.xml',
+                                {'object': self, 'begintime': datetime_32h(self.operatingday, self.begintime),
+                                 'endtime': datetime_32h(self.operatingday, self.endtime)}).replace(os.linesep, '')
 
     class Meta(object):
         verbose_name = _('Ritaanpassing')
         verbose_name_plural = _("Ritaanpassingen")
-        unique_together = ('operatingday', 'line', 'journey', 'reinforcement')
+        unique_together = ('dataownercode', 'operatingday', 'line', 'journey', 'reinforcement', 'is_alljourneysofline',
+                           'is_alllines', 'is_recovered', 'begintime')
         permissions = (
             ("view_change", _("Ritaanpassingen bekijken")),
             ("add_change", _("Ritaanpassingen aanmaken")),
+            ("cancel_lines", _("Lijnen annuleren")),
+            ("cancel_alllines", _("Vervoerder annuleren")),
         )
 
     def __str__(self):
-        return "%s Lijn %s Rit# %s" % (self.operatingday, self.line, self.journey.journeynumber)
+        if not self.journey:
+            journeynumber = "Alle ritten"
+        else:
+            journeynumber = self.journey.journeynumber
+
+        if not self.line:
+            line = "Alle lijnen"
+        else:
+            line = self.line
+        return "%s Lijn %s Rit# %s" % (self.operatingday, line, journeynumber)
 
     def realtime_id(self):
-        return "%s:%s:%s" % (self.dataownercode, self.line.lineplanningnumber, self.journey.journeynumber)
+        if not self.journey:
+            journeynumber = "Alle ritten"
+        else:
+            journeynumber = self.journey.journeynumber
+
+        if not self.line:
+            lineplanningnumber = "Alle lijnen"
+        else:
+            lineplanningnumber = self.line.lineplanningnumber
+
+        return "%s:%s:%s" % (self.dataownercode, lineplanningnumber, journeynumber)
 
 
 class Kv17JourneyChange(models.Model):
