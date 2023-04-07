@@ -1,25 +1,28 @@
 # Create your views here.
+import json
 import logging
 from datetime import timedelta
 
-from braces.views import LoginRequiredMixin
 from django.contrib.gis.db.models import Extent
 from django.urls import reverse_lazy
 from django.db.models import Q, Count
 from django.shortcuts import redirect
-from django.views.generic import ListView, UpdateView, DetailView
+from django.views.generic import FormView, ListView, UpdateView, DetailView
 from django.views.generic.edit import CreateView, DeleteView
 from django.utils.timezone import now
 
 from djgeojson.views import GeoJSONLayerView
 
-from kv1.models import Kv1Stop
+from kv1.models import Kv1Stop, Kv1Line
 from openebs.views_push import Kv15PushMixin
 from openebs.views_utils import FilterDataownerMixin
 from utils.client import get_client_ip
-from utils.views import JSONListResponseMixin, AccessMixin
+from utils.views import JSONListResponseMixin, AccessMixin, AccessJsonMixin
 from openebs.models import Kv15Stopmessage, Kv15Log, MessageStatus, Kv1StopFilter
-from openebs.form import Kv15StopMessageForm
+from openebs.form import Kv15StopMessageForm, Kv15ImportForm
+
+from django.shortcuts import render
+from dateutil import parser
 
 
 log = logging.getLogger('openebs.views')
@@ -42,9 +45,9 @@ class MessageListView(AccessMixin, ListView):
             stop_list = Kv1StopFilter.objects.get(id=context['filter']).stops.values_list('stop')
 
         # Get the currently active messages
-        active = self.model.objects.filter(messageendtime__gt=now(), isdeleted=False) \
-                                    .annotate(Count('stops'))\
-                                    .order_by('-messagetimestamp')
+        active = self.model.objects.filter(Q(messageendtime__gt=now()) | Q(messageendtime=None), isdeleted=False) \
+                                   .annotate(Count('stops'))\
+                                   .order_by('-messagetimestamp')
         if context['filter'] != -1:
             active = active.filter(kv15messagestop__stop__in=stop_list)
 
@@ -62,7 +65,9 @@ class MessageListView(AccessMixin, ListView):
             archive = archive.filter(kv15messagestop__stop__in=stop_list)
 
         if not context['view_all']:
-            archive = archive.filter(dataownercode=self.request.user.userprofile.company)
+            archive = archive.filter(dataownercode=self.request.user.userprofile.company)[:50]
+        else:
+            archive = archive[:50]
         context['archive_list'] = archive
 
         return context
@@ -79,6 +84,13 @@ class MessageCreateView(AccessMixin, Kv15PushMixin, CreateView):
     model = Kv15Stopmessage
     form_class = Kv15StopMessageForm
     success_url = reverse_lazy('msg_index')
+
+    def get_form_kwargs(self):
+        kwargs = super(MessageCreateView, self).get_form_kwargs()
+        kwargs.update({
+            'user': self.request.user
+        })
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super(MessageCreateView, self).get_context_data(**kwargs)
@@ -103,12 +115,24 @@ class MessageCreateView(AccessMixin, Kv15PushMixin, CreateView):
         if haltes:
             stops = Kv1Stop.find_stops_from_haltes(haltes)
 
+        lines = self.request.POST.get('lines', None)
+        lijnen = []
+        if lines:
+            for line in lines.split(','):
+                if len(line) > 0:
+                    result = Kv1Line.find_line(form.instance.dataownercode, line)
+                    lijnen.append(result)
+
         # Save and then log
         ret = super(MessageCreateView, self).form_valid(form)
 
         # Add stop data
         for stop in stops:
             form.instance.kv15messagestop_set.create(stopmessage=form.instance, stop=stop)
+
+        for lijn in lijnen:
+            form.instance.kv15messageline_set.create(stopmessage=form.instance, line=lijn)
+
         Kv15Log.create_log_entry(form.instance, get_client_ip(self.request))
 
         # Send to GOVI
@@ -143,6 +167,9 @@ class MessageUpdateView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, Update
         # Get our new stops, and always determine if we need to get rid of any!
         haltes = self.request.POST.get('haltes', None)
         self.process_new_old_haltes(form.instance, form.instance.kv15messagestop_set, haltes if haltes else "")
+        lijnen = self.request.POST.get('lines', None)
+        self.process_new_old_lines(form.instance, form.instance.kv15messageline_set, lijnen if lijnen else "")
+
 
         # Push a delete, then a create, but the previous one has a different message id
         if self.push_message(form.instance.to_xml_delete(original_message[2])+form.instance.to_xml()):
@@ -169,6 +196,24 @@ class MessageUpdateView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, Update
         for old_msg_stop in stop_set.all():
             if old_msg_stop.stop not in new_stops: # Removed stop, delete it
                 old_msg_stop.delete()
+
+    @staticmethod
+    def process_new_old_lines(msg, line_set, lines):
+        """ Add new lines to the set, and then check if we've deleted any lines from the old list """
+        new_lines = []
+        old_lines = lines.split(',')
+        for line in old_lines:
+            if len(line) > 0:
+                valid_line = Kv1Line.find_line(msg.dataownercode, line)
+                if valid_line:
+                    new_lines.append(valid_line)
+        for lijn in new_lines:
+            # TODO Improve this to not be n-queries
+            if line_set.filter(line=lijn).count() == 0: # New line, add it
+                line_set.create(stopmessage=msg, line=lijn)
+        for old_msg_line in line_set.all():
+            if old_msg_line.line not in new_lines: # Removed line, delete it
+                old_msg_line.delete()
 
 
 class MessageResendView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, DetailView):
@@ -219,22 +264,34 @@ class MessageDetailsView(AccessMixin, FilterDataownerMixin, DetailView):
 
 
 # AJAX Views
-class ActiveStopsAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+class ActiveStopsAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_messages'
     model = Kv1Stop
     render_object = 'object'
 
     def get_object(self, **kwargs):
         # Note, can't set this on the view, because it triggers the queryset cache
-        queryset = self.model.objects.filter(messages__stopmessage__messagestarttime__lte=now(),
-                                             messages__stopmessage__messageendtime__gte=now(),
+        messagestarttime = parser.parse(
+            self.request.GET['messagestarttime']) if 'messagestarttime' in self.request.GET else now()
+        queryset = self.model.objects.filter(messages__stopmessage__messagestarttime__lte=messagestarttime,
+                                             messages__stopmessage__messageendtime__gt=messagestarttime,
                                              messages__stopmessage__isdeleted=False,
                                              # These two are double, but just in case
                                              messages__stopmessage__dataownercode=self.request.user.userprofile.company,
                                              dataownercode=self.request.user.userprofile.company).distinct()
-        return list(queryset.values('dataownercode', 'userstopcode'))
+        return list({'dataownercode': x['dataownercode'],
+                     'userstopcode': x['userstopcode'],
+                     'line': x['messages__stopmessage__kv15messageline__line'],
+                     'starttime': int(x['messages__stopmessage__messagestarttime'].timestamp()),
+                     'endtime': int(x['messages__stopmessage__messageendtime'].timestamp()),
+                     'message': x['messages__stopmessage__messagecontent']} for x in
+                    queryset.values('dataownercode', 'userstopcode', 'messages__stopmessage__kv15messageline__line',
+                                    'messages__stopmessage__messagestarttime', 'messages__stopmessage__messageendtime',
+                                    'messages__stopmessage__messagecontent'))
 
 
-class MessageStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
+class MessageStopsAjaxView(AccessJsonMixin, GeoJSONLayerView):
+    permission_required = 'openebs.view_messages'
     model = Kv1Stop
     geometry_field = 'location'
     properties = ['name', 'userstopcode', 'dataownercode']
@@ -249,7 +306,8 @@ class MessageStopsAjaxView(LoginRequiredMixin, GeoJSONLayerView):
         return qry
 
 
-class MessageStopsBoundAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+class MessageStopsBoundAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_messages'
     model = Kv1Stop
     render_object = 'object'
 
@@ -265,3 +323,114 @@ class MessageStopsBoundAjaxView(LoginRequiredMixin, JSONListResponseMixin, Detai
             qry = qry.filter(kv15stopmessage__dataownercode=self.request.user.userprofile.company)
 
         return qry
+
+
+class MessageImportView(AccessMixin, Kv15PushMixin, FormView):
+    permission_required = 'openebs.add_messages'
+    form_class = Kv15ImportForm
+    template_name = 'openebs/kv15stopmessage_import.html'
+    success_url = reverse_lazy('msg_import_add')
+
+    def get_form_kwargs(self):
+        kwargs = super(MessageImportView, self).get_form_kwargs()
+        kwargs.update({
+            'user': self.request.user
+        })
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super(MessageImportView, self).get_context_data(**kwargs)
+        if 'import-text' in self.request.POST:
+            context['importtext'] = self.request.POST['import-text']
+        else:
+            context['importtext'] = ''
+
+        return context
+
+    def form_valid(self, form):
+        context = super(MessageImportView, self).get_context_data()
+
+        if 'action' not in self.request.POST:
+            if hasattr(form, 'cleaned_data'):
+                context['importtext'] = self.request.POST['import-text']
+                context['object'] = []
+                i = 0
+                for message in form.cleaned_data:
+                    message['kv15'].pk = 9999 + i
+                    context['object'].append({'message': message['kv15'], 'kv15messagestop': message['stops']})
+                    i += 1
+
+                return render(self.request, 'openebs/kv15stopmessage_import_detail.html', context)
+        else:
+            for stopmessage in form.kv15stopmessages:
+                if self.push_message(stopmessage.to_xml()):
+                    stopmessage.set_status(MessageStatus.SENT)
+                    log.info("Sent message to subscribers: %s" % stopmessage)
+                else:
+                    stopmessage.set_status(MessageStatus.ERROR_SEND)
+                    log.error("Failed to send message to subscribers: %s" % stopmessage)
+
+                if self.request.POST['action'] == 'action_remove':
+                    msg = Kv15Stopmessage.objects.filter(dataownercode=stopmessage.dataownercode,
+                                                         messagecodedate=stopmessage.messagecodedate,
+                                                         messagecodenumber=stopmessage.messagecodenumber)[0]
+                    if self.push_message(msg.to_xml_delete()):
+                        msg.set_status(MessageStatus.DELETED)
+                        Kv15Stopmessage.objects.filter(pk=msg.pk).update(isdeleted=True)
+                        log.error("Deleted message succesfully communicated to subscribers: %s" % msg)
+                    else:
+                        msg.set_status(MessageStatus.ERROR_SEND_DELETE)
+                        log.error("Failed to send delete request to subscribers: %s" % msg)
+
+        return redirect(reverse_lazy('msg_index'))
+
+    def form_invalid(self, form):
+        return render(self.request, 'openebs/kv15stopmessage_import.html', self.get_context_data())
+
+
+class ActiveMessageAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_messages'
+    model = Kv15Stopmessage
+    render_object = 'object'
+
+    def get_object(self, **kwargs):
+        qry = self.get_queryset()
+        return qry
+
+    def get_queryset(self):
+        qry = super(ActiveMessageAjaxView, self).get_queryset()
+        qry = qry.filter(id=self.kwargs.get('pk', None))
+        dataownercode = qry.values('dataownercode')[0]['dataownercode']
+        lines = []
+        for item in qry.values('kv15messageline__line_id', 'kv15messageline__line_id__lineplanningnumber'):
+            if item['kv15messageline__line_id'] is None:
+                lines.append('None/None')
+            else:
+                lines.append(str(item['kv15messageline__line_id'])+'/'+item['kv15messageline__line_id__lineplanningnumber'])
+        stops = []
+        for item in qry.values('kv15messagestop__stop_id__userstopcode', 'kv15messagestop__stop_id__name'):
+            stops.append([dataownercode+'_'+item['kv15messagestop__stop_id__userstopcode'], item['kv15messagestop__stop_id__name']])
+
+        line_stops = {}
+        used_stops = []
+        if 'None' in lines[0]:
+            line_stops[lines[0]] = stops
+        else:
+            for line in lines:
+                line_id = line.split('/')[0]
+                line_stops[line] = []
+                query = Kv1Line.objects.filter(id=line_id)
+                stop_map = query.values('stop_map')[0]['stop_map']
+                for stop in stops:
+                    if stop[0] in stop_map:
+                        line_stops[line].append(stop)
+                        if stop not in used_stops:
+                            used_stops.append(stop)
+            # check if all stops are 'used'
+            extra_stops = []
+            for stop in stops:
+                if stop not in used_stops:
+                    extra_stops.append(stop)
+            if len(extra_stops) > 0:
+                line_stops['x/Onbekend'] = extra_stops
+        return line_stops

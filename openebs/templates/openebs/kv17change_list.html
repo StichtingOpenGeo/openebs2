@@ -5,12 +5,7 @@
 
 {% block content %}
 
-  <h1>{% trans "Ritaanpassingen" %}
-        {% comment %}
-        <a class="btn btn-danger pull-right" href="{% url 'change_redbutton' %}">
-        <span class="glyphicon glyphicon-trash"></span> {% trans "Alle ritten opheffen" %}
-        {% endcomment %}
-      </a>&nbsp;</h1>
+  <h1>{% trans "Ritaanpassingen" %}</h1>
 
   <h2>{% trans "Actieve aanpassingen" %}
       {% if perms.openebs.add_change %}
@@ -40,31 +35,69 @@
 </div>
 
   <h2>Verlopen Aanpassingen</h2>
-  <table class="table table-bordered table-condensed table-striped">
-  <tr id="highlight">
-        <th class="col-lg-4">{% trans "Ritdatum"%}</th>
-        <th class="col-lg-2">{% trans "Lijn" %}</th>
-        <th class="col-lg-3">{% trans "Rit" %}</th>
-        <th class="col-lg-5">&nbsp;</th>
+  <table class="table table-bordered table-condensed">
+  <tr>
+        <th class="col-sm-2">{% trans "Ritdatum" %}</th>
+        <th class="col-sm-2">{% trans "Begintijd" %}</th>
+        <th class="col-sm-2">{% trans "Eindtijd" %}</th>
+        <th class="col-sm-2">{% trans "Lijn" %}</th>
+        <th class="col-sm-5">{% trans "Rit" %}</th>
+        <th class="col-sm-3">&nbsp;</th>
   </tr>
   {% for msg in archive_list %}
     <tr class="{% if msg.is_recovered %}warning{% endif %}">
         <td>{{ msg.operatingday|date:"d-m-Y" }}</td></td>
-        <td>{{ msg.line.publiclinenumber }}</td>
-        <td>{{ msg.journey.journeynumber }} <small>(Vertrek {{msg.journey.departuretime|seconds_time|date:"H:i"}})</small></td>
+        <td>{% if msg.begintime %}{{ msg.begintime|time:"H:i" }}{% endif %}</td>
+        <td>{% if msg.endtime %}{{ msg.endtime|time:"H:i" }}{% endif %}</td>
         <td>
-            {% if perms.openebs.add_change %}
-            <form method="post" action="{% url 'change_redo' msg.id %}">
-                {% csrf_token %}
-                <button class="btn pull-right">
-                    <span class="glyphicon glyphicon-repeat"></span>
-                </button>
-            </form>
+            {% if msg.line %}
+                {% if msg.line.lineplanningnumber != msg.line.publiclinenumber %}
+                    {{ msg.line.publiclinenumber }} ({{ msg.line.lineplanningnumber }})
+                {% else %}
+                    {{ msg.line.publiclinenumber }}
+                {% endif %}
+            {% else %}
+                {% trans "Alle lijnen van vervoerder" %}
             {% endif %}
         </td>
+        {% if msg.journey %}
+            <td>{{ msg.journey.journeynumber }} <small>(Vertrek {{msg.journey.departuretime|seconds_time|date:"H:i"}})</small></td>
+            <td>
+                {% if perms.openebs.add_change %}
+                <form method="post" action="{% url 'change_redo' msg.id %}">
+                    {% csrf_token %}
+                    <button class="btn pull-right">
+                        <span class="glyphicon glyphicon-repeat"></span>
+                    </button>
+                </form>
+                {% endif %}
+            </td>
+        {% elif msg.line %}
+            <td>{% trans "Alle ritten" %}</td>
+            <td>{% if perms.openebs.cancel_lines %}
+                    <form method="post" action="{% url 'change_redo' msg.id %}">
+                        {% csrf_token %}
+                        <button class="btn pull-right">
+                            <span class="glyphicon glyphicon-repeat"></span>
+                        </button>
+                    </form>
+                {% endif %}
+            </td>
+        {% else %}
+            <td>{% trans "Alle ritten van vervoerder" %}</td>
+            <td>{% if perms.openebs.cancel_alllines %}
+                    <form method="post" action="{% url 'change_redo' msg.id %}">
+                        {% csrf_token %}
+                        <button class="btn pull-right">
+                            <span class="glyphicon glyphicon-repeat"></span>
+                        </button>
+                    </form>
+                {% endif %}
+            </td>
+        {% endif %}
     </tr>
   {% empty %}
-      <tr><td colspan="5" class="text-center"><em>{% trans "Geen berichten gevonden" %}</em></td></tr>
+      <tr><td colspan="6" class="text-center"><em>{% trans "Geen berichten gevonden" %}</em></td></tr>
   {% endfor %}
   </table>
   <p><small>{% trans "Rood = teruggedraaide aanpassing" %}</small></p>

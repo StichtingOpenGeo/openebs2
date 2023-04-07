@@ -9,4 +9,19 @@
     <div id="calendar">
         {{ calendar }}
     </div>
+    <br />
+    <h2>{% trans "Importstatus" %} </h2>
+    <p>{% trans "Datum en status van de laatste vijf ritimporten." %} </p>
+    <table class="import-table table-condensed table-bordered table-striped" id="import-table">
+        <tr>
+            <th class="col-md-1" id="importdate">{% trans "Datum" %}</th>
+            <th class="col-md-1" id="importstatus">{% trans "Status" %}</th>
+        </tr>
+        {% for i in import|slice:":5" %}
+        <tr>
+            <td>{{ i.importDate|date:"d-m-Y" }} {{ i.importDate|time:"H:i" }}</td>
+            <td>{{ i.status }}</td>
+        </tr>
+        {% endfor %}
+    </table>
 {% endblock %}
