@@ -1,4 +1,5 @@
 import json
+import urllib
 
 from braces.views import LoginRequiredMixin, StaffuserRequiredMixin
 from datetime import timedelta, datetime
@@ -212,7 +213,9 @@ class StopSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
         qry = qry.filter(dataownercode=self.request.user.userprofile.company) \
             .order_by('userstopcode') \
             .values('pk', 'dataownercode', 'name', 'userstopcode')
-        needle = self.kwargs.get('search', '') or ''
+        needle = self.request.GET.get('search', '') or ''
+        if needle:
+            needle = urllib.parse.unquote(needle)
         qry = qry.filter(Q(name__icontains=needle) | Q(userstopcode__startswith=needle))
         return qry
 

@@ -47,30 +47,34 @@ function searchSelection(item) {
 
 function stopSearch(event) {
     if ($("#halte_search").val().length > 0) {
-        var term = $("#halte_search").val();
-        var check = term.indexOf(' ');
-        if (check > -1 ) {
-           term = term.split(" ").join("_"); // weird method, but 'spaces' are apparently not working for the ajax
-        }
-        $.ajax('/stop/'+term, {
+        var term = encodeURIComponent($("#halte_search").val());
+        $.ajax({
+            method: 'GET',
+            url: '/stop',
+            data: {
+                search: term,
+            },
             success : writeStopListMiddle
         })
     } else {
         $('#stops-new .help').removeClass('hidden');
+        $('.geen_lijn').addClass('hidden');
         $('.specificeer-middle').addClass('hidden');
         $('.stop').remove();
     }
     if ($("#haltelijn_search").val().length > 0) {
-        var term = $("#haltelijn_search").val();
-        var check = term.indexOf(' ');
-        if (check > -1 ) {
-           term = term.split(" ").join("_"); // weird method, but 'spaces' are apparently not working for the ajax
-        }
-        $.ajax('/stop/'+term, {
+        var term = encodeURIComponent($("#haltelijn_search").val());
+        $.ajax({
+            method: 'GET',
+            url: '/stop',
+            data: {
+                search: term,
+            },
             success : writeStopList
         })
     } else {
         $('#stop_rows .help, #rows2 td.help').removeClass('hidden');
+        $('.geen_lijn').addClass('hidden');
         $('.specificeer, #reset').addClass('hidden');
         $('.search_stop, #rows2 .line').remove();
     }
@@ -182,6 +186,9 @@ function writeList(data, status, item) {
                 $(this).fadeOut(200).remove();
             }
         });
+        if ($('#rows2 .line').length === 0) {
+            $('.geen_lijn').removeClass('hidden');
+        }
     } else {
         $('#rows tr td.help').addClass('hidden');
         $("#rows .line").each(function(index) {
