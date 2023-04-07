@@ -154,7 +154,8 @@ function writeTrips(data, status) {
     tripSelection = data.object.trips_1.concat(data.object.trips_2);
     maxLen = Math.max(data.object.trips_1.length, data.object.trips_2.length);
     if (maxLen > 0) {
-        $('#trips tbody').fadeOut(100).empty();
+        $('.triprow').fadeOut(100).remove();
+        $('#trips tbody .help').addClass('hidden');
         tripRows = null;
         for (i = 0; i <= maxLen; i = i + 1) {
             a = null;
@@ -171,7 +172,7 @@ function writeTrips(data, status) {
         $("#all_journeys").removeAttr('disabled');
     } else {
         $('#trips thead').hide();
-        $('#trips tbody').text("Geen ritten in database.");
+        $('#trips tbody .no_journeys').removeClass('hidden');
         $('#all_journeys').attr('disabled','disabled');
     }
     if ($.inArray(activeLine, selectedLines) != -1) {
@@ -182,7 +183,7 @@ function writeTrips(data, status) {
 }
 
 function renderTrip(trip_a, trip_b) {
-    out = '<tr>';
+    out = '<tr class="triprow">';
     out += renderTripCell(trip_a);
     out += renderTripCell(trip_b);
     out += '</tr>';
@@ -255,8 +256,8 @@ function changeOperatingDayTrips() {
     emptyJourneyList();
     getActiveLines();
     if ($("#id_operatingday").text === undefined || ($("#id_operatingday option").length == 1 && $("#id_operatingday option:selected" ).text() !== $("#operating_day_text").text())) {
-        $('#trips tr.help').remove();
-        $('#trips tr.empty_dates').show();
+        $('#trips tr.help').removeClass('hidden');
+        $('#trips tr.empty_dates').removeClass('hidden');
         $('#line_search').attr('disabled','disabled');
         $('#all_lines').attr('disabled','disabled');
         $('.btn-primary').attr('disabled','disabled');
@@ -289,8 +290,7 @@ var operating_day = $("#id_operatingday").val();
     } else {
         cancelledLines = [];
         $('#trips thead').hide();
-        $('#trips tbody').addClass('empty_database');
-        $('#trips tbody').text("Er staan geen ritten in de database.");
+        $('#trips tr.empty_dates').removeClass('hidden');
     }
 }
 
@@ -384,6 +384,7 @@ function removeLineFromX(event, ui) {
         $('#rit-list .help').show();
         $('#trips thead').show();
         $('#trips tbody').show();
+        $('#trips tbody .help').removeClass('hidden');
     } else {
         lijnnr =$(this).parent().attr('id').replace('st', '');
         //remove from selectTripMeasures & allTrips
@@ -456,7 +457,7 @@ function selectAllLines() {
         $('#div_id_begintime_part').removeClass('hidden');
         $('#div_id_endtime_part').removeClass('hidden');
     }
-    $('#trips tbody tr').remove();
+    $('.triprow').remove();
     $('.rit-overzicht').css("display","none");
     $('#trips thead').hide();
     $('#trips tbody').hide();
