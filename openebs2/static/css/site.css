@@ -249,3 +249,37 @@ span.stop-selection,span.trip-selection{
     border-width: 1px;
     border-color: #00008b;
 }
+
+#div_id_autorecover input {
+    opacity: 0.6;
+    position: relative;
+    display: inline-block;
+    border: 1px solid #a9a9a9;
+    border-radius: .25em;
+    width: 1.3em;
+    height: 1.3em;
+    float: left;
+    margin-right: .5em;
+    margin-top: 0em;
+}
+
+#div_id_showcancelledtrip input {
+    opacity: 0.6;
+    position: relative;
+    display: inline-block;
+    border: 1px solid #a9a9a9;
+    border-radius: .25em;
+    width: 1.3em;
+    height: 1.3em;
+    float: left;
+    margin-right: .5em;
+    margin-top: 0em;
+}
+
+#highlight th {
+    background-color: #D3D1D0;
+}
+
+#highlight td {
+    background-color: #D3D1D0;
+}
