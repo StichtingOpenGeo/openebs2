@@ -1,6 +1,6 @@
 from django.conf.urls import url
 from kv1.views import LineSearchView, LineStopView, ActiveStopListView, LineTripView, DataImportView, \
-    ActiveMessagesForStopView, StopAutocompleteView, StopLineSearchView
+    ActiveMessagesForStopView, StopAutocompleteView, StopLineSearchView, StopLineFilterView, StopSearchView
 
 urlpatterns = [
     url(r'^line/(?P<search>\w+)?$', LineSearchView.as_view(), name="line_search"),
@@ -12,5 +12,7 @@ urlpatterns = [
     url(r'^stop/(?P<tpc>\w+)/messages.json$', ActiveMessagesForStopView.as_view(), name="msg_stop_json"),
     url(r'^stop/search.json$', StopAutocompleteView.as_view(), name="stop_search_json"),
 
-    url(r'^stop/lines$', StopLineSearchView.as_view(), name="stopline_search")
+    url(r'^stop/lines$', StopLineFilterView.as_view(), name="stopline_search"),
+    url(r'^stop$', StopSearchView.as_view(), name="stop_search"),
+    url(r'^stop/(?P<pk>\w+)/lines$', StopLineSearchView.as_view(), name="stopline_search")
 ]
