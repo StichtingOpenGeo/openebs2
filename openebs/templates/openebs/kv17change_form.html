@@ -113,7 +113,20 @@
             {% crispy form form.helper %}
             <div class="form-group">
                 <br />
-                <button type="submit" class="btn btn-primary">{% trans "Doorvoeren" %}</button>
+                <input type="submit" class="btn btn-danger" name="Annuleren" value="Opheffen"/>
+                <input type="hidden" name="notMonitored" id="notMonitoredInput"/>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary disabled" id="notMonitored">Niet gevolgd</button>
+                    <button class="btn btn-primary dropdown-toggle" id="monitoring-error" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                      {% for choice in form.monitoring_error.field.choices %}
+                        <li><a value="{{choice.0}}">{{choice.1}}</a></li>
+                      {% endfor %}
+                    </ul>
+                </div>
             </div>
         </form>
     </div>
@@ -140,4 +153,6 @@
     $('#lijn-list').on('click', '.line-remove', removeLineFromX);
     $('#id_operatingday').change(changeOperatingDayTrips);
     $('#id_begintime_part, #id_endtime_part').change(changeOfRange);
+    $(".dropdown-menu").on('click', 'li a', notMonitored);
+
 {% endblock %}

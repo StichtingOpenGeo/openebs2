@@ -211,8 +211,7 @@ class ActiveJourneysAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView)
         operating_day = parse_date(self.request.GET['operatingday']) if 'operatingday' in \
                                                                         self.request.GET else get_operator_date()
         # Note, can't set this on the view, because it triggers the queryset cache
-        queryset = self.model.objects.filter(operatingday=operating_day,
-                                             is_recovered=False,
+        queryset = self.model.objects.filter(operatingday=operating_day, is_recovered=False, is_cancel=True,
                                              dataownercode=self.request.user.userprofile.company).distinct()
         return list(queryset.values('journey_id', 'dataownercode', 'is_recovered'))
 
@@ -227,7 +226,7 @@ class ActiveLinesAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
 
         # Note, can't set this on the view, because it triggers the queryset cache
         queryset = self.model.objects.filter(Q(is_alljourneysofline=True) | Q(is_alllines=True),
-                                             operatingday=operating_day, is_recovered=False,
+                                             operatingday=operating_day, is_recovered=False, is_cancel=True,
                                              dataownercode=self.request.user.userprofile.company).distinct()
         # TODO: is it possible to apply a function on a value of a queryset?
         start_of_day = datetime.combine(operating_day, datetime.min.time()).timestamp()
@@ -238,3 +237,52 @@ class ActiveLinesAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
                      'all_lines': x['is_alllines']}
                     for x in queryset.values('line', 'begintime', 'endtime', 'dataownercode', 'is_alljourneysofline',
                     'is_alllines'))
+
+
+
+class NotMonitoredJourneyAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_change'
+    model = Kv17Change
+    render_object = 'object'
+
+    def get_object(self):
+        operating_day = get_operator_date()
+        if 'operatingday' in self.request.GET:
+            operating_day = parse_date(self.request.GET['operatingday'])
+
+        # Note, can't set this on the view, because it triggers the queryset cache
+        queryset = self.model.objects.filter(is_alljourneysofline=False,
+                                             is_alllines=False,
+                                             operatingday=operating_day,
+                                             is_cancel=False,
+                                             is_recovered=False,
+                                             monitoring_error__isnull=False,
+                                             dataownercode=self.request.user.userprofile.company).distinct()
+        return list(queryset.values('journey_id', 'dataownercode', 'monitoring_error'))
+
+
+class NotMonitoredLinesAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_change'
+    model = Kv17Change
+    render_object = 'object'
+
+    def get_object(self):
+        operating_day = get_operator_date()
+        if 'operatingday' in self.request.GET:
+            operating_day = parse_date(self.request.GET['operatingday'])
+
+        # Note, can't set this on the view, because it triggers the queryset cache
+        queryset = self.model.objects.filter(Q(is_alljourneysofline=True) | Q(is_alllines=True),
+                                             operatingday=operating_day,
+                                             is_cancel=False,
+                                             is_recovered=False,
+                                             monitoring_error__isnull=False,
+                                             dataownercode=self.request.user.userprofile.company).distinct()
+
+        # TODO: is it possible to apply a function on a value of a queryset?
+        start_of_day = datetime.combine(operating_day, datetime.min.time()).timestamp()
+        return list({'id': x['line'], 'begintime': int(x['begintime'].timestamp() - start_of_day) if x['begintime'] is not None else None,
+                     'endtime': int(x['endtime'].timestamp() - start_of_day) if x['endtime'] is not None else None,
+                     'dataownercode': x['dataownercode'],
+                     'monitoring_error': x['monitoring_error']} for x in
+                    queryset.values('line', 'begintime', 'endtime', 'dataownercode', 'monitoring_error'))

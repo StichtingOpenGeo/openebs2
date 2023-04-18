@@ -425,6 +425,8 @@ class Kv17Change(models.Model):
     recovered = models.DateTimeField(null=True, blank=True)  # Not filled till recovered
     is_alljourneysofline = models.BooleanField(default=False, verbose_name=_("Alle ritten"))
     is_alllines = models.BooleanField(default=False, verbose_name=_("Alle lijnen"))
+    monitoring_error = models.CharField(max_length=40, null=True, choices=MONITORINGERROR,
+                                        verbose_name=_("Monitoring_error"))
 
     def delete(self):
         self.is_recovered = True

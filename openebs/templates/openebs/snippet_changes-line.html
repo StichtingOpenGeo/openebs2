@@ -1,4 +1,5 @@
 {% load i18n filters %}
+
 {% if line.grouper.publiclinenumber %}
     {% if line.grouper.lineplanningnumber != line.grouper.publiclinenumber %}
         <h4>{% trans "Lijn" %} {{ line.grouper.publiclinenumber }} ({{ line.grouper.lineplanningnumber }}) <small>{{ line.grouper.headsign }}</small></h4>
@@ -14,6 +15,7 @@
   <tr>
       <th class="col-sm-2">{% trans "Ritdatum" %}</th>
       <th class="col-sm-4">{% trans "Ritnummer" %}</th>
+      <td class="col-sm-1" align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-ban-circle" title="Niet gevolgd"></span></td>
       <td class="col-sm-1" align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-eye-close" title="Toon opgeheven rit niet"></span></td>
       <td class="col-sm-1" align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-transfer" title="Automatisch herstellen"></span></td>
       <th class="col-sm-1"></th>
@@ -47,6 +49,13 @@
                     <small>(hele dag)</small>
                 {% endif %}
             {% endif %}
+          </td>
+          <td align="center" style="vertical-align:middle;">
+              {% if msg.monitoring_error %}
+                <span class="glyphicon glyphicon-ban-circle" title="Niet gevolgd"></span>
+              {% else %}
+                <span></span>
+              {% endif %}
           </td>
           <td align="center" style="vertical-align:middle;">
             {% if msg.showcancelledtrip %}

@@ -43,6 +43,8 @@
         <th class="col-sm-2">{% trans "Lijn" %}</th>
         <th class="col-sm-5">{% trans "Rit" %}</th>
         <th class="col-sm-3">&nbsp;</th>
+        <th class="col-sm-3">&nbsp;</th>
+
   </tr>
   {% for msg in archive_list %}
     <tr class="{% if msg.is_recovered %}warning{% endif %}">
@@ -58,6 +60,11 @@
                 {% endif %}
             {% else %}
                 {% trans "Alle lijnen van vervoerder" %}
+            {% endif %}
+        </td>
+        <td align="center">
+            {% if msg.monitoring_error %}
+                <span class="glyphicon glyphicon-ban-circle" title="Niet gevolgd"></span>
             {% endif %}
         </td>
         {% if msg.journey %}
@@ -97,7 +104,7 @@
         {% endif %}
     </tr>
   {% empty %}
-      <tr><td colspan="6" class="text-center"><em>{% trans "Geen berichten gevonden" %}</em></td></tr>
+      <tr><td colspan="7" class="text-center"><em>{% trans "Geen berichten gevonden" %}</em></td></tr>
   {% endfor %}
   </table>
   <p><small>{% trans "Rood = teruggedraaide aanpassing" %}</small></p>

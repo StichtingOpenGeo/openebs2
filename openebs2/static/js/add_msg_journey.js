@@ -9,6 +9,9 @@ var lijnList = [];
 var allTrips = [];
 var selectTripMeasures = [];
 var tripSelection = [];
+var notmonitoredJourneys = [];
+var notmonitoredLines = [];
+var notMonitoredLineMeasures = null;
 
 function changeSearch(event) {
     if ($("#line_search").val().length > 0) {
@@ -209,6 +212,18 @@ function renderTripCell(trip) {
         }
     });
 
+    const notMonitoredTripMeasures = notMonitoredLineMeasures.filter(measure => {
+        if (measure.begintime === null && measure.endtime === null) {
+            return true;
+        } else if (measure.begintime === null && measure.endtime > trip.departuretime) {
+            return true;
+        } else if (measure.begintime <= trip.departuretime && measure.endtime === null) {
+            return true;
+        } else if (measure.begintime <= trip.departuretime && measure.endtime >= trip.departuretime) {
+            return true;
+        }
+    });
+
     if ($.inArray(trip.id, activeJourneys) != -1) {
         out = '<td class="trip warning" id="t'+trip.id+'">';
     } else if (currentTripMeasures.length > 0) {
@@ -218,11 +233,22 @@ function renderTripCell(trip) {
     }
     out += "<strong>Rit "+trip.journeynumber+"</strong>";
     out += "&nbsp;<small>Vertrek "+convertSecondsToTime(trip.departuretime)+"</small>";
-    if ($.inArray(trip.id, activeJourneys) != -1) {
-        out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Rit is al opgeheven"></span>';
-    }
     if (currentTripMeasures.length > 0) {
-        out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Lijn is al opgeheven"></span>';
+        if (currentTripMeasures.filter(l =>l.id === null).length > 0) {
+            out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Vervoerder is opgeheven"></span>'
+        } else if (currentTripMeasures.filter(l => l.id == activeLine).length > 0) {
+        out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Lijn is opgeheven"></span>'
+        }
+    } else if ($.inArray(trip.id, activeJourneys) != -1) {
+        out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Rit is opgeheven"></span>'
+    } else if (notMonitoredTripMeasures.length > 0) {
+        if (notMonitoredTripMeasures.filter(l=> l.id === null).length > 0) {
+        out += '<span class="glyphicon glyphicon-ban-circle pull-right" title="Vervoerder wordt niet gevolgd"></span>'
+        } else if (notMonitoredTripMeasures.filter(l=> l.id == activeLine).length > 0) {
+        out += '<span class="glyphicon glyphicon-ban-circle pull-right" title="Lijn wordt niet gevolgd"></span>'
+        }
+    } else if ($.inArray(trip.id, notmonitoredJourneys) != -1) {
+        out += '<span class="glyphicon glyphicon-ban-circle pull-right" title="Rit wordt niet gevolgd"></span>'
     }
     out += "</td>";
     return out;
@@ -242,7 +268,7 @@ function writeActiveJourneys(data, status) {
             activeJourneys.push(journey.journey_id);
         });
     }
-    showTripsOnChange();
+    getNotMonitoredJourneys();
 }
 
 function changeOperatingDayTrips() {
@@ -271,6 +297,7 @@ function changeOperatingDayTrips() {
 function showTripsOnChange() {
     if (activeLine !== null) {
         currentLineMeasures = cancelledLines.filter(l => l.id == activeLine || l.id === null);
+        notMonitoredLineMeasures = notmonitoredLines.filter(l => l.id == activeLine || l.id === null);
         tripSelection = [];
         var operating_day = $("#id_operatingday").val();
         $.ajax({ url: '/line/'+activeLine+'/ritten',
@@ -535,6 +562,71 @@ function changeOfRange() {
     selectTripMeasures = [];
     $('#trips.td.all_selected').removeClass('all_selected');
     colorSelectedRange();
+}
+
+function emptyJourneyList() {
+    selectedTrips = [];
+    activeJourneys = [];
+    allTrips = [];
+    tripSelection = [];
+    selectTripMeasures = [];
+    $("#rit-list span").remove();
+    $('.rit-overzicht').css("display","block");
+    $('#rit-list .help').show();
+    $('#trips thead').show();
+    $('#trips tbody').show();
+    $("#trips tr td").removeClass('ui-selected success');
+    $("#journeys").val('');
+}
+
+function getNotMonitoredJourneys() {
+    var operating_day = $("#id_operatingday").val();
+    if (operating_day != null) {
+        $.ajax({ url: '/ritaanpassing/ritten-nietgevolgd.json',
+            data: {'operatingday': operating_day},
+            success : saveNotMonitoredJourneys
+        });
+    } else {
+        notmonitoredJourneys = []
+        getNotMonitoredLines();
+    }
+}
+
+function saveNotMonitoredJourneys(data, status) {
+    if (data.object) {
+        $.each(data.object, function (i, journey) {
+            notmonitoredJourneys.push(journey.journey_id);
+        });
+    getNotMonitoredLines();
+    }
+}
+
+function getNotMonitoredLines() {
+    var operating_day = $("#id_operatingday").val();
+    if (operating_day != null) {
+        $.ajax({ url: '/ritaanpassing/lijnen-nietgevolgd.json',
+            data: {'operatingday': operating_day},
+            success : saveNotMonitoredLines
+        });
+    } else {
+        notmonitoredLines = [];
+        showTripsOnChange();
+    }
+}
+
+function saveNotMonitoredLines(data, status) {
+    if (data.object) {
+        notmonitoredLines = data.object;
+    } else {
+        notmonitoredLines = [];
+    };
+    showTripsOnChange();
+}
+
+function notMonitored() {
+    $("#notMonitored").text($(this).text());
+    $("#notMonitoredInput").val($(this).attr('value'));
+    $("#notMonitored").removeClass('disabled');
 }
 
 /* TIME FUNCTIONS */
