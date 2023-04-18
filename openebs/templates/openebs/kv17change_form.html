@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static crispy_forms_tags i18n %}
 
- {% block title %}{% trans "Nieuwe ritaanpassing" %}{% endblock %}
+{% block title %}{% trans "Nieuwe ritaanpassing" %}{% endblock %}
 
 {% block content %}
 <div class="row">
@@ -23,20 +23,33 @@
                 </tr>
             </thead>
             <tbody id="rows">
+                {% if first_lines %}
+                    {% for first_line in first_lines %}
+                        <tr class="line" id="l{{ first_line.pk }}">
+                            <td><strong>{{ first_line.publiclinenumber }}</strong>
+                                {% if first_line.publiclinenumber != first_line.lineplanningnumber %}
+                                     / <small>{{ first_line.lineplanningnumber }}</small>
+                                {% else %}
+                                    <span class="hidden"><small>{{ first_line.lineplanningnumber }}</small></span>
+                                {% endif %}
+                            </td>
+                            <td>{{ first_line.headsign }}</td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
                 <tr>
                     <td colspan="2" class="text-center"><em>{% trans "Typ een eindbestemming of lijnnummer om een lijn te zoeken" %}</em></td>
                 </tr>
+                {% endif %}
             </tbody>
         </table>
     </div>
-
     <div class="col-sm-5">
         <h2>Ritten <span title="Dienstregelingsdatum" id="operating_day_text">{{ operator_date|date:"d-m-Y" }}</span>
             {% if perms.openebs.cancel_lines %}
                 <button type="button" onclick="selectAllTrips()" id="all_journeys" class="btn btn-warning btn-right" style="float: right;" disabled>{% trans "Alle ritten" %}</button>
             {% endif %}
         </h2>
-
         <table class="table openebs-trips" id="trips">
             <thead>
                 <tr>
@@ -46,10 +59,11 @@
             </thead>
             <tbody>
                 <tr class="help text-center"><td colspan="2"><em>Klik een lijn om ritten hier te zien</em></td></tr>
+                <tr class="empty_dates text-center hidden"><td colspan="2"><em>Er staan geen ritten in de database.<br />Neem contact op met de beheerder.</em></td></tr>
+                <tr class="no_journeys text-center hidden"><td colspan="2"><em>Er staan geen ritten in de database.</em></td></tr>
             </tbody>
         </table>
     </div>
-
     <div class="col-sm-3" id="ritaanpassing">
         <h2>{% trans "Ritaanpassing" %}</h2>
         {% if journey_errors > 0 %}
@@ -65,7 +79,6 @@
                 </p><br />
                 <input type="hidden" id="journeys" name="journeys" />
                 <input type="hidden" id="lines" name="lines" />
-
             </div>
             <div class="control-group">
                 <div class = "lijn-overzicht" style="display: none;">
@@ -78,7 +91,7 @@
                             <span class="label label-danger lijn-preload" id="st{{l.lineplanningnumber}}">{% trans "Lijn" %}{{ l.publiclinenumber }}<span class="lijn-remove glyphicon glyphicon-remove"></span></span>
                         {% endfor %}
                     {% endif %}
-                    </p><br />
+                </p><br />
                 </div>
                 <div class = "rit-overzicht" style="display: block;">
                     <label>{% trans "Rit(ten)" %}</label>
@@ -95,10 +108,10 @@
                     </p><br />
                 </div>
             </div>
-        <div class="clearfix"></div>
-        <br />
-        {% crispy form form.helper %}
-        <div class="form-group">
+            <div class="clearfix"></div>
+            <br />
+            {% crispy form form.helper %}
+            <div class="form-group">
                 <br />
                 <input type="submit" class="btn btn-danger" name="Annuleren" value="Opheffen"/>
                 <input type="hidden" name="notMonitored" id="notMonitoredInput"/>
@@ -114,7 +127,7 @@
                       {% endfor %}
                     </ul>
                 </div>
-        </div>
+            </div>
         </form>
     </div>
 </div>
@@ -139,8 +152,7 @@
     $('#rit-list').on('click', '.trip-remove', removeTripFromX);
     $('#lijn-list').on('click', '.line-remove', removeLineFromX);
     $('#id_operatingday').change(changeOperatingDayTrips);
-    $('#id_begintime_part').change(changeOfRange);
-    $('#id_endtime_part').change(changeOfRange);
+    $('#id_begintime_part, #id_endtime_part').change(changeOfRange);
     $(".dropdown-menu").on('click', 'li a', notMonitored);
 
 {% endblock %}

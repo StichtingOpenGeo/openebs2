@@ -1,3 +1,7 @@
-<ul>{% for halte in msg.stops.all %}
+<ul>{% for halte in msg.get_distinct_stop_names %}
   <li>{{ halte.stop.name }}</li>
 {% endfor %}</ul>
+
+{% if msg.stops.count > 15 %}
+<p><small>en {{  msg.stops.count|add:-15 }} overige haltes. (klik cijfer om te bekijken)</small></p>
+{% endif %}

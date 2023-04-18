@@ -1,0 +1,12 @@
+{% for messageline in msg.kv15messageline_set.all %}
+    <span class="pull-left label label-primary" id="line-list-html">
+        {% if messageline.line.lineplanningnumber == messageline.line.publiclinenumber %}
+            {{ messageline.line.lineplanningnumber }}
+        {% else %}
+            {{ messageline.line.publiclinenumber }} ({{ messageline.line.lineplanningnumber }})
+        {% endif %}
+    </span>
+{% endfor %}
+
+
+

@@ -10,10 +10,12 @@
   <h2>{% trans "Actieve aanpassingen" %}
       {% if perms.openebs.add_change %}
         <div class="btn-group" style="float: right;">
-          <a class="btn btn-success" href="{% url 'change_add' %}">
-            <span class="glyphicon glyphicon-plus"></span> {% trans "Nieuwe aanpassing" %}</a>
-          <a class="btn btn-warning" href="{% url 'shorten_add' %}">
-            <span class="glyphicon glyphicon-plus"></span> {% trans "Nieuwe inkorting" %}</a>
+            <a class="btn btn-success" href="{% url 'change_add' %}">
+                <span class="glyphicon glyphicon-plus"></span> {% trans "Nieuwe aanpassing" %}
+            </a>
+            <a class="btn btn-warning" href="{% url 'shorten_add' %}">
+                <span class="glyphicon glyphicon-plus"></span> {% trans "Nieuwe inkorting" %}
+            </a>
         </div>
       {% endif %}
   </h2>
@@ -38,20 +40,19 @@
 </div>
 
   <h2>Verlopen Aanpassingen</h2>
-  <table class="table table-bordered table-condensed table-striped">
+  <table class="table table-bordered table-condensed">
   <tr id="highlight">
-        <th class="col-sm-2">{% trans "Ritdatum"%}</th>
-        <th class="col-sm-1">{% trans "Begintijd" %}</th>
-        <th class="col-sm-1">{% trans "Eindtijd" %}</th>
+        <th class="col-sm-2">{% trans "Ritdatum" %}</th>
+        <th class="col-sm-2">{% trans "Begintijd" %}</th>
+        <th class="col-sm-2">{% trans "Eindtijd" %}</th>
         <th class="col-sm-2">{% trans "Lijn" %}</th>
-        <th class="col-sm-3">{% trans "Rit" %}</th>
+        <th class="col-sm-5">{% trans "Rit" %}</th>
         <td class="col-sm-1" align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-random" title="Rit ingekort"></span></td>
         <td class="col-sm-1" align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-ban-circle" title="Niet gevolgd"></span></td>
-        <th class="col-sm-2">&nbsp;</th>
-
+        <th class="col-sm-3">&nbsp;</th>
   </tr>
   {% for msg in archive_list %}
-    <tr class="{% if msg.is_recovered %}warning{% endif %}">
+    <tr class="{% if msg.is_recovered %}warning{% endif %}">  {% comment %} TODO! make own style in css {% endcomment %}
         <td style="vertical-align:middle;">{{ msg.operatingday|date:"d-m-Y" }}</td></td>
         <td style="vertical-align:middle;">{% if msg.begintime %}{{ msg.begintime|time:"H:i" }}{% endif %}</td>
         <td style="vertical-align:middle;">{% if msg.endtime %}{{ msg.endtime|time:"H:i" }}{% endif %}</td>
@@ -139,7 +140,6 @@
                 {% endif %}
             </td>
         {% endif %}
-
     </tr>
   {% empty %}
       <tr><td colspan="8" class="text-center"><em>{% trans "Geen berichten gevonden" %}</em></td></tr>
