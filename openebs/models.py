@@ -21,7 +21,7 @@ from kv1.models import Kv1Stop, Kv1Line, Kv1Journey
 
 from kv15.enum import *
 from openebs2.settings import EXTERNAL_MESSAGE_USER_ID
-from utils.time import datetime_32h  # TODO: from openebs.views_utils or this one?
+from utils.time import datetime_32h
 
 log = logging.getLogger('openebs.views')
 
