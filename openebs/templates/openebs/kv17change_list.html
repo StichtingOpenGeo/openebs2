@@ -35,9 +35,9 @@
 </div>
 
   <h2>Verlopen Aanpassingen</h2>
-  <table class="table table-bordered table-condensed table-striped">
-  <tr id="highlight">
-        <th class="col-sm-2">{% trans "Ritdatum"%}</th>
+  <table class="table table-bordered table-condensed">
+  <tr>
+        <th class="col-sm-2">{% trans "Ritdatum" %}</th>
         <th class="col-sm-2">{% trans "Begintijd" %}</th>
         <th class="col-sm-2">{% trans "Eindtijd" %}</th>
         <th class="col-sm-2">{% trans "Lijn" %}</th>
@@ -67,7 +67,6 @@
                 <span class="glyphicon glyphicon-ban-circle" title="Niet gevolgd"></span>
             {% endif %}
         </td>
-
         {% if msg.journey %}
             <td>{{ msg.journey.journeynumber }} <small>(Vertrek {{msg.journey.departuretime|seconds_time|date:"H:i"}})</small></td>
             <td>

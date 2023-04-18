@@ -1,8 +1,7 @@
 import logging
-from braces.views import LoginRequiredMixin
 from datetime import timedelta, datetime
 from django.urls import reverse_lazy
-from django.db.models import Q, F
+from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.views.generic import ListView, CreateView, DeleteView, DetailView
 from kv1.models import Kv1Journey, Kv1Line
@@ -11,7 +10,7 @@ from openebs.models import Kv17Change
 from openebs.views_push import Kv17PushMixin
 from openebs.views_utils import FilterDataownerMixin
 from utils.time import get_operator_date, get_operator_date_aware
-from utils.views import AccessMixin, ExternalMessagePushMixin, JSONListResponseMixin
+from utils.views import AccessMixin, JSONListResponseMixin, AccessJsonMixin
 from django.utils.dateparse import parse_date
 from django.utils.timezone import now
 
@@ -68,9 +67,19 @@ class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
     def get_context_data(self, **kwargs):
         data = super(ChangeCreateView, self).get_context_data(**kwargs)
         data['operator_date'] = get_operator_date()
+        data['first_lines'] = self.get_first_lines()
         if 'journey' in self.request.GET:
             self.add_journeys_from_request(data)
         return data
+
+    def get_first_lines(self):
+        first_lines = list(Kv1Line.objects.filter(dataownercode=self.request.user.userprofile.company)
+                                          .exclude(headsign='')
+                                          .order_by('headsign')
+                                          .values('pk', 'dataownercode', 'headsign', 'lineplanningnumber',
+                                                  'publiclinenumber')[:10]
+                           )
+        return first_lines
 
     def add_journeys_from_request(self, data):
         operating_day = parse_date(
@@ -95,7 +104,6 @@ class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
 
     def form_invalid(self, form):
         log.error("Form for KV17 change invalid!")
-        print(form.errors)
         return super(ChangeCreateView, self).form_invalid(form)
 
     def form_valid(self, form):
@@ -159,8 +167,8 @@ class ChangeUpdateView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteV
         else:
             log.error("Failed to send redo request to subscribers: %s" % obj)
             # We failed to push, recover our redo operation by restoring previous state
-            obj.is_recovered = self.get_object.is_recovered
-            obj.recovered = self.get_object.recovered
+            obj.is_recovered = self.object.is_recovered
+            obj.recovered = self.object.recovered
             obj.save()  # Note, this won't work locally!
         return HttpResponseRedirect(self.get_success_url())
 
@@ -194,23 +202,22 @@ TODO : This is a big red button view allowing you to cancel all active trips if 
 #         return ret
 
 
-class ActiveJourneysAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+class ActiveJourneysAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_change'
     model = Kv17Change
     render_object = 'object'
 
     def get_object(self):
         operating_day = parse_date(self.request.GET['operatingday']) if 'operatingday' in \
                                                                         self.request.GET else get_operator_date()
-
         # Note, can't set this on the view, because it triggers the queryset cache
-        queryset = self.model.objects.filter(operatingday=operating_day,
-                                             is_recovered=False,
-                                             is_cancel=True,
+        queryset = self.model.objects.filter(operatingday=operating_day, is_recovered=False, is_cancel=True,
                                              dataownercode=self.request.user.userprofile.company).distinct()
         return list(queryset.values('journey_id', 'dataownercode', 'is_recovered'))
 
 
-class ActiveLinesAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+class ActiveLinesAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_change'
     model = Kv17Change
     render_object = 'object'
 
@@ -219,22 +226,22 @@ class ActiveLinesAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView)
 
         # Note, can't set this on the view, because it triggers the queryset cache
         queryset = self.model.objects.filter(Q(is_alljourneysofline=True) | Q(is_alllines=True),
-                                             operatingday=operating_day,
-                                             is_recovered=False,
-                                             is_cancel=True,
+                                             operatingday=operating_day, is_recovered=False, is_cancel=True,
                                              dataownercode=self.request.user.userprofile.company).distinct()
         # TODO: is it possible to apply a function on a value of a queryset?
         start_of_day = datetime.combine(operating_day, datetime.min.time()).timestamp()
         return list({'id': x['line'],
                      'begintime': int(x['begintime'].timestamp() - start_of_day) if x['begintime'] is not None else None,
                      'endtime': int(x['endtime'].timestamp() - start_of_day) if x['endtime'] is not None else None,
-                     'dataownercode': x['dataownercode'],
-                     'alljourneysofline': x['is_alljourneysofline'],
-                     'all_lines': x['is_alllines']} for x in
-                    queryset.values('line', 'begintime', 'endtime', 'dataownercode', 'is_alljourneysofline', 'is_alllines'))
+                     'dataownercode': x['dataownercode'], 'alljourneysofline': x['is_alljourneysofline'],
+                     'all_lines': x['is_alllines']}
+                    for x in queryset.values('line', 'begintime', 'endtime', 'dataownercode', 'is_alljourneysofline',
+                    'is_alllines'))
 
 
-class NotMonitoredJourneyAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+
+class NotMonitoredJourneyAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_change'
     model = Kv17Change
     render_object = 'object'
 
@@ -254,7 +261,8 @@ class NotMonitoredJourneyAjaxView(LoginRequiredMixin, JSONListResponseMixin, Det
         return list(queryset.values('journey_id', 'dataownercode', 'monitoring_error'))
 
 
-class NotMonitoredLinesAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+class NotMonitoredLinesAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_change'
     model = Kv17Change
     render_object = 'object'
 

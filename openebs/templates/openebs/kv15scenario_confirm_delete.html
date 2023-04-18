@@ -6,7 +6,7 @@
 {% block content %}
 
   <h1>{% trans "Scenario verwijderen" %}</h1>
-  <p>{% trans "Weet je zeker dat je het scenario <em>&ldquo;"%} {{ object.description|default:"" }} {% trans "&rdquo;</em> en alle " %} {{ object.kv15scenariomessage_set.count }} {% trans "onderliggende berichten wilt verwijderen?" %}</p>
+  <p>{% trans "Weet je zeker dat je het scenario <em>&ldquo;"%} {{ object.name|default:"" }} {% trans "&rdquo;</em> en alle " %} {{ object.messages.count }} {% trans "onderliggende bericht(en) wilt verwijderen?" %}</p>
   <div>
       <form method="post" action="{% url 'scenario_delete' object.pk %}">
           {% csrf_token %}

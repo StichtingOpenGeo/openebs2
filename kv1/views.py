@@ -1,4 +1,5 @@
 import json
+import urllib
 
 from braces.views import LoginRequiredMixin, StaffuserRequiredMixin
 from datetime import timedelta, datetime
@@ -11,7 +12,7 @@ from djgeojson.views import GeoJSONLayerView
 from utils.calender import CountCalendar
 from utils.time import get_operator_date
 from utils.views import JSONListResponseMixin
-from kv1.models import Kv1Line, Kv1Stop, Kv1JourneyDate
+from kv1.models import Kv1Line, Kv1Stop, Kv1JourneyDate, ImportStatus
 from dateutil.relativedelta import relativedelta
 from django.utils.dateparse import parse_date
 
@@ -27,8 +28,8 @@ class LineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
             .order_by('lineplanningnumber') \
             .values('pk', 'dataownercode', 'headsign', 'lineplanningnumber', 'publiclinenumber')
         needle = self.kwargs.get('search', '') or ''
-        qry = qry.filter(Q(headsign__icontains=needle) | Q(publiclinenumber__startswith=needle) |
-                         Q(lineplanningnumber__startswith=needle))
+        qry = qry.filter(Q(headsign__icontains=needle) | Q(publiclinenumber__istartswith=needle) |
+                         Q(lineplanningnumber__istartswith=needle))
         return qry
 
 
@@ -54,18 +55,18 @@ class LineTripView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
         """
         Forces our output as json and do some queries
         """
-        operating_day = get_operator_date()
         if 'operatingday' in self.request.GET:
             operating_day = parse_date(self.request.GET['operatingday'])
 
-        obj = get_object_or_404(self.model, pk=self.kwargs.get('pk', None))
-        if obj:
-            # Note, the list() is required to serialize correctly
-            # We're filtering on todays trips #
-            journeys = obj.journeys.filter(dates__date=operating_day).order_by('departuretime') \
-                .values('id', 'journeynumber', 'direction', 'departuretime')
-            return {'trips_1': list(journeys.filter(direction=1)), 'trips_2': list(journeys.filter(direction=2))}
-        return obj
+            obj = get_object_or_404(self.model, pk=self.kwargs.get('pk', None))
+            if obj:
+                # Note, the list() is required to serialize correctly
+                # We're filtering on todays trips #
+                journeys = obj.journeys.filter(dates__date=operating_day).order_by('departuretime') \
+                    .values('id', 'journeynumber', 'direction', 'departuretime')
+                return {'trips_1': list(journeys.filter(direction=1)), 'trips_2': list(journeys.filter(direction=2))}
+
+        return {'trips_1': [], 'trips_2': []}
 
 
 # Map views
@@ -154,10 +155,93 @@ class DataImportView(LoginRequiredMixin, StaffuserRequiredMixin, ListView):
         context['calendar'] = mark_safe(
             cal.formatmonth(date_now.year, date_now.month, ) + '<br />' + cal.formatmonth(date_next.year,
                                                                                           date_next.month, ))
+        context['import'] = ImportStatus.objects.all().order_by('-importDate')
         return context
 
     def get_queryset(self):
         qry = super(DataImportView, self).get_queryset()
         qry = qry.filter(journey__dataownercode=self.request.user.userprofile.company)
         qry = qry.values('date').annotate(dcount=Count('date')).order_by('date')
+        return qry
+
+
+class StopLineFilterView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+    model = Kv1Line
+    render_object = 'object'
+
+    def get_object(self, **kwargs):
+        qry = self.get_queryset()
+        return qry
+
+    def get_queryset(self):
+        lijnen = self.request.GET.get('lijnen', None)[0:-1].split(',')
+        stops = self.request.GET.get('stops', None)[0:-1].split(',')
+        if lijnen is None or stops is None:
+            return
+        dataownercode = stops[0].split('_')[0]
+        line_stops = {}
+        used_stops = []
+        if 'None' in lijnen[0]:
+            line_stops[lijnen[0]] = stops
+        else:
+            for line in lijnen:
+                if line == 'Onbekend':
+                    continue
+                line_stops[line] = []
+                query = Kv1Line.objects.filter(dataownercode=dataownercode, lineplanningnumber=line)
+                stop_map = query.values('stop_map')[0]['stop_map']
+                for stop in stops:
+                    if stop in stop_map:
+                        line_stops[line].append(stop)
+                        if stop not in used_stops:
+                            used_stops.append(stop)
+            # check if all stops are 'used'
+            extra_stops = []
+            for stop in stops:
+                if stop not in used_stops:
+                    extra_stops.append(stop)
+            if len(extra_stops) > 0:
+                line_stops['Onbekend'] = extra_stops
+        return line_stops
+
+
+class StopSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
+    model = Kv1Stop
+    render_object = 'object_list'
+
+    def get_queryset(self):
+        qry = super(StopSearchView, self).get_queryset()
+        qry = qry.filter(dataownercode=self.request.user.userprofile.company) \
+            .order_by('userstopcode') \
+            .values('pk', 'dataownercode', 'name', 'userstopcode')
+        needle = self.request.GET.get('search', '') or ''
+        if needle:
+            needle = urllib.parse.unquote(needle)
+        qry = qry.filter(Q(name__icontains=needle) | Q(userstopcode__startswith=needle))
+        return qry
+
+
+class StopLineSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
+    model = Kv1Line
+    render_object = 'object_list'
+
+    def get_queryset(self):
+        qry = super(StopLineSearchView, self).get_queryset()
+        stop = self.kwargs.get('pk', None)
+        if stop is None:
+            return
+        dataownercode = stop.split('_')[0]
+        qry = qry.filter(dataownercode=dataownercode)
+        obj = []
+        for line in qry:
+            data = json.loads(line.stop_map)
+            for x in data:
+                for item in x.values():
+                    if item is not None:
+                        if item['id'] == stop:
+                            obj.append(line.pk)
+        qry = qry.filter(pk__in=obj) \
+            .order_by('lineplanningnumber') \
+            .values('pk', 'dataownercode', 'headsign', 'lineplanningnumber', 'publiclinenumber')
+
         return qry

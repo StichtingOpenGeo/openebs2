@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load static i18n %}
 
 {% block title %}Scenario's{% endblock %}
 
@@ -33,6 +33,9 @@
                     <span class="glyphicon glyphicon-trash"></span> {% trans "Verwijder" %}
                 </button>
             </form>
+            <a href="/scenario/{{ scenario.pk }}/dupliceer" class="btn btn-link pull-right">
+                <span class="glyphicon glyphicon-duplicate"></span> {% trans "Dupliceer" %}
+            </a>
             <a href="/scenario/{{ scenario.pk }}/bewerk" class="btn btn-link pull-right">
                 <span class="glyphicon glyphicon-edit"></span> {% trans "Bewerk" %}&nbsp;
             </a>
