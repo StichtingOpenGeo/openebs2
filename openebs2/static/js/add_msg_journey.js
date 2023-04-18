@@ -251,7 +251,7 @@ function renderTripCell(trip) {
         out += '<span class="glyphicon glyphicon-ban-circle pull-right" title="Rit wordt niet gevolgd"></span>'
     }
     out += "</td>";
-    return out
+    return out;
 }
 
 function getActiveJourneys() {
