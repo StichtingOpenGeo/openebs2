@@ -217,7 +217,7 @@ class StopSearchView(LoginRequiredMixin, JSONListResponseMixin, ListView):
         needle = self.request.GET.get('search', '') or ''
         if needle:
             needle = urllib.parse.unquote(needle)
-        qry = qry.filter(Q(name__icontains=needle) | Q(userstopcode__startswith=needle))
+        qry = qry.filter(Q(name__icontains=needle) | Q(userstopcode__startswith=needle))[:11]
         return qry
 
 

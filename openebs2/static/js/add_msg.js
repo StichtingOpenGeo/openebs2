@@ -965,7 +965,7 @@ function writeStopList(data, status, item) {
                 out += "<strong>"+stop.userstopcode+"</strong>";
                 row = '<tr class="search_stop" id="sq'+stop.dataownercode+'_'+stop.userstopcode+'"><td>'+out+'</td>';
                 row += '<td>'+stop.name+'</td></tr>';
-                $(row).hide().appendTo("#stop_rows").fadeIn(200);
+                $(row).hide().appendTo("#stop_rows");
             }
         });
         $(document).ready(function() {
