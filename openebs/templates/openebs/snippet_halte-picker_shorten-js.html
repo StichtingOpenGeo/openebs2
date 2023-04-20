@@ -13,7 +13,7 @@ $("#trips").selectable({
   selected: selectTrip,
 });
 
-$( "#line_search" ).on('keyup', changeSearch);
+$( "#line_search, #haltelijn_search" ).on('keyup', changeSearch);
 $( "body" ).on('click', ".line", showTrips);
 
 $('#rit-list').on('click', '.trip-remove', removeTripFromX);
@@ -21,10 +21,14 @@ $('#lijn-list').on('click', '.line-remove', removeLineFromX);
 $('#id_operatingday').change(changeOperatingDayTrips);
 $('#id_begintime_part').change(changeOfRange);
 $('#id_endtime_part').change(changeOfRange);
-
+$( "body" ).on('click', ".search_stop", getLinesOfStop);
 $( "body" ).on('click', ".stop-remove", removeStopFromX);
 $( "body" ).on('click', ".stop.success", lineRemoveStop);
 
 $( "#stops" ).on('click', ".stop-img.stop-both", selectStopFromBall);
 $( "#stops" ).on('click', ".stop-img.stop-left", selectStopFromBall);
 $( "#stops" ).on('click', ".stop-img.stop-right", selectStopFromBall);
+
+$('body').on('click', '#line_button, #stopline_button', function() {
+    resetAll();
+});

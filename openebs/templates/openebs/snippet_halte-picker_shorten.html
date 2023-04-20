@@ -1,23 +1,79 @@
 {% load i18n %}
 <div class="col-lg-4">
     <h2>Lijn</h2>
-    <div class="input-group">
-        <span class="input-group-addon"><span class="glyphicon glyphicon-search"></span></span>
-        <input type="text" class="form-control" id="line_search" placeholder="{% trans 'Lijnnummer of eindbestemming' %}">
-    </div><br />
-    <table class="table table-condensed table-hover">
-        <thead>
-            <tr>
-                <th>{% trans "Lijn" %}</th>
-                <th>{% trans "Eindbestemming" %}</th>
-            </tr>
-        </thead>
-        <tbody id="rows">
-            <tr>
-                <td colspan="2" class="text-center"><em>{% trans "Typ een eindbestemming of lijnnummer om een lijn te zoeken" %}</em></td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="panel-group" id="my-accordion">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a class="accordion-toggle" id="line_button" data-toggle="collapse" data-parent="#my-accordion"
+                       href="#searchLine">Zoek op lijn</a></h4>
+            </div>
+            <div id="searchLine" class="panel-collapse collapse in" aria-expanded="false">
+                <br/>
+                <div class="input-group">
+                    <span class="input-group-addon"><span class="glyphicon glyphicon-search"></span></span>
+                    <input type="text" class="form-control" id="line_search" placeholder="{% trans 'Lijnnummer of eindbestemming' %}">
+                </div><br />
+                <table class="table table-condensed table-hover">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Lijn" %}</th>
+                            <th>{% trans "Eindbestemming" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rows">
+                        <tr>
+                            <td colspan="2" class="help text-center"><em>{% trans "Typ een eindbestemming of lijnnummer om een lijn te zoeken" %}</em></td>
+                            <td colspan="2" class="geen_lijn text-center hidden"><em>{% trans "Er werd geen lijn gevonden" %}</em></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a class="accordion-toggle" id="stopline_button" data-toggle="collapse" data-parent="#my-accordion"
+                       href="#searchStopLine">Zoek lijn(en) bij halte</a></h4>
+            </div>
+            <div id="searchStopLine" class="panel-collapse collapse" aria-expanded="false">
+                <br/>
+                <div class="input-group">
+                    <span class="input-group-addon"><span class="glyphicon glyphicon-search"></span></span>
+                    <input type="text" class="form-control" id="haltelijn_search" placeholder="{% trans 'Haltenummer of -naam' %}">
+                </div><br />
+                <table class="table table-condensed table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col-sm-2">{% trans "Halte" %}</th>
+                            <th class="col-sm-9">{% trans "Haltenaam" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stop_rows">
+                        <tr>
+                            <td colspan="3" class="help text-center"><em>{% trans "Typ een haltenummer of -naam om een halte te zoeken" %}</em></td>
+                            <td colspan="3" class="specificeer hidden"><em></em></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <br />
+                <table class="table table-condensed table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col-sm-2">{% trans "Lijn" %}</th>
+                            <th class="col-sm-9">{% trans "Eindbestemming" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rows2">
+                        <tr>
+                            <td colspan="2" class="help text-center"><em>{% trans "Selecteer een halte om een lijn te zoeken" %}</em></td>
+                            <td colspan="2" class="geen_lijn text-center hidden"><em>{% trans "Er werd geen lijn bij deze halte gevonden" %}</em></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
     <div class="btn-group" id="shorten_buttons">
         <button type="button" onclick="showLines()" id="go_back" class="btn btn-secundary">{% trans "Toon vorige" %}</button>
         {% if perms.openebs.cancel_lines %}<button type="button" onclick="selectAllTrips()" id="all_journeys" class="btn btn-warning btn-right">{% trans "Alle ritten" %}</button>{% endif %}
@@ -35,6 +91,7 @@
             </thead>
             <tbody id="tripoverzicht">
                 <tr class="help text-center"><td colspan="2"><em>Klik een lijn om ritten hier te zien.</em></td></tr>
+                <tr class="geen_ritten text-center hidden"><td colspan="2"><em>Geen ritten in database.</em></td></tr>
             </tbody>
         </table>
     </div>

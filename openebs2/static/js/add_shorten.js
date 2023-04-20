@@ -46,8 +46,8 @@ function getActiveLines() {
     } else {
         cancelledLines = [];
         $('#trips thead').hide();
-        $('#trips tbody').addClass('empty_database');
-        $('#trips tbody').text("Er staan geen ritten in de database.");
+        $('#trips .help').addClass('hidden');
+        $('#trips .geen_ritten').removeClass('hidden');
     }
 }
 
@@ -107,8 +107,9 @@ function writeTrips(data, status) {
 
     var maxLen = Math.max(data.object.trips_1.length, data.object.trips_2.length);
     if (maxLen > 0) {
-        $('#trips tbody').fadeOut(200).empty();
-        var tripRows = null;
+        $('#trips .tripRow').fadeOut(200).remove();
+        $('#trips .help').addClass('hidden');
+        var tripRows = "";
         for (i = 0; i <= maxLen; i = i + 1) {
             a = null;
             b = null;
@@ -116,7 +117,9 @@ function writeTrips(data, status) {
                 a = data.object.trips_1[i];
             if (i in data.object.trips_2)
                 b = data.object.trips_2[i];
-            tripRows += renderTrip(a, b);
+            if (a || b) {
+                tripRows += renderTrip(a, b);
+            }
         }
         $('#trips tbody').append(tripRows);
         $('#trips thead').fadeIn(200);
@@ -124,13 +127,13 @@ function writeTrips(data, status) {
         $("#all_journeys").removeAttr('disabled');
     } else {
         $('#trips thead').hide();
-        $('#trips tbody').text("Geen ritten in database.");
+        $('#trips .geen_ritten').fadeIn(200);
         $('#all_journeys').attr('disabled','disabled');
     }
 }
 
 function renderTrip(trip_a, trip_b) {
-    out = '<tr>';
+    out = '<tr class="tripRow">';
     out += renderTripCell(trip_a);
     out += renderTripCell(trip_b);
     out += '</tr>';
@@ -183,15 +186,34 @@ function renderTripCell(trip) {
 
 function changeSearch(event) {
     if ($("#line_search").val().length > 0) {
+        resetAll(false);
         $.ajax('/line/'+$("#line_search").val(), {
             success : writeList
         })
         $("#tripoverzicht tr td").removeClass('success');
+    } else if ($("#haltelijn_search").val().length > 0) {
+        resetAll(false);
+        var term = encodeURIComponent($("#haltelijn_search").val());
+        $.ajax({
+            method: 'GET',
+            url: '/stop',
+            data: {
+                search: term,
+            },
+            success : writeStopList
+        });
+    } else {
+        resetAll(true);
     }
 }
 
-function writeList(data, status) {
+function writeList(data, status, item) {
     var validIds = [];
+    if (data.object_list.length == 0) {
+        $('.geen_lijn').removeClass('hidden');
+    } else {
+        $('.geen_lijn').addClass('hidden');
+    }
     /* Add them all, as neccesary */
     $.each(data.object_list, function (i, line) {
         validIds.push('l'+line.pk);
@@ -210,36 +232,67 @@ function writeList(data, status) {
                     row = '<tr class="line" id="l'+line.pk+'"><td>'+out+'</td>';
                 }
                 row += '<td>'+line.headsign+'</td></tr>';
-                $(row).hide().appendTo("#rows").fadeIn(999);
+                if (item == 1){
+                    $(row).hide().appendTo('#rows2').fadeIn(200);
+
+                } else {
+                    $(row).hide().appendTo('#rows').fadeIn(200);
+                }
             }
         }
     });
 
     /* Cleanup */
-    $("#rows tr").each(function(index) {
-        if ($.inArray($(this).attr('id'), validIds) == -1) {
-            $(this).fadeOut(999).remove();
+    if (item == 1){
+        $('#rows2 .help').addClass('hidden');
+        $("#rows2 .line").each(function(index) {
+            if ($.inArray($(this).attr('id'), validIds) == -1) {
+                $(this).fadeOut(200).remove();
+            }
+        });
+        if ($('#rows2 .line').length === 0) {
+            $('.geen_lijn').removeClass('hidden');
         }
-    });
+    } else {
+        $("#rows tr.line").each(function(index) {
+            if ($.inArray($(this).attr('id'), validIds) == -1) {
+                $(this).fadeOut(999).remove();
+            }
+        });
+        if ($("#rows tr.line").length > 0) {
+            $('#rows .help').addClass('hidden');
+            $("#rows .geen_lijn").addClass("hidden");
+        } else {
+            if ($("#line_search")[0].value.length > 0) {
+                $('#rows .help').addClass('hidden');
+                $("#rows .geen_lijn").removeClass("hidden");
+            } else if ($("#line_search")[0].value.length == 0) {
+                $("#rows .geen_lijn").addClass("hidden");
+                $('#rows .help').removeClass('hidden');
+            }
+        }
+    }
 }
 
 function showTrips(event) {
     currentTrips = [];
     currentTripLabels = [];
     $("#rows tr.success").removeClass('success');
+    $("#rows2 tr.success").removeClass('success');
     $(".suc-icon").remove();
 
     $(this).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
     activeLine = $(this).attr('id').substring(1);
 
     showTripsOnChange();
-
     $('#line').val(activeLine);
     $(this).addClass('success');
     currentLine = $('#rows tr.success').find("small").text();
 
     // Show only selected line + button 'toon vorige'
-    $("#rows tr:not(.success)").fadeOut(100);
+    $("#rows tr.line:not(.success)").fadeOut(100);
+    $("#rows2 tr.line:not(.success)").fadeOut(100);
+
     $("#shorten_buttons").css("display","block");
     $("#rittenoverzicht").css("display","block");
 
@@ -252,6 +305,10 @@ function showTrips(event) {
             });
             */
         }
+    }
+    if ($("tr.line").length == 0) {
+        $("#rows .help").addClass("hidden");
+        $("#rows .geen_lijn").removeClass("hidden");
     }
 }
 
@@ -349,7 +406,9 @@ function writeLine(data, status) {
     var out = "";
     currentLine = $('#rows tr.success').find("small").text();
     $.each(data.object.stop_map, function (i, stop) {
-        out += renderRow(stop);
+        if (stop) {
+            out += renderRow(stop);
+        }
     });
     $('#body_stops').append(out);
 }
@@ -769,23 +828,47 @@ function emptyLineList() {
 
 /* Extra Functions */
 function showLines() {
+    $("#rows tr.success").removeClass('success');
+    $("#rows2 tr.success").removeClass('success');
+    $("#rows2, #rows .suc-icon").remove();
     $("#rows tr:not(.success)").show();
+    $("#rows2 tr:not(.success)").show();
     $("#shorten_buttons").css("display","none");
 }
 
-function resetAll() {
+function resetAll(all) {
     $("#shorten_buttons").css("display","none");
-    $("#tripoverzicht tr").remove();
+
+    $("#tripoverzicht .tripRow").remove();
+    $("#tripoverzicht .help").removeClass('hidden');
+    $("#tripoverzicht .geen_ritten").addClass('hidden');
+
     $("#body_stops .stopRow").remove();
     $("#body_stops .help").show(200);
+
+    $("#rows .geen_lijn").addClass("hidden");
+    $("#rows .help").removeClass("hidden");
+    $("#rows .line").remove();
+
+    $("#stop_rows .search_stop").remove();
+    $("#stop_rows .specificeer").addClass("hidden");
+    $("#stop_rows .help").removeClass("hidden");
+
     $('#div_id_begintime_part').addClass("hidden");
     $('#div_id_endtime_part').addClass('hidden');
     clearAllTrips(1);
     clearAllStops();
-    $("#line_search").val("");
-    $("#rows").empty();
+    $("#rows2 .geen_lijn").addClass("hidden");
+    $("#rows2 .help").removeClass("hidden");
+    $("#rows2 .line").remove();
+
+
     stopSelectionOfLine = {};
     writeOutputAsString(stopSelectionOfLine);
+    if (all) {
+        $("#line_search, #haltelijn_search").val("");
+
+    }
 }
 
 function changeOfRange() {
@@ -893,6 +976,68 @@ function colorSelectedRange() {
                 });
     }
 }
+
+function writeStopList(data, status, item) {
+    if ($("#haltelijn_search").val().length > 0 && data.object_list.length == 0) {
+        $('#stop_rows tr.search_stop').remove();
+        $('#stop_rows tr td.help').addClass('hidden');
+        $('.specificeer em').text("Er werden geen haltes gevonden. Kies een andere zoekterm aub");
+        $('#stop_rows .specificeer').removeClass('hidden');
+        return
+    }
+    if (data.object_list.length > 0 ) {
+        $('#stop_rows tr td.help').addClass('hidden');
+        $('#stop_rows tr.search_stop').remove();
+    }
+    /* Add them all, as neccesary */
+    validIds = []
+    $.each(data.object_list, function (i, stop) {
+        validIds.push('sq'+stop.dataownercode+'_'+stop.userstopcode);
+        if (!$('#sq'+stop.dataownercode+'_'+stop.userstopcode).length) {
+            var out = '';
+            var row = '';
+            out += "<strong>"+stop.userstopcode+"</strong>";
+            row = '<tr class="search_stop" id="sq'+stop.dataownercode+'_'+stop.userstopcode+'"><td>'+out+'</td>';
+            row += '<td>'+stop.name+'</td></tr>';
+            $(row).hide().appendTo("#stop_rows");
+        }
+    });
+    $(document).ready(function() {
+        if ($('#stop_rows tr').length > 11) {
+            $('#stop_rows tr:lt(10)').fadeIn(200);
+            $('#stop_rows .specificeer').removeClass('hidden');
+            $('.specificeer em').text("Er waren meer dan 10 resulaten. Specificeer uw opdracht aub");
+        } else {
+            $('#stop_rows .specificeer').addClass('hidden');
+            $('#stop_rows tr').fadeIn(200);
+        }
+    });
+    /* Cleanup */
+    $("#stop_rows tr").each(function(index) {
+        if (index == 0 && $(this).attr('id') == undefined) return
+
+        if ($.inArray($(this).attr('id'), validIds) == -1) {
+            $(this).fadeOut(200).remove()
+        }
+    });
+}
+
+
+function getLinesOfStop(event) {
+    $(".lines").remove();
+    $("#rows2 .line, .suc-icon").remove();
+    $("#haltes-original .stopRow").remove();
+    $("#stop_rows tr.success").removeClass('success');
+    $(event.currentTarget).children('td').eq(1).append('<span class="suc-icon pull-right glyphicon glyphicon-arrow-right"></span>');
+    $.ajax('/stop/'+$(event.currentTarget).attr('id').substring(2)+'/lines', {
+        success : function(data, status, item){
+            writeList(data, status, 1);
+        }
+    });
+    $(event.currentTarget).addClass('success');
+    $('#reset').removeClass('hidden');
+}
+
 
 /* TIME FUNCTIONS */
 function convertSecondsToTime(seconds) {
