@@ -299,7 +299,6 @@ function doSelectStop(obj) {
             if (i == -1) {
                 lineSelection.push(currentLine);
             }
-            var me = obj.id;
             if (obj.id !== undefined) {
                 if (obj.id.startsWith('sl')) {
                     var headsign = obj.textContent;
@@ -326,7 +325,13 @@ function doSelectStop(obj) {
             selectedStops.push([headsign, currentLine, id]);
             return true;
         } else {
-            removeStop(id, currentLine);
+            var current_selection = [];
+            $.each($('.ui-selecting'), function(i, stop) {
+                current_selection.push(stop.id.slice(1, -1));
+            });
+            if ($.inArray(id, current_selection) !== -1) {
+                removeStop(id, currentLine);
+            }
         }
     } else {
         if (!obj.id.startsWith('sl')) {
