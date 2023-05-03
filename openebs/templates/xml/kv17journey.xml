@@ -61,16 +61,17 @@
     <MUTATIONMESSAGE>
         <userstopcode>{{ mutation.stop.userstopcode }}</userstopcode>
         <passagesequencenumber>{{ mutation.passagesequencenumber }}</passagesequencenumber>
-    {% if mutation.reasontype %}
-        <reasontype>{{mutation.reasontype }}</reasontype>
-        <subreasontype>{{ mutation.subreasontype }}</subreasontype>
-        <reasoncontent>{{ mutation.reasoncontent }}</reasoncontent>
-    {% endif %}
-    {% if mutation.advicetype %}
-        <advicetype>{{ mutation.advicetype }}</advicetype>
-        <subadvicetype>{{ mutation.subadvicetype }}</subadvicetype>
-        <advicecontent>{{ mutation.advicecontent }}</advicecontent>
-    {% endif %}
+        {% if mutation.reasontype %}
+            <reasontype>{{mutation.reasontype }}</reasontype>
+            <subreasontype>{{ mutation.subreasontype }}</subreasontype>
+            <reasoncontent>{{ mutation.reasoncontent }}</reasoncontent>
+        {% endif %}
+        {% if mutation.advicetype %}
+            <advicetype>{{ mutation.advicetype }}</advicetype>
+            <subadvicetype>{{ mutation.subadvicetype }}</subadvicetype>
+            <advicecontent>{{ mutation.advicecontent }}</advicecontent>
+        {% endif %}
+        <showcancelledtrip>{{ object.showcancelledtrip }}</showcancelledtrip>
     </MUTATIONMESSAGE>
 {% endfor %}
 </KV17MUTATEJOURNEYSTOP>

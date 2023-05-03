@@ -1,19 +1,17 @@
 import logging
-from braces.views import LoginRequiredMixin
-from datetime import date, timedelta, datetime
+
 from django.urls import reverse_lazy
 from django.http import HttpResponseRedirect
+from django.utils.dateparse import parse_date
 from django.views.generic import CreateView, DetailView
-from kv1.models import Kv1Journey, Kv1Stop
+
+from kv1.models import Kv1Journey
 from openebs.form_kv17 import Kv17ShortenForm
 from openebs.models import Kv17Shorten, Kv17Change
 from openebs.views_push import Kv17PushMixin
 from openebs.views_utils import FilterDataownerMixin
-from utils.time import get_operator_date, get_operator_date_aware, seconds_to_hhmm
-from utils.views import AccessMixin, JSONListResponseMixin
-from django.utils.dateparse import parse_date
-from djgeojson.views import GeoJSONLayerView
-from django.contrib.gis.db.models import Extent
+from utils.time import get_operator_date
+from utils.views import AccessMixin, JSONListResponseMixin, AccessJsonMixin
 
 log = logging.getLogger('openebs.views.changes')
 
@@ -63,7 +61,17 @@ class ShortenCreateView(AccessMixin, Kv17PushMixin, CreateView):
         return super(ShortenCreateView, self).form_invalid(form)
 
     def form_valid(self, form):
+
+        """ created SHORTEN already exists """
+        if not form.cleaned_data['journeys']:
+            return HttpResponseRedirect(self.success_url)
+
         form.instance.dataownercode = self.request.user.userprofile.company
+        form.instance.operatingday = self.request.POST['operatingday']
+        form.instance.showcancelledtrip = True if self.request.POST['showcancelledtrip'] == 'on' else False
+        form.instance.is_cancel = False  # is SHORTEN
+        form.instance.recovered_changes = form.cleaned_data['recovered_changes'] if 'recovered_changes' in \
+                                                                                      form.cleaned_data.keys() else []
 
         # TODO this is a bad solution - totally gets rid of any benefit of Django's CBV and Forms
         xml = form.save()
@@ -90,95 +98,17 @@ class ShortenDetailsView(AccessMixin, FilterDataownerMixin, DetailView):
     template_name = 'openebs/kv17shorten_detail.html'
 
 
-class ShortenStopsBoundAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
-    model = Kv1Stop
-    render_object = 'object'
 
-    def get_object(self, **kwargs):
-        qry = self.get_queryset()
-        return {'extent': qry.aggregate(Extent('location')).get('location__extent')}
-
-    def get_queryset(self):
-        qry = super(ShortenStopsBoundAjaxView, self).get_queryset()
-        pk = self.request.GET.get('id', None)
-        qry = qry.filter(stop_shorten__change_id=pk)
-
-        if not (self.request.user.has_perm("openebs.view_all")):
-            qry = qry.filter(dataownercode=self.request.user.userprofile.company)
-
-        return qry
-
-
-class ActiveStopsAjaxViewShorten(LoginRequiredMixin, JSONListResponseMixin, DetailView):
-    model = Kv17Shorten
+class ShortenedJourneysAjaxView(AccessJsonMixin, JSONListResponseMixin, DetailView):
+    permission_required = 'openebs.view_change'
+    model = Kv17Change
     render_object = 'object'
 
     def get_object(self):
         operating_day = parse_date(self.request.GET['operatingday']) if 'operatingday' in \
                                                                         self.request.GET else get_operator_date()
-
         # Note, can't set this on the view, because it triggers the queryset cache
-        queryset = self.model.objects.filter(change__operatingday=operating_day,
-                                             change__is_recovered=False,
-                                             change__dataownercode=self.request.user.userprofile.company).distinct()
-        return list(queryset.values('change__line', 'change__journey', 'change__dataownercode', 'stop__userstopcode',
-                                    'change__is_recovered'))
-
-
-class ActiveShortenForStopView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
-    """
-    Show shorten journeys on an active stop on the map, creates JSON
-    """
-    model = Kv1Stop
-    render_object = 'object'
-
-    def get_queryset(self):
-        tpc = self.kwargs.get('tpc', None)
-        if tpc is None or tpc == '0':
-            return None
-        operatingday = get_operator_date_aware()
-
-        # active list updates at 4 am.
-        if datetime.now().hour < 4:
-            change = -1
-        else:
-            change = 0
-
-        change_day = operatingday + timedelta(days=change)
-
-        qry = self.model.objects.filter(stop_shorten__change__operatingday__gte=change_day,
-                                        stop_shorten__change__is_recovered=False,
-                                        timingpointcode=tpc)
-        if not self.request.user.has_perm("openebs.view_all"):
-            qry = qry.filter(dataownercode=self.request.user.userprofile.company)
-
-        return list({'id': x['id'], 'dataownercode': x['dataownercode'],
-                     'operatingday': x['stop_shorten__change__operatingday'].strftime('%d-%m-%Y'),
-                     'journeynumber': x['stop_shorten__change__journey__journeynumber'],
-                     'departuretime': seconds_to_hhmm(x['stop_shorten__change__journey__departuretime'])}
-                    for x in qry.values('id', 'dataownercode', 'stop_shorten__change_id',
-                                        'stop_shorten__change__operatingday',
-                                        'stop_shorten__change__journey__journeynumber',
-                                        'stop_shorten__change__journey__departuretime')
-                    .order_by('stop_shorten__change__operatingday', 'stop_shorten__change__journey__departuretime'))
-
-    def get_object(self):
-        return list(self.get_queryset())
-
-
-class ActiveShortenStopListView(LoginRequiredMixin, GeoJSONLayerView):
-    """
-    Show stops with active messages on the map, creates GeoJSON
-    """
-    model = Kv1Stop
-    geometry_field = 'location'
-    properties = ['id', 'name', 'userstopcode', 'dataownercode', 'timingpointcode']
-
-    def get_queryset(self):
-        today = date.today()
-        qry = self.model.objects.filter(stop_shorten__change__operatingday__gte=today,
-                                        stop_shorten__change__is_recovered=False)
-
-        if not self.request.user.has_perm("openebs.view_all"):
-            qry = qry.filter(dataownercode=self.request.user.userprofile.company)
-        return qry
+        queryset = self.model.objects.filter(operatingday=operating_day, is_recovered=False,
+                                             shorten_details__isnull=False,
+                                             dataownercode=self.request.user.userprofile.company).distinct()
+        return list(queryset.values('journey_id', 'dataownercode', 'is_recovered', 'shorten_details'))

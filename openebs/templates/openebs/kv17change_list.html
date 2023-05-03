@@ -69,10 +69,10 @@
         </td>
         {% if msg.journey %}
             <td style="vertical-align:middle;">{{ msg.journey.journeynumber }} <small>(Vertrek {{msg.journey.departuretime|seconds_time|date:"H:i"}})</small></td>
-            <td align="center" id="halte-count">
+            <td style="vertical-align:middle; align:center;" id="halte-count">
                 {% if msg.shorten_details.all %}
                 <a class="shorten_halte-count btn btn-link" id="shorten_halte-count" href="{% url 'shorten_view' msg.id %}"
-                       data-title="{% trans 'Haltes bij inkorting' %}" data-html="true" data-content="{% include 'openebs/snippet_halte-list_shorten.html' %}">
+                       data-title="{% trans 'Vervallen haltes bij inkorting' %}" data-html="true" data-content="{% include 'openebs/snippet_halte-list_shorten.html' %}">
                         {{ msg.shorten_details.all | length }}</a>
                 {% endif %}
             </td>
@@ -96,7 +96,7 @@
             <td align="center" id="halte-count">
                 {% if msg.shorten_details.all %}
                 <a class="shorten_halte-count btn btn-link" id="shorten_halte-count" href="{% url 'shorten_view' msg.id %}"
-                       data-title="{% trans 'Haltes bij inkorting' %}" data-html="true" data-content="{% include 'openebs/snippet_halte-list_shorten.html' %}">
+                       data-title="{% trans 'Vervallen haltes bij inkorting' %}" data-html="true" data-content="{% include 'openebs/snippet_halte-list_shorten.html' %}">
                         {{ msg.shorten_details.all | length }}</a>
                 {% endif %}
             </td>
@@ -120,7 +120,7 @@
             <td align="center" id="halte-count">
                 {% if msg.shorten_details.all %}
                 <a class="shorten_halte-count btn btn-link" id="shorten_halte-count" href="{% url 'shorten_view' msg.id %}"
-                       data-title="{% trans 'Haltes bij inkorting' %}" data-html="true" data-content="{% include 'openebs/snippet_halte-list_shorten.html' %}">
+                       data-title="{% trans 'Vervallen haltes bij inkorting' %}" data-html="true" data-content="{% include 'openebs/snippet_halte-list_shorten.html' %}">
                         {{ msg.shorten_details.all | length }}</a>
                 {% endif %}
             </td>

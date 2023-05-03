@@ -12,8 +12,7 @@ from openebs.views_scenario import ScenarioListView, ScenarioCreateView, Scenari
     ScenarioMessagesForStopView, ScenarioActiveMessagesAjaxView
 from openebs.views_scenario_msg import ScenarioMessageCreateView, ScenarioMessageUpdateView, ScenarioMessageDeleteView, \
     ScenarioMessageDetailsView, ScenarioMessageAjaxView
-from openebs.views_shorten import ShortenCreateView, ShortenDetailsView, ShortenStopsBoundAjaxView, \
-    ActiveStopsAjaxViewShorten, ActiveShortenForStopView, ActiveShortenStopListView
+from openebs.views_shorten import ShortenCreateView, ShortenDetailsView, ShortenedJourneysAjaxView
 
 urlpatterns = [
     # Onze Index
@@ -69,11 +68,7 @@ urlpatterns = [
 
     url(r'^ritinkorting/add', ShortenCreateView.as_view(), name="shorten_add"),
     url(r'^ritinkorting/(?P<pk>\d+)/bekijken', ShortenDetailsView.as_view(), name="shorten_view"),
-    url(r'^ritinkorting/kaart', TemplateRequestView.as_view(template_name='openebs/kv17shorten_map.html'), name="shorten_map"),
-    url(r'^ritinkorting/halte/(?P<tpc>\w+)/ritten.json$', ActiveShortenForStopView.as_view(), name="shorten_stop_json"),
-    url(r'^ritinkorting/active-haltes.geojson$', ActiveShortenStopListView.as_view(), name="shorten_geojson"),
-    url(r'^ritinkorting/halte_bereik.geojson$', ShortenStopsBoundAjaxView.as_view(), name="shorten_bounds_ajax"),
-    url(r'^ritinkorting/haltes', ActiveStopsAjaxViewShorten.as_view(), name="active_stops_ajax"),
+    url(r'^ritinkorting/ritten.json$', ShortenedJourneysAjaxView.as_view(), name="shortened_journeys_ajax"),
 
     url(r'^vervoerder/wijzig', ChangeCompanyView.as_view(), name="company_change"),
     url(r'^vervoerder/filter/halte/nieuw', FilterStopCreateView.as_view(), name="filter_stop_add"),
