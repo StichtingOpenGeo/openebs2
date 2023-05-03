@@ -159,6 +159,7 @@ function writeTrips(data, status) {
     if (maxLen > 0) {
         $('.triprow').fadeOut(100).remove();
         $('#trips tbody .help').addClass('hidden');
+        $('#trips tbody .no_journeys').addClass('hidden');
         tripRows = null;
         for (i = 0; i <= maxLen; i = i + 1) {
             a = null;
@@ -175,6 +176,7 @@ function writeTrips(data, status) {
         $("#all_journeys").removeAttr('disabled');
     } else {
         $('#trips thead').hide();
+        $('.triprow').fadeOut(100).remove();
         $('#trips tbody .no_journeys').removeClass('hidden');
         $('#all_journeys').attr('disabled','disabled');
     }
