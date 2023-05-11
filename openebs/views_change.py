@@ -42,12 +42,22 @@ class ChangeListView(AccessMixin, ListView):
                                                                  'operatingday', 'journey__departuretime')
 
         # Add the no longer active changes
-        context['archive_list'] = self.model.objects.filter(Q(endtime__lt=now()) | Q(is_recovered=True) |
-                                                            (Q(endtime__isnull=True) & Q(operatingday__lt=change_day)),
+        context['archive_list'] = self.model.objects.filter(Q(endtime__lt=now()) | (Q(endtime__isnull=True) &
+                                                            Q(operatingday__lt=change_day)),
+                                                            is_recovered=False,
                                                             dataownercode=self.request.user.userprofile.company,
                                                             created__gt=operatingday-timedelta(days=3))
-        context['archive_list'] = context['archive_list'].order_by('-operatingday', 'line__publiclinenumber',
-                                                                   '-journey__departuretime')
+        context['archive_list'] = context['archive_list'].order_by('-operatingday', '-journey__departuretime',
+                                                                   '-begintime', '-endtime', 'line__publiclinenumber')
+
+        # Add the recovered changes
+        context['recovered_list'] = self.model.objects.filter(Q(endtime__gte=now()) | Q(endtime__isnull=True),
+                                                              operatingday__gte=operatingday,
+                                                              is_recovered=True,
+                                                              dataownercode=self.request.user.userprofile.company)
+        context['recovered_list'] = context['recovered_list'].order_by('-operatingday', '-journey__departuretime',
+                                                                       '-begintime', '-endtime', 'line__publiclinenumber')
+
         return context
 
 

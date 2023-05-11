@@ -38,6 +38,112 @@
       </div>
   {% endif %}
 </div>
+<h2>Herstelde Aanpassingen</h2>
+  <table class="table table-bordered table-condensed">
+  <tr id="highlight">
+        <th class="col-sm-2">{% trans "Ritdatum" %}</th>
+        <th class="col-sm-2">{% trans "Begintijd" %}</th>
+        <th class="col-sm-2">{% trans "Eindtijd" %}</th>
+        <th class="col-sm-2">{% trans "Lijn" %}</th>
+        <th class="col-sm-5">{% trans "Rit" %}</th>
+        <td class="col-sm-1" align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-scissors" title="Rit ingekort"></span></td>
+        <td class="col-sm-1" align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-ban-circle" title="Niet gevolgd"></span></td>
+        <th class="col-sm-3">&nbsp;</th>
+  </tr>
+  {% for msg in recovered_list %}
+    <tr class="{% if msg.is_recovered %}warning{% endif %}">
+        <td style="vertical-align:middle;">{{ msg.operatingday|date:"d-m-Y" }}</td></td>
+        <td style="vertical-align:middle;">{% if msg.begintime %}{{ msg.begintime|time:"H:i" }}{% endif %}</td>
+        <td style="vertical-align:middle;">{% if msg.endtime %}{{ msg.endtime|time:"H:i" }}{% endif %}</td>
+        <td style="vertical-align:middle;">
+            {% if msg.line %}
+                {% if msg.line.lineplanningnumber != msg.line.publiclinenumber %}
+                    {{ msg.line.publiclinenumber }} ({{ msg.line.lineplanningnumber }})
+                {% else %}
+                    {{ msg.line.publiclinenumber }}
+                {% endif %}
+            {% else %}
+                {% trans "Alle lijnen van vervoerder" %}
+            {% endif %}
+        </td>
+        {% if msg.journey %}
+            <td style="vertical-align:middle;">{{ msg.journey.journeynumber }} <small>(Vertrek {{msg.journey.departuretime|seconds_time|date:"H:i"}})</small></td>
+            <td style="vertical-align:middle; align:center;" id="halte-count">
+                {% if msg.shorten_details.all %}
+                <a class="shorten_halte-count btn btn-link" id="shorten_halte-count" href="{% url 'shorten_view' msg.id %}"
+                       data-title="{% trans 'Vervallen haltes bij inkorting' %}" data-html="true" data-content="{% include 'openebs/snippet_halte-list_shorten.html' %}">
+                        {{ msg.shorten_details.all | length }}</a>
+                {% endif %}
+            </td>
+            <td align="center" style="vertical-align:middle;">
+            {% if msg.monitoring_error %}
+                <span class="glyphicon glyphicon-ban-circle" title="Rit niet gevolgd"></span>
+            {% endif %}
+            </td>
+            <td align="center">
+                {% if perms.openebs.add_change %}
+                <form method="post" action="{% url 'change_redo' msg.id %}">
+                    {% csrf_token %}
+                    <button class="btn">
+                        <span class="glyphicon glyphicon-repeat"></span>
+                    </button>
+                </form>
+                {% endif %}
+            </td>
+        {% elif msg.line %}
+            <td style="vertical-align:middle;">{% trans "Alle ritten" %}</td>
+            <td align="center" id="halte-count">
+                {% if msg.shorten_details.all %}
+                <a class="shorten_halte-count btn btn-link" id="shorten_halte-count" href="{% url 'shorten_view' msg.id %}"
+                       data-title="{% trans 'Vervallen haltes bij inkorting' %}" data-html="true" data-content="{% include 'openebs/snippet_halte-list_shorten.html' %}">
+                        {{ msg.shorten_details.all | length }}</a>
+                {% endif %}
+            </td>
+            <td align="center" style="vertical-align:middle;">
+            {% if msg.monitoring_error %}
+                <span class="glyphicon glyphicon-ban-circle" title="Lijn niet gevolgd"></span>
+            {% endif %}
+            </td>
+            <td align="center" style="vertical-align:middle;">
+                {% if perms.openebs.cancel_lines %}
+                    <form method="post" action="{% url 'change_redo' msg.id %}">
+                        {% csrf_token %}
+                        <button class="btn">
+                            <span class="glyphicon glyphicon-repeat"></span>
+                        </button>
+                    </form>
+                {% endif %}
+            </td>
+        {% else %}
+            <td style="vertical-align:middle;">{% trans "Alle ritten van vervoerder" %}</td>
+            <td align="center" id="halte-count">
+                {% if msg.shorten_details.all %}
+                <a class="shorten_halte-count btn btn-link" id="shorten_halte-count" href="{% url 'shorten_view' msg.id %}"
+                       data-title="{% trans 'Vervallen haltes bij inkorting' %}" data-html="true" data-content="{% include 'openebs/snippet_halte-list_shorten.html' %}">
+                        {{ msg.shorten_details.all | length }}</a>
+                {% endif %}
+            </td>
+            <td align="center" style="vertical-align:middle;">
+            {% if msg.monitoring_error %}
+                <span class="glyphicon glyphicon-ban-circle" title="Vervoerder niet gevolgd"></span>
+            {% endif %}
+            </td>
+            <td align="center" style="vertical-align:middle;">
+                {% if perms.openebs.cancel_alllines %}
+                    <form method="post" action="{% url 'change_redo' msg.id %}">
+                        {% csrf_token %}
+                        <button class="btn">
+                            <span class="glyphicon glyphicon-repeat"></span>
+                        </button>
+                    </form>
+                {% endif %}
+            </td>
+        {% endif %}
+    </tr>
+  {% empty %}
+      <tr><td colspan="8" class="text-center"><em>{% trans "Geen berichten gevonden" %}</em></td></tr>
+  {% endfor %}
+  </table>
 
   <h2>Verlopen Aanpassingen</h2>
   <table class="table table-bordered table-condensed">
