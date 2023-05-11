@@ -19,7 +19,6 @@ var allTrips = []; // list of dicts with all trip measures of selected lines
 var tripSelection = []; // temporary list of all trips of current line
 
 /* STOP VARIABLES */
-var blockedStops = []  // list of stops that already have shortens set (from Ajax)
 var selectedStops = []; // list of selected stops
 var stopSelectionOfLine = {}; // dictionary with selected stops (values) per line (key)
 
@@ -76,21 +75,7 @@ function writeCancelledJourneys(data, status) {
             cancelledJourneys.push(journey.journey_id);
         });
     }
-    getHaltesWithShorten();
-}
-
-function getHaltesWithShorten() {
-     $.ajax({ url: '/ritinkorting/haltes.json',
-            data: {'operatingday': operating_day},
-            success : writeHaltesWithShorten
-     });
-}
-
-function writeHaltesWithShorten(data, status) {
-    $.each(data.object, function (i, halte) {
-        blockedStops.push(halte);
-    });
-    showTripsOnChange();
+    getShortenedJourneys();
 }
 
 function getShortenedJourneys() {
@@ -374,7 +359,6 @@ function selectTrip(event, ui) {
         var label_id = $.inArray($(ui.selected).find("strong").text(), currentTripLabels);
         currentTripLabels.splice(label_id, 1);
     }
-    currentStopMeasures = blockedStops.filter (s => s.change__line == activeLine || s.change__line===null);
     showStops();
     /*
     document.querySelector('#halteoverzicht').scrollIntoView({
@@ -406,7 +390,6 @@ function selectAllTrips() {
     } else {
         changeOfRange();
     }
-    currentStopMeasures = blockedStops.filter (s => s.change__line == activeLine || s.change__line===null)
     showStops();
     /*
     document.querySelector('#halteoverzicht').scrollIntoView({
@@ -464,9 +447,6 @@ function renderRow(row) {
             out += '<td class="stop stop-right success" id="'+id+'">'+row.right.name+'<span class="stop-check glyphicon glyphicon-ok-circle pull-right"></span>&nbsp;</td>';
         } else {
             out += '<td class="stop stop-right" id="'+id+'">'+row.right.name;
-            if ($.inArray(row.right.id, blockedStops) != -1) {
-                out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Halte heeft al bericht"></span>';
-            }
             out += '</td>';
         }
     } else {
