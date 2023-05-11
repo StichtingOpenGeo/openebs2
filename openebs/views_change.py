@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, time
 from django.urls import reverse_lazy
 from django.db.models import Q
 from django.http import HttpResponseRedirect
@@ -12,7 +12,7 @@ from openebs.views_utils import FilterDataownerMixin
 from utils.time import get_operator_date, get_operator_date_aware
 from utils.views import AccessMixin, JSONListResponseMixin, AccessJsonMixin
 from django.utils.dateparse import parse_date
-from django.utils.timezone import now
+from django.utils.timezone import now, make_aware
 
 log = logging.getLogger('openebs.views.changes')
 
@@ -108,6 +108,8 @@ class ChangeCreateView(AccessMixin, Kv17PushMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.dataownercode = self.request.user.userprofile.company
+        form.instance.recovered_changes = form.cleaned_data['recovered_changes'] if 'recovered_changes' in \
+                                                                                    form.cleaned_data.keys() else []
 
         # TODO this is a bad solution - totally gets rid of any benefit of Django's CBV and Forms
         xml = form.save()
@@ -132,10 +134,26 @@ class ChangeDeleteView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteV
     model = Kv17Change
     success_url = reverse_lazy('change_index')
 
+
     def delete(self, request, *args, **kwargs):
         ret = super(ChangeDeleteView, self).delete(request, *args, **kwargs)
         obj = self.get_object()
-        if self.push_message(obj.to_xml()):
+        xml_output = [obj.to_xml()]
+
+        # send not-recovered alljourneysofline which had overlap with now recovered all_lines, unless endtime has already expired
+        if obj.is_alllines:
+            if obj.operatingday == datetime.today().date():
+                begintime = make_aware(datetime.now()) if obj.begintime is None else obj.begintime
+            else:
+                begintime = make_aware(datetime.combine(obj.operatingday, time((int(4))))) \
+                    if obj.begintime is None else obj.begintime
+            to_restore_changes = Kv17Change.objects.filter(Q(endtime__gt=begintime) | Q(endtime=None),
+                                                           Q(begintime__lte=begintime) | Q(begintime=None),
+                                                           is_recovered=False, dataownercode=obj.dataownercode,
+                                                           is_alljourneysofline=True)
+            for to_restore in to_restore_changes:
+                xml_output.append(to_restore.to_xml())
+        if self.push_message(xml_output):
             log.error("Recovered line succesfully communicated to subscribers: %s" % obj)
         else:
             log.error("Failed to send recover request to subscribers: %s" % obj)

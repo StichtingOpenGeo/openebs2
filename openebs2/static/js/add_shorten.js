@@ -188,7 +188,7 @@ function renderTripCell(trip) {
     } else if ($.inArray(trip.id, cancelledJourneys) != -1) {
         out += '<span class="glyphicon glyphicon-warning-sign pull-right" title="Rit is opgeheven"></span>';
     } else if ($.inArray(trip.id, shortenedJourneys) != -1) {
-        out += '<span class="glyphicon glyphicon-bell pull-right" title="Rit is al ingekort"></span>';
+        out += '<span class="glyphicon glyphicon-scissors pull-right" title="Rit is al ingekort"></span>';
     }
     out += "</td>";
     return out

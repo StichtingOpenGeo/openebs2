@@ -10,11 +10,11 @@ from kv1.models import Kv1Journey, Kv1JourneyDate, Kv1Line, Kv1Stop
 from kv15.enum import REASONTYPE, SUBREASONTYPE, ADVICETYPE, SUBADVICETYPE, MONITORINGERROR
 from openebs.models import Kv17Change, Kv17Shorten
 from openebs.models import Kv17JourneyChange, Kv17MutationMessage
-from django.utils.dateparse import parse_date, parse_time
+from django.utils.dateparse import parse_date
 from datetime import datetime, timedelta, time
 from django.db.models import Q
 from django.utils.timezone import make_aware
-from utils.time import seconds_to_hhmm, hhmm_to_seconds
+from utils.time import hhmm_to_seconds
 
 
 log = logging.getLogger('openebs.forms')
@@ -63,11 +63,11 @@ class Kv17ChangeForm(forms.ModelForm):
 
         dataownercode = self.user.userprofile.company
         if 'Alle ritten' in self.data['journeys']:
-            valid_journeys = self.clean_all_journeys(operatingday, dataownercode, begintime, endtime)
+            valid_journeys, cleaned_data['recovered_changes'] = self.clean_all_journeys(operatingday, dataownercode, begintime, endtime)
         elif 'Hele vervoerder' in self.data['lines']:
-            valid_journeys = self.clean_all_lines(operatingday, dataownercode, begintime, endtime)
+            valid_journeys, cleaned_data['recovered_changes'] = self.clean_all_lines(operatingday, dataownercode, begintime, endtime)
         else:
-            valid_journeys = self.clean_journeys(operatingday, dataownercode)
+            valid_journeys, cleaned_data['recovered_changes'] = self.clean_journeys(operatingday, dataownercode)
 
         if valid_journeys == 0:
             raise ValidationError(_("Er zijn geen ritten geselecteerd om op te heffen"))
@@ -76,6 +76,7 @@ class Kv17ChangeForm(forms.ModelForm):
 
     def clean_journeys(self, operatingday, dataownercode):
         valid_journeys = 0
+        recovered_changes = []
         if self.data['journeys'] != '':
             for journey in self.data['journeys'].split(',')[0:-1]:
                 journey_qry = Kv1Journey.objects.filter(dataownercode=dataownercode, pk=journey, dates__date=operatingday)
@@ -101,12 +102,18 @@ class Kv17ChangeForm(forms.ModelForm):
                                               is_cancel=True).delete()
 
                     # change not_monitored to 'recovered=True' if cancel_query is the same
-                    Kv17Change.objects.filter(journey__pk=journey,
-                                              dataownercode=dataownercode,
-                                              line=journey_qry[0].line,
-                                              operatingday=operatingday,
-                                              monitoring_error__isnull=False,
-                                              is_recovered=False).update(is_recovered=True)
+                    registered_changes = Kv17Change.objects.filter(journey__pk=journey,
+                                                                   dataownercode=dataownercode,
+                                                                   line=journey_qry[0].line,
+                                                                   operatingday=operatingday,
+                                                                   monitoring_error__isnull=False,
+                                                                   is_recovered=False)
+                    if registered_changes.count() != 0:
+                        registered_change_ids = list(registered_changes.values_list('id', flat=True))
+                        for reg in registered_changes:
+                            reg.recover()
+                        for recovered in Kv17Change.objects.filter(id__in=registered_change_ids):
+                            recovered_changes.append(recovered)
 
                 else:  # NotMonitored Journey
                     if database.filter(Q(monitoring_error__isnull=False) | Q(is_cancel=True)):
@@ -124,11 +131,11 @@ class Kv17ChangeForm(forms.ModelForm):
 
         valid_journeys += 1
 
-        return valid_journeys
+        return valid_journeys, recovered_changes
 
     def clean_all_journeys(self, operatingday, dataownercode, begintime, endtime):
         valid_journeys = 0
-
+        recovered_changes = []
         if 'lines' in self.data:
             if self.data['lines'] != '':
                 for line in self.data['lines'].split(',')[0:-1]:
@@ -158,14 +165,20 @@ class Kv17ChangeForm(forms.ModelForm):
                                                   endtime=endtime).delete()
 
                         # change not_monitored to 'recovered=True' if cancel_query is the same
-                        Kv17Change.objects.filter(dataownercode=dataownercode,
-                                                  line=line_qry[0],
-                                                  is_alljourneysofline=True,
-                                                  is_recovered=True,
-                                                  monitoring_error__isnull=False,
-                                                  operatingday=operatingday,
-                                                  begintime=begintime,
-                                                  endtime=endtime).update(is_recovered=True)
+                        registered_changes = Kv17Change.objects.filter(dataownercode=dataownercode,
+                                                                       line=line_qry[0],
+                                                                       is_alljourneysofline=True,
+                                                                       is_recovered=False,
+                                                                       monitoring_error__isnull=False,
+                                                                       operatingday=operatingday,
+                                                                       begintime=begintime,
+                                                                       endtime=endtime)
+                        if registered_changes.count() != 0:
+                            registered_change_ids = list(registered_changes.values_list('id', flat=True))
+                            for reg in registered_changes:
+                                reg.recover()
+                            for recovered in Kv17Change.objects.filter(id__in=registered_change_ids):
+                                recovered_changes.append(recovered)
 
                         if operatingday == datetime.today().date():
                             begintime = make_aware(datetime.now()) if begintime is None else begintime
@@ -223,11 +236,11 @@ class Kv17ChangeForm(forms.ModelForm):
 
         valid_journeys += 1
 
-        return valid_journeys
+        return valid_journeys, recovered_changes
 
     def clean_all_lines(self, operatingday, dataownercode, begintime, endtime):
         valid_journeys = 0
-
+        recovered_changes = []
         database_alllines = Kv17Change.objects.filter(dataownercode=dataownercode, is_alllines=True,
                                                       operatingday=operatingday, is_recovered=False)
 
@@ -242,13 +255,20 @@ class Kv17ChangeForm(forms.ModelForm):
                                       endtime=endtime).delete()
 
             # change not_monitored to 'recovered=True' if cancel_query is the same
-            Kv17Change.objects.filter(dataownercode=dataownercode,
-                                      is_alllines=True,
-                                      monitoring_error__isnull=False,
-                                      is_recovered=False,
-                                      operatingday=operatingday,
-                                      begintime=begintime,
-                                      endtime=endtime).update(is_recovered=True)
+            # can't be a shorten, because 'is_alllines'
+            registered_changes = Kv17Change.objects.filter(dataownercode=dataownercode,
+                                                           is_alllines=True,
+                                                           monitoring_error__isnull=False,
+                                                           is_recovered=False,
+                                                           operatingday=operatingday,
+                                                           begintime=begintime,
+                                                           endtime=endtime)
+            if registered_changes.count() != 0:
+                registered_change_ids = list(registered_changes.values_list('id', flat=True))
+                for reg in registered_changes:
+                    reg.recover()
+                for recovered in Kv17Change.objects.filter(id__in=registered_change_ids):
+                    recovered_changes.append(recovered)
 
             if database_alllines:
                 if operatingday == datetime.today().date():
@@ -285,7 +305,7 @@ class Kv17ChangeForm(forms.ModelForm):
 
         valid_journeys += 1
 
-        return valid_journeys
+        return valid_journeys, recovered_changes
 
     def save(self, force_insert=False, force_update=False, commit=True):
         ''' Save each of the journeys in the model. This is a disaster, we return the XML
@@ -312,60 +332,92 @@ class Kv17ChangeForm(forms.ModelForm):
 
         if 'Annuleren' in self.data:
             if 'Alle ritten' in self.data['journeys']:
-                xml_output = self.save_all_journeys(operatingday, begintime, endtime)
+                to_send, to_recover = self.save_all_journeys(operatingday, begintime, endtime)
             elif 'Hele vervoerder' in self.data['lines']:
-                xml_output = self.save_all_lines(operatingday, begintime, endtime)
+                to_send, to_recover = self.save_all_lines(operatingday, begintime, endtime)
             else:
-                xml_output = self.save_journeys(operatingday)
+                to_send, to_recover = self.save_journeys(operatingday)
         else:
-            xml_output = self.save_not_monitored(operatingday, begintime, endtime)
+            to_send, to_recover = self.save_not_monitored(operatingday, begintime, endtime)
 
+        for recovered_change in self.instance.recovered_changes:
+            to_recover.add(recovered_change.to_xml())
+
+        xml_output = list(to_recover.union(to_send))
         return xml_output
 
     def save_all_journeys(self, operatingday, begintime, endtime):
-        xml_output = []
+        to_recover = set()
+        to_send = set()
 
+        """ only cancels in this function """
         for line in self.data['lines'].split(',')[0:-1]:
             qry = Kv1Line.objects.filter(id=line)
-            if qry.count() == 1:
-                self.instance.pk = None
-                self.instance.is_alljourneysofline = True
-                self.instance.line = qry[0]
-                self.instance.operatingday = operatingday
-                self.instance.begintime = begintime
-                self.instance.endtime = endtime
-                self.instance.is_cancel = True
-                self.instance.monitoring_error = None
-
-                # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
-                if self.instance.line.dataownercode == self.instance.dataownercode:
-                    self.instance.save()
-
-                    # Add details
-                    if self.data['reasontype'] != '0' or self.data['advicetype'] != '0':
-                        Kv17JourneyChange(change=self.instance, reasontype=self.data['reasontype'],
-                                          subreasontype=self.data['subreasontype'],
-                                          reasoncontent=self.data['reasoncontent'],
-                                          advicetype=self.data['advicetype'],
-                                          subadvicetype=self.data['subadvicetype'],
-                                          advicecontent=self.data['advicecontent']).save()
-
-                    xml_output.append(self.instance.to_xml())
-                else:
-                    log.error(
-                        "Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
-                        (self.instance.line.dataownercode, self.instance.dataownercode))
-
-            else:
+            if qry.count() == 0:
                 log.error("Failed to find line %s" % line)
+                continue
+            new_recovered_changes = self.recover_changes('all_journeys', 'cancel', qry[0], operatingday, begintime,
+                                                         endtime)
+            for new_recovered_change in new_recovered_changes:
+                to_recover.add(new_recovered_change.to_xml())
 
-        return xml_output
+            self.instance.pk = None
+            self.instance.is_alljourneysofline = True
+            self.instance.line = qry[0]
+            self.instance.operatingday = operatingday
+            self.instance.begintime = begintime
+            self.instance.endtime = endtime
+            self.instance.is_cancel = True
+            self.instance.monitoring_error = None
+            self.instance.showcancelledtrip = True if self.data['showcancelledtrip'] == 'on' else False
+
+            # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
+            if self.instance.line.dataownercode == self.instance.dataownercode:
+                self.instance.save()
+
+                # Add details
+                if self.data['reasontype'] != '0' or self.data['advicetype'] != '0':
+                    Kv17JourneyChange(change=self.instance, reasontype=self.data['reasontype'],
+                                      subreasontype=self.data['subreasontype'],
+                                      reasoncontent=self.data['reasoncontent'],
+                                      advicetype=self.data['advicetype'],
+                                      subadvicetype=self.data['subadvicetype'],
+                                      advicecontent=self.data['advicecontent']).save()
+
+                to_send.add(self.instance.to_xml())
+            else:
+                log.error(
+                    "Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving all_journey cancel" %
+                    (self.instance.line.dataownercode, self.instance.dataownercode))
+
+        return to_send, to_recover
 
     def save_journeys(self, operatingday):
-        xml_output = []
+        to_recover = set()
+        to_send = set()
 
         for journey in self.data['journeys'].split(',')[0:-1]:
             qry = Kv1Journey.objects.filter(id=journey, dates__date=operatingday)
+            if qry.count() == 0:
+                log.error("Failed to find journey %s" % journey)
+                continue
+
+            new_recovered_changes = self.recover_changes('journeys', 'cancel', qry[0], operatingday, None, None)
+            for new_recovered_change in new_recovered_changes:
+                to_recover.add(new_recovered_change.to_xml())
+
+            qry_kv17change = Kv17Change.objects.filter(operatingday=operatingday, journey__id=journey,
+                                                       is_recovered=False, is_cancel=False)
+            if qry_kv17change.count() != 0:
+                registered_other_ids = list(qry_kv17change.values_list('id', flat=True))
+                for kv17change in qry_kv17change:
+                    kv17change.recover()
+                for new_recovered in set(Kv17Change.objects.filter(id__in=registered_other_ids)):
+                    new_recovered_changes.append(new_recovered)
+                for new_recovered_change in new_recovered_changes:
+                    to_recover.add(new_recovered_change.to_xml())
+
+            """ only cancels in this function """
             if qry.count() == 1:
                 self.instance.pk = None
                 self.instance.journey = qry[0]
@@ -376,6 +428,7 @@ class Kv17ChangeForm(forms.ModelForm):
                 # Shouldn't be necessary, but just in case:
                 self.instance.begintime = None
                 self.instance.endtime = None
+                self.instance.showcancelledtrip = True if self.data['showcancelledtrip'] == 'on' else False
 
                 # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
                 if self.instance.journey.dataownercode == self.instance.dataownercode:
@@ -390,18 +443,21 @@ class Kv17ChangeForm(forms.ModelForm):
                                           subadvicetype=self.data['subadvicetype'],
                                           advicecontent=self.data['advicecontent']).save()
 
-                    xml_output.append(self.instance.to_xml())
+                    to_send.add(self.instance.to_xml())
                 else:
                     log.error(
-                        "Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
+                        "Oops! mismatch between dataownercode of journey (%s) and of user (%s) when saving journey cancel" %
                         (self.instance.journey.dataownercode, self.instance.dataownercode))
-            else:
-                log.error("Failed to find journey %s" % journey)
 
-        return xml_output
+        return to_send, to_recover
 
     def save_all_lines(self, operatingday, begintime, endtime):
-        xml_output = []
+        to_recover = set()
+        to_send = set()
+        new_recovered_changes = self.recover_changes('all_lines', 'cancel', self.instance.dataownercode, operatingday,
+                                                     begintime, endtime)
+        for new_recovered_change in new_recovered_changes:
+            to_recover.add(new_recovered_change.to_xml())
 
         self.instance.pk = None
         self.instance.is_alllines = True
@@ -410,6 +466,7 @@ class Kv17ChangeForm(forms.ModelForm):
         self.instance.endtime = endtime
         self.instance.is_cancel = True
         self.instance.monitoring_error = None
+        self.instance.showcancelledtrip = True if self.data['showcancelledtrip'] == 'on' else False
 
         # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
         if self.instance.dataownercode == self.user.userprofile.company:
@@ -424,18 +481,48 @@ class Kv17ChangeForm(forms.ModelForm):
                                   subadvicetype=self.data['subadvicetype'],
                                   advicecontent=self.data['advicecontent']).save()
 
-            xml_output.append(self.instance.to_xml())
+            to_send.add(self.instance.to_xml())
         else:
             log.error(
-                "Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
-                (self.instance.line.dataownercode, self.instance.dataownercode))
+                "Oops! mismatch between dataownercode of request (%s) and of user (%s) when saving all_lines cancel" %
+                (self.instance.dataownercode, self.user.userprofile.company))
 
-        return xml_output
+        return to_send, to_recover
 
     def save_not_monitored(self, operatingday, begintime, endtime):
-        xml_output = []
+        to_recover = set()
+        to_send = set()
 
         if 'Hele vervoerder' in self.data['lines']:  # hele vervoerder
+            new_recovered_changes, keep_changes = self.recover_changes('all_lines', 'not_monitored',
+                                                                       self.instance.dataownercode, operatingday,
+                                                                       begintime, endtime)
+            for keep in keep_changes:
+                to_send.add(keep.to_xml())
+            new_entries = []
+            for new_recovered_change in new_recovered_changes:
+                to_recover.add(new_recovered_change.to_xml())
+
+                """ create copy of recovered changes to send with new xml """
+                if new_recovered_change.shorten_details.all().count() > 0:
+                    new_entry = new_recovered_change
+                    new_entry.pk = None
+                    new_entry.monitoring_error = None
+                    new_entry.recovered = None
+                    new_entry.is_recovered = False
+                    new_entry.save()
+
+                    """ make + add clone of all related shorten_details """
+                    old_shorten_details = new_recovered_change.shorten_details.all()
+                    for old_detail in old_shorten_details:
+                        old_detail.pk = None
+                        old_detail.save()
+                        new_entry.shorten_details.add(old_detail)
+                    new_entries.append(new_entry)
+
+            for new_entry in new_entries:
+                to_send.add(new_entry.to_xml())
+
             self.instance.pk = None
             self.instance.operatingday = operatingday
             self.instance.monitoring_error = self.data['notMonitored']
@@ -450,117 +537,162 @@ class Kv17ChangeForm(forms.ModelForm):
             if self.instance.dataownercode == self.user.userprofile.company:
                 self.instance.save()
 
-                xml_output.append(self.instance.to_xml())
+                to_send.add(self.instance.to_xml())
             else:
                 log.error(
-                    "Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
-                    (self.instance.journey.dataownercode, self.instance.dataownercode))
-            self.update_shorten('multiple_journeys')
+                    "Oops! mismatch between dataownercode of request (%s) and of user (%s) when saving all_lines not_monitored" %
+                    (self.instance.dataownercode, self.user.userprofile.company))
 
         elif 'Alle ritten' in self.data['journeys']:  # hele lijn(en)
             for line in self.data['lines'].split(',')[0:-1]:
                 qry = Kv1Line.objects.filter(id=line)
                 if qry.count() == 0:
                     log.error("Failed to find line %s" % line)
+                    continue
+
+                new_entries = []
+                new_recovered_changes, keep_changes = self.recover_changes('all_journeys', 'not_monitored', qry[0],
+                                                                           operatingday, begintime, endtime)
+                for keep in keep_changes:
+                    to_send.add(keep.to_xml())
+
+                for new_recovered_change in new_recovered_changes:
+                    to_recover.add(new_recovered_change.to_xml())
+
+                    """ create copy of recovered changes to send with new xml """
+                    new_entry = new_recovered_change
+                    old_shorten_details = new_recovered_change.shorten_details.all()
+                    new_entry.pk = None
+                    new_entry.monitoring_error = None
+                    new_entry.is_recovered = False
+                    new_entry.recovered = None
+                    new_entry.save()
+
+                    """ make + add clone of all related shorten_details """
+                    for old_detail in old_shorten_details:
+                        old_detail.pk = None
+                        old_detail.save()
+                        new_entry.shorten_details.add(old_detail)
+                    new_entries.append(new_entry)
+
+                for new_entry in new_entries:
+                    to_send.add(new_entry.to_xml())
+
+                self.instance.pk = None
+                self.instance.line = qry[0]
+                self.instance.operatingday = operatingday
+                self.instance.begintime = begintime
+                self.instance.endtime = endtime
+                self.instance.is_alljourneysofline = True
+                self.instance.monitoring_error = self.data['notMonitored']
+                self.instance.autorecover = False
+                self.instance.showcancelledtrip = False
+                self.instance.is_cancel = False
+
+                # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
+                if self.instance.line.dataownercode == self.instance.dataownercode:
+                    self.instance.save()
+
+                    to_send.add(self.instance.to_xml())
                 else:
-                    self.instance.pk = None
-                    self.instance.line = qry[0]
-                    self.instance.operatingday = operatingday
-                    self.instance.begintime = begintime
-                    self.instance.endtime = endtime
-                    self.instance.is_alljourneysofline = True
-                    self.instance.monitoring_error = self.data['notMonitored']
-                    self.instance.autorecover = False
-                    self.instance.showcancelledtrip = False
-                    self.instance.is_cancel = False
-
-                    # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
-                    if self.instance.line.dataownercode == self.instance.dataownercode:
-                        self.instance.save()
-
-                        xml_output.append(self.instance.to_xml())
-                    else:
-                        log.error(
-                            "Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
-                            (self.instance.journey.dataownercode, self.instance.dataownercode))
-            self.update_shorten('multiple_journeys')
-
+                    log.error(
+                        "Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving all_journey not_monitored" %
+                        (self.instance.line.dataownercode, self.instance.dataownercode))
         else:  # enkele rit(ten)
             for journey in self.data['journeys'].split(',')[0:-1]:
                 qry = Kv1Journey.objects.filter(id=journey, dates__date=operatingday)
                 if qry.count() == 0:
                     log.error("Failed to find journey %s" % journey)
-                else:
-                    # check if there's already a kv17change on this journey that is not a cancel
-                    qry_kv17change = Kv17Change.objects.filter(journey=qry[0],
-                                                               operatingday=parse_date(self.data['operatingday']),
-                                                               # shouldn't be neccessary, but just in case:
-                                                               is_cancel=False,
-                                                               is_recovered=False)
-                    if qry_kv17change.count() == 1:
-                        self.instance = qry_kv17change[0]
-                    else:
-                        self.instance.pk = None
-                        self.instance.journey = qry[0]
-                        self.instance.line = qry[0].line
-                        self.instance.operatingday = operatingday
-                        self.instance.begintime = None
-                        self.instance.endtime = None
-                        self.instance.monitoring_error = self.data['notMonitored']
-                        self.instance.autorecover = False
-                        self.instance.showcancelledtrip = False
-                        self.instance.is_cancel = False
+                    continue
+                new_recovered_changes, keep_changes = self.recover_changes('journeys', 'not_monitored', qry[0],
+                                                                           operatingday, begintime, endtime)
+
+                new_details = []
+                for new_recovered_change in new_recovered_changes:
+                    to_recover.add(new_recovered_change.to_xml())
+                    old_shorten_details = new_recovered_change.shorten_details.all()
+                    """ make + add clone of all related shorten_details """
+                    for old_detail in old_shorten_details:
+                        old_detail.pk = None
+                        old_detail.save()
+                        new_details.append(old_detail)
+
+                self.instance.pk = None
+                self.instance.journey = qry[0]
+                self.instance.line = qry[0].line
+                self.instance.operatingday = operatingday
+                self.instance.begintime = None
+                self.instance.endtime = None
+                self.instance.monitoring_error = self.data['notMonitored']
+                self.instance.autorecover = False
+                self.instance.showcancelledtrip = False
+                self.instance.is_cancel = False
 
                 # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
                 if self.instance.journey.dataownercode == self.instance.dataownercode:
-                    if qry_kv17change.count() == 0:
-                        self.instance.save()
-                    else:
-                        self.update_shorten(qry[0])
+                    self.instance.save()
 
-                    xml_output.append(self.instance.to_xml())
+                    if len(new_recovered_changes) > 0 and len(new_details) > 0:
+                        self.instance.shorten_details.set(new_details)
+
+                    to_send.add(self.instance.to_xml())
                 else:
                     log.error(
-                        "Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
+                        "Oops! mismatch between dataownercode of journey (%s) and of user (%s) when saving journey not_monitored" %
                         (self.instance.journey.dataownercode, self.instance.dataownercode))
-        return xml_output
 
-    def update_shorten(self, journey):
-        """ update kv17Change linked to Kv17Shorten if journey is notMonitored as well """
-        operatingday = self.instance.operatingday
-        if journey == 'multiple_journeys':
-            shortened_journeys = []
+        return to_send, to_recover
 
-            begin = hhmm_to_seconds('begin', datetime.now().time())
-            if self.instance.begintime:
-                begin = hhmm_to_seconds('begin', self.instance.begintime.time())
-            else:
-                if operatingday != datetime.today().date():
-                    begin = 14400  # =04:00 of operatingday
+    def recover_changes(self, task, new_obj_type, current_object, operatingday, begintime, endtime):
+        new_recovered_changes = []
+        keep_changes = []
+        if task == 'all_lines':
+            if current_object != self.user.userprofile.company:
+                return []
+            qry_kv17change = Kv17Change.objects.filter(dataownercode=current_object, operatingday=operatingday,
+                                                       is_recovered=False, is_cancel=False)
 
-            if self.instance.endtime:
-                end = hhmm_to_seconds('end', self.instance.endtime.time())
-            else:
-                end = 100800  # =04:00 next day
+        elif task == 'all_journeys':
+            if current_object.dataownercode != self.instance.dataownercode:
+                return []
+            qry_kv17change = Kv17Change.objects.filter(line=current_object, operatingday=operatingday,
+                                                       is_recovered=False, is_cancel=False)
 
-            qry_shortened = Kv17Shorten.objects.filter(change__operatingday=operatingday,
-                                                       change__dataownercode=self.instance.dataownercode,
-                                                       change__journey__departuretime__gte=begin,
-                                                       change__journey__departuretime__lt=end)
-            shortened_items = qry_shortened.count()
-            for i in range(shortened_items):
-                kv17change_id = qry_shortened[i].change_id
-                if kv17change_id not in shortened_journeys:  # shouldn't be neccessary, but just in case
-                    shortened_journeys.append(kv17change_id)
+        elif task == 'journeys':
+            if current_object.dataownercode != self.instance.dataownercode:
+                return []
+            qry_kv17change = Kv17Change.objects.filter(journey=current_object, operatingday=operatingday,
+                                                       is_recovered=False, is_cancel=False)
+        else: # should not be possible, but just in case
+            return []
 
-            for change_id in shortened_journeys:
-                Kv17Change.objects.filter(pk=change_id).update(monitoring_error=self.data['notMonitored'])
+        if (task == 'all_lines' or task == 'all_journeys') and (begintime or endtime):
+            if begintime:
+                begintime_in_seconds = hhmm_to_seconds('begin', begintime)
+                qry_kv17change = qry_kv17change.filter(Q(journey__departuretime__gte=begintime_in_seconds) |
+                                                       Q(begintime__gte=begintime))
+            if endtime:
+                endtime_in_seconds = hhmm_to_seconds('end', endtime)
+
+                qry_kv17change = qry_kv17change.filter(Q(journey__departuretime__lt=endtime_in_seconds) |
+                                                       Q(endtime__lt=endtime))
+
+        # keep shorten objects when new object is clustered not-monitored
+        if (task == 'all_lines' or task == 'all_journeys') and new_obj_type == 'not_monitored':
+            keep_changes = [x for x in qry_kv17change.filter(shorten_details__isnull=False).distinct('id')]
+            qry_kv17change = qry_kv17change.filter(shorten_details__isnull=True)
+
+        if qry_kv17change.count() != 0:
+            registered_other_ids = list(qry_kv17change.values_list('id', flat=True))
+            for kv17change in qry_kv17change:
+                kv17change.recover()
+            for new_recovered in set(Kv17Change.objects.filter(id__in=registered_other_ids)):
+                new_recovered_changes.append(new_recovered)
+
+        if new_obj_type == 'not_monitored':
+            return new_recovered_changes, keep_changes
         else:
-            Kv17Change.objects.filter(journey=journey,
-                                      operatingday=parse_date(self.data['operatingday'])).update(
-                monitoring_error=self.data['notMonitored'])
-
-            self.instance.monitoring_error = self.data['notMonitored']
+            return new_recovered_changes
 
     class Meta(object):
         model = Kv17Change
@@ -637,6 +769,10 @@ class Kv17ShortenForm(forms.ModelForm):
     advicecontent = forms.CharField(max_length=255, label=_("Uitleg advies"), required=False,
                                     widget=forms.Textarea(attrs={'cols': 40, 'rows': 4, 'class': 'col-lg-6'}))
 
+    """ allJourneysOfLine mag niet in een verzamelbericht voor een SHORTEN. Iedere journey krijgt een eigen melding """
+
+    # TODO: doe een poging vervallen haltes wel een icoontje te geven in ons scherm  --> nu alleen rit icoontje gegeven (geen blokkade)
+
     def clean(self):
         cleaned_data = super(Kv17ShortenForm, self).clean()
         cleaned_data['recovered_changes'] = []
@@ -681,8 +817,11 @@ class Kv17ShortenForm(forms.ModelForm):
                     raise ValidationError(_("Een of meer geselecteerde ritten zijn al opgeheven"))
 
                 registered_stopids = []
-                registered_shortens = journey.changes.all().filter(shorten_details__isnull=False, is_recovered=False)
-                registered_others = journey.changes.all().filter(monitoring_error__isnull=False, is_recovered=False)
+                registered_shortens = journey.changes.filter(shorten_details__isnull=False, operatingday=operating_day,
+                                                             is_recovered=False)
+                registered_others = journey.changes.filter(monitoring_error__isnull=False, shorten_details__isnull=True,
+                                                           operatingday=operating_day, is_recovered=False)
+
                 if registered_shortens.count() != 0:
                     registered_stopids = list(registered_shortens[0].shorten_details.all()
                                                                    .values_list('stop__pk', flat=True))
@@ -726,13 +865,13 @@ class Kv17ShortenForm(forms.ModelForm):
                     elif valid_stops and registered_stopids:
                         registered_shorten_ids = set(registered_shortens.values_list('id', flat=True))
                         for reg in registered_shortens:
-                            reg.delete()
+                            reg.recover()
                         for recovered in set(Kv17Change.objects.filter(id__in=registered_shorten_ids)):
                             cleaned_data['recovered_changes'].append(recovered)
                     elif registered_others:
                         registered_other_ids = set(registered_others.values_list('id', flat=True))
                         for reg in registered_others:
-                            reg.delete()
+                            reg.recover()
                         for recovered in set(Kv17Change.objects.filter(id__in=registered_other_ids)):
                             cleaned_data['recovered_changes'].append(recovered)
 
@@ -746,14 +885,14 @@ class Kv17ShortenForm(forms.ModelForm):
                 # if same shorten_query in database as 'is-recovered', delete
                 old_recovered = Kv17Change.objects.filter(journey=journey, operatingday=operating_day,
                                                           is_cancel=False, is_recovered=True,
-                                                          shorten_details__stop=stop)
+                                                          shorten_details__stop=stop).distinct('id')
                 for old in old_recovered:
                     old.force_delete()
 
             valid_journeys += 1
 
         if valid_journeys == 0:
-            raise ValidationError(_("Er zijn geen ritten geselecteerd om op te heffen"))
+            raise ValidationError(_("Er zijn geen ritten geselecteerd om in te korten"))
 
         return cleaned_data
 
@@ -762,34 +901,25 @@ class Kv17ShortenForm(forms.ModelForm):
         """ Save each of the journeys in the model. This is a disaster, we return the XML
         TODO: Figure out a better solution fo this! """
         operatingday = parse_date(self.data['operatingday'])
+        to_recover = set()
+        to_send = set()
 
-        xml_output = []
         for recovered_change in self.instance.recovered_changes:
-            xml_output.append(recovered_change.to_xml())
+            to_recover.add(recovered_change.to_xml())
 
         new_recovered_changes = []
         for journey in self.cleaned_data['journeys']:
-            # qry = Kv1Journey.objects.filter(id=journey, dates__date=operatingday)
-            # if qry.count() == 1:
-            departure_time = seconds_to_hhmm(journey.departuretime)
-            departure = make_aware(datetime.combine(operatingday, parse_time(departure_time)))
-            qry_kv17change_all = Kv17Change.objects.filter(Q(is_alljourneysofline=True) & Q(line=journey.line) |
-                                                           Q(is_alllines=True),
-                                                           Q(begintime__lte=departure) | Q(begintime=None),
-                                                           Q(endtime__gt=departure) | Q(endtime=None),
-                                                           is_cancel=False, operatingday=operatingday,
-                                                           is_recovered=False)
-
-            """ shouldn't find anything since we've recovered these in clean, but just in case """
             qry_kv17change = Kv17Change.objects.filter(journey=journey, operatingday=operatingday, is_cancel=False,
                                                        is_recovered=False)
             if qry_kv17change.count() != 0:
                 registered_other_ids = list(qry_kv17change.values_list('id', flat=True))
-                qry_kv17change.delete()
+                for kv17change in qry_kv17change:
+                    kv17change.recover()
                 for new_recovered in set(Kv17Change.objects.filter(id__in=registered_other_ids)):
                     new_recovered_changes.append(new_recovered)
                 for new_recovered_change in new_recovered_changes:
-                    xml_output.append(new_recovered_change.to_xml())
+                    to_recover.add(new_recovered_change.to_xml())
+                new_recovered_changes = []
 
             self.instance.pk = None
             self.instance.journey = journey
@@ -804,21 +934,20 @@ class Kv17ShortenForm(forms.ModelForm):
                 self.instance.monitoring_error = self.instance.recovered_changes[0].monitoring_error
             elif len(new_recovered_changes) > 0:
                 self.instance.monitoring_error = new_recovered_changes[0].monitoring_error
-            elif qry_kv17change_all.count() > 0:
-                self.instance.monitoring_error = qry_kv17change_all[0].monitoring_error
 
             # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
             if self.instance.dataownercode == self.user.userprofile.company:
                 self.instance.save()
                 self.save_shorten(qry_kv17change)
                 self.save_mutationmessage()
-                xml_output.append(self.instance.to_xml())
+                to_send.add(self.instance.to_xml())
 
             else:
                 log.error(
                     "Oops! mismatch between dataownercode of line (%s) and of user (%s) when saving journey cancel" %
                     (self.instance.journey.dataownercode, self.instance.dataownercode))
 
+        xml_output = list(to_recover.union(to_send))
         return xml_output
 
     def save_shorten(self, qry_kv17change):

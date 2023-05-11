@@ -445,6 +445,24 @@ class Kv17Change(models.Model):
                                 {'object': self, 'begintime': datetime_32h(self.operatingday, self.begintime),
                                  'endtime': datetime_32h(self.operatingday, self.endtime)}).replace(os.linesep, '')
 
+    def recover(self):
+        """ if same object in database as 'is-recovered', delete old, recover current """
+        not_shorten = True if self.shorten_details.all().count() == 0 else False
+        old_recovered = Kv17Change.objects.filter(is_recovered=True, dataownercode=self.dataownercode,
+                                                  operatingday=self.operatingday, begintime=self.begintime,
+                                                  endtime=self.endtime, line=self.line, journey=self.journey,
+                                                  autorecover=self.autorecover,
+                                                  showcancelledtrip=self.showcancelledtrip, is_cancel=self.is_cancel,
+                                                  is_alljourneysofline=self.is_alljourneysofline,
+                                                  is_alllines=self.is_alllines, monitoring_error=self.monitoring_error,
+                                                  shorten_details__isnull=not_shorten) \
+                                          .exclude(id=self.id)
+        if old_recovered.count() > 0:
+            for old in old_recovered:
+                if self.shorten_details.all() == old.shorten_details.all():
+                    old.force_delete()
+        self.delete()  # is actual recover.
+
     class Meta(object):
         verbose_name = _('Ritaanpassing')
         verbose_name_plural = _("Ritaanpassingen")
@@ -583,13 +601,6 @@ class Kv17Shorten(models.Model):
     change = models.ForeignKey(Kv17Change, related_name="shorten_details", on_delete=models.CASCADE)
     stop = models.ForeignKey(Kv1Stop, related_name="stop_shorten", on_delete=models.CASCADE)
     passagesequencenumber = models.IntegerField(default=0, verbose_name=_("Passagenummer"))
-
-    def delete(self):
-        self.save()
-        # Warning: Don't perform the actual delete here!
-
-    def force_delete(self):
-        super(Kv17Shorten, self).delete()
 
     class Meta(object):
         verbose_name = _('Ritverkorting')
