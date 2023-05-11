@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load static crispy_forms_tags leaflet_tags i18n %}
+{% load i18n filters %}
+
+
+{% block title %}{% trans "Bekijk bericht" %}{% endblock %}
+
+{% block content %}
+<h2>{% trans "Ritinkorting" %}</h2>
+<div>
+    <div class="row">
+        <div class="col-sm-6 col-lg-6">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">{% trans "Omschrijving" %}</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="control-group row">
+                        <label class="col-sm-4">{% trans "Vervoerder" %}</label>
+                        <p class="form-control-static col-sm-8">
+                            {{ object.dataownercode }}
+                        </p>
+                    </div>
+                    <div class="control-group row">
+                        <label class="col-sm-4">{% trans "Uitvoerdatum" %}</label>
+                        <p class="form-control-static col-sm-8">
+                            {{ object.operatingday }}</p>
+                            <label class="col-sm-4">{% trans "Lijn" %}</label>
+                            <p class="form-control-static col-sm-8">
+                                {% if object.line %}
+                                    {% if object.line.lineplanningnumber != object.line.publiclinenumber %}
+                                       {{ object.line.headsign }} ({{ object.line.publiclinenumber }} / {{object.line.lineplanningnumber}})</p>
+                                    {% else %}
+                                        {{ object.line.headsign }} ({{ object.line.publiclinenumber }})
+                                    {% endif %}</p>
+
+                                {% else %}
+                                    Hele vervoerder</p>
+                                {% endif %}
+
+                            <label class="col-sm-4">{% trans "Rit" %}</label>
+                            <p class="form-control-static col-sm-8">
+                                {% if object.journey %}
+                                    {{ object.journey.journeynumber }} <small>(Vertrek {{object.journey.departuretime|seconds_time|date:"H:i"}})</small>
+                                {% else %}
+                                    Alle ritten
+                                {% endif %}</p>
+                            {% if not object.journey %}
+                            <label class="col-sm-4">{% trans "Van - tot" %}</label>
+                            <p class="form-control-static col-sm-8">
+                                {% if object.begintime and object.endtime %}
+                                    {{ object.begintime }} - {{ object.endtime }}
+                                {% elif object.begintime %}
+                                    {{ object.begintime }} - 04:00 (+1)
+                                {% elif object.endtime %}
+                                    {{ object.created|time:"H:i" }} - {{ object.endtime }}
+                                {% else %}
+                                    {{ object.created|time:"H:i" }} - 04:00 (+1)
+                                {% endif %}</p>
+                            {% endif %}
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3>{% trans "Haltes" %} <span style="font-weight: normal;">({{ object.shorten_details.all | length }})</span></h3>
+    <table class="table table-bordered table-condensed">
+        <tr>
+            <th class="col-lg-1">{% trans "Vervoerder" %}</th>
+            <th>Halte</th>
+            <th class="col-lg-2 text-right">Haltenummer</th>
+        </tr>
+
+        {% for item in object.shorten_details.all %}
+        <tr>
+            <td><img class="user-icon" src="{% get_static_prefix %}img/logos/{{ item.stop.dataownercode|lower }}.png" /></td>
+            <td>{{ item.stop.name }}</td>
+            <td class="text-right">{{ item.stop.userstopcode }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

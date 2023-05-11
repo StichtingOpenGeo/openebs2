@@ -283,3 +283,17 @@ span.stop-selection,span.trip-selection{
 #highlight td {
     background-color: #D3D1D0;
 }
+
+#halte-count .popover {
+    width: 400px;
+    max-width:none;
+}
+
+#shorten_buttons {
+    display: none;
+    width:100%;
+}
+
+.shortened {
+    background: eb34ba;
+}

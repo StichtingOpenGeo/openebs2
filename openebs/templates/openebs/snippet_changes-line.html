@@ -13,8 +13,9 @@
 
 <table class="table table-condensed table-bordered">
   <tr>
-      <th class="col-sm-2">{% trans "Ritdatum" %}</th>
-      <th class="col-sm-4">{% trans "Ritnummer" %}</th>
+      <th class="col-sm-2" style="vertical-align:middle;">{% trans "Ritdatum" %}</th>
+      <th class="col-sm-4" style="vertical-align:middle;">{% trans "Ritnummer" %}</th>
+      <td class="col-sm-1" align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-scissors" title="Ingekort"></span></td>
       <td class="col-sm-1" align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-ban-circle" title="Niet gevolgd"></span></td>
       <td class="col-sm-1" align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-eye-close" title="Toon opgeheven rit niet"></span></td>
       <td class="col-sm-1" align="center" style="vertical-align:middle;"><span class="glyphicon glyphicon-transfer" title="Automatisch herstellen"></span></td>
@@ -22,8 +23,8 @@
   </tr>
   {% for msg in line.list %}
       <tr>
-          <td>{{ msg.operatingday|date:"d-m-Y" }}</td>
-          <td>
+          <td style="vertical-align:middle;">{{ msg.operatingday|date:"d-m-Y" }}</td>
+          <td style="vertical-align:middle;">
             {% if msg.journey %}
                 {{ msg.journey.journeynumber }} <small>(Vertrek {{ msg.journey.departuretime|seconds_time|date:"H:i"}})</small>
             {% elif all_lines %}
@@ -50,6 +51,16 @@
                 {% endif %}
             {% endif %}
           </td>
+          <td align="center" style="vertical-align:middle;" id="halte-count">
+              {% if msg.shorten_details.all %}
+                <a class="shorten_halte-count btn btn-link" id="shorten_halte-count" href="{% url 'shorten_view' msg.id %}"
+                   data-title="{% trans 'Vervallen haltes bij inkorting' %}" data-html="true" data-content="{% include 'openebs/snippet_halte-list_shorten.html' %}">
+                   {{ msg.shorten_details.all | length }}
+                </a>
+              {% else %}
+                <a></a>
+              {% endif %}
+          </td>
           <td align="center" style="vertical-align:middle;">
               {% if msg.monitoring_error %}
                 <span class="glyphicon glyphicon-ban-circle" title="Niet gevolgd"></span>
@@ -58,11 +69,12 @@
               {% endif %}
           </td>
           <td align="center" style="vertical-align:middle;">
-            {% if msg.showcancelledtrip %}
-                <span></span>
-            {% else %}
-                <span class="glyphicon glyphicon-eye-close" title="Toon opgeheven rit niet"></span>
-
+              {% if msg.is_cancel or msg.shorten_details.all %}
+                  {% if msg.showcancelledtrip %}
+                    <span></span>
+                  {% else %}
+                    <span class="glyphicon glyphicon-eye-close" title="Toon opgeheven rit/halte niet"></span>
+              {% endif %}
             {% endif %}
           </td>
           <td align="center" style="vertical-align:middle;">
@@ -72,7 +84,7 @@
                 <span></span>
             {% endif %}
           </td>
-          <td>
+          <td style="vertical-align:middle;">
             {% if msg.journey and perms.openebs.add_change %}
                 <form method="post" action="{% url 'change_delete' msg.id %}">
                     {% csrf_token %}

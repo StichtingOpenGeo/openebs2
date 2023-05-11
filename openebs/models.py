@@ -445,6 +445,24 @@ class Kv17Change(models.Model):
                                 {'object': self, 'begintime': datetime_32h(self.operatingday, self.begintime),
                                  'endtime': datetime_32h(self.operatingday, self.endtime)}).replace(os.linesep, '')
 
+    def recover(self):
+        """ if same object in database as 'is-recovered', delete old, recover current """
+        not_shorten = True if self.shorten_details.all().count() == 0 else False
+        old_recovered = Kv17Change.objects.filter(is_recovered=True, dataownercode=self.dataownercode,
+                                                  operatingday=self.operatingday, begintime=self.begintime,
+                                                  endtime=self.endtime, line=self.line, journey=self.journey,
+                                                  autorecover=self.autorecover,
+                                                  showcancelledtrip=self.showcancelledtrip, is_cancel=self.is_cancel,
+                                                  is_alljourneysofline=self.is_alljourneysofline,
+                                                  is_alllines=self.is_alllines, monitoring_error=self.monitoring_error,
+                                                  shorten_details__isnull=not_shorten) \
+                                          .exclude(id=self.id)
+        if old_recovered.count() > 0:
+            for old in old_recovered:
+                if self.shorten_details.all() == old.shorten_details.all():
+                    old.force_delete()
+        self.delete()  # is actual recover.
+
     class Meta(object):
         verbose_name = _('Ritaanpassing')
         verbose_name_plural = _("Ritaanpassingen")
@@ -574,3 +592,54 @@ class Kv1StopFilterStop(models.Model):
         verbose_name_plural = _("Filter haltes")
         unique_together = ('filter', 'stop')
         ordering = ['stop__name', 'stop__timingpointcode']
+
+
+class Kv17Shorten(models.Model):
+    """
+    Container for a kv17 shorten for a particular journey
+    """
+    change = models.ForeignKey(Kv17Change, related_name="shorten_details", on_delete=models.CASCADE)
+    stop = models.ForeignKey(Kv1Stop, related_name="stop_shorten", on_delete=models.CASCADE)
+    passagesequencenumber = models.IntegerField(default=0, verbose_name=_("Passagenummer"))
+
+    class Meta(object):
+        verbose_name = _('Ritverkorting')
+        verbose_name_plural = _("Ritverkortingen")
+        permissions = (
+            ("view_change", _("Ritaanpassingen bekijken")),
+            ("add_change", _("Ritaanpassingen aanmaken")),
+            ("cancel_lines", _("Lijnen annuleren")),
+        )
+
+    def __str__(self):
+
+        if not self.journey:
+            journeynumber = "Alle ritten"
+        else:
+            journeynumber = self.journey.journeynumber
+
+        return "%s Lijn %s Rit# %s Halte# %s" % (self.operatingday, self.line, journeynumber,
+                                                 self.stop.userstopcode)
+
+
+class Kv17MutationMessage(models.Model):
+    """
+    Store shorten and recover for a complete trip
+    If is_recovered = False is a cancel, else it's no longer
+    """
+    change = models.ForeignKey(Kv17Change, related_name="journey_details_mutation_message", on_delete=models.CASCADE)
+    stop = models.ForeignKey(Kv1Stop, related_name="stop_mutation_message", on_delete=models.CASCADE)
+    passagesequencenumber = models.IntegerField(default=0, verbose_name=_("Passagenummer"))
+    reasontype = models.SmallIntegerField(null=True, blank=True, choices=REASONTYPE, verbose_name=_("Type oorzaak"))
+    subreasontype = models.CharField(max_length=10, blank=True, choices=SUBREASONTYPE, verbose_name=_("Oorzaak"))
+    reasoncontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg oorzaak"))
+    advicetype = models.SmallIntegerField(null=True, blank=True, choices=ADVICETYPE, verbose_name=_("Type advies"))
+    subadvicetype = models.CharField(max_length=10, blank=True, choices=SUBADVICETYPE, verbose_name=_("Advies"))
+    advicecontent = models.CharField(max_length=255, blank=True, verbose_name=_("Uitleg advies"))
+
+    class Meta(object):
+        verbose_name = _('Ritverkortingsdetails')
+        verbose_name_plural = _("Ritverkortingsdetails")
+
+    def __str__(self):
+        return "%s Details" % self.change
