@@ -44,7 +44,11 @@ class Command(BaseCommand):
                     self.import_errors += 1
 
     def do_line(self, row):
-        linenumber = row['operator_id'].split(':')
+        linenumber = row['bison_id'].split(':')
+        if len(linenumber) < 2:
+            self.log("Failed to match route: %s" % row)
+            return
+
         lines = Kv1Line.objects.filter(dataownercode=linenumber[0], lineplanningnumber=linenumber[1])
         if lines.count() == 1:
             line = lines[0]
@@ -52,7 +56,7 @@ class Command(BaseCommand):
             line.publiclinenumber = row['publiccode']
             line.save()
         else:
-            self.log("Failed to match route: %s" % row['operator_id'])
+            self.log("Failed to match route: %s" % row['bison_id'])
 
     def do_stops(self):
         with open(self.folder+'/openebs_stops.csv') as stops_file:
