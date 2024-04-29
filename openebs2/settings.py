@@ -72,8 +72,9 @@ TEMPLATES = [
 ]
 
 # Crispy = form addon
-CRISPY_TEMPLATE_PACK = 'bootstrap3'
+CRISPY_TEMPLATE_PACK = 'bootstrap5'
 CRISPY_FAIL_SILENTLY = not DEBUG
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 
 MIDDLEWARE = (
     'django.middleware.common.CommonMiddleware',
@@ -110,6 +111,7 @@ INSTALLED_APPS = (
     # Libs
     'floppyforms',
     'crispy_forms',
+    'crispy_bootstrap5',
     'leaflet',
     # 'debug_toolbar',
 
