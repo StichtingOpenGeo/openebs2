@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.timezone import now
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from kv1.models import Kv1Line, Kv1Journey, Kv1Stop
 from openebs.models import Kv17Change, Kv17StopChange, Kv15Scenario
