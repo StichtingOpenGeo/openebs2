@@ -12,7 +12,7 @@ django-braces==1.15.0
 future==1.0.0
 python-dateutil
 #transitfeed # Read Write GTFS
-crispy-bootstrap5==2024.2
+crispy-bootstrap3==2024.1
 
 # Dev
 lxml==5.2.1 # Tests - needs libxml2-dev libxslt-dev packages
