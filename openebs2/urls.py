@@ -28,4 +28,5 @@ urlpatterns = [
     re_path(r'^geweigerd/$', TemplateView.as_view(template_name="openebs/nopermission.html"), name="app_nopermission"),
 
     path('admin/', admin.site.urls),
+    path("accounts/", include('allauth.urls')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

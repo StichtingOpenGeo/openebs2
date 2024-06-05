@@ -13,6 +13,7 @@ future==1.0.0
 python-dateutil
 #transitfeed # Read Write GTFS
 crispy-bootstrap3==2024.1
+django-allauth[socialaccount]
 
 # Dev
 lxml==5.2.1 # Tests - needs libxml2-dev libxslt-dev packages
