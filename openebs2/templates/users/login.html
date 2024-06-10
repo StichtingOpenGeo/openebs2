@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags i18n %}
+{% load socialaccount %}
 
 {% block content %}
 <div class="col-lg-8">
@@ -24,6 +25,10 @@
                     </div>
                 </div>
                 <input type="hidden" name="next" value="{{ next }}" />
+            </form>
+            <form action="{% provider_login_url 'keycloak' auth_params='kc_idp_hint=htm' %}" method="post">
+                {% csrf_token %}
+                <button type="submit">HTM Personenvervoer N.V.</button>
             </form>
             </div>
         </div>

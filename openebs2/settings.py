@@ -107,7 +107,7 @@ INSTALLED_APPS = (
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    #'allauth.socialaccount.providers.openid_connect', # TODO
+    'allauth.socialaccount.providers.openid_connect',
 
     # Our apps
     # Order matters for testing: openebs depends on kv1 not viceversa
@@ -130,9 +130,6 @@ INSTALLED_APPS = (
 # Provider specific settings
 SOCIALACCOUNT_PROVIDERS = {}
 
-
-# Password validation  # TODO: is dit nodig?
-# https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
