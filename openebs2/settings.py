@@ -115,6 +115,7 @@ INSTALLED_APPS = (
     'openebs',
     'ferry',
     'utils',  # Load our custom filters
+    # 'openebs.apps.OpenebsConfig',
 
     # Libs
     'floppyforms',
