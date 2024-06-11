@@ -131,10 +131,11 @@
                     </a></li>
                 <li class="divider"></li>
               {%  endif %}
-
-              <li><a href="{% url 'app_password_change' %}">
+              {% if not user.socialaccount_set.all.0 %}
+                  <li><a href="{% url 'app_password_change' %}">
                   <span class="glyphicon glyphicon-user"></span>&nbsp;{% trans "Wachtwoord wijzigen" %}
               </a></li>
+              {% endif %}
               <li><a href="{% url 'app_logout' %}">
                   <span class="glyphicon glyphicon-log-out"></span>&nbsp;{% trans "Uitloggen" %}
               </a></li>
@@ -146,6 +147,7 @@
     </nav>
     {% block content_full_page %}
         <div class="container">
+
             {% block content %} {% endblock %}
         </div>
     {% endblock %}

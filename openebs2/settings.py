@@ -74,8 +74,10 @@ TEMPLATES = [
 # Crispy = form addon
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 CRISPY_FAIL_SILENTLY = not DEBUG
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap3"
 
 MIDDLEWARE = (
+    'django.middleware.security.SecurityMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -83,6 +85,7 @@ MIDDLEWARE = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 )
 
 ROOT_URLCONF = 'openebs2.urls'
@@ -100,22 +103,56 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.gis',
 
+    # allauth pieces
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.openid_connect',
+
     # Our apps
     # Order matters for testing: openebs depends on kv1 not viceversa
     'kv1',  # Static data stuff
     'openebs',
     'ferry',
     'utils',  # Load our custom filters
+    # 'openebs.apps.OpenebsConfig',
 
     # Libs
     'floppyforms',
     'crispy_forms',
+    'crispy_bootstrap3',
     'leaflet',
     # 'debug_toolbar',
 
     # Admin & tools
     'django.contrib.admin',
 )
+
+# Provider specific settings
+SOCIALACCOUNT_PROVIDERS = {}
+
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+    },
+]
+
+AUTHENTICATION_BACKENDS = [
+    # Needed to login by username in Django admin, regardless of `allauth`
+    'django.contrib.auth.backends.ModelBackend',
+    # `allauth` specific authentication methods, such as login by email
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
 
 # Logging so far
 LOGGING = {
