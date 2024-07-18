@@ -118,7 +118,10 @@ class Command(BaseCommand):
         self.set_if_filled(msg, 'advicecontent', row['AdviceContent'])
 
     def add_stop_for_message(self, msg, row):
-        stops = Kv1Stop.objects.filter(timingpointcode=row['TimingPointCode'])
+        if row['QuayCode'] is None or len(row['QuayCode']) == 0:
+            return
+
+        stops = Kv1Stop.objects.filter(quaycoderef=row['QuayCode'])
         for stop in stops:
             message_stop, created = Kv15MessageStop.objects.get_or_create(stopmessage=msg, stop=stop)
             if created:

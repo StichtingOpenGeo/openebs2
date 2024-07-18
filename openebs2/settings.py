@@ -235,8 +235,8 @@ CALENDAR_LOCALE = 'nl_NL.UTF-8'
 CROSSOVER_HOUR = 4
 
 # Verification feed settings
-GOVI_VERIFY_FEED = 'tcp://192.168.33.1:8001'  # 'tcp://node02.kv7.openov.nl:7817'
-GOVI_VERIFY_SUB = "/InTraffic/KV8gen"
+GOVI_VERIFY_FEED = 'tcp://pubsub.besteffort.ndovloket.nl:7817'
+GOVI_VERIFY_SUB = "/GOVI/KV8gen"
 
 EXTERNAL_MESSAGE_USER_ID = None  # Set in local_settings
 
