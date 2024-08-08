@@ -23,9 +23,8 @@ def user_logged_in_signal_handler(request, user, **kwargs):
         permission_set += list(Permission.objects.filter(codename__in=['view_change', 'view_scenario']))
 
     suffix = user.email.split('@')[-1]
-    match suffix:
-        case 'htm.nl':
-            UserProfile.objects.update_or_create(user=user, company='HTM')
+    if suffix == 'htm.nl':
+        UserProfile.objects.update_or_create(user=user, company='HTM')
 
     user.user_permissions.set(permission_set)
 

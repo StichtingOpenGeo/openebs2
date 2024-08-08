@@ -28,7 +28,9 @@
             </form>
             <form action="{% provider_login_url 'keycloak' auth_params='kc_idp_hint=htm' %}" method="post">
                 {% csrf_token %}
-                <button type="submit">HTM Personenvervoer N.V.</button>
+                <label class="control-label requiredField">Inloggen met:</label>
+                <br />
+                <input type="image" alt="Inloggen bij HTM Personenvervoer N.V." src="https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcQoTvMFOybjDV8LOQJTz5Jx1YxWiCZ_jSUB2MGPDkDmY8L0J2kQ" style="width:100px;"/>
             </form>
             </div>
         </div>
