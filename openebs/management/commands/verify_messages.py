@@ -72,7 +72,7 @@ class Command(BaseCommand):
     def process_message(self, row, deleted):
         msg, created = Kv15Stopmessage.objects.get_or_create(dataownercode=row['DataOwnerCode'],
                                                              messagecodedate=row['MessageCodeDate'],
-                                                             messagecodenumber=row['MessageCodeNumber'],
+                                                             messagecodenumber=row['OriginalMessageCodeNumber'],
                                                              defaults={'user': self.get_user()})
         if not deleted:
             msg.status = MessageStatus.CONFIRMED
