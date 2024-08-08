@@ -8,7 +8,7 @@ from crispy_forms.layout import Submit, Layout, Field, HTML, Div
 from django.utils.timezone import now, is_aware, make_aware
 import floppyforms.__future__ as forms
 from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from kv1.models import Kv1Stop, Kv1Line
 from openebs.models import Kv15Stopmessage, Kv15Scenario, Kv15ScenarioMessage, get_end_service
 from datetime import datetime

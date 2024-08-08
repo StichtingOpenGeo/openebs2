@@ -15,7 +15,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.template.loader import render_to_string
 from datetime import timedelta
-from django.utils.translation import ugettext, ugettext_lazy as _
+from django.utils.translation import gettext, gettext_lazy as _
 from django.utils.timezone import now, datetime, get_current_timezone
 from kv1.models import Kv1Stop, Kv1Line, Kv1Journey
 
@@ -69,7 +69,7 @@ class Kv15Log(models.Model):
         if stop_message.messagecontent is not None:  # Can happen with overrule
             log.message = stop_message.messagecontent
         else:
-            log.message = ugettext("<leeg of overschrijven>")  # Default
+            log.message = gettext("<leeg of overschrijven>")  # Default
         log.ipaddress = ipaddress
         log.save()
         return log
@@ -235,7 +235,7 @@ class Kv15Stopmessage(models.Model):
                                              messagecodedate=self.messagecodedate).aggregate(
             models.Max('messagecodenumber'))
         if num['messagecodenumber__max'] == 9999:
-            raise IntegrityError(ugettext("Teveel berichten vestuurd - probeer het morgen weer"))
+            raise IntegrityError(gettext("Teveel berichten vestuurd - probeer het morgen weer"))
         result = num['messagecodenumber__max'] + 1 if num['messagecodenumber__max'] else 1
         if self.dataownercode in self.operators_with_other_systems and result < 5000:
             result = 5000

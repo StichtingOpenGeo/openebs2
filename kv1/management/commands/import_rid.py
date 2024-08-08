@@ -81,6 +81,7 @@ class Command(BaseCommand):
         s.name = row['name']
         s.location = location
         s.timingpointcode = row['timingpointcode']
+        s.quaycoderef = row['quaycoderef']
         s.save()
 
     def log(self, text):

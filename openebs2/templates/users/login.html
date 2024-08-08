@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags i18n %}
+{% load socialaccount %}
 
 {% block content %}
 <div class="col-lg-8">
@@ -24,6 +25,12 @@
                     </div>
                 </div>
                 <input type="hidden" name="next" value="{{ next }}" />
+            </form>
+            <form action="{% provider_login_url 'keycloak' auth_params='kc_idp_hint=htm' %}" method="post">
+                {% csrf_token %}
+                <label class="control-label requiredField">Inloggen met:</label>
+                <br />
+                <input type="image" alt="Inloggen bij HTM Personenvervoer N.V." src="https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcQoTvMFOybjDV8LOQJTz5Jx1YxWiCZ_jSUB2MGPDkDmY8L0J2kQ" style="width:100px;"/>
             </form>
             </div>
         </div>

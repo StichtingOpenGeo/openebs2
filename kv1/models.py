@@ -7,7 +7,7 @@ from datetime import time
 from django.contrib.gis.db import models
 from jsonfield import JSONField
 from kv15.enum import DATAOWNERCODE, STOPTYPES
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from utils.time import get_operator_date
 
@@ -40,6 +40,7 @@ class Kv1Stop(models.Model):
     userstopcode = models.CharField(max_length=10)
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
     timingpointcode = models.CharField(max_length=10)  # Note, unique, but not per stop
+    quaycoderef = models.CharField(max_length=32, null=True, blank=True)
     name = models.CharField(max_length=102)
     location = models.PointField()
 
