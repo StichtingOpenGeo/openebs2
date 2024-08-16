@@ -186,9 +186,7 @@
                     halteMarkerOptions.color = '#000';
 
                     let myIcon = L.icon(halteMarkerOptions);
-                    // TODO: remove hack when Django is upgraded
-                    var latlng = new L.LatLng(lnglat.lng, lnglat.lat);
-                    return L.circleMarker(latlng, halteMarkerOptions);
+                    return L.circleMarker(lnglat, halteMarkerOptions);
                 }
                 if (myLayerData.features.length > 0) {
                     let myLayerOptions = {
