@@ -12,7 +12,8 @@ DATAOWNERCODE = (
     ('QBUZZ', 'Qbuzz'),
     ('TCR', 'Taxi Centrale Renesse'),
     ('GOVI', 'GOVI'),
-    ('WSF', 'Westerschelde Ferry')
+    ('WSF', 'Westerschelde Ferry'),
+    ('ZTM', 'Gemeente Zoetermeer')
 )
 
 MESSAGEPRIORITY = (
