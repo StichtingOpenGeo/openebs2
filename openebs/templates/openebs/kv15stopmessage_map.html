@@ -151,9 +151,7 @@
                         var colors = getColorsForDataownercode(feature.properties.dataownercode);
                         halteMarkerOptions.fillColor = colors[0];
                         halteMarkerOptions.color = colors[1];
-                        // TODO: remove hack when Django is upgraded
-                        var latlng = new L.LatLng(lnglat.lng, lnglat.lat);
-                        return L.circleMarker(latlng, halteMarkerOptions);
+                        return L.circleMarker(lnglat, halteMarkerOptions);
                     }
                 }).addTo(map);
             });

@@ -139,7 +139,7 @@ class ScenarioMessageAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailV
 
     def get_queryset(self):
         qry = super(ScenarioMessageAjaxView, self).get_queryset()
-        qry = qry.filter(id=self.kwargs.get('pk', None))
+        qry = qry.filter(id=self.kwargs.get('scenario', None))
         dataownercode = qry.values('dataownercode')[0]['dataownercode']
         lines = []
         x = qry.values('lines__line_id')
