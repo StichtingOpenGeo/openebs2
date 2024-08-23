@@ -13,7 +13,10 @@ DATAOWNERCODE = (
     ('TCR', 'Taxi Centrale Renesse'),
     ('GOVI', 'GOVI'),
     ('WSF', 'Westerschelde Ferry'),
-    ('ZTM', 'Gemeente Zoetermeer')
+    ('ZTM', 'Gemeente Zoetermeer'),
+    ('TESO', 'TESO'),
+    ('DOEKSEN', 'Rederij Doeksen'),
+    ('WPD', 'Wagenborg Passagiersdiensten'),
 )
 
 MESSAGEPRIORITY = (
