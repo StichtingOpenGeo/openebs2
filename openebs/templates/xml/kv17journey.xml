@@ -36,8 +36,8 @@
             <subadvicetype>{{ object.journey_details.all.0.subadvicetype }}</subadvicetype>
             {% if object.journey_details.all.0.advicecontent %}<advicecontent>{{ object.journey_details.all.0.advicecontent }}</advicecontent>{% endif %}
             {% endif %}
-            <showcancelledtrip>{{ object.showcancelledtrip }}</showcancelledtrip>
-            <autorecover>{{ object.autorecover }}</autorecover>
+            <showcancelledtrip>{{ object.showcancelledtrip|lower }}</showcancelledtrip>
+            <autorecover>{{ object.autorecover|lower }}</autorecover>
         </CANCEL>
     {% else %}
         <timestamp>{{ object.created|date:"c" }}</timestamp>
@@ -54,7 +54,7 @@
     <SHORTEN>
         <userstopcode>{{ shorten.stop.userstopcode }}</userstopcode>
         <passagesequencenumber>{{ shorten.passagesequencenumber }}</passagesequencenumber>
-        <showcancelledtrip>{{ object.showcancelledtrip }}</showcancelledtrip>
+        <showcancelledtrip>{{ object.showcancelledtrip|lower }}</showcancelledtrip>
     </SHORTEN>
 {% endfor %}
 {% for mutation in object.journey_details_mutation_message.all %}
@@ -71,7 +71,7 @@
             <subadvicetype>{{ mutation.subadvicetype }}</subadvicetype>
             <advicecontent>{{ mutation.advicecontent }}</advicecontent>
         {% endif %}
-        <showcancelledtrip>{{ object.showcancelledtrip }}</showcancelledtrip>
+        <showcancelledtrip>{{ object.showcancelledtrip|lower }}</showcancelledtrip>
     </MUTATIONMESSAGE>
 {% endfor %}
 </KV17MUTATEJOURNEYSTOP>
