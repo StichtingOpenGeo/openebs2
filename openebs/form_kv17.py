@@ -370,6 +370,7 @@ class Kv17ChangeForm(forms.ModelForm):
             self.instance.is_cancel = True
             self.instance.monitoring_error = None
             self.instance.showcancelledtrip = True if self.data.get('showcancelledtrip', '') == 'on' else False
+            self.instance.autorecover = True if self.data.get('autorecover', '') == 'on' else False
 
             # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
             if self.instance.line.dataownercode == self.instance.dataownercode:
@@ -429,6 +430,7 @@ class Kv17ChangeForm(forms.ModelForm):
                 self.instance.begintime = None
                 self.instance.endtime = None
                 self.instance.showcancelledtrip = True if self.data.get('showcancelledtrip', '') == 'on' else False
+                self.instance.autorecover = True if self.data.get('autorecover', '') == 'on' else False
 
                 # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
                 if self.instance.journey.dataownercode == self.instance.dataownercode:
@@ -467,6 +469,7 @@ class Kv17ChangeForm(forms.ModelForm):
         self.instance.is_cancel = True
         self.instance.monitoring_error = None
         self.instance.showcancelledtrip = True if self.data.get('showcancelledtrip', '') == 'on' else False
+        self.instance.autorecover = True if self.data.get('autorecover', '') == 'on' else False
 
         # Unfortunately, we can't place this any earlier, because we don't have the dataownercode there
         if self.instance.dataownercode == self.user.userprofile.company:
@@ -929,6 +932,7 @@ class Kv17ShortenForm(forms.ModelForm):
             self.instance.endtime = None
             self.instance.is_cancel = False
             self.instance.showcancelledtrip = True if self.data.get('showcancelledtrip', '') == 'on' else False
+            self.instance.autorecover = True if self.data.get('autorecover', '') == 'on' else False
             self.instance.monitoring_error = None
             if len(self.instance.recovered_changes) > 0:
                 self.instance.monitoring_error = self.instance.recovered_changes[0].monitoring_error
