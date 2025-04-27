@@ -67,7 +67,7 @@ class ShortenCreateView(AccessMixin, Kv17PushMixin, CreateView):
 
         form.instance.dataownercode = self.request.user.userprofile.company
         form.instance.operatingday = self.request.POST['operatingday']
-        form.instance.showcancelledtrip = True if self.request.POST['showcancelledtrip'] == 'on' else False
+        form.instance.showcancelledtrip = True if self.request.POST.get('showcancelledtrip', '') == 'on' else False
         form.instance.is_cancel = False  # is SHORTEN
         form.instance.recovered_changes = form.cleaned_data['recovered_changes'] if 'recovered_changes' in \
                                                                                       form.cleaned_data.keys() else []

@@ -138,20 +138,22 @@ class ScenarioMessageAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailV
         return qry
 
     def get_queryset(self):
+        lines = []
+        stops = []
         qry = super(ScenarioMessageAjaxView, self).get_queryset()
         qry = qry.filter(id=self.kwargs.get('scenario', None))
-        dataownercode = qry.values('dataownercode')[0]['dataownercode']
-        lines = []
-        x = qry.values('lines__line_id')
 
-        for item in qry.values('lines__line_id', 'lines__line_id__lineplanningnumber'):
-            if item['lines__line_id'] is None:
-                lines.append('None/None')
-            else:
-                lines.append(str(item['lines__line_id'])+'/'+item['lines__line_id__lineplanningnumber'])
-        stops = []
-        for item in qry.values('stops__stop_id__userstopcode', 'stops__stop_id__name'):
-            stops.append([dataownercode+'_'+item['stops__stop_id__userstopcode'], item['stops__stop_id__name']])
+        if len(qry) > 0:
+            dataownercode = qry.values('dataownercode')[0]['dataownercode']
+            x = qry.values('lines__line_id')
+
+            for item in qry.values('lines__line_id', 'lines__line_id__lineplanningnumber'):
+                if item['lines__line_id'] is None:
+                    lines.append('None/None')
+                else:
+                    lines.append(str(item['lines__line_id'])+'/'+item['lines__line_id__lineplanningnumber'])
+            for item in qry.values('stops__stop_id__userstopcode', 'stops__stop_id__name'):
+                stops.append([dataownercode+'_'+item['stops__stop_id__userstopcode'], item['stops__stop_id__name']])
 
         line_stops = {}
         used_stops = []

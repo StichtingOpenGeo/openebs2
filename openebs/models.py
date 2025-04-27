@@ -108,6 +108,10 @@ class Kv15Stopmessage(models.Model):
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE, verbose_name=_("Vervoerder"))
     messagecodedate = models.DateField(verbose_name=_("Datum"), default=now)
     messagecodenumber = models.IntegerField(verbose_name=_("Volgnummer"))
+
+    kv8messagecodedate = models.DateField(null=True, blank=True, verbose_name=_("KV8 Datum"))
+    kv8messagecodenumber = models.IntegerField(null=True, blank=True, verbose_name=_("KV8 Volgnummer"))
+
     messagepriority = models.CharField(max_length=10, choices=MESSAGEPRIORITY, default='PTPROCESS',
                                        verbose_name=_("Prioriteit"))
     messagetype = models.CharField(max_length=10, choices=MESSAGETYPE, default='GENERAL',
@@ -227,7 +231,7 @@ class Kv15Stopmessage(models.Model):
         return self.kv15messagestop_set.distinct('stop__name').order_by('stop__name')[0:number]
 
     # TODO: Move to config
-    operators_with_other_systems = ["HTM", "KEOLIS", "SYNTUS"]
+    operators_with_other_systems = ["HTM", "KEOLIS", "SYNTUS", "EBS", "RET"]
 
     def get_latest_number(self):
         """ Get the currently highest number and add one if found or start with 1  """

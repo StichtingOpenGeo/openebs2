@@ -240,7 +240,7 @@ class MessageDeleteView(AccessMixin, Kv15PushMixin, FilterDataownerMixin, Delete
     model = Kv15Stopmessage
     success_url = reverse_lazy('msg_index')
 
-    def delete(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         # Ensure we update the user
         msg = self.get_object()
         msg.user = request.user

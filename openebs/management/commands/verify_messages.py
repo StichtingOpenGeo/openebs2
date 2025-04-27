@@ -70,13 +70,17 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def process_message(self, row, deleted):
-        msg, created = Kv15Stopmessage.objects.get_or_create(dataownercode=row['DataOwnerCode'],
-                                                             messagecodedate=row['MessageCodeDate'],
-                                                             messagecodenumber=row['OriginalMessageCodeNumber'],
-                                                             defaults={'user': self.get_user()})
         if not deleted:
+            msg, created = Kv15Stopmessage.objects.get_or_create(dataownercode=row['DataOwnerCode'],
+                                                                 messagecodedate=row['OriginalMessageCodeDate'],
+                                                                 messagecodenumber=row['OriginalMessageCodeNumber'],
+                                                                 defaults={'user': self.get_user()})
+     
+
             msg.status = MessageStatus.CONFIRMED
             # In case this is an update, set these fields to properly restore our message:
+            msg.kv8messagecodedate = row['MessageCodeDate']
+            msg.kv8messagecodenumber = row['MessageCodeNumber']
             msg.messagestarttime = row['MessageStartTime']
             msg.messageendtime = row['MessageEndTime']
             msg.isdeleted = False
@@ -85,19 +89,33 @@ class Command(BaseCommand):
                 self.copy_message_content(msg, row)
             else:
                 self.log.info("Message confirmed: %s (Stop/TPC %s)" % (msg, row['TimingPointCode']))
+
+            msg.save(significant=False)
+
+            # Handle stop
+            self.add_stop_for_message(msg, row)
+
         else:
+            msg, created = Kv15Stopmessage.objects.get_or_create(dataownercode=row['DataOwnerCode'],
+                                                                 kv8messagecodedate=row['MessageCodeDate'],
+                                                                 kv8messagecodenumber=row['MessageCodeNumber'],
+                                                                 defaults={'user': self.get_user()})
+
             if not created:
                 self.log.info("Message confirmed deleted: %s (Stop/TPC %s)" % (msg, row['TimingPointCode']))
             else:
                 self.log.info("Message added and confirmed deleted: %s (Stop/TPC %s)" % (msg, row['TimingPointCode']))
+            
+            msg.kv8messagecodedate = row['MessageCodeDate']
+            msg.kv8messagecodenumber = row['MessageCodeNumber']
             msg.status = MessageStatus.DELETE_CONFIRMED
             msg.messageendtime = now()
             msg.isdeleted = True
+   
+            msg.save(significant=False)
 
-        msg.save(significant=False)
-
-        # Handle stop
-        self.add_stop_for_message(msg, row)
+            # Handle stop
+            self.add_stop_for_message(msg, row)
 
     def copy_message_content(self, msg, row):
         msg.messagecontent = row['MessageContent']
