@@ -954,14 +954,16 @@ class Kv17ShortenForm(forms.ModelForm):
         for line in self.data['haltes'].split(";"):
             if line != '':
                 lijn = self.instance.line
-                if line.split(":")[0] == lijn.publiclinenumber:
+                if line.split(":")[0] == lijn.lineplanningnumber:
                     haltes = line.split(":")[1].split(",")
                     for halte in haltes:
                         if len(halte) == 0:
+                            log.error(halte)
                             continue
 
                         halte_split = halte.split('_')
                         if len(halte_split) != 2:
+                            log.error(halte_split)
                             continue
 
                         stop = Kv1Stop.find_stop(halte_split[0], halte_split[1])
@@ -981,13 +983,17 @@ class Kv17ShortenForm(forms.ModelForm):
                             Kv17Shorten(change=self.instance, stop=stop,
                                         # passagesequencenumber=0,   TODO: resolve this in the future
                                         ).save()
+                else:
+                    log.error(lijn.lineplanningnumber + " " + line)
+            else:
+                log.error("Line empty, eigenlijk haltes leeg")
 
     def save_mutationmessage(self):
         # Add details
         line = self.data['haltes']
         if line != '':
             lijn = self.instance.line
-            if line.split(":")[0] == lijn.publiclinenumber:
+            if line.split(":")[0] == lijn.lineplanningnumber:
                 haltes = [x for x in line.split(":")[1].split(",") if x]
                 for halte in haltes:
                     halte_split = halte.split('_')
