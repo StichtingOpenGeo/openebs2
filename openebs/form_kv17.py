@@ -951,6 +951,8 @@ class Kv17ShortenForm(forms.ModelForm):
         return xml_output
 
     def save_shorten(self, qry_kv17change):
+        # TODO: when a shorten of multiple trips and multiple directions is provided, it should only apply the shorten
+        # on the stops in that direction.
         for line in self.data['haltes'].split(";"):
             if line != '':
                 lijn = self.instance.line
