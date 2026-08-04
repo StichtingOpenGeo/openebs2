@@ -66,6 +66,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'openebs2.context_processors.social_login',
             ],
         },
     },
@@ -130,6 +131,10 @@ INSTALLED_APPS = (
 
 # Provider specific settings
 SOCIALACCOUNT_PROVIDERS = {}
+
+# SSO login: shows the provider button and syncs permissions from its roles.
+# Turn off in local_settings to use plain Django accounts.
+SOCIAL_LOGIN_ENABLED = True
 
 
 AUTH_PASSWORD_VALIDATORS = [

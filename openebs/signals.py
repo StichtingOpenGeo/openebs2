@@ -1,5 +1,6 @@
 from allauth.account.signals import user_logged_in
 from allauth.socialaccount.models import SocialAccount
+from django.conf import settings
 from django.dispatch import receiver
 from django.contrib.auth.models import Permission
 
@@ -8,6 +9,9 @@ from openebs.models import UserProfile
 
 @receiver(user_logged_in)
 def user_logged_in_signal_handler(request, user, **kwargs):
+    if not settings.SOCIAL_LOGIN_ENABLED:
+        return  # No social account to read roles from
+
     social_account = SocialAccount.objects.get(user=request.user)
     roles = social_account.extra_data.get('realm_access', {}).get('roles', [])
 
