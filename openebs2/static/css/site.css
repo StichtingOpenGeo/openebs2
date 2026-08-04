@@ -116,6 +116,10 @@ span.stop-selection,span.trip-selection{
     width: 250px;
     background-color: #ffffff;
     padding: 5px;
+    /* Leaflet's panes (z-index 400) and controls (800) share the root stacking
+       context with this box, so without a z-index the map paints over it as
+       soon as it renders. Stay below 1000 so the navbar dropdowns win. */
+    z-index: 900;
 }
 .twitter-typeahead {
     width: 100%;
