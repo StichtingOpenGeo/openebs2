@@ -17,6 +17,7 @@
             <advicetype>1</advicetype>
             <subadvicetype>3</subadvicetype>
             <advicecontent>Pak de volgende boot</advicecontent>
+            <showcancelledtrip>true</showcancelledtrip>
         </MUTATIONMESSAGE>
     </KV17MUTATEJOURNEYSTOP>
 </DOSSIER>

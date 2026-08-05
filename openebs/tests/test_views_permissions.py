@@ -31,8 +31,8 @@ class TestViewPermissions(TestCase):
     def test_view_messages(self):
         response = self.client.get(reverse('msg_index'))
         self.assertEqual(response.status_code, 200)
-        self.assertEquals(len(response.context['active_list']), 0)
-        self.assertEquals(len(response.context['archive_list']), 0)
+        self.assertEqual(len(response.context['active_list']), 0)
+        self.assertEqual(len(response.context['archive_list']), 0)
 
         # Create NS message
         msg = TestUtils.create_message_default(self.user)
@@ -46,27 +46,27 @@ class TestViewPermissions(TestCase):
 
         response = self.client.get(reverse('msg_index'))
         self.assertEqual(response.status_code, 200)
-        self.assertEquals(len(response.context['active_list']), 1)
-        self.assertEquals(response.context['active_list'][0].messagecontent, "NS zet bussen in")
-        self.assertEquals(len(response.context['archive_list']), 0)
+        self.assertEqual(len(response.context['active_list']), 1)
+        self.assertEqual(response.context['active_list'][0].messagecontent, "NS zet bussen in")
+        self.assertEqual(len(response.context['archive_list']), 0)
 
     def test_view_messages_all(self):
         response = self.client.get(reverse('msg_index')+"?all=true")
         self.assertEqual(response.status_code, 200)
-        self.assertEquals(len(response.context['active_list']), Kv15Stopmessage.objects.filter(dataownercode='NS').count())
-        self.assertEquals(len(response.context['archive_list']), 0)
+        self.assertEqual(len(response.context['active_list']), Kv15Stopmessage.objects.filter(dataownercode='NS').count())
+        self.assertEqual(len(response.context['archive_list']), 0)
 
         view_all_perm = Permission.objects.get(codename='view_all')
         self.user.user_permissions.add(view_all_perm)
 
         response = self.client.get(reverse('msg_index'))
         self.assertEqual(response.status_code, 200)
-        self.assertEquals(len(response.context['active_list']), Kv15Stopmessage.objects.filter(messageendtime__gt=now(),
+        self.assertEqual(len(response.context['active_list']), Kv15Stopmessage.objects.filter(messageendtime__gt=now(),
                                                                                                isdeleted=False).count())
 
-        archive_count = Kv15Stopmessage.objects.filter(Q(messageendtime__lt=now) | Q(isdeleted=True),
+        archive_count = Kv15Stopmessage.objects.filter(Q(messageendtime__lt=now()) | Q(isdeleted=True),
                                                        messagestarttime__gt=now() - timedelta(days=3)).count()
-        self.assertEquals(len(response.context['archive_list']), archive_count)
+        self.assertEqual(len(response.context['archive_list']), archive_count)
 
         self.user.user_permissions.remove(view_all_perm)
         self.user.save()

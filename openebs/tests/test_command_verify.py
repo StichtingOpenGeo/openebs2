@@ -17,9 +17,9 @@ class TestKv8Verify(TestCase):
         cls.user = User.objects.create_user("test_kv8")
 
         # Create two fake sotps
-        stop_a = Kv1Stop(userstopcode=400, dataownercode='HTM', timingpointcode=400, name="Om de ene hoek", location=Point(1, 1))
-        stop_b = Kv1Stop(userstopcode=401, dataownercode='HTM', timingpointcode=401, name="Om de ander hoek", location=Point(1, 1))
-        stop_c = Kv1Stop(userstopcode=402, dataownercode='HTM', timingpointcode=3000402, name="In Lutjebroek", location=Point(1, 1))
+        stop_a = Kv1Stop(userstopcode=400, dataownercode='HTM', timingpointcode=400, quaycoderef='NL:Q:400', name="Om de ene hoek", location=Point(1, 1))
+        stop_b = Kv1Stop(userstopcode=401, dataownercode='HTM', timingpointcode=401, quaycoderef='NL:Q:401', name="Om de ander hoek", location=Point(1, 1))
+        stop_c = Kv1Stop(userstopcode=402, dataownercode='HTM', timingpointcode=3000402, quaycoderef='NL:Q:402', name="In Lutjebroek", location=Point(1, 1))
         stop_a.save()
         stop_b.save()
         stop_c.save()
@@ -40,10 +40,13 @@ class TestKv8Verify(TestCase):
         row = {
             'DataOwnerCode': 'HTM',
             'TimingPointCode': 400,
+            'QuayCode': 'NL:Q:400',
             'MessageCodeDate': now().date().isoformat(),
             'MessageStartTime': now(),
             'MessageEndTime': now()+timedelta(hours=2),
-            'MessageCodeNumber': '24'
+            'MessageCodeNumber': '24',
+            'OriginalMessageCodeDate': now().date().isoformat(),
+            'OriginalMessageCodeNumber': '24'
         }
 
         # Method under test
@@ -67,6 +70,9 @@ class TestKv8Verify(TestCase):
             'TimingPointCode': 400,
             'MessageCodeDate': now().date().isoformat(),
             'MessageCodeNumber': '25',
+            'OriginalMessageCodeDate': now().date().isoformat(),
+            'OriginalMessageCodeNumber': '25',
+            'QuayCode': 'NL:Q:400',
             'MessageContent': "Test content",
             'MessageStartTime': now(),
             'MessageEndTime': now()+timedelta(hours=2),
@@ -125,6 +131,9 @@ class TestKv8Verify(TestCase):
             'TimingPointCode': 400,
             'MessageCodeDate': now().date().isoformat(),
             'MessageCodeNumber': '37',
+            'OriginalMessageCodeDate': now().date().isoformat(),
+            'OriginalMessageCodeNumber': '37',
+            'QuayCode': 'NL:Q:400',
             'MessageContent': "Test content",
             'MessageStartTime': now(),
             'MessageEndTime': now()+timedelta(hours=2),
@@ -147,9 +156,9 @@ class TestKv8Verify(TestCase):
 
         # Method under test
         self.testClass.process_message(row, False)
-        row['TimingPointCode'] = 401
+        row['TimingPointCode'], row['QuayCode'] = 401, 'NL:Q:401'
         self.testClass.process_message(row, False)
-        row['TimingPointCode'] = 3000402
+        row['TimingPointCode'], row['QuayCode'] = 3000402, 'NL:Q:402'
         self.testClass.process_message(row, False)
 
         self.assertEqual(Kv15Stopmessage.objects.count(), count+1)
@@ -165,8 +174,8 @@ class TestKv8Verify(TestCase):
         Now we have proper support for TPC, check we can have message with two linked stops
         """
 
-        stop_d = Kv1Stop(userstopcode=403, dataownercode='HTM', timingpointcode=3000403, name="In Lutjebroek", location=Point(1, 1))
-        stop_e = Kv1Stop(userstopcode=999, dataownercode='VTN', timingpointcode=3000403, name="In Lutjebrk", location=Point(1, 1))
+        stop_d = Kv1Stop(userstopcode=403, dataownercode='HTM', timingpointcode=3000403, quaycoderef='NL:Q:403', name="In Lutjebroek", location=Point(1, 1))
+        stop_e = Kv1Stop(userstopcode=999, dataownercode='VTN', timingpointcode=3000403, quaycoderef='NL:Q:403', name="In Lutjebrk", location=Point(1, 1))
         stop_d.save()
         stop_e.save()
 
@@ -176,6 +185,9 @@ class TestKv8Verify(TestCase):
             'TimingPointCode': 3000403,
             'MessageCodeDate': now().date().isoformat(),
             'MessageCodeNumber': '50',
+            'OriginalMessageCodeDate': now().date().isoformat(),
+            'OriginalMessageCodeNumber': '50',
+            'QuayCode': 'NL:Q:403',
             'MessageContent': "Test content some more for two vervoerders",
             'MessageStartTime': now(),
             'MessageEndTime': now()+timedelta(hours=2),
@@ -219,6 +231,9 @@ class TestKv8Verify(TestCase):
             'TimingPointCode': 400,
             'MessageCodeDate': now().date().isoformat(),
             'MessageCodeNumber': '26',
+            'OriginalMessageCodeDate': now().date().isoformat(),
+            'OriginalMessageCodeNumber': '26',
+            'QuayCode': 'NL:Q:400',
             'MessageContent': "Test content",
             'MessageStartTime': now(),
             'MessageEndTime': now()+timedelta(hours=2),
@@ -272,7 +287,8 @@ class TestKv8Verify(TestCase):
         Test an already deleted message is marked as such, and the end time is about now
         """
         a = Kv15Stopmessage(dataownercode='HTM', user=self.user, messagecodedate=datetime(2013, 11, 17),
-                            messagecodenumber=30)
+                            messagecodenumber=30, kv8messagecodedate=datetime(2013, 11, 17),
+                            kv8messagecodenumber=30)
         a.save()
         a.delete()
         a.set_status(MessageStatus.DELETED)
@@ -283,6 +299,7 @@ class TestKv8Verify(TestCase):
         row = {
             'DataOwnerCode': 'HTM',
             'TimingPointCode': 400,
+            'QuayCode': 'NL:Q:400',
             'MessageCodeDate': '2013-11-17',
             'MessageCodeNumber': '30'
         }
@@ -299,7 +316,9 @@ class TestKv8Verify(TestCase):
         """
         Test a message that was deleted
         """
-        a = Kv15Stopmessage(dataownercode='HTM', user=self.user, messagecodedate=datetime(2013, 11, 17), messagecodenumber=31)
+        a = Kv15Stopmessage(dataownercode='HTM', user=self.user, messagecodedate=datetime(2013, 11, 17),
+                            messagecodenumber=31, kv8messagecodedate=datetime(2013, 11, 17),
+                            kv8messagecodenumber=31)
         a.save()
         self.assertEqual(a.status, MessageStatus.SAVED)
         self.assertEqual(a.isdeleted, False)
@@ -309,6 +328,7 @@ class TestKv8Verify(TestCase):
         row = {
             'DataOwnerCode': 'HTM',
             'TimingPointCode': 400,
+            'QuayCode': 'NL:Q:400',
             'MessageCodeDate': '2013-11-17',
             'MessageCodeNumber': '31'
         }
@@ -333,13 +353,15 @@ class TestKv8Verify(TestCase):
         row = {
             'DataOwnerCode': 'HTM',
             'TimingPointCode': 400,
+            'QuayCode': 'NL:Q:400',
             'MessageCodeDate': '2013-11-17',
             'MessageCodeNumber': '38'
         }
         # Method under test
         self.testClass.process_message(row, True)
 
-        a = Kv15Stopmessage.objects.get(messagecodenumber=38)
+        # Unknown messages are created with a fresh openEBS number, so find it by its KV8 one
+        a = Kv15Stopmessage.objects.get(kv8messagecodenumber=38)
         self.assertEqual(a.status, MessageStatus.DELETE_CONFIRMED)
         self.assertEqual(a.isdeleted, True)
         self.assertLess((now() - a.messageendtime), timedelta(seconds=30), "Time wasn't set right")
@@ -354,7 +376,9 @@ class TestKv8Verify(TestCase):
         a = Kv15Stopmessage(dataownercode='HTM',
                             user=self.user,
                             messagecodedate=datetime(2013, 11, 17),
-                            messagecodenumber=messagecodenumber)
+                            messagecodenumber=messagecodenumber,
+                            kv8messagecodedate=datetime(2013, 11, 17),
+                            kv8messagecodenumber=messagecodenumber)
         a.save()
         self.assertEqual(a.status, MessageStatus.SAVED)
         self.assertEqual(a.isdeleted, False)
@@ -363,12 +387,13 @@ class TestKv8Verify(TestCase):
         row = {
             'DataOwnerCode': 'HTM',
             'TimingPointCode': 400,
+            'QuayCode': 'NL:Q:400',
             'MessageCodeDate': '2013-11-17',
             'MessageCodeNumber': str(messagecodenumber)
         }
         # Method under test
         self.testClass.process_message(row, True)
-        row['TimingPointCode'] = 401
+        row['TimingPointCode'], row['QuayCode'] = 401, 'NL:Q:401'
         self.testClass.process_message(row, True)
 
         a = Kv15Stopmessage.objects.get(pk=a.pk) # Get latest from db
@@ -384,7 +409,8 @@ class TestKv8Verify(TestCase):
         """
         When we update a message, it sends a delete followed by an update - check that works
         """
-        a = Kv15Stopmessage(dataownercode='HTM', user=self.user, messagecodedate=now().date(), messagecodenumber=32)
+        a = Kv15Stopmessage(dataownercode='HTM', user=self.user, messagecodedate=now().date(), messagecodenumber=32,
+                            kv8messagecodedate=now().date(), kv8messagecodenumber=32)
         a.messagecontent = "Bla!"
         a.status = MessageStatus.CONFIRMED
         a.save()
@@ -398,16 +424,21 @@ class TestKv8Verify(TestCase):
         delete_row = {
             'DataOwnerCode': 'HTM',
             'TimingPointCode': 400,
+            'QuayCode': 'NL:Q:400',
             'MessageCodeDate': now().date().isoformat(),
             'MessageCodeNumber': '32'
         }
         add_row = {
             'DataOwnerCode': 'HTM',
             'TimingPointCode': 401,
+            'QuayCode': 'NL:Q:401',
             'MessageCodeDate': now().date().isoformat(),
             'MessageStartTime': now(),
             'MessageEndTime': now()+timedelta(hours=2),
-            'MessageCodeNumber': '32'
+            'MessageCodeNumber': '32',
+            # The update carries the message's new number, the delete the one it replaced
+            'OriginalMessageCodeDate': now().date().isoformat(),
+            'OriginalMessageCodeNumber': str(a.messagecodenumber)
         }
         # Method under test
         self.testClass.process_message(delete_row, True)
@@ -431,6 +462,9 @@ class TestKv8Verify(TestCase):
             'TimingPointCode': 400,
             'MessageCodeDate': now().date().isoformat(),
             'MessageCodeNumber': '35',
+            'OriginalMessageCodeDate': now().date().isoformat(),
+            'OriginalMessageCodeNumber': '35',
+            'QuayCode': 'NL:Q:400',
             'MessageContent': None,
             'MessageStartTime': now(),
             'MessageEndTime': now()+timedelta(hours=2),

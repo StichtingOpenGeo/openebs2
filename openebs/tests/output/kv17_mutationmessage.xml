@@ -14,6 +14,7 @@
             <reasontype>3</reasontype>
             <subreasontype>7</subreasontype>
             <reasoncontent>Boot is vol</reasoncontent>
+            <showcancelledtrip>true</showcancelledtrip>
         </MUTATIONMESSAGE>
     </KV17MUTATEJOURNEYSTOP>
 </DOSSIER>

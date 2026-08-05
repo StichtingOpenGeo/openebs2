@@ -1,4 +1,3 @@
-from unittest.test.test_case import Test
 
 import csv
 import tempfile
@@ -55,8 +54,8 @@ class TestRidImporter(TestCase):
             ['VTN:1049','62','Gulpen - Vaals'],
         ]
         stops = [
-            ['operator_id','name','longitude','latitude','timingpointcode',],
-            ['VTN:15023014','Busstation Perron C', '1', '2','15023014']  # Load an updated name
+            ['operator_id','name','longitude','latitude','timingpointcode','quaycoderef'],
+            ['VTN:15023014','Busstation Perron C', '1', '2','15023014','NL:Q:15023014']  # Load an updated name
         ]
         self.createTestFile('openebs_lines.csv', lines)
         self.createTestFile('openebs_stops.csv', stops)

@@ -342,7 +342,7 @@ class Kv15Scenario(models.Model):
 
     def delete_all(self):
         msgs = []
-        for inst in Kv15ScenarioInstance.objects.filter(scenario=self, message__messageendtime__gt=now):
+        for inst in Kv15ScenarioInstance.objects.filter(scenario=self, message__messageendtime__gt=now()):
             inst.message.delete()
             msgs.append(inst.message.to_xml_delete())
 
