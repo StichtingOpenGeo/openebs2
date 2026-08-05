@@ -85,8 +85,11 @@ class ExternalMessagePushMixin(object):
         for destination in sorted(settings, key=lambda k: k['priority']):
             if not destination['enabled']:
                 continue
-            if self.message_type is None or self.message_type not in destination['endpoints']:
+            if self.message_type is None:
                 raise ImproperlyConfigured("Endpoint type isn't registered")
+            if self.message_type not in destination['endpoints']:
+                # Not every subscriber takes every message type - ndovloket_rig has no KV6
+                continue
             if self.namespace == '' or self.namespace is None:
                 raise ImproperlyConfigured("Namespace isn't configured")
             if self.dossier == '' or self.dossier is None:

@@ -47,7 +47,7 @@
     {% endif %}
 </KV17MUTATEJOURNEY>
 {% endif %}
-{% if object.journey_details_mutation_message.count > 0 or object.shorten_details.count > 0 and not object.is_recovered %}
+{% if object.journey_details_mutation_message.count > 0 or object.shorten_details.count > 0 %}{% if not object.is_recovered %}
 <KV17MUTATEJOURNEYSTOP>
     <timestamp>{{ object.created|date:"c" }}</timestamp>
 {% for shorten in object.shorten_details.all %}
@@ -75,4 +75,4 @@
     </MUTATIONMESSAGE>
 {% endfor %}
 </KV17MUTATEJOURNEYSTOP>
-{% endif %}
+{% endif %}{% endif %}
