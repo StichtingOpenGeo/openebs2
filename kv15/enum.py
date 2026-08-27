@@ -17,6 +17,8 @@ DATAOWNERCODE = (
     ('TESO', 'TESO'),
     ('DOEKSEN', 'Rederij Doeksen'),
     ('WPD', 'Wagenborg Passagiersdiensten'),
+    ('MLN', 'Miljoenenlijn'),
+    ('OVCN', 'Stichting Openbaar Vervoer Collectie Nederland'),
 )
 
 MESSAGEPRIORITY = (
