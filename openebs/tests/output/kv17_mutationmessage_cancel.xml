@@ -8,7 +8,10 @@
     </KV17JOURNEY>
     <KV17MUTATEJOURNEY>
         <timestamp>...</timestamp>
-        <CANCEL></CANCEL>
+        <CANCEL>
+            <showcancelledtrip>true</showcancelledtrip>
+            <autorecover>false</autorecover>
+        </CANCEL>
     </KV17MUTATEJOURNEY>
     <KV17MUTATEJOURNEYSTOP>
         <timestamp>...</timestamp>
@@ -18,6 +21,7 @@
             <reasontype>3</reasontype>
             <subreasontype>7</subreasontype>
             <reasoncontent>Boot is vol en vaart niet</reasoncontent>
+            <showcancelledtrip>true</showcancelledtrip>
         </MUTATIONMESSAGE>
     </KV17MUTATEJOURNEYSTOP>
 </DOSSIER>
