@@ -8,6 +8,9 @@
     </KV17JOURNEY>
     <KV17MUTATEJOURNEY>
         <timestamp>...</timestamp>
-        <CANCEL></CANCEL>
+        <CANCEL>
+            <showcancelledtrip>true</showcancelledtrip>
+            <autorecover>false</autorecover>
+        </CANCEL>
     </KV17MUTATEJOURNEY>
 </DOSSIER>

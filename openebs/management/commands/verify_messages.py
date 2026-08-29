@@ -96,10 +96,17 @@ class Command(BaseCommand):
             self.add_stop_for_message(msg, row)
 
         else:
-            msg, created = Kv15Stopmessage.objects.get_or_create(dataownercode=row['DataOwnerCode'],
-                                                                 kv8messagecodedate=row['MessageCodeDate'],
-                                                                 kv8messagecodenumber=row['MessageCodeNumber'],
-                                                                 defaults={'user': self.get_user()})
+            # Updating a message keeps the superseded version around, and it carries the same
+            # KV8 identity, so match the most recent one instead of tripping over the duplicates
+            msg = Kv15Stopmessage.objects.filter(dataownercode=row['DataOwnerCode'],
+                                                 kv8messagecodedate=row['MessageCodeDate'],
+                                                 kv8messagecodenumber=row['MessageCodeNumber']).order_by('id').last()
+            created = msg is None
+            if created:
+                msg = Kv15Stopmessage.objects.create(dataownercode=row['DataOwnerCode'],
+                                                     kv8messagecodedate=row['MessageCodeDate'],
+                                                     kv8messagecodenumber=row['MessageCodeNumber'],
+                                                     user=self.get_user())
 
             if not created:
                 self.log.info("Message confirmed deleted: %s (Stop/TPC %s)" % (msg, row['TimingPointCode']))

@@ -46,7 +46,7 @@ class Command(BaseCommand):
             try:
                 msg = FerryKv6Messages.objects.get(operatingday=date, ferry=ferry, journeynumber=journey.journeynumber,
                                                    status=FerryKv6Messages.Status.READY, cancelled=False)
-                if msg.delay > 0 and journey.departuretime + msg.delay > depart_target:
+                if msg.delay is not None and msg.delay > 0 and journey.departuretime + msg.delay > depart_target:
                     continue
 
                 msg.status = FerryKv6Messages.Status.DEPARTED
@@ -66,7 +66,7 @@ class Command(BaseCommand):
             try:
                 msg = FerryKv6Messages.objects.get(operatingday=date, ferry=ferry, journeynumber=journey.journeynumber,
                                                    status=FerryKv6Messages.Status.DEPARTED, cancelled=False)
-                if msg.delay > 0 and journey.departuretime + msg.delay > arrival_target:
+                if msg.delay is not None and msg.delay > 0 and journey.departuretime + msg.delay > arrival_target:
                     continue
 
                 msg.status = FerryKv6Messages.Status.ARRIVED

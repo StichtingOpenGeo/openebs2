@@ -1,4 +1,3 @@
-from unittest.test.test_case import Test
 
 from django.core.management import call_command
 from django.test import TestCase
@@ -45,12 +44,12 @@ class TestRidImporter(TestCase):
 
         # Data
         lines = [
-            ['operator_id','publiccode','name'],
+            ['bison_id','publiccode','name'],
             ['VTN:1049','62','Gulpen - Vaals'],
         ]
         stops = [
-            ['operator_id','name','longitude','latitude','timingpointcode',],
-            ['VTN:15023014','Busstation Perron C', '1', '2','15023014']  # Load an updated name
+            ['operator_id','name','longitude','latitude','timingpointcode','quaycoderef'],
+            ['VTN:15023014','Busstation Perron C', '1', '2','15023014','NL:Q:15023014']  # Load an updated name
         ]
         self.createTestFile('openebs_lines.csv', lines)
         self.createTestFile('openebs_stops.csv', stops)

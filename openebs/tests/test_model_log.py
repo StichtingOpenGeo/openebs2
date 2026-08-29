@@ -12,4 +12,4 @@ class TestKv15LogModel(TestCase):
         m.save() # This assigns an codenumber
         Kv15Log.create_log_entry(m, "10.0.0.1")
 
-        self.assertEquals(Kv15Log.objects.count(), 1)
+        self.assertEqual(Kv15Log.objects.count(), 1)

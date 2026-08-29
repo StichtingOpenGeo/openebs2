@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
 
 from kv1.models import Kv1Stop, Kv1Line, Kv1Journey
-from openebs.models import Kv17Change, Kv17StopChange, Kv17JourneyChange
+from openebs.models import Kv17Change, Kv17MutationMessage, Kv17JourneyChange
 from utils.xml_test import XmlTest
 
 
@@ -72,8 +72,8 @@ class TestKv17MessageXmlModel(XmlTest):
         change = Kv17Change(dataownercode='HTM', line=self.line, journey=journey, operatingday=datetime(2016, 4, 1),
                             is_cancel=False)
         change.save()
-        stop_change = Kv17StopChange(change=change, type=5, stop=self.haltes[0], stoporder=1,
-                                     reasontype=3, subreasontype=7, reasoncontent="Boot is vol")
+        stop_change = Kv17MutationMessage(change=change, stop=self.haltes[0], passagesequencenumber=1,
+                                          reasontype=3, subreasontype=7, reasoncontent="Boot is vol")
         stop_change.save()
 
         # Have to pad with "DOSSIER" since otherwise we have invalid XML
@@ -98,8 +98,8 @@ class TestKv17MessageXmlModel(XmlTest):
 
         change = Kv17Change(dataownercode='HTM', line=self.line, journey=journey, operatingday=datetime(2016, 4, 1))
         change.save()
-        stop_change = Kv17StopChange(change=change, type=5, stop=self.haltes[0], stoporder=1,
-                                     reasontype=3, subreasontype=7, reasoncontent="Boot is vol en vaart niet")
+        stop_change = Kv17MutationMessage(change=change, stop=self.haltes[0], passagesequencenumber=1,
+                                          reasontype=3, subreasontype=7, reasoncontent="Boot is vol en vaart niet")
         stop_change.save()
         self.assertXmlEqual("<DOSSIER>%s</DOSSIER>" % change.to_xml(),
                             self.getCompareXML('openebs/tests/output/kv17_mutationmessage_cancel.xml'))

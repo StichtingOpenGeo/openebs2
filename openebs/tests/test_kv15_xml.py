@@ -53,7 +53,7 @@ class TestKv15MessageXmlModel(XmlTest):
         m1.messagetype = MESSAGETYPE[1][0]
         m1.messagedurationtype = MESSAGEDURATIONTYPE[1][0]
         m1.reasontype = REASONTYPE[1][0]
-        m1.subreasontype = SUBREASONTYPE[1][0]
+        m1.subreasontype = '11'  # Literal: the expected XML pins this, the choice order does not
         m1.reasoncontent = "Uitleg oorzaak"
         m1.effecttype = EFFECTTYPE[1][0]
         m1.subeffecttype = SUBEFFECTTYPE[1][0]

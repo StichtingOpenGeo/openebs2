@@ -13,6 +13,8 @@
             <subreasontype>24_13</subreasontype>
             <advicetype>1</advicetype>
             <subadvicetype>3_1</subadvicetype>
+            <showcancelledtrip>true</showcancelledtrip>
+            <autorecover>false</autorecover>
         </CANCEL>
     </KV17MUTATEJOURNEY>
 </DOSSIER>
