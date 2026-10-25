@@ -11,7 +11,7 @@ from kv1.models import Kv1Line, Kv1Stop
 from openebs.models import Kv15Stopmessage, Kv15MessageStop
 from openebs.views_push import Kv15PushMixin, Kv17PushMixin, Kv6PushMixin
 from utils.push import Push, SiriSxPush
-from utils.siri_sx import SIRI_NAMESPACE, RefLookup, convert, to_siri_sx
+from utils.siri_sx import SIRI_NAMESPACE, RefLookup, _alert_cause, convert, to_siri_sx
 
 NS = {'s': SIRI_NAMESPACE}
 
@@ -64,7 +64,8 @@ class TestSiriSxKv15(TestCase):
         self.assertEqual(['open'], values(situation, 's:Progress'))
         self.assertEqual(['2013-11-16T14:09:35+01:00'], values(situation, 's:ValidityPeriod/s:StartTime'))
         self.assertEqual(['2013-11-17T03:00:00+01:00'], values(situation, 's:ValidityPeriod/s:EndTime'))
-        self.assertEqual(['undefinedEquipmentProblem'], values(situation, 's:AlertCause'))
+        # Materieel, without a subreasontype
+        self.assertEqual(['technicalProblem'], values(situation, 's:AlertCause'))
         self.assertEqual(['Defecte tram'], values(situation, 's:ReasonName'))
         self.assertEqual(['severe'], values(situation, 's:Severity'))
         self.assertEqual(['1'], values(situation, 's:Priority'))
@@ -158,7 +159,7 @@ class TestSiriSxKv17(TestCase):
         self.assertEqual(['NL:HTM:Line:1001'], values(journey, 's:LineRef'))
         self.assertEqual([], values(journey, 's:Calls/s:Call/s:StopPointRef'))
         consequence = situation.xpath('s:Consequences/s:Consequence', namespaces=NS)[0]
-        self.assertEqual(['discontinuedOperation'], values(consequence, 's:Condition'))
+        self.assertEqual(['tripCancellation'], values(consequence, 's:Condition'))
         self.assertEqual(['100'], values(consequence, 's:Affects/s:VehicleJourneys/s:AffectedVehicleJourney/'
                                                       's:FramedVehicleJourneyRef/s:DatedVehicleJourneyRef'))
 
@@ -190,6 +191,25 @@ class TestSiriSxKv17(TestCase):
         self.assertEqual(['2016-04-01T10:00:00+02:00'], values(situation, 's:CreationTime'))
         self.assertEqual(['100', '101'], values(situation, 's:Affects/s:VehicleJourneys/'
                                                                    's:AffectedVehicleJourney/s:Calls/s:Call/s:StopPointRef'))
+        consequence = situation.xpath('s:Consequences/s:Consequence', namespaces=NS)[0]
+        self.assertEqual(['stopCancelled'], values(consequence, 's:Condition'))
+        self.assertEqual(['100', '101'], values(consequence, 's:Affects/s:VehicleJourneys/'
+                                                                     's:AffectedVehicleJourney/s:Calls/s:Call/s:StopPointRef'))
+
+    def test_shorten_and_mutation_message(self):
+        """ Only the skipped stop is cancelled, the stop with a message is still served """
+        xml = """<KV17JOURNEY><dataownercode>HTM</dataownercode><lineplanningnumber>1001</lineplanningnumber>
+        <operatingday>2016-04-01</operatingday><journeynumber>100</journeynumber><reinforcementnumber>0</reinforcementnumber>
+        </KV17JOURNEY><KV17MUTATEJOURNEYSTOP><timestamp>2016-04-01T10:00:00+02:00</timestamp>
+        <SHORTEN><userstopcode>100</userstopcode><passagesequencenumber>0</passagesequencenumber>
+        <showcancelledtrip>true</showcancelledtrip></SHORTEN>
+        <MUTATIONMESSAGE><userstopcode>101</userstopcode><passagesequencenumber>0</passagesequencenumber>
+        <reasontype>3</reasontype><subreasontype>7</subreasontype></MUTATIONMESSAGE></KV17MUTATEJOURNEYSTOP>"""
+        situation = convert('KV17cvlinfo', xml)[0]
+        self.assertEqual(['100', '101'], values(situation, 's:Affects/s:VehicleJourneys/'
+                                                                   's:AffectedVehicleJourney/s:Calls/s:Call/s:StopPointRef'))
+        self.assertEqual(['100'], values(situation, 's:Consequences/s:Consequence/s:Affects/s:VehicleJourneys/'
+                                                         's:AffectedVehicleJourney/s:Calls/s:Call/s:StopPointRef'))
 
     def test_all_journeys_of_line(self):
         xml = """<KV17JOURNEY><dataownercode>HTM</dataownercode><allJourneysOfLine/>
@@ -205,6 +225,7 @@ class TestSiriSxKv17(TestCase):
                                                                      's:AffectedLine/s:LineRef'))
         self.assertEqual(['NL:HTM:Line:1001'], values(situation, 's:Consequences/s:Consequence/s:Affects/s:Networks/'
                                                                      's:AffectedNetwork/s:AffectedLine/s:LineRef'))
+        self.assertEqual(['lineCancellation'], values(situation, 's:Consequences/s:Consequence/s:Condition'))
 
     def test_all_lines(self):
         xml = """<KV17JOURNEY><dataownercode>HTM</dataownercode><allLines/><operatingday>2016-04-01</operatingday>
@@ -212,6 +233,7 @@ class TestSiriSxKv17(TestCase):
         <showcancelledtrip>true</showcancelledtrip><autorecover>false</autorecover></CANCEL></KV17MUTATEJOURNEY>"""
         situation = convert('KV17cvlinfo', xml)[0]
         self.assertEqual(['KV17:HTM:2016-04-01:ALL'], values(situation, 's:SituationNumber'))
+        self.assertEqual(['discontinuedOperation'], values(situation, 's:Consequences/s:Consequence/s:Condition'))
         self.assertEqual(['NL:BISON:Codespace:HTM'], values(situation, 's:Affects/s:Operators/s:AffectedOperator/'
                                                                            's:OperatorRef'))
         self.assertEqual(['NL:BISON:Codespace:HTM'], values(situation, 's:Consequences/s:Consequence/s:Affects/'
@@ -240,6 +262,43 @@ class TestSiriSxKv17(TestCase):
         other = get_fixture('kv17_reason_basic.xml').replace('>HTM<', '>GVB<')
         siri = etree.fromstring(to_siri_sx('KV17cvlinfo', [get_fixture('kv17_cancel.xml'), other], 'openebs'))
         self.assertEqual(['openebs'], values(siri, 's:ServiceDelivery/s:ProducerRef'))
+
+
+
+class TestSiriSxReasons(TestCase):
+    """ The KV subreasontype gives the AlertCause, and the reasontype only where a code means several things """
+    def test_alert_cause(self):
+        self.assertEqual('roadworks', _alert_cause('1', '23_2'))
+        # The UI has one list of subreasons, so a code with one meaning doesn't depend on the reasontype
+        self.assertEqual('congestion', _alert_cause('3', '15'))
+        # 4 is Brand, Tekort aan personeel or Seinstoring
+        self.assertEqual('fire', _alert_cause('1', '4'))
+        self.assertEqual('staffAbsence', _alert_cause('2', '4'))
+        self.assertEqual('signalFailure', _alert_cause('3', '4'))
+        # 255 is Onbekend, or Weersomstandigheden for the environment
+        self.assertEqual('poorWeather', _alert_cause('4', '255'))
+        self.assertEqual('unknown', _alert_cause('2', '255'))
+        # Events without a PublicEventReason are still events
+        self.assertEqual('specialEvent', _alert_cause('1', '24_16'))
+        # Unknown codes fall back on the reasontype, without the deprecated undefined...Problem values
+        self.assertEqual('miscellaneous', _alert_cause('1', '99'))
+        self.assertEqual('technicalProblem', _alert_cause('3', None))
+        self.assertEqual('unknown', _alert_cause('2', None))
+        self.assertEqual('unknown', _alert_cause(None, None))
+
+    def test_event(self):
+        """ Wielerronde """
+        situation = convert('KV17cvlinfo', get_fixture('kv17_reason_basic.xml'))[0]
+        self.assertEqual(['specialEvent'], values(situation, 's:AlertCause'))
+        self.assertEqual(['bicycleRace'], values(situation, 's:PublicEventReason'))
+        self.assertEqual(['true'], values(situation, 's:Planned'))
+
+    def test_mutation_message(self):
+        """ Defect materieel """
+        situation = convert('KV17cvlinfo', get_fixture('kv17_mutationmessage.xml'))[0]
+        self.assertEqual(['breakDown'], values(situation, 's:AlertCause'))
+        self.assertEqual([], values(situation, 's:PublicEventReason'))
+        self.assertEqual(['false'], values(situation, 's:Planned'))
 
 
 PUSH_SETTINGS_SIRI_SX = [

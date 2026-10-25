@@ -12,7 +12,7 @@ KV15 STOPMESSAGE
     dataownercode/messagecodedate/number    -> SituationNumber (KV15:<dataowner>:<date>:<number>)
     messagetimestamp                        -> CreationTime
     messagestarttime / messageendtime       -> ValidityPeriod/StartTime, ValidityPeriod/EndTime
-    reasontype                              -> AlertCause (coarse, see REASONTYPE_ALERTCAUSE)
+    reasontype/subreasontype                -> AlertCause and PublicEventReason (see SUBREASONTYPE_ALERTCAUSE)
     reasoncontent                           -> ReasonName
     messagepriority                         -> Severity and Priority (CALAMITY is severe/1, everything else normal/3)
     messagecontent                          -> Summary, Description
@@ -27,17 +27,20 @@ bare userstopcode if we don't have one. Lines are the NeTEx line ref imported fr
 The dataowner is the codespace, so ParticipantRef and OperatorRef are NL:BISON:Codespace:<dataowner> and the
 ProducerRef of a delivery is NL:<dataowner> (if it's all one dataowner).
 
-Every situation also gets CountryRef, PublicationWindow, Priority, ReportType (incident) and Planned (false), like
-the NS samples of the Dutch profile.
+Every situation also gets CountryRef, PublicationWindow, Priority, ReportType (incident) and Planned (true for works
+and events), like the NS samples of the Dutch profile. Enumerations only use the values the SIRI-NL profile allows.
+
 KV15 DELETEMESSAGE                          -> the same SituationNumber with Progress closed
 
 KV17 KV17JOURNEY                            -> SituationNumber (KV17:<dataowner>:<operatingday>:<line>:<journey>)
                                                and Affects (operator, line or vehicle journey)
      KV17MUTATEJOURNEY/CANCEL               -> open situation, reason/advice content as Detail/Advice, and a
-                                               Consequence (discontinuedOperation) for what is cancelled
+                                               Consequence for what is cancelled: tripCancellation, lineCancellation
+                                               or (all lines) discontinuedOperation
      KV17MUTATEJOURNEY/RECOVER              -> closed situation
      KV17MUTATEJOURNEY/NOTMONITORED         -> nothing, this isn't passenger information
-     KV17MUTATEJOURNEYSTOP/SHORTEN          -> AffectedVehicleJourney/Calls/Call per skipped stop
+     KV17MUTATEJOURNEYSTOP/SHORTEN          -> AffectedVehicleJourney/Calls/Call per skipped stop, and a Consequence
+                                               (stopCancelled) for those
      KV17MUTATEJOURNEYSTOP/MUTATIONMESSAGE  -> AffectedVehicleJourney/Calls/Call, reason/advice content as Detail/Advice
 """
 import logging
@@ -61,12 +64,79 @@ PARTICIPANT_PREFIX = 'NL:BISON:Codespace:'
 CHB_QUAYCODE_PREFIX = 'NL:Q:'  # Kv1Stop.quaycoderef as imported from RID
 CHB_QUAY_PREFIX = 'NL:CHB:Quay:'  # What we send
 
-# KV15 reasontype -> SIRI AlertCause. The KV subreasontypes aren't unique across reasontypes, so we stay coarse
+# KV15/KV17 subreasontype -> SIRI AlertCause, limited to the values the SIRI-NL profile allows. The KV codes are the old
+# TPEG Pti19-22 codes, one table per reasontype (1 miscellaneous, 2 personnel, 3 equipment, 4 environment), so a few
+# codes mean different things per reasontype. The UI shows one flat list of subreasons though, so a code with a
+# single meaning in that list is mapped on its own, and only the shared codes go by reasontype.
+SUBREASONTYPE_ALERTCAUSE = {
+    '0_1': 'previousDisturbances',  # Eerdere verstoring
+    '3': 'heavySnowFall',  # Sneeuw
+    '3_1': 'policeOrder',  # Op last van de politie
+    '3_9': 'securityAlert',  # Bommelding
+    '3_11': 'evacuation',  # Ontruiming
+    '3_15': 'bombDisposal',  # Ruimen WO II bom
+    '3_17': 'fireBrigadeOrder',  # Op last van de brandweer
+    '4': {'1': 'fire', '2': 'staffAbsence', '3': 'signalFailure', '4': 'fire'},  # Brand, Tekort aan personeel, Seinstoring
+    '4_1': 'signalFailure',  # Sein en wisselstoring, like NS does
+    '5': {'2': 'industrialAction', '3': 'derailment', '4': 'strongWinds'},  # Staking/Vakbondsacties, Ontsporing, Storm
+    '5_1': 'industrialAction',  # Mogelijke staking
+    '6': {'1': 'accident', '2': 'industrialAction', '3': 'accident', '4': 'accident'},  # Ongeval, Stiptheidsactie
+    '6_2': 'defectiveVehicle',  # Defecte trein
+    '6_3': 'personHitByVehicle',  # Aanrijding met een persoon
+    '6_4': 'emergencyMedicalServices',  # Passagier onwel
+    '6_6': 'collision',  # Aanrijding
+    '7': {'1': 'overcrowded', '2': 'overcrowded', '3': 'breakDown', '4': 'overcrowded'},  # Extreme drukte, Defect materieel
+    '8_1': 'brokenRail',  # Defect spoor
+    '8_4': 'miscellaneous',  # Tekort aan materieel
+    '8_10': 'pointsFailure',  # Wisselstoring
+    '8_11': 'levelCrossingFailure',  # Overwegstoring
+    '8_12': 'trafficManagementSystemFailure',  # Storing in verkeersleidingsysteem
+    '8_13': 'poorRailConditions',  # Gladde sporen
+    '9': 'repairWork',  # Herstelwerkzaamheden
+    '9_1': 'ice',  # Gladheid
+    '9_2': 'ice',  # IJsgang, IJzel
+    '11': 'maintenanceWork',  # Herstel werkzaamheden
+    '11_2': 'maintenanceWork',  # Uitloop herstelwerkzaamheden
+    '12': 'powerProblem',  # Stroomstoring
+    '12_1': 'overheadWireFailure',  # Defecte bovenleiding
+    '12_2': 'maintenanceWork',  # Uitloop werkzaamheden
+    '14': {'3': 'swingBridgeFailure', '4': 'flooding'},  # Defecte brug, Wateroverlast
+    '14_1': 'bridgeDamage',  # Defect viaduct
+    '15': 'congestion',  # File
+    '16': 'routeBlockage',  # Route versperd, Stremming
+    '17': 'personOnTheLine',  # Mensen op de route
+    '18': 'vehicleOnTheLine',  # Auto in spoor
+    '19_1': 'fallenTreeOnTheLine',  # Omgevallen bomen
+    '20': 'animalOnTheLine',  # Vee op de route
+    '23': 'roadworks',  # Werkzaamheden
+    '23_1': 'sewerageMaintenance',  # Rioleringswerkzaamheden
+    '23_2': 'roadworks',  # Wegwerkzaamheden
+    '23_3': 'roadworks',  # Asfalteringswerkzaamheden
+    '23_4': 'roadworks',  # Bestratingswerkzaamheden
+    '24_1': 'procession',  # Optocht
+    '26_1': 'speedRestrictions',  # Snelheidsbeperkingen
+    '26_2': 'miscellaneous',  # Logistieke problemen
+    '255': {'4': 'poorWeather'},  # Onbekend, Weersomstandigheden
+    '255_1': 'lightningStrike',  # Blikseminslag
+}
+# Events (24_x) are a specialEvent, with the kind of event as PublicEventReason if the profile has it
+SUBREASONTYPE_PUBLICEVENT = {
+    '24_1': 'procession',  # Optocht
+    '24_6': 'flowerEvent',  # Bloemencorso
+    '24_7': 'streetFestival',  # Braderie
+    '24_8': 'festival',  # Carnaval
+    '24_9': 'market',  # Jaarmarkt
+    '24_10': 'funfair',  # Kermis
+    '24_11': 'stateOccasion',  # Koninginnedag
+    '24_12': 'marathon',  # Marathon
+    '24_13': 'bicycleRace',  # Wielerronde
+    '24_14': 'footballMatch',  # Voetbalwedstrijd
+    '24_15': 'ceremonialEvent',  # Herdenking
+}
+# Without a (known) subreasontype. The profile doesn't allow the undefined...Problem values per reasontype
 REASONTYPE_ALERTCAUSE = {
     '1': 'miscellaneous',
-    '2': 'undefinedPersonnelProblem',
-    '3': 'undefinedEquipmentProblem',
-    '4': 'undefinedEnvironmentalProblem',
+    '3': 'technicalProblem',
 }
 
 log = logging.getLogger('openebs.siri_sx')
@@ -135,6 +205,7 @@ def _convert_kv15(message, refs):
     situation = _situation(_datetime(message, 'messagetimestamp') or now(), dataowner, situation_number, 'open',
                            _datetime(message, 'messagestarttime') or now(), _datetime(message, 'messageendtime'),
                            reasontype=_text(message, 'reasontype'),
+                           subreasontype=_text(message, 'subreasontype'),
                            reason=_text(message, 'reasoncontent'),
                            severity='severe' if _text(message, 'messagepriority') == 'CALAMITY' else 'normal',
                            summary=_text(message, 'messagecontent'),
@@ -214,6 +285,7 @@ def _convert_kv17(group, refs):
             summary = _text(details, 'reasoncontent') or "Wijziging in de dienstregeling"
         situation = _situation(timestamp, dataowner, situation_number, 'open', start, end,
                                reasontype=_text(details, 'reasontype'),
+                               subreasontype=_text(details, 'subreasontype'),
                                reason=_text(details, 'reasoncontent'),
                                summary=summary,
                                detail=_text(details, 'reasoncontent'),
@@ -236,13 +308,31 @@ def _convert_kv17(group, refs):
             calls = _sub(vehicle_journey, 'Calls')
             for mutation in stop_mutations:
                 call = _sub(calls, 'Call')
+                # passagesequencenumber counts earlier visits to the stop, it isn't the Order in the journey
                 _sub(call, 'StopPointRef', refs.stop(dataowner, _text(mutation, 'userstopcode')))
-                _sub(call, 'Order', _text(mutation, 'passagesequencenumber'))
 
     if cancel is not None:
+        if journey.find('allLines') is not None:
+            condition = 'discontinuedOperation'
+        elif journey.find('allJourneysOfLine') is not None:
+            condition = 'lineCancellation'
+        else:
+            condition = 'tripCancellation'
         consequence = _sub(_sub(situation, 'Consequences'), 'Consequence')
-        _sub(consequence, 'Condition', 'discontinuedOperation')
+        _sub(consequence, 'Condition', condition)
         consequence.append(deepcopy(affects))
+    elif recover is None and journey.find('journeynumber') is not None:
+        shortened = [m for m in stop_mutations if m.tag == 'SHORTEN']
+        if len(shortened) > 0:
+            # Only the skipped stops, a MUTATIONMESSAGE stop is still served
+            consequence = _sub(_sub(situation, 'Consequences'), 'Consequence')
+            _sub(consequence, 'Condition', 'stopCancelled')
+            skipped = set(refs.stop(dataowner, _text(m, 'userstopcode')) for m in shortened)
+            consequence_affects = deepcopy(affects)
+            for call in list(consequence_affects.iter(_tag('Call'))):
+                if call.findtext(_tag('StopPointRef')) not in skipped:
+                    call.getparent().remove(call)
+            consequence.append(consequence_affects)
     return situation
 
 
@@ -256,8 +346,8 @@ def _cancel_summary(journey, dataowner, line):
 
 # SIRI building blocks
 
-def _situation(created, dataowner, situation_number, progress, start, end, reasontype=None, reason=None,
-               severity='normal', summary=None, description=None, detail=None, advice=None):
+def _situation(created, dataowner, situation_number, progress, start, end, reasontype=None, subreasontype=None,
+               reason=None, severity='normal', summary=None, description=None, detail=None, advice=None):
     """ Create a PtSituationElement up to (but not including) Affects, in the order the XSD requires """
     published = now()
     situation = etree.Element(_tag('PtSituationElement'))
@@ -278,18 +368,30 @@ def _situation(created, dataowner, situation_number, progress, start, end, reaso
         _sub(publication, 'EndTime', published.isoformat())
     elif end is not None:
         _sub(publication, 'EndTime', end.isoformat())
-    _sub(situation, 'AlertCause', REASONTYPE_ALERTCAUSE.get(reasontype, 'unknown'))
+    _sub(situation, 'AlertCause', _alert_cause(reasontype, subreasontype))
+    if subreasontype in SUBREASONTYPE_PUBLICEVENT:
+        _sub(situation, 'PublicEventReason', SUBREASONTYPE_PUBLICEVENT[subreasontype])
     _text_sub(situation, 'ReasonName', reason)
     _sub(situation, 'Severity', severity)
     _sub(situation, 'Priority', '1' if severity == 'severe' else '3')
     _sub(situation, 'ReportType', 'incident')
-    _sub(situation, 'Planned', 'false')
+    # Works and events are planned, KV doesn't tell us otherwise
+    _sub(situation, 'Planned', 'true' if (subreasontype or '').startswith(('23', '24')) else 'false')
     _sub(situation, 'Language', LANGUAGE)
     _text_sub(situation, 'Summary', summary)
     _text_sub(situation, 'Description', description)
     _text_sub(situation, 'Detail', detail)
     _text_sub(situation, 'Advice', advice)
     return situation
+
+
+def _alert_cause(reasontype, subreasontype):
+    cause = SUBREASONTYPE_ALERTCAUSE.get(subreasontype)
+    if isinstance(cause, dict):
+        cause = cause.get(reasontype)
+    if cause is None and (subreasontype or '').startswith('24_'):
+        cause = 'specialEvent'
+    return cause or REASONTYPE_ALERTCAUSE.get(reasontype, 'unknown')
 
 
 class RefLookup(object):
