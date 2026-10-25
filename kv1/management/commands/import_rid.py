@@ -54,6 +54,7 @@ class Command(BaseCommand):
             line = lines[0]
             line.headsign = row['name']
             line.publiclinenumber = row['publiccode']
+            line.original_ref = row.get('original_ref') or None
             line.save()
         else:
             self.log("Failed to match route: %s" % row['bison_id'])
@@ -82,6 +83,7 @@ class Command(BaseCommand):
         s.location = location
         s.timingpointcode = row['timingpointcode']
         s.quaycoderef = row['quaycoderef']
+        s.original_ref = row.get('original_ref') or None
         s.save()
 
     def log(self, text):

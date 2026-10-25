@@ -17,10 +17,13 @@ from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse
 from django.shortcuts import redirect, render
-from utils.push import Push
+from utils.push import Push, SiriSxPush
+from utils.siri_sx import SIRI_SX_PATH
 from django.db.models.query import QuerySet
 
 log = logging.getLogger('openebs.views.mixins')
+
+SIRI_STATUS_FALSE = re.compile(r"<(\w+:)?Status>\s*false\s*</", re.IGNORECASE)
 
 
 class JSONListResponseMixin(JSONResponseMixin):
@@ -40,6 +43,7 @@ class ExternalMessagePushMixin(object):
     message_type = None  # Abstract
     namespace = ''
     dossier = ''
+    siri_sx = False  # Also push as SIRI-SX to destinations with a SIRI-SX endpoint
     pushers = []
 
     def __init__(self):
@@ -67,7 +71,28 @@ class ExternalMessagePushMixin(object):
                     break
                 else:
                     success = True
+            if pusher.siri_sx is not None and not self.push_siri_sx(pusher.siri_sx, msg):
+                success = False
+                log.error("Failing after %s failed, not pushing to other subscribers" % (pusher.siri_sx.alias))
+                break
         return success
+
+    @staticmethod
+    def push_siri_sx(pusher, msg):
+        """
+        Push message _msg_ as SIRI-SX, returns False if this failed and should stop pushing to other subscribers
+        """
+        try:
+            code, content = pusher.push(msg)
+        except Exception:
+            log.exception("Failed to convert message to SIRI-SX for %s" % pusher.alias)
+            return not pusher.fail_on_failure
+        if code is None:  # Nothing to tell in SIRI-SX
+            return True
+        if 200 <= code < 300 and SIRI_STATUS_FALSE.search(content or '') is None:
+            return True
+        log.error("SIRI-SX push to %s failed with code %s: %s" % (pusher.alias, code, content))
+        return not pusher.fail_on_failure
 
     @staticmethod
     def parse_error(content):
@@ -103,8 +128,28 @@ class ExternalMessagePushMixin(object):
             p.fail_on_failure = destination.get('failOnFailure', True)
             p.debug = destination.get('debug', defaults.get('debug', False))
             p.timeout = destination.get('timeout', defaults.get('timeout', False))
+            p.siri_sx = self.get_siri_sx_pusher(destination, defaults)
             push_list.append(p)
         return push_list
+
+    def get_siri_sx_pusher(self, destination, defaults):
+        """
+        Setup pushing the same messages as SIRI-SX to this destination, if it has a SIRI-SX endpoint
+        """
+        if not self.siri_sx or 'SIRI-SX' not in destination['endpoints']:
+            return None
+        endpoint = destination['endpoints']['SIRI-SX']
+        p = SiriSxPush(destination['host'],
+                       self.dossier,
+                       destination['subscriberName'],
+                       destination['https'] if 'https' in destination else False,
+                       endpoint.get('path', SIRI_SX_PATH))
+        p.alias = "%s (SIRI-SX)" % destination.get('alias', destination['host'])
+        # Don't let a failing SIRI-SX endpoint block KV messages, unless asked to
+        p.fail_on_failure = endpoint.get('failOnFailure', False)
+        p.debug = destination.get('debug', defaults.get('debug', False))
+        p.timeout = destination.get('timeout', defaults.get('timeout', False))
+        return p
 
 
 class AccessMixin(BracesAccessMixin):
