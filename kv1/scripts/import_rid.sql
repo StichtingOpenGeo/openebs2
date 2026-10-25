@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS tmp_js (privatecode character varying(255), dep_time integer, direction integer, availability integer);
 DELETE FROM tmp_js;
 \COPY tmp_js FROM '/tmp/rid/openebs_journeys.csv' CSV HEADER;
+ANALYZE tmp_js;
 /* Insert new trips */
 INSERT INTO kv1_kv1journey (dataownercode, line_id, journeynumber, scheduleref, direction, departuretime)
 SELECT split_part(privatecode,':',1), l.id, cast(split_part(privatecode,':',3) as integer), availability, direction, dep_time
@@ -15,6 +16,7 @@ AND NOT EXISTS (
 create table if not exists tmp_jd (jid text, availability integer, d date);
 delete from tmp_jd;
 \copy tmp_jd from '/tmp/rid/openebs_journey_dates.csv' csv header;
+analyze tmp_jd;
 delete from kv1_kv1journeydate ;
 insert into kv1_kv1journeydate (journey_id, date)
 select kv1_kv1journey.id, d from tmp_jd, kv1_kv1journey, kv1_kv1line
