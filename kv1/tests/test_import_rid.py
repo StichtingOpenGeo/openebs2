@@ -8,7 +8,8 @@ from django.core.management import call_command, CommandError
 from django.test import TestCase
 
 from kv1.management.commands.import_rid import Command as ImportCommand
-from kv1.models import Kv1Line, Kv1Stop, Kv1Journey, ImportStatus
+from kv1.management.commands.import_rid import CsvColumns
+from kv1.models import Kv1Line, Kv1Stop, Kv1Journey, Kv1JourneyDate, ImportStatus
 
 
 class TestRidImporter(TestCase):
@@ -195,6 +196,57 @@ class TestRidImporter(TestCase):
 
         self.assertEqual(['9006'], list(Kv1Stop.objects.values_list('userstopcode', flat=True)))
         self.assertEqual("Er waren 2 fouten.", ImportStatus.objects.latest('importDate').status)
+
+    def setUpJourneys(self):
+        self.line = Kv1Line.objects.create(dataownercode='HTM', lineplanningnumber='1', stop_map='{}')
+        self.createTestFile('openebs_lines.csv', [['bison_id', 'publiccode', 'name']])
+        self.createTestFile('openebs_stops.csv', [['operator_id', 'name', 'latitude', 'longitude']])
+
+    def testJourneys(self):
+        """ Columns are found by name, so other columns and their order don't matter """
+        self.setUpJourneys()
+        existing = Kv1Journey.objects.create(dataownercode='HTM', line=self.line, journeynumber=18119, scheduleref=7,
+                                             departuretime=60000, direction=1)
+        Kv1JourneyDate.objects.create(journey=existing, date='2026-10-01')  # Replaced
+        self.createTestFile('openebs_journeys.csv', [
+            ['availabilityconditionref', 'operator', 'journey_id', 'direction', 'base_departure_time'],
+            ['7', 'HTM', 'HTM:1:18119', '1', '60000'],  # Already there
+            ['7', 'HTM', 'HTM:1:18120', '2', '61200'],
+            ['7', 'HTM', 'HTM:99:1', '1', '61200'],  # Unknown line
+        ])
+        self.createTestFile('openebs_journey_dates.csv', [
+            ['validdate', 'privatecode', 'isavailable', 'availabilityconditionref'],
+            ['2026-10-25', 'HTM:1:18119', 't', '7'],
+            ['2026-10-26', 'HTM:1:18119', 't', '7'],
+            ['2026-10-25', 'HTM:1:18120', 't', '7'],
+            ['2026-10-25', 'HTM:1:18120', 't', '8'],  # Other schedule
+        ])
+        call_command('import_rid', self.folder.name)
+
+        self.assertEqual([(18119, 1, 60000), (18120, 2, 61200)],
+                         list(Kv1Journey.objects.order_by('journeynumber')
+                              .values_list('journeynumber', 'direction', 'departuretime')))
+        self.assertEqual([(18119, '2026-10-25'), (18119, '2026-10-26'), (18120, '2026-10-25')],
+                         [(d.journey.journeynumber, d.date.isoformat())
+                          for d in Kv1JourneyDate.objects.order_by('journey__journeynumber', 'date')])
+        self.assertEqual("Succesvol", ImportStatus.objects.latest('importDate').status)
+
+        # Importing the same again changes nothing
+        call_command('import_rid', self.folder.name)
+        self.assertEqual(2, Kv1Journey.objects.count())
+        self.assertEqual(3, Kv1JourneyDate.objects.count())
+
+    def testJourneysMissingColumn(self):
+        self.setUpJourneys()
+        self.createTestFile('openebs_journeys.csv', [['journey_id', 'direction'], ['HTM:1:18120', '2']])
+        with self.assertRaisesRegex(CommandError, 'openebs_journeys.csv is missing column'):
+            call_command('import_rid', self.folder.name)
+
+    def testCsvColumns(self):
+        rows = [{'a': '1', 'b': 'with "quotes", and a comma', 'c': ''}, {'a': '2', 'b': 'x', 'c': 'y'}]
+        data = CsvColumns(iter(rows), ['c', 'b'])
+        self.assertEqual(',"with ""quotes"", and a comma"\n"y","x"\n', data.read(5) + data.read())
+        self.assertEqual('', data.read())
 
     def createTestFile(self, name, data):
         with open(self.folder.name + '/' + name, 'w', newline='') as outfile:
