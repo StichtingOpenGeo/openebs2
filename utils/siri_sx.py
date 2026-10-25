@@ -132,6 +132,7 @@ SUBREASONTYPE_PUBLICEVENT = {
     '24_13': 'bicycleRace',  # Wielerronde
     '24_14': 'footballMatch',  # Voetbalwedstrijd
     '24_15': 'ceremonialEvent',  # Herdenking
+    '24_16': 'sportsMeeting',  # Avondvierdaagse
 }
 # Without a (known) subreasontype. The profile doesn't allow the undefined...Problem values per reasontype
 REASONTYPE_ALERTCAUSE = {

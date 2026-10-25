@@ -279,7 +279,7 @@ class TestSiriSxReasons(TestCase):
         self.assertEqual('poorWeather', _alert_cause('4', '255'))
         self.assertEqual('unknown', _alert_cause('2', '255'))
         # Events without a PublicEventReason are still events
-        self.assertEqual('specialEvent', _alert_cause('1', '24_16'))
+        self.assertEqual('specialEvent', _alert_cause('1', '24_99'))
         # Unknown codes fall back on the reasontype, without the deprecated undefined...Problem values
         self.assertEqual('miscellaneous', _alert_cause('1', '99'))
         self.assertEqual('technicalProblem', _alert_cause('3', None))
