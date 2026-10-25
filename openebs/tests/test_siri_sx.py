@@ -61,6 +61,7 @@ class TestSiriSxKv15(TestCase):
         self.assertEqual(['NL:BISON:Codespace:HTM'], values(situation, 's:ParticipantRef'))
         self.assertEqual(['nl'], values(situation, 's:CountryRef'))
         self.assertEqual(['KV15:HTM:2013-11-16:4'], values(situation, 's:SituationNumber'))
+        self.assertEqual(['1'], values(situation, 's:Version'))
         self.assertEqual(['open'], values(situation, 's:Progress'))
         self.assertEqual(['2013-11-16T14:09:35+01:00'], values(situation, 's:ValidityPeriod/s:StartTime'))
         self.assertEqual(['2013-11-17T03:00:00+01:00'], values(situation, 's:ValidityPeriod/s:EndTime'))
@@ -168,6 +169,7 @@ class TestSiriSxKv17(TestCase):
         recover = convert('KV17cvlinfo', get_fixture('kv17_recover.xml'))[0]
         self.assertEqual(values(cancel, 's:SituationNumber'), values(recover, 's:SituationNumber'))
         self.assertEqual(['closed'], values(recover, 's:Progress'))
+        self.assertEqual(['1'], values(recover, 's:Version'))
         self.assertEqual([], recover.xpath('s:Consequences', namespaces=NS))
 
     def test_mutation_message(self):

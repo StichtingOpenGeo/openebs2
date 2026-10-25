@@ -356,6 +356,8 @@ def _situation(created, dataowner, situation_number, progress, start, end, reaso
     _sub(situation, 'CountryRef', COUNTRY)
     _sub(situation, 'ParticipantRef', PARTICIPANT_PREFIX + dataowner)
     _sub(situation, 'SituationNumber', situation_number)
+    # The profile requires it. We don't track versions: a KV15 edit closes the old situation and opens a new one
+    _sub(situation, 'Version', '1')
     _sub(_sub(situation, 'Source'), 'SourceType', 'directReport')
     _sub(situation, 'Progress', progress)
     validity = _sub(situation, 'ValidityPeriod')
