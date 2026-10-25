@@ -27,9 +27,9 @@ bare userstopcode if we don't have one. Lines are the NeTEx line ref imported fr
 The dataowner is the codespace, so ParticipantRef and OperatorRef are NL:BISON:Codespace:<dataowner> and the
 ProducerRef of a delivery is NL:<dataowner> (if it's all one dataowner).
 
-Every situation also gets CountryRef, PublicationWindow, Priority, ReportType (incident for a calamity, otherwise
-general) and Planned (true for works and events), like the NS samples of the Dutch profile. Enumerations only use
-the values the SIRI-NL profile allows.
+Every situation also gets CountryRef, PublicationWindow, Priority, ReportType (incident for a calamity or a
+cancellation, otherwise general) and Planned (true for works and events), like the NS samples of the Dutch profile.
+Enumerations only use the values the SIRI-NL profile allows.
 
 KV15 DELETEMESSAGE                          -> the same SituationNumber with Progress closed
 
@@ -291,7 +291,8 @@ def _convert_kv17(group, refs):
                                reason=_text(details, 'reasoncontent'),
                                summary=summary,
                                detail=_text(details, 'reasoncontent'),
-                               advice=_text(details, 'advicecontent'))
+                               advice=_text(details, 'advicecontent'),
+                               incident=cancel is not None)
 
     affects = _sub(situation, 'Affects')
     if journey.find('allLines') is not None:
@@ -349,7 +350,8 @@ def _cancel_summary(journey, dataowner, line):
 # SIRI building blocks
 
 def _situation(created, dataowner, situation_number, progress, start, end, reasontype=None, subreasontype=None,
-               reason=None, severity='normal', summary=None, description=None, detail=None, advice=None):
+               reason=None, severity='normal', summary=None, description=None, detail=None, advice=None,
+               incident=False):
     """ Create a PtSituationElement up to (but not including) Affects, in the order the XSD requires """
     published = now()
     situation = etree.Element(_tag('PtSituationElement'))
@@ -378,8 +380,8 @@ def _situation(created, dataowner, situation_number, progress, start, end, reaso
     _text_sub(situation, 'ReasonName', reason)
     _sub(situation, 'Severity', severity)
     _sub(situation, 'Priority', '1' if severity == 'severe' else '3')
-    # Only a calamity (the one thing that makes it severe) is an incident, everything else is general information
-    _sub(situation, 'ReportType', 'incident' if severity == 'severe' else 'general')
+    # A calamity (the one thing that makes it severe) or a cancellation is an incident, the rest general information
+    _sub(situation, 'ReportType', 'incident' if incident or severity == 'severe' else 'general')
     # Works and events are planned, KV doesn't tell us otherwise
     _sub(situation, 'Planned', 'true' if (subreasontype or '').startswith(('23', '24')) else 'false')
     _sub(situation, 'Language', LANGUAGE)

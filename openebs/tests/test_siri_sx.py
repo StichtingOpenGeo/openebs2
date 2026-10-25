@@ -163,8 +163,8 @@ class TestSiriSxKv17(TestCase):
         self.assertEqual([], values(journey, 's:Calls/s:Call/s:StopPointRef'))
         consequence = situation.xpath('s:Consequences/s:Consequence', namespaces=NS)[0]
         self.assertEqual(['tripCancellation'], values(consequence, 's:Condition'))
-        # KV17 has no calamity
-        self.assertEqual(['general'], values(situation, 's:ReportType'))
+        # A cancellation is an incident, even without a calamity
+        self.assertEqual(['incident'], values(situation, 's:ReportType'))
         self.assertEqual(['100'], values(consequence, 's:Affects/s:VehicleJourneys/s:AffectedVehicleJourney/'
                                                       's:FramedVehicleJourneyRef/s:DatedVehicleJourneyRef'))
 
@@ -303,6 +303,8 @@ class TestSiriSxReasons(TestCase):
         """ Defect materieel """
         situation = convert('KV17cvlinfo', get_fixture('kv17_mutationmessage.xml'))[0]
         self.assertEqual(['breakDown'], values(situation, 's:AlertCause'))
+        # The journey still runs
+        self.assertEqual(['general'], values(situation, 's:ReportType'))
         self.assertEqual([], values(situation, 's:PublicEventReason'))
         self.assertEqual(['false'], values(situation, 's:Planned'))
 
