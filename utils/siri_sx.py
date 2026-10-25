@@ -20,7 +20,8 @@ KV15 STOPMESSAGE
     advicecontent                           -> Advice
     userstopcode (+ lineplanningnumber)     -> Affects/StopPoints/AffectedStopPoint/StopPointRef (+ Lines/AffectedLine)
 
-Stop refs are the CHB quay code (NL:Q:32009006) as imported from RID into Kv1Stop.quaycoderef, falling back to the
+Stop refs are the CHB quay (NL:CHB:Quay:32009006), made from the quay code imported from RID into
+Kv1Stop.quaycoderef (NL:Q:32009006). Quay codes outside the CHB (DE:Q:, BE:Q:) are used as is, and we fall back to the
 bare userstopcode if we don't have one. Line and journey refs are the bare lineplanningnumber and journeynumber, as
 most operators' own SIRI-ET/VM feeds use. The operator is in ParticipantRef.
 KV15 DELETEMESSAGE                          -> the same SituationNumber with Progress closed
@@ -48,6 +49,8 @@ SIRI_SX_PATH = '/OPENOV/SituationExchangeDelivery'  # Default endpoint (topic) t
 SIRI_VERSION = '2.1'
 LANGUAGE = 'nl'
 XML_LANG = '{http://www.w3.org/XML/1998/namespace}lang'
+CHB_QUAYCODE_PREFIX = 'NL:Q:'  # Kv1Stop.quaycoderef as imported from RID
+CHB_QUAY_PREFIX = 'NL:CHB:Quay:'  # What we send
 
 # KV15 reasontype -> SIRI AlertCause. The KV subreasontypes aren't unique across reasontypes, so we stay coarse
 REASONTYPE_ALERTCAUSE = {
@@ -281,7 +284,15 @@ class RefLookup(object):
             rows = Kv1Stop.objects.filter(dataownercode=dataowner, quaycoderef__isnull=False,
                                           userstopcode__in=[c for d, c in stops if d == dataowner]) \
                 .exclude(quaycoderef='')
-            self.stops.update({(dataowner, code): ref for code, ref in rows.values_list('userstopcode', 'quaycoderef')})
+            self.stops.update({(dataowner, code): self.quay_ref(ref)
+                               for code, ref in rows.values_list('userstopcode', 'quaycoderef')})
+
+    @staticmethod
+    def quay_ref(quaycode):
+        """ NL:Q:32009006 -> NL:CHB:Quay:32009006, other quay codes aren't in the CHB """
+        if quaycode.startswith(CHB_QUAYCODE_PREFIX):
+            return CHB_QUAY_PREFIX + quaycode[len(CHB_QUAYCODE_PREFIX):]
+        return quaycode
 
     def stop(self, dataowner, userstopcode):
         return self.stops.get((dataowner, userstopcode), userstopcode)

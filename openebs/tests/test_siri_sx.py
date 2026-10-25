@@ -11,7 +11,7 @@ from kv1.models import Kv1Line, Kv1Stop
 from openebs.models import Kv15Stopmessage, Kv15MessageStop
 from openebs.views_push import Kv15PushMixin, Kv17PushMixin, Kv6PushMixin
 from utils.push import Push, SiriSxPush
-from utils.siri_sx import SIRI_NAMESPACE, convert, to_siri_sx
+from utils.siri_sx import SIRI_NAMESPACE, RefLookup, convert, to_siri_sx
 
 NS = {'s': SIRI_NAMESPACE}
 
@@ -91,7 +91,7 @@ class TestSiriSxKv15(TestCase):
 
 
 class TestSiriSxStopRefs(TestCase):
-    """ Stops use the quay code when we have one, the userstopcode if we don't. Lines stay the lineplanningnumber """
+    """ Stops use the CHB quay when we have one, the userstopcode if we don't. Lines stay the lineplanningnumber """
     def setUp(self):
         Kv1Stop(userstopcode='100', dataownercode='HTM', name="Om de hoek", location=Point(1, 1),
                 quaycoderef='NL:Q:32000100', original_ref='NL:HTM:ScheduledStopPoint:R100').save()
@@ -106,15 +106,20 @@ class TestSiriSxStopRefs(TestCase):
         xml = get_fixture('message_basic.xml').replace('<messagetimestamp>...</messagetimestamp>', '')
         with self.assertNumQueries(1):
             situation = convert('KV15messages', xml)[0]
-        self.assertEqual(['NL:Q:32000100', '101'],
+        self.assertEqual(['NL:CHB:Quay:32000100', '101'],
                          values(situation, 's:Affects/s:StopPoints/s:AffectedStopPoint/s:StopPointRef'))
 
     def test_kv17(self):
         situation = convert('KV17cvlinfo', get_fixture('kv17_mutationmessage.xml'))[0]
         journey = situation.xpath('s:Affects/s:VehicleJourneys/s:AffectedVehicleJourney', namespaces=NS)[0]
         self.assertEqual(['1001'], values(journey, 's:LineRef'))
-        self.assertEqual(['NL:Q:32000100'], values(journey, 's:Calls/s:Call/s:StopPointRef'))
+        self.assertEqual(['NL:CHB:Quay:32000100'], values(journey, 's:Calls/s:Call/s:StopPointRef'))
         self.assertEqual(['101'], values(journey, 's:FramedVehicleJourneyRef/s:DatedVehicleJourneyRef'))
+
+    def test_quay_ref(self):
+        self.assertEqual('NL:CHB:Quay:32000100', RefLookup.quay_ref('NL:Q:32000100'))
+        # Foreign stops aren't in the CHB
+        self.assertEqual('DE:Q:44140030', RefLookup.quay_ref('DE:Q:44140030'))
 
 
 class TestSiriSxKv17(TestCase):
