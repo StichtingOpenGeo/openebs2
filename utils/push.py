@@ -5,6 +5,8 @@ import socket
 from django.utils.timezone import now
 from lxml import etree
 
+from utils.siri_sx import SIRI_NAMESPACE, SIRI_SX_PATH, to_siri_sx
+
 
 class Push:
     alias = None
@@ -61,7 +63,9 @@ class Push:
         self.content = content
 
         # Calculate XML with wrapper/header
-        content = self.__str__()
+        return self.post(self.__str__())
+
+    def post(self, content):
         if self.debug:
             self.log.debug("Pushing message:\n%s" % (content,))
 
@@ -99,3 +103,20 @@ class Push:
                 self.alias, response_code, response_content))
 
         return response_code, response_content
+
+
+class SiriSxPush(Push):
+    """
+    Push the KV15/KV17 content as SIRI-SX situations instead
+    """
+    def __init__(self, host, dossiername, producer_ref='openOV', use_https=False, endpoint=SIRI_SX_PATH):
+        super(SiriSxPush, self).__init__(host, endpoint, SIRI_NAMESPACE, dossiername, producer_ref, use_https)
+
+    def push(self, content):
+        """ Returns None as response code if there was nothing to send """
+        self.content = content
+        xml = to_siri_sx(self.dossiername, content, self.subscriberid)
+        if xml is None:
+            self.log.debug("Nothing to send as SIRI-SX to %s" % self.alias)
+            return None, None
+        return self.post(xml)

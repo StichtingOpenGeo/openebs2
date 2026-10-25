@@ -1,14 +1,20 @@
 from unittest.test.test_case import Test
 
-from django.core.management import call_command
+import csv
+import tempfile
+
+from django.contrib.gis.geos import Point
+from django.core.management import call_command, CommandError
 from django.test import TestCase
 
 from kv1.management.commands.import_rid import Command as ImportCommand
-from kv1.models import Kv1Line, Kv1Stop, Kv1Journey
+from kv1.models import Kv1Line, Kv1Stop, Kv1Journey, ImportStatus
 
 
 class TestRidImporter(TestCase):
-
+    def setUp(self):
+        self.folder = tempfile.TemporaryDirectory()
+        self.addCleanup(self.folder.cleanup)
 
     #def testLinesSimple(self):
     #    # Setup model
@@ -45,7 +51,7 @@ class TestRidImporter(TestCase):
 
         # Data
         lines = [
-            ['operator_id','publiccode','name'],
+            ['bison_id','publiccode','name'],
             ['VTN:1049','62','Gulpen - Vaals'],
         ]
         stops = [
@@ -54,10 +60,8 @@ class TestRidImporter(TestCase):
         ]
         self.createTestFile('openebs_lines.csv', lines)
         self.createTestFile('openebs_stops.csv', stops)
-        self.createTestFile('openebs_journey_stops.csv', [])
-        self.createTestFile('openebs_journey_dates.csv', [])
 
-        call_command('import_rid', '/tmp')
+        call_command('import_rid', self.folder.name)
 
         line = Kv1Line.objects.get(dataownercode='VTN', lineplanningnumber=1049)
         self.assertEqual(Kv1Line.objects.count(), num_lines)
@@ -115,6 +119,83 @@ class TestRidImporter(TestCase):
     #    self.assertEqual(journey.stops.filter()[0].targetarrival, time(17, 36))
     #    self.assertEqual(journey.stops.filter()[0].targetdeparture, time(17, 38))
 
+    def testRefs(self):
+        Kv1Line.objects.create(dataownercode='HTM', lineplanningnumber='1', stop_map='{}')
+        self.createTestFile('openebs_lines.csv', [
+            ['bison_id', 'publiccode', 'name', 'original_ref'],
+            ['HTM:1', '1', 'Scheveningen - Delft', 'NL:HTM:Line:1'],
+        ])
+        self.createTestFile('openebs_stops.csv', [
+            ['operator_id', 'name', 'latitude', 'longitude', 'timingpointcode', 'quaycoderef', 'original_ref'],
+            ['HTM:9006', 'Delft, Noordeinde', '52.016435', '4.351544', '9006', 'NL:Q:32009006',
+             'NL:HTM:ScheduledStopPoint:R9006'],
+            ['GVB:07494', 'Emplacement Zuid', '52.33866', '4.863729', '07494', '', ''],
+        ])
+        call_command('import_rid', self.folder.name)
+
+        self.assertEqual('NL:HTM:Line:1', Kv1Line.objects.get(dataownercode='HTM').original_ref)
+        stop = Kv1Stop.objects.get(dataownercode='HTM', userstopcode='9006')
+        self.assertEqual('NL:Q:32009006', stop.quaycoderef)
+        self.assertEqual('NL:HTM:ScheduledStopPoint:R9006', stop.original_ref)
+        stop = Kv1Stop.objects.get(dataownercode='GVB', userstopcode='07494')
+        self.assertIsNone(stop.quaycoderef)
+        self.assertIsNone(stop.original_ref)
+
+    def testUnknownColumns(self):
+        """ New columns in the export are ignored, wherever they are """
+        Kv1Line.objects.create(dataownercode='HTM', lineplanningnumber='1', stop_map='{}')
+        self.createTestFile('openebs_lines.csv', [
+            ['transportmode', 'bison_id', 'publiccode', 'name', 'brand'],
+            ['TRAM', 'HTM:1', '1', 'Scheveningen - Delft', 'HTM'],
+        ])
+        self.createTestFile('openebs_stops.csv', [
+            ['tariff_zones', 'operator_id', 'name', 'latitude', 'longitude', 'timingpointcode', 'quaycoderef',
+             'platformcode'],
+            ['{NL:DOVA:TariffZone:5426}', 'HTM:9006', 'Delft, Noordeinde', '52.016435', '4.351544', '9006',
+             'NL:Q:32009006', 'A'],
+        ])
+        call_command('import_rid', self.folder.name)
+
+        self.assertEqual('Scheveningen - Delft', Kv1Line.objects.get(dataownercode='HTM').headsign)
+        self.assertEqual('NL:Q:32009006', Kv1Stop.objects.get(dataownercode='HTM', userstopcode='9006').quaycoderef)
+
+    def testOlderExportKeepsRefs(self):
+        """ An export without the optional columns doesn't wipe what we already have """
+        Kv1Line.objects.create(dataownercode='HTM', lineplanningnumber='1', stop_map='{}', original_ref='NL:HTM:Line:1')
+        Kv1Stop.objects.create(dataownercode='HTM', userstopcode='9006', name='Oud', location=Point(1, 1),
+                               quaycoderef='NL:Q:32009006', original_ref='NL:HTM:ScheduledStopPoint:R9006')
+        self.createTestFile('openebs_lines.csv', [['bison_id', 'publiccode', 'name'], ['HTM:1', '1', 'Lijn 1']])
+        self.createTestFile('openebs_stops.csv', [
+            ['operator_id', 'name', 'latitude', 'longitude'],
+            ['HTM:9006', 'Delft, Noordeinde', '52.016435', '4.351544'],
+        ])
+        call_command('import_rid', self.folder.name)
+
+        self.assertEqual('NL:HTM:Line:1', Kv1Line.objects.get(dataownercode='HTM').original_ref)
+        stop = Kv1Stop.objects.get(dataownercode='HTM', userstopcode='9006')
+        self.assertEqual('Delft, Noordeinde', stop.name)
+        self.assertEqual('NL:Q:32009006', stop.quaycoderef)
+        self.assertEqual('NL:HTM:ScheduledStopPoint:R9006', stop.original_ref)
+
+    def testMissingRequiredColumn(self):
+        self.createTestFile('openebs_lines.csv', [['bison_id', 'publiccode', 'name']])
+        self.createTestFile('openebs_stops.csv', [['operator_id', 'name', 'latitude']])
+        with self.assertRaisesRegex(CommandError, 'openebs_stops.csv is missing column\\(s\\) longitude'):
+            call_command('import_rid', self.folder.name)
+
+    def testBadRowIsSkipped(self):
+        self.createTestFile('openebs_lines.csv', [['bison_id', 'publiccode', 'name']])
+        self.createTestFile('openebs_stops.csv', [
+            ['operator_id', 'name', 'latitude', 'longitude'],
+            ['HTM:9005', 'Kapot', 'onbekend', '4.351226'],
+            ['NOCOLON', 'Geen code', '52.0', '4.3'],
+            ['HTM:9006', 'Delft, Noordeinde', '52.016435', '4.351544'],
+        ])
+        call_command('import_rid', self.folder.name)
+
+        self.assertEqual(['9006'], list(Kv1Stop.objects.values_list('userstopcode', flat=True)))
+        self.assertEqual("Er waren 2 fouten.", ImportStatus.objects.latest('importDate').status)
+
     def createTestFile(self, name, data):
-        with open('/tmp/'+name, 'w') as outfile:
-            outfile.write("\r\n".join([",".join(line) for line in data]))
+        with open(self.folder.name + '/' + name, 'w', newline='') as outfile:
+            csv.writer(outfile).writerows(data)

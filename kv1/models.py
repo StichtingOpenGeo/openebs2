@@ -20,6 +20,7 @@ class Kv1Line(models.Model):
     publiclinenumber = models.CharField(max_length=10)
     headsign = models.CharField(max_length=100)
     stop_map = JSONField()
+    original_ref = models.CharField(max_length=255, null=True, blank=True)  # RID operator_id, i.e. NL:GVB:Line:1
 
     class Meta(object):
         verbose_name = _("Lijn")
@@ -41,6 +42,7 @@ class Kv1Stop(models.Model):
     dataownercode = models.CharField(max_length=10, choices=DATAOWNERCODE)
     timingpointcode = models.CharField(max_length=10)  # Note, unique, but not per stop
     quaycoderef = models.CharField(max_length=32, null=True, blank=True)
+    original_ref = models.CharField(max_length=255, null=True, blank=True)  # RID operator_id, i.e. NL:HTM:ScheduledStopPoint:R9006
     name = models.CharField(max_length=102)
     location = models.PointField()
 

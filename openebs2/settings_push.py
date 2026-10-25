@@ -25,7 +25,10 @@ PUSH_SETTINGS = [
      'endpoints' : {
          'KV6' : {'path' : '/RIG/KV6posinfo'},
          'KV15' : {'path' : '/RIG/KV15messages'},
-         'KV17' : {'path' : '/RIG/KV17cvlinfo'}
+         'KV17' : {'path' : '/RIG/KV17cvlinfo'},
+         # Also send the KV15 and KV17 messages as SIRI-SX. A failure here is only logged,
+         # unless 'failOnFailure' is set to True on the endpoint
+         'SIRI-SX' : {'path' : '/OPENOV/SituationExchangeDelivery'}
      }
     },
     {'alias' : 'ndovloket_rig',
