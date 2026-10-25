@@ -15,12 +15,23 @@ from django.db import transaction
 from django.utils.timezone import now
 import zmq
 from openebs.models import Kv15Stopmessage, MessageStatus, Kv15MessageStop
+from openebs.views_push import Kv15PushMixin
+from utils.views import ExternalMessagePushMixin
 
 
 class Command(BaseCommand):
     log = logging.getLogger('openebs.kv8verify')
 
+    def __init__(self, *args, **kwargs):
+        super(Command, self).__init__(*args, **kwargs)
+        self.siri_sx_pushers = []
+        self.imported = {}  # Messages to push as SIRI-SX once the whole packet is in, by pk
+        self.user = None
+
     def handle(self, *args, **options):
+        if settings.GOVI_VERIFY_SIRI_SX:
+            self.siri_sx_pushers = self.get_siri_sx_pushers()
+            print("Pushing imported messages as SIRI-SX to: %s" % ", ".join(p.alias for p in self.siri_sx_pushers))
         print('Setting up a ZeroMQ SUB: %s\n' % (settings.GOVI_VERIFY_FEED))
         sub = Command.setup_subscription()
         print("Started at %s, further messages are in your logfile" % (datetime.now().isoformat('T')))
@@ -41,6 +52,7 @@ class Command(BaseCommand):
         except:
             print(contents)
             raise
+        self.push_imported()
 
     def parse_message(self, content):
         for line in content.split('\r\n')[:-1]:
@@ -94,6 +106,7 @@ class Command(BaseCommand):
 
             # Handle stop
             self.add_stop_for_message(msg, row)
+            self.remember_imported(msg)
 
         else:
             msg, created = Kv15Stopmessage.objects.get_or_create(dataownercode=row['DataOwnerCode'],
@@ -116,6 +129,41 @@ class Command(BaseCommand):
 
             # Handle stop
             self.add_stop_for_message(msg, row)
+            if not created:  # Nothing to close if we never had it
+                self.remember_imported(msg)
+
+    def remember_imported(self, msg):
+        """ Our own messages were already pushed as SIRI-SX when they were made in OpenEBS """
+        if len(self.siri_sx_pushers) > 0 and msg.user_id == self.get_kv8_user().pk:
+            self.imported[msg.pk] = msg
+
+    def push_imported(self):
+        """
+        Push the messages imported from this packet as SIRI-SX. A message has a row per stop, so it's pushed once with
+        all the stops of the packet, not once per row
+        """
+        for msg in self.imported.values():
+            if msg.isdeleted:
+                content = msg.to_xml_delete()
+            elif msg.stops.count() > 0:
+                content = msg.to_xml()
+            else:
+                self.log.warning("Not pushing %s as SIRI-SX, none of its stops are known" % msg)
+                continue
+            for pusher in self.siri_sx_pushers:
+                if ExternalMessagePushMixin.push_siri_sx(pusher, content):
+                    self.log.info("Pushed %s as SIRI-SX to %s" % (msg, pusher.alias))
+        self.imported = {}
+
+    @staticmethod
+    def get_siri_sx_pushers():
+        """ The SIRI-SX endpoints of the KV15 destinations. We don't push the KV15 itself, it came from GOVI """
+        return [pusher.siri_sx for pusher in Kv15PushMixin().pushers if pusher.siri_sx is not None]
+
+    def get_kv8_user(self):
+        if self.user is None:
+            self.user = self.get_user()
+        return self.user
 
     def copy_message_content(self, msg, row):
         msg.messagecontent = row['MessageContent']

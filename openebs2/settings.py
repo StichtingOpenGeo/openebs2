@@ -242,6 +242,9 @@ CROSSOVER_HOUR = 4
 # Verification feed settings
 GOVI_VERIFY_FEED = 'tcp://pubsub.besteffort.ndovloket.nl:7817'
 GOVI_VERIFY_SUB = "/GOVI/KV8gen"
+# Also push the KV15 messages verify_messages imports from the feed (not the ones made in OpenEBS) as SIRI-SX, to the
+# destinations with a SIRI-SX endpoint
+GOVI_VERIFY_SIRI_SX = False
 
 EXTERNAL_MESSAGE_USER_ID = None  # Set in local_settings
 
