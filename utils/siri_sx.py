@@ -23,7 +23,8 @@ KV15 STOPMESSAGE
 Stop refs are the CHB quay (NL:CHB:Quay:32009006), made from the quay code imported from RID into
 Kv1Stop.quaycoderef (NL:Q:32009006). Quay codes outside the CHB (DE:Q:, BE:Q:) are used as is, and we fall back to the
 bare userstopcode if we don't have one. Lines are the NeTEx line ref imported from RID into Kv1Line.original_ref
-(NL:HTM:Line:1), falling back to NL:<dataowner>:Line:<lineplanningnumber>. Journeys are the bare journeynumber. The dataowner is the codespace, so ParticipantRef is NL:BISON:Codespace:<dataowner> and the
+(NL:HTM:Line:1), falling back to NL:<dataowner>:Line:<lineplanningnumber>. Journeys are the bare journeynumber.
+The dataowner is the codespace, so ParticipantRef and OperatorRef are NL:BISON:Codespace:<dataowner> and the
 ProducerRef of a delivery is NL:<dataowner> (if it's all one dataowner).
 
 Every situation also gets CountryRef, PublicationWindow, Priority, ReportType (incident) and Planned (false), like
@@ -220,7 +221,7 @@ def _convert_kv17(group, refs):
 
     affects = _sub(situation, 'Affects')
     if journey.find('allLines') is not None:
-        _sub(_sub(_sub(affects, 'Operators'), 'AffectedOperator'), 'OperatorRef', dataowner)
+        _sub(_sub(_sub(affects, 'Operators'), 'AffectedOperator'), 'OperatorRef', PARTICIPANT_PREFIX + dataowner)
     elif journey.find('allJourneysOfLine') is not None:
         network = _sub(_sub(affects, 'Networks'), 'AffectedNetwork')
         _sub(_sub(network, 'AffectedLine'), 'LineRef', refs.line(dataowner, line))

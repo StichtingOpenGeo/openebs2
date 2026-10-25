@@ -206,6 +206,17 @@ class TestSiriSxKv17(TestCase):
         self.assertEqual(['NL:HTM:Line:1001'], values(situation, 's:Consequences/s:Consequence/s:Affects/s:Networks/'
                                                                      's:AffectedNetwork/s:AffectedLine/s:LineRef'))
 
+    def test_all_lines(self):
+        xml = """<KV17JOURNEY><dataownercode>HTM</dataownercode><allLines/><operatingday>2016-04-01</operatingday>
+        </KV17JOURNEY><KV17MUTATEJOURNEY><timestamp>2016-04-01T10:00:00+02:00</timestamp><CANCEL>
+        <showcancelledtrip>true</showcancelledtrip><autorecover>false</autorecover></CANCEL></KV17MUTATEJOURNEY>"""
+        situation = convert('KV17cvlinfo', xml)[0]
+        self.assertEqual(['KV17:HTM:2016-04-01:ALL'], values(situation, 's:SituationNumber'))
+        self.assertEqual(['NL:BISON:Codespace:HTM'], values(situation, 's:Affects/s:Operators/s:AffectedOperator/'
+                                                                           's:OperatorRef'))
+        self.assertEqual(['NL:BISON:Codespace:HTM'], values(situation, 's:Consequences/s:Consequence/s:Affects/'
+                                                                           's:Operators/s:AffectedOperator/s:OperatorRef'))
+
     def test_multiple_journeys(self):
         """ Batch commands send a list of changes in one push """
         situations = convert('KV17cvlinfo', [get_fixture('kv17_cancel.xml'), get_fixture('kv17_reason_basic.xml')])
