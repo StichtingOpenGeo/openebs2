@@ -121,6 +121,8 @@ class TestSiriSxStopRefs(TestCase):
             situation = convert('KV15messages', xml)[0]
         self.assertEqual(['NL:CHB:Quay:32000100', '101'],
                          values(situation, 's:Affects/s:StopPoints/s:AffectedStopPoint/s:StopPointRef'))
+        # PTPROCESS, not a calamity
+        self.assertEqual(['general'], values(situation, 's:ReportType'))
 
     def test_kv15_lines(self):
         xml = get_fixture('message_basic.xml').replace('<messagetimestamp>...</messagetimestamp>', '') \
@@ -161,6 +163,8 @@ class TestSiriSxKv17(TestCase):
         self.assertEqual([], values(journey, 's:Calls/s:Call/s:StopPointRef'))
         consequence = situation.xpath('s:Consequences/s:Consequence', namespaces=NS)[0]
         self.assertEqual(['tripCancellation'], values(consequence, 's:Condition'))
+        # KV17 has no calamity
+        self.assertEqual(['general'], values(situation, 's:ReportType'))
         self.assertEqual(['100'], values(consequence, 's:Affects/s:VehicleJourneys/s:AffectedVehicleJourney/'
                                                       's:FramedVehicleJourneyRef/s:DatedVehicleJourneyRef'))
 

@@ -27,8 +27,9 @@ bare userstopcode if we don't have one. Lines are the NeTEx line ref imported fr
 The dataowner is the codespace, so ParticipantRef and OperatorRef are NL:BISON:Codespace:<dataowner> and the
 ProducerRef of a delivery is NL:<dataowner> (if it's all one dataowner).
 
-Every situation also gets CountryRef, PublicationWindow, Priority, ReportType (incident) and Planned (true for works
-and events), like the NS samples of the Dutch profile. Enumerations only use the values the SIRI-NL profile allows.
+Every situation also gets CountryRef, PublicationWindow, Priority, ReportType (incident for a calamity, otherwise
+general) and Planned (true for works and events), like the NS samples of the Dutch profile. Enumerations only use
+the values the SIRI-NL profile allows.
 
 KV15 DELETEMESSAGE                          -> the same SituationNumber with Progress closed
 
@@ -377,7 +378,8 @@ def _situation(created, dataowner, situation_number, progress, start, end, reaso
     _text_sub(situation, 'ReasonName', reason)
     _sub(situation, 'Severity', severity)
     _sub(situation, 'Priority', '1' if severity == 'severe' else '3')
-    _sub(situation, 'ReportType', 'incident')
+    # Only a calamity (the one thing that makes it severe) is an incident, everything else is general information
+    _sub(situation, 'ReportType', 'incident' if severity == 'severe' else 'general')
     # Works and events are planned, KV doesn't tell us otherwise
     _sub(situation, 'Planned', 'true' if (subreasontype or '').startswith(('23', '24')) else 'false')
     _sub(situation, 'Language', LANGUAGE)
