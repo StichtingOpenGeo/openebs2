@@ -144,10 +144,10 @@ class ChangeDeleteView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteV
     model = Kv17Change
     success_url = reverse_lazy('change_index')
 
-
-    def delete(self, request, *args, **kwargs):
-        ret = super(ChangeDeleteView, self).delete(request, *args, **kwargs)
-        obj = self.get_object()
+    def form_valid(self, form):
+        # Since Django 4.0 a POST to a DeleteView ends up here, not in delete()
+        obj = self.object
+        obj.delete()  # Only marks it as recovered
         xml_output = [obj.to_xml()]
 
         # send not-recovered alljourneysofline which had overlap with now recovered all_lines, unless endtime has already expired
@@ -171,7 +171,12 @@ class ChangeDeleteView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteV
             obj.is_recovered = False
             obj.recovered = None
             obj.save() # Note, this won't work locally!
-        return ret
+        return HttpResponseRedirect(self.get_success_url())
+
+    def delete(self, request, *args, **kwargs):
+        # A DELETE has no form data, but should do the same as a POST
+        self.object = self.get_object()
+        return self.form_valid(None)
 
 
 class ChangeUpdateView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteView):
@@ -187,8 +192,9 @@ class ChangeUpdateView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteV
         obj.save()
         return obj
 
-    def delete(self, request, *args, **kwargs):
-        self.object = self.get_object()  # Store an original to undo our redo
+    def form_valid(self, form):
+        # Since Django 4.0 a POST to a DeleteView ends up here, not in delete(). self.object is the original, to undo
+        # our redo
         obj = self.update_object()
         if self.push_message(obj.to_xml()):
             log.error("Redo line cancel succesfully communicated to subscribers: %s" % obj)
@@ -199,6 +205,11 @@ class ChangeUpdateView(AccessMixin, Kv17PushMixin, FilterDataownerMixin, DeleteV
             obj.recovered = self.object.recovered
             obj.save()  # Note, this won't work locally!
         return HttpResponseRedirect(self.get_success_url())
+
+    def delete(self, request, *args, **kwargs):
+        # A DELETE has no form data, but should do the same as a POST
+        self.object = self.get_object()
+        return self.form_valid(None)
 
 """
 TODO : This is a big red button view allowing you to cancel all active trips if you so wish.
