@@ -90,29 +90,30 @@ class TestSiriSxKv15(TestCase):
         self.assertEqual(['100'], values(stop, 's:StopPointRef'))
 
 
-class TestSiriSxOriginalRefs(TestCase):
-    """ Stops and lines use the original ref from RID when we have one, the KV code if we don't """
+class TestSiriSxStopRefs(TestCase):
+    """ Stops use the quay code when we have one, the userstopcode if we don't. Lines stay the lineplanningnumber """
     def setUp(self):
         Kv1Stop(userstopcode='100', dataownercode='HTM', name="Om de hoek", location=Point(1, 1),
-                original_ref='NL:HTM:ScheduledStopPoint:R100').save()
-        Kv1Stop(userstopcode='101', dataownercode='HTM', name="De andere hoek", location=Point(1, 10)).save()
+                quaycoderef='NL:Q:32000100', original_ref='NL:HTM:ScheduledStopPoint:R100').save()
+        Kv1Stop(userstopcode='101', dataownercode='HTM', name="De andere hoek", location=Point(1, 10),
+                original_ref='NL:HTM:ScheduledStopPoint:R101').save()
         Kv1Stop(userstopcode='100', dataownercode='GVB', name="Elders", location=Point(2, 2),
-                original_ref='NL:GVB:ScheduledStopPoint:100').save()
+                quaycoderef='NL:Q:57000100').save()
         Kv1Line(dataownercode='HTM', lineplanningnumber='1001', publiclinenumber='1', headsign="Lijn 1", stop_map=[],
                 original_ref='NL:HTM:Line:1').save()
 
     def test_kv15(self):
         xml = get_fixture('message_basic.xml').replace('<messagetimestamp>...</messagetimestamp>', '')
-        with self.assertNumQueries(1):  # Only stops in this message, so no line query
+        with self.assertNumQueries(1):
             situation = convert('KV15messages', xml)[0]
-        self.assertEqual(['NL:HTM:ScheduledStopPoint:R100', '101'],
+        self.assertEqual(['NL:Q:32000100', '101'],
                          values(situation, 's:Affects/s:StopPoints/s:AffectedStopPoint/s:StopPointRef'))
 
     def test_kv17(self):
         situation = convert('KV17cvlinfo', get_fixture('kv17_mutationmessage.xml'))[0]
         journey = situation.xpath('s:Affects/s:VehicleJourneys/s:AffectedVehicleJourney', namespaces=NS)[0]
-        self.assertEqual(['NL:HTM:Line:1'], values(journey, 's:LineRef'))
-        self.assertEqual(['NL:HTM:ScheduledStopPoint:R100'], values(journey, 's:Calls/s:Call/s:StopPointRef'))
+        self.assertEqual(['1001'], values(journey, 's:LineRef'))
+        self.assertEqual(['NL:Q:32000100'], values(journey, 's:Calls/s:Call/s:StopPointRef'))
         self.assertEqual(['101'], values(journey, 's:FramedVehicleJourneyRef/s:DatedVehicleJourneyRef'))
 
 

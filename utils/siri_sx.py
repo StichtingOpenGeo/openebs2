@@ -20,9 +20,9 @@ KV15 STOPMESSAGE
     advicecontent                           -> Advice
     userstopcode (+ lineplanningnumber)     -> Affects/StopPoints/AffectedStopPoint/StopPointRef (+ Lines/AffectedLine)
 
-Stop and line refs are the original refs from RID (stoppoint/line operator_id, i.e. NL:HTM:ScheduledStopPoint:R9006
-and NL:GVB:Line:1) as imported into Kv1Stop/Kv1Line.original_ref, falling back to the bare KV code if we don't have one.
-Journey refs are the bare journeynumber. The operator is in ParticipantRef.
+Stop refs are the CHB quay code (NL:Q:32009006) as imported from RID into Kv1Stop.quaycoderef, falling back to the
+bare userstopcode if we don't have one. Line and journey refs are the bare lineplanningnumber and journeynumber, as
+most operators' own SIRI-ET/VM feeds use. The operator is in ParticipantRef.
 KV15 DELETEMESSAGE                          -> the same SituationNumber with Progress closed
 
 KV17 KV17JOURNEY                            -> SituationNumber (KV17:<dataowner>:<operatingday>:<line>:<journey>)
@@ -41,7 +41,7 @@ from django.utils.dateparse import parse_date, parse_datetime
 from django.utils.timezone import now, make_aware
 from lxml import etree
 
-from kv1.models import Kv1Line, Kv1Stop
+from kv1.models import Kv1Stop
 
 SIRI_NAMESPACE = 'http://www.siri.org.uk/siri'
 SIRI_SX_PATH = '/OPENOV/SituationExchangeDelivery'  # Default endpoint (topic) to push to
@@ -132,7 +132,7 @@ def _convert_kv15(message, refs):
         if len(lines) > 0:
             affected_lines = _sub(stop, 'Lines')
             for line in lines:
-                _sub(_sub(affected_lines, 'AffectedLine'), 'LineRef', refs.line(dataowner, line))
+                _sub(_sub(affected_lines, 'AffectedLine'), 'LineRef', line)
     return situation
 
 
@@ -207,13 +207,13 @@ def _convert_kv17(group, refs):
         _sub(_sub(_sub(affects, 'Operators'), 'AffectedOperator'), 'OperatorRef', dataowner)
     elif journey.find('allJourneysOfLine') is not None:
         network = _sub(_sub(affects, 'Networks'), 'AffectedNetwork')
-        _sub(_sub(network, 'AffectedLine'), 'LineRef', refs.line(dataowner, line))
+        _sub(_sub(network, 'AffectedLine'), 'LineRef', line)
     else:
         vehicle_journey = _sub(_sub(affects, 'VehicleJourneys'), 'AffectedVehicleJourney')
         framed = _sub(vehicle_journey, 'FramedVehicleJourneyRef')
         _sub(framed, 'DataFrameRef', operatingday.isoformat())
         _sub(framed, 'DatedVehicleJourneyRef', journeynumber)
-        _sub(vehicle_journey, 'LineRef', refs.line(dataowner, line))
+        _sub(vehicle_journey, 'LineRef', line)
         # A cancel affects the whole journey, only list the stops if those are all that changed
         if cancel is None and recover is None and len(stop_mutations) > 0:
             calls = _sub(vehicle_journey, 'Calls')
@@ -260,40 +260,31 @@ def _situation(created, dataowner, situation_number, progress, start, end, reaso
 
 class RefLookup(object):
     """
-    Find the original (RID) refs for all stops and lines in a push with a query each, falling back to the KV code
+    Find the quay codes for all stops in a push with a query per dataowner, falling back to the userstopcode
     """
     def __init__(self, root):
-        stops, lines = set(), set()
+        stops = set()
         for message in root:
             dataowner = _text(message, 'dataownercode')
             if dataowner is None:
                 continue
             stops.update((dataowner, code.text.strip()) for code in message.iter('userstopcode') if code.text)
-            lines.update((dataowner, code.text.strip()) for code in message.iter('lineplanningnumber') if code.text)
         # KV17 mutations don't repeat the dataowner, they follow the KV17JOURNEY that has it
         dataowner = None
         for element in root:
             dataowner = _text(element, 'dataownercode') or dataowner
             if element.tag == 'KV17MUTATEJOURNEYSTOP':
                 stops.update((dataowner, code.text.strip()) for code in element.iter('userstopcode') if code.text)
-        self.stops = self._lookup(Kv1Stop, 'userstopcode', stops)
-        self.lines = self._lookup(Kv1Line, 'lineplanningnumber', lines)
 
-    @staticmethod
-    def _lookup(model, field, codes):
-        found = {}
-        for dataowner in set(d for d, _ in codes):
-            rows = model.objects.filter(dataownercode=dataowner, original_ref__isnull=False,
-                                        **{field + '__in': [c for d, c in codes if d == dataowner]}) \
-                .exclude(original_ref='')
-            found.update({(dataowner, code): ref for code, ref in rows.values_list(field, 'original_ref')})
-        return found
+        self.stops = {}
+        for dataowner in set(d for d, _ in stops):
+            rows = Kv1Stop.objects.filter(dataownercode=dataowner, quaycoderef__isnull=False,
+                                          userstopcode__in=[c for d, c in stops if d == dataowner]) \
+                .exclude(quaycoderef='')
+            self.stops.update({(dataowner, code): ref for code, ref in rows.values_list('userstopcode', 'quaycoderef')})
 
     def stop(self, dataowner, userstopcode):
         return self.stops.get((dataowner, userstopcode), userstopcode)
-
-    def line(self, dataowner, lineplanningnumber):
-        return self.lines.get((dataowner, lineplanningnumber), lineplanningnumber)
 
 
 def _start_of_day(day):
