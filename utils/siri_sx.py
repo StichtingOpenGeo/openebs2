@@ -8,13 +8,13 @@ Mapping, loosely following https://github.com/EmmaKnijn/kv-to-sx/blob/main/mappi
 (target paths are relative to PtSituationElement):
 
 KV15 STOPMESSAGE
-    dataownercode                           -> ParticipantRef
+    dataownercode                           -> ParticipantRef (NL:BISON:Codespace:<dataowner>)
     dataownercode/messagecodedate/number    -> SituationNumber (KV15:<dataowner>:<date>:<number>)
     messagetimestamp                        -> CreationTime
     messagestarttime / messageendtime       -> ValidityPeriod/StartTime, ValidityPeriod/EndTime
     reasontype                              -> AlertCause (coarse, see REASONTYPE_ALERTCAUSE)
     reasoncontent                           -> ReasonName
-    messagepriority                         -> Severity (CALAMITY is severe, everything else normal)
+    messagepriority                         -> Severity and Priority (CALAMITY is severe/1, everything else normal/3)
     messagecontent                          -> Summary, Description
     effectcontent, measurecontent           -> Detail
     advicecontent                           -> Advice
@@ -22,19 +22,25 @@ KV15 STOPMESSAGE
 
 Stop refs are the CHB quay (NL:CHB:Quay:32009006), made from the quay code imported from RID into
 Kv1Stop.quaycoderef (NL:Q:32009006). Quay codes outside the CHB (DE:Q:, BE:Q:) are used as is, and we fall back to the
-bare userstopcode if we don't have one. Line and journey refs are the bare lineplanningnumber and journeynumber, as
-most operators' own SIRI-ET/VM feeds use. The operator is in ParticipantRef.
+bare userstopcode if we don't have one. Lines are the NeTEx line ref imported from RID into Kv1Line.original_ref
+(NL:HTM:Line:1), falling back to NL:<dataowner>:Line:<lineplanningnumber>. Journeys are the bare journeynumber. The dataowner is the codespace, so ParticipantRef is NL:BISON:Codespace:<dataowner> and the
+ProducerRef of a delivery is NL:<dataowner> (if it's all one dataowner).
+
+Every situation also gets CountryRef, PublicationWindow, Priority, ReportType (incident) and Planned (false), like
+the NS samples of the Dutch profile.
 KV15 DELETEMESSAGE                          -> the same SituationNumber with Progress closed
 
 KV17 KV17JOURNEY                            -> SituationNumber (KV17:<dataowner>:<operatingday>:<line>:<journey>)
                                                and Affects (operator, line or vehicle journey)
-     KV17MUTATEJOURNEY/CANCEL               -> open situation, reason/advice content as Detail/Advice
+     KV17MUTATEJOURNEY/CANCEL               -> open situation, reason/advice content as Detail/Advice, and a
+                                               Consequence (discontinuedOperation) for what is cancelled
      KV17MUTATEJOURNEY/RECOVER              -> closed situation
      KV17MUTATEJOURNEY/NOTMONITORED         -> nothing, this isn't passenger information
      KV17MUTATEJOURNEYSTOP/SHORTEN          -> AffectedVehicleJourney/Calls/Call per skipped stop
      KV17MUTATEJOURNEYSTOP/MUTATIONMESSAGE  -> AffectedVehicleJourney/Calls/Call, reason/advice content as Detail/Advice
 """
 import logging
+from copy import deepcopy
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -42,13 +48,15 @@ from django.utils.dateparse import parse_date, parse_datetime
 from django.utils.timezone import now, make_aware
 from lxml import etree
 
-from kv1.models import Kv1Stop
+from kv1.models import Kv1Line, Kv1Stop
 
 SIRI_NAMESPACE = 'http://www.siri.org.uk/siri'
 SIRI_SX_PATH = '/OPENOV/SituationExchangeDelivery'  # Default endpoint (topic) to push to
 SIRI_VERSION = '2.1'
 LANGUAGE = 'nl'
 XML_LANG = '{http://www.w3.org/XML/1998/namespace}lang'
+COUNTRY = 'nl'
+PARTICIPANT_PREFIX = 'NL:BISON:Codespace:'
 CHB_QUAYCODE_PREFIX = 'NL:Q:'  # Kv1Stop.quaycoderef as imported from RID
 CHB_QUAY_PREFIX = 'NL:CHB:Quay:'  # What we send
 
@@ -71,6 +79,11 @@ def to_siri_sx(dossier, content, producer_ref):
     situations = convert(dossier, content)
     if len(situations) == 0:
         return None
+
+    # A push is normally for one operator, which is then the producer
+    participants = set(s.findtext(_tag('ParticipantRef')) for s in situations)
+    if len(participants) == 1:
+        producer_ref = "NL:%s" % participants.pop()[len(PARTICIPANT_PREFIX):]
 
     timestamp = now().isoformat()
     siri = etree.Element(_tag('Siri'), nsmap={None: SIRI_NAMESPACE}, version=SIRI_VERSION)
@@ -135,7 +148,7 @@ def _convert_kv15(message, refs):
         if len(lines) > 0:
             affected_lines = _sub(stop, 'Lines')
             for line in lines:
-                _sub(_sub(affected_lines, 'AffectedLine'), 'LineRef', line)
+                _sub(_sub(affected_lines, 'AffectedLine'), 'LineRef', refs.line(dataowner, line))
     return situation
 
 
@@ -210,13 +223,13 @@ def _convert_kv17(group, refs):
         _sub(_sub(_sub(affects, 'Operators'), 'AffectedOperator'), 'OperatorRef', dataowner)
     elif journey.find('allJourneysOfLine') is not None:
         network = _sub(_sub(affects, 'Networks'), 'AffectedNetwork')
-        _sub(_sub(network, 'AffectedLine'), 'LineRef', line)
+        _sub(_sub(network, 'AffectedLine'), 'LineRef', refs.line(dataowner, line))
     else:
         vehicle_journey = _sub(_sub(affects, 'VehicleJourneys'), 'AffectedVehicleJourney')
         framed = _sub(vehicle_journey, 'FramedVehicleJourneyRef')
         _sub(framed, 'DataFrameRef', operatingday.isoformat())
         _sub(framed, 'DatedVehicleJourneyRef', journeynumber)
-        _sub(vehicle_journey, 'LineRef', line)
+        _sub(vehicle_journey, 'LineRef', refs.line(dataowner, line))
         # A cancel affects the whole journey, only list the stops if those are all that changed
         if cancel is None and recover is None and len(stop_mutations) > 0:
             calls = _sub(vehicle_journey, 'Calls')
@@ -224,6 +237,11 @@ def _convert_kv17(group, refs):
                 call = _sub(calls, 'Call')
                 _sub(call, 'StopPointRef', refs.stop(dataowner, _text(mutation, 'userstopcode')))
                 _sub(call, 'Order', _text(mutation, 'passagesequencenumber'))
+
+    if cancel is not None:
+        consequence = _sub(_sub(situation, 'Consequences'), 'Consequence')
+        _sub(consequence, 'Condition', 'discontinuedOperation')
+        consequence.append(deepcopy(affects))
     return situation
 
 
@@ -240,9 +258,11 @@ def _cancel_summary(journey, dataowner, line):
 def _situation(created, dataowner, situation_number, progress, start, end, reasontype=None, reason=None,
                severity='normal', summary=None, description=None, detail=None, advice=None):
     """ Create a PtSituationElement up to (but not including) Affects, in the order the XSD requires """
+    published = now()
     situation = etree.Element(_tag('PtSituationElement'))
     _sub(situation, 'CreationTime', created.isoformat())
-    _sub(situation, 'ParticipantRef', dataowner)
+    _sub(situation, 'CountryRef', COUNTRY)
+    _sub(situation, 'ParticipantRef', PARTICIPANT_PREFIX + dataowner)
     _sub(situation, 'SituationNumber', situation_number)
     _sub(_sub(situation, 'Source'), 'SourceType', 'directReport')
     _sub(situation, 'Progress', progress)
@@ -250,9 +270,19 @@ def _situation(created, dataowner, situation_number, progress, start, end, reaso
     _sub(validity, 'StartTime', start.isoformat())
     if end is not None:
         _sub(validity, 'EndTime', end.isoformat())
+    # From now until the end, or nothing more to show if it's closed
+    publication = _sub(situation, 'PublicationWindow')
+    _sub(publication, 'StartTime', published.isoformat())
+    if progress == 'closed':
+        _sub(publication, 'EndTime', published.isoformat())
+    elif end is not None:
+        _sub(publication, 'EndTime', end.isoformat())
     _sub(situation, 'AlertCause', REASONTYPE_ALERTCAUSE.get(reasontype, 'unknown'))
     _text_sub(situation, 'ReasonName', reason)
     _sub(situation, 'Severity', severity)
+    _sub(situation, 'Priority', '1' if severity == 'severe' else '3')
+    _sub(situation, 'ReportType', 'incident')
+    _sub(situation, 'Planned', 'false')
     _sub(situation, 'Language', LANGUAGE)
     _text_sub(situation, 'Summary', summary)
     _text_sub(situation, 'Description', description)
@@ -263,15 +293,17 @@ def _situation(created, dataowner, situation_number, progress, start, end, reaso
 
 class RefLookup(object):
     """
-    Find the quay codes for all stops in a push with a query per dataowner, falling back to the userstopcode
+    Find the quay codes for all stops and the NeTEx refs for all lines in a push, with a query per dataowner
     """
     def __init__(self, root):
         stops = set()
+        lines = set()
         for message in root:
             dataowner = _text(message, 'dataownercode')
             if dataowner is None:
                 continue
             stops.update((dataowner, code.text.strip()) for code in message.iter('userstopcode') if code.text)
+            lines.update((dataowner, code.text.strip()) for code in message.iter('lineplanningnumber') if code.text)
         # KV17 mutations don't repeat the dataowner, they follow the KV17JOURNEY that has it
         dataowner = None
         for element in root:
@@ -287,6 +319,14 @@ class RefLookup(object):
             self.stops.update({(dataowner, code): self.quay_ref(ref)
                                for code, ref in rows.values_list('userstopcode', 'quaycoderef')})
 
+        self.lines = {}
+        for dataowner in set(d for d, _ in lines):
+            rows = Kv1Line.objects.filter(dataownercode=dataowner, original_ref__isnull=False,
+                                          lineplanningnumber__in=[c for d, c in lines if d == dataowner]) \
+                .exclude(original_ref='')
+            self.lines.update({(dataowner, code): ref
+                               for code, ref in rows.values_list('lineplanningnumber', 'original_ref')})
+
     @staticmethod
     def quay_ref(quaycode):
         """ NL:Q:32009006 -> NL:CHB:Quay:32009006, other quay codes aren't in the CHB """
@@ -296,6 +336,10 @@ class RefLookup(object):
 
     def stop(self, dataowner, userstopcode):
         return self.stops.get((dataowner, userstopcode), userstopcode)
+
+    def line(self, dataowner, lineplanningnumber):
+        return self.lines.get((dataowner, lineplanningnumber),
+                              "NL:%s:Line:%s" % (dataowner, lineplanningnumber))
 
 
 def _start_of_day(day):

@@ -58,7 +58,8 @@ class TestSiriSxKv15(TestCase):
         situations = convert('KV15messages', self.create_message().to_xml())
         self.assertEqual(1, len(situations))
         situation = situations[0]
-        self.assertEqual(['HTM'], values(situation, 's:ParticipantRef'))
+        self.assertEqual(['NL:BISON:Codespace:HTM'], values(situation, 's:ParticipantRef'))
+        self.assertEqual(['nl'], values(situation, 's:CountryRef'))
         self.assertEqual(['KV15:HTM:2013-11-16:4'], values(situation, 's:SituationNumber'))
         self.assertEqual(['open'], values(situation, 's:Progress'))
         self.assertEqual(['2013-11-16T14:09:35+01:00'], values(situation, 's:ValidityPeriod/s:StartTime'))
@@ -66,6 +67,10 @@ class TestSiriSxKv15(TestCase):
         self.assertEqual(['undefinedEquipmentProblem'], values(situation, 's:AlertCause'))
         self.assertEqual(['Defecte tram'], values(situation, 's:ReasonName'))
         self.assertEqual(['severe'], values(situation, 's:Severity'))
+        self.assertEqual(['1'], values(situation, 's:Priority'))
+        self.assertEqual(['incident'], values(situation, 's:ReportType'))
+        self.assertEqual(['false'], values(situation, 's:Planned'))
+        self.assertEqual(['2013-11-17T03:00:00+01:00'], values(situation, 's:PublicationWindow/s:EndTime'))
         self.assertEqual(['Bla!'], values(situation, 's:Summary'))
         self.assertEqual(['Neem de bus'], values(situation, 's:Advice'))
         self.assertEqual(['100', '101'],
@@ -76,6 +81,9 @@ class TestSiriSxKv15(TestCase):
         self.assertEqual(1, len(situations))
         self.assertEqual(['KV15:HTM:2013-11-16:4'], values(situations[0], 's:SituationNumber'))
         self.assertEqual(['closed'], values(situations[0], 's:Progress'))
+        # Nothing more to show
+        self.assertEqual(values(situations[0], 's:PublicationWindow/s:StartTime'),
+                         values(situations[0], 's:PublicationWindow/s:EndTime'))
 
     def test_update(self):
         """ An update is a delete of the old and a new message in one push """
@@ -91,7 +99,10 @@ class TestSiriSxKv15(TestCase):
 
 
 class TestSiriSxStopRefs(TestCase):
-    """ Stops use the CHB quay when we have one, the userstopcode if we don't. Lines stay the lineplanningnumber """
+    """
+    Stops use the CHB quay when we have one, the userstopcode if we don't. Lines use the NeTEx ref from RID, or one
+    made from the lineplanningnumber
+    """
     def setUp(self):
         Kv1Stop(userstopcode='100', dataownercode='HTM', name="Om de hoek", location=Point(1, 1),
                 quaycoderef='NL:Q:32000100', original_ref='NL:HTM:ScheduledStopPoint:R100').save()
@@ -109,10 +120,21 @@ class TestSiriSxStopRefs(TestCase):
         self.assertEqual(['NL:CHB:Quay:32000100', '101'],
                          values(situation, 's:Affects/s:StopPoints/s:AffectedStopPoint/s:StopPointRef'))
 
+    def test_kv15_lines(self):
+        xml = get_fixture('message_basic.xml').replace('<messagetimestamp>...</messagetimestamp>', '') \
+            .replace('</userstopcodes>', '</userstopcodes><lineplanningnumbers><lineplanningnumber>1001'
+                                         '</lineplanningnumber><lineplanningnumber>1002</lineplanningnumber>'
+                                         '</lineplanningnumbers>')
+        with self.assertNumQueries(2):
+            situation = convert('KV15messages', xml)[0]
+        stop = situation.xpath('s:Affects/s:StopPoints/s:AffectedStopPoint', namespaces=NS)[0]
+        # 1002 isn't in RID
+        self.assertEqual(['NL:HTM:Line:1', 'NL:HTM:Line:1002'], values(stop, 's:Lines/s:AffectedLine/s:LineRef'))
+
     def test_kv17(self):
         situation = convert('KV17cvlinfo', get_fixture('kv17_mutationmessage.xml'))[0]
         journey = situation.xpath('s:Affects/s:VehicleJourneys/s:AffectedVehicleJourney', namespaces=NS)[0]
-        self.assertEqual(['1001'], values(journey, 's:LineRef'))
+        self.assertEqual(['NL:HTM:Line:1'], values(journey, 's:LineRef'))
         self.assertEqual(['NL:CHB:Quay:32000100'], values(journey, 's:Calls/s:Call/s:StopPointRef'))
         self.assertEqual(['101'], values(journey, 's:FramedVehicleJourneyRef/s:DatedVehicleJourneyRef'))
 
@@ -133,20 +155,27 @@ class TestSiriSxKv17(TestCase):
         journey = situation.xpath('s:Affects/s:VehicleJourneys/s:AffectedVehicleJourney', namespaces=NS)[0]
         self.assertEqual(['2016-04-01'], values(journey, 's:FramedVehicleJourneyRef/s:DataFrameRef'))
         self.assertEqual(['100'], values(journey, 's:FramedVehicleJourneyRef/s:DatedVehicleJourneyRef'))
-        self.assertEqual(['1001'], values(journey, 's:LineRef'))
+        self.assertEqual(['NL:HTM:Line:1001'], values(journey, 's:LineRef'))
         self.assertEqual([], values(journey, 's:Calls/s:Call/s:StopPointRef'))
+        consequence = situation.xpath('s:Consequences/s:Consequence', namespaces=NS)[0]
+        self.assertEqual(['discontinuedOperation'], values(consequence, 's:Condition'))
+        self.assertEqual(['100'], values(consequence, 's:Affects/s:VehicleJourneys/s:AffectedVehicleJourney/'
+                                                      's:FramedVehicleJourneyRef/s:DatedVehicleJourneyRef'))
 
     def test_recover_closes_same_situation(self):
         cancel = convert('KV17cvlinfo', get_fixture('kv17_cancel.xml'))[0]
         recover = convert('KV17cvlinfo', get_fixture('kv17_recover.xml'))[0]
         self.assertEqual(values(cancel, 's:SituationNumber'), values(recover, 's:SituationNumber'))
         self.assertEqual(['closed'], values(recover, 's:Progress'))
+        self.assertEqual([], recover.xpath('s:Consequences', namespaces=NS))
 
     def test_mutation_message(self):
         situation = convert('KV17cvlinfo', get_fixture('kv17_mutationmessage.xml'))[0]
         self.assertEqual(['open'], values(situation, 's:Progress'))
         self.assertEqual(['100'], values(situation, 's:Affects/s:VehicleJourneys/s:AffectedVehicleJourney/'
                                                         's:Calls/s:Call/s:StopPointRef'))
+        # The journey still runs
+        self.assertEqual([], situation.xpath('s:Consequences', namespaces=NS))
 
     def test_shorten(self):
         xml = """<KV17JOURNEY><dataownercode>HTM</dataownercode><lineplanningnumber>1001</lineplanningnumber>
@@ -172,8 +201,10 @@ class TestSiriSxKv17(TestCase):
         self.assertEqual(['KV17:HTM:2016-04-01:1001:ALL:23:00:00'], values(situation, 's:SituationNumber'))
         self.assertEqual(['2016-04-01T23:00:00+02:00'], values(situation, 's:ValidityPeriod/s:StartTime'))
         self.assertEqual(['2016-04-02T02:30:00+02:00'], values(situation, 's:ValidityPeriod/s:EndTime'))
-        self.assertEqual(['1001'], values(situation, 's:Affects/s:Networks/s:AffectedNetwork/'
-                                                         's:AffectedLine/s:LineRef'))
+        self.assertEqual(['NL:HTM:Line:1001'], values(situation, 's:Affects/s:Networks/s:AffectedNetwork/'
+                                                                     's:AffectedLine/s:LineRef'))
+        self.assertEqual(['NL:HTM:Line:1001'], values(situation, 's:Consequences/s:Consequence/s:Affects/s:Networks/'
+                                                                     's:AffectedNetwork/s:AffectedLine/s:LineRef'))
 
     def test_multiple_journeys(self):
         """ Batch commands send a list of changes in one push """
@@ -189,9 +220,15 @@ class TestSiriSxKv17(TestCase):
 
     def test_delivery(self):
         siri = etree.fromstring(to_siri_sx('KV17cvlinfo', get_fixture('kv17_cancel.xml'), 'openebs'))
-        self.assertEqual(['openebs'], values(siri, 's:ServiceDelivery/s:ProducerRef'))
+        self.assertEqual(['NL:HTM'], values(siri, 's:ServiceDelivery/s:ProducerRef'))
         self.assertEqual(1, len(siri.xpath('s:ServiceDelivery/s:SituationExchangeDelivery/s:Situations/'
                                            's:PtSituationElement', namespaces=NS)))
+
+    def test_delivery_several_operators(self):
+        """ There's no one producer, so use the configured one """
+        other = get_fixture('kv17_reason_basic.xml').replace('>HTM<', '>GVB<')
+        siri = etree.fromstring(to_siri_sx('KV17cvlinfo', [get_fixture('kv17_cancel.xml'), other], 'openebs'))
+        self.assertEqual(['openebs'], values(siri, 's:ServiceDelivery/s:ProducerRef'))
 
 
 PUSH_SETTINGS_SIRI_SX = [
