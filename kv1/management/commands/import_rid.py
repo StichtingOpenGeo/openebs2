@@ -1,6 +1,5 @@
 import csv
-import os
-from django.db import connection, transaction, Error
+from django.db import connection, Error
 
 # Hack to disable logging for now
 # TODO: test if we can remove this
@@ -27,9 +26,6 @@ class Command(BaseCommand):
     LINE_FIELDS = {'publiccode': 'publiclinenumber', 'name': 'headsign', 'original_ref': 'original_ref'}
     STOP_FIELDS = {'timingpointcode': 'timingpointcode', 'quaycoderef': 'quaycoderef', 'original_ref': 'original_ref'}
     NULLABLE_FIELDS = {'quaycoderef', 'original_ref'}  # Store an empty value as NULL
-    # Journeys and their dates are too many to do one by one: these columns are copied into a temporary table
-    JOURNEY_COLUMNS = ['journey_id', 'base_departure_time', 'direction', 'availabilityconditionref']
-    JOURNEY_DATE_COLUMNS = ['privatecode', 'availabilityconditionref', 'validdate']
 
     def add_arguments(self, parser):
         parser.add_argument('folder', type=str)
@@ -40,10 +36,6 @@ class Command(BaseCommand):
         self.do_lines()
         print("==========================\n\nSTEP 2: Stops")
         self.do_stops()
-        print("==========================\n\nSTEP 3: Journeys")
-        self.do_journeys()
-        print("==========================\n\nSTEP 4: Journey dates")
-        self.do_journey_dates()
 
         self.get_status()
 
@@ -120,83 +112,6 @@ class Command(BaseCommand):
         self.update_fields(s, row, self.STOP_FIELDS)
         s.save()
 
-    def copy_csv(self, cursor, name, table, columns):
-        """ Copy the given columns of an export into a temporary table, by name so other columns don't matter """
-        csv_file, reader = self.open_csv(name, columns)
-        with csv_file:
-            # ON COMMIT DROP doesn't happen when we're inside an outer transaction, so make sure it's gone
-            cursor.execute("DROP TABLE IF EXISTS %s" % table)
-            cursor.execute("CREATE TEMPORARY TABLE %s (%s) ON COMMIT DROP" %
-                           (table, ", ".join("%s text" % column for column in columns)))
-            cursor.copy_expert("COPY %s FROM STDIN WITH CSV" % table, CsvColumns(reader, columns))
-            # Without statistics the planner thinks the table is tiny and loops over it for every line
-            cursor.execute("ANALYZE %s" % table)
-
-    def do_journeys(self):
-        if not os.path.exists(self.folder + '/openebs_journeys.csv'):
-            self.log("No openebs_journeys.csv, skipping journeys")
-            return
-        try:
-            with transaction.atomic(), connection.cursor() as cursor:
-                self.copy_csv(cursor, 'openebs_journeys.csv', 'tmp_journeys', self.JOURNEY_COLUMNS)
-                # Insert new trips. Note: need to still delete old trips (related to archiving)
-                # Journeys with an id we can't parse are skipped rather than failing the whole import
-                cursor.execute("""
-                    INSERT INTO kv1_kv1journey (dataownercode, line_id, journeynumber, scheduleref, direction, departuretime)
-                    SELECT DISTINCT ON (t.dataownercode, l.id, t.journeynumber, t.scheduleref)
-                           t.dataownercode, l.id, t.journeynumber, t.scheduleref, t.direction, t.departuretime
-                    FROM (
-                        SELECT split_part(journey_id, ':', 1) AS dataownercode,
-                               split_part(journey_id, ':', 2) AS lineplanningnumber,
-                               cast(split_part(journey_id, ':', 3) AS integer) AS journeynumber,
-                               cast(availabilityconditionref AS integer) AS scheduleref,
-                               cast(direction AS integer) AS direction,
-                               cast(base_departure_time AS integer) AS departuretime
-                        FROM tmp_journeys
-                        WHERE split_part(journey_id, ':', 3) ~ '^[0-9]{1,9}$' AND availabilityconditionref ~ '^[0-9]{1,9}$'
-                        AND direction ~ '^[0-9]{1,4}$' AND base_departure_time ~ '^[0-9]{1,9}$'
-                    ) t
-                    JOIN kv1_kv1line l ON l.dataownercode = t.dataownercode AND l.lineplanningnumber = t.lineplanningnumber
-                    WHERE NOT EXISTS (
-                        SELECT 1 FROM kv1_kv1journey j WHERE j.dataownercode = t.dataownercode AND j.line_id = l.id
-                        AND j.journeynumber = t.journeynumber AND j.scheduleref = t.scheduleref
-                    )""")
-                self.log("Added %s journeys" % cursor.rowcount)
-        except (Error, ValueError) as error:
-            self.log("Issue importing journeys: %s" % error)
-            self.import_errors += 1
-
-    def do_journey_dates(self):
-        if not os.path.exists(self.folder + '/openebs_journey_dates.csv'):
-            self.log("No openebs_journey_dates.csv, skipping journey dates")
-            return
-        try:
-            # We don't link to these, so replace them all. In one transaction so a failure keeps the old dates
-            with transaction.atomic(), connection.cursor() as cursor:
-                self.copy_csv(cursor, 'openebs_journey_dates.csv', 'tmp_journey_dates', self.JOURNEY_DATE_COLUMNS)
-                cursor.execute("DELETE FROM kv1_kv1journeydate")
-                # Match on the parts of the id, so the unique index on journeys can be used
-                cursor.execute("""
-                    INSERT INTO kv1_kv1journeydate (journey_id, date)
-                    SELECT DISTINCT j.id, t.date
-                    FROM (
-                        SELECT split_part(privatecode, ':', 1) AS dataownercode,
-                               split_part(privatecode, ':', 2) AS lineplanningnumber,
-                               cast(split_part(privatecode, ':', 3) AS integer) AS journeynumber,
-                               cast(availabilityconditionref AS integer) AS scheduleref,
-                               cast(validdate AS date) AS date
-                        FROM tmp_journey_dates
-                        WHERE split_part(privatecode, ':', 3) ~ '^[0-9]{1,9}$' AND availabilityconditionref ~ '^[0-9]{1,9}$'
-                        AND validdate ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
-                    ) t
-                    JOIN kv1_kv1line l ON l.dataownercode = t.dataownercode AND l.lineplanningnumber = t.lineplanningnumber
-                    JOIN kv1_kv1journey j ON j.dataownercode = t.dataownercode AND j.line_id = l.id
-                    AND j.journeynumber = t.journeynumber AND j.scheduleref = t.scheduleref""")
-                self.log("Added %s journey dates" % cursor.rowcount)
-        except (Error, ValueError) as error:
-            self.log("Issue importing journey dates: %s" % error)
-            self.import_errors += 1
-
     def log(self, text):
         self.stdout.write("%s - import_rid: %s" % (datetime.now().isoformat(), text))
 
@@ -212,31 +127,3 @@ class Command(BaseCommand):
         super().__init__()
         self.import_errors = 0
         self.import_status = ""
-
-
-class CsvColumns(object):
-    """
-    File-like object for COPY: the given columns of each row of a DictReader, as CSV. Streams, so a large export
-    doesn't have to fit in memory
-    """
-    def __init__(self, reader, columns):
-        self.rows = ([row[column] for column in columns] for row in reader)
-        self.buffer = ''
-
-    def read(self, size=-1):
-        while size < 0 or len(self.buffer) < size:
-            try:
-                row = next(self.rows)
-            except StopIteration:
-                break
-            self.buffer += ",".join(self.quote(value) for value in row) + "\n"
-        if size < 0:
-            size = len(self.buffer)
-        data, self.buffer = self.buffer[:size], self.buffer[size:]
-        return data
-
-    @staticmethod
-    def quote(value):
-        if value is None or value == '':
-            return ''
-        return '"%s"' % value.replace('"', '""')

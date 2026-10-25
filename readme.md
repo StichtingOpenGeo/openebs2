@@ -23,7 +23,7 @@ Tool for posting KV15 messages
 
 1. Run ```python manage.py import_html lines/``` where lines is a folder containing HTML line data
 
-1. Export lines, stops, journeys and journey dates from RID with ```kv1/scripts/export_rid.sql```, then run ```python manage.py import_rid folder/``` where folder contains the exported ```openebs_*.csv``` files. Columns are matched by name, so extra columns in the export are ignored
+1. Since there's a lot of them, we import some data directly into the database. Use the steps in ```kv1/scripts/import_rid.sql``` to do so
 
 1. Run ```python manage.py runserver``` enter the admin by the browser http://127.0.0.1:8000/admin/auth/user/1/ and set the agency for the first user.
 
