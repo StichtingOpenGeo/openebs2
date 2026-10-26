@@ -533,15 +533,11 @@ dependencies = [
     { name = "django-leaflet" },
     { name = "future" },
     { name = "jsonfield" },
+    { name = "lxml" },
     { name = "psycopg2" },
     { name = "python-dateutil" },
     { name = "pyzmq" },
     { name = "setuptools" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "lxml" },
 ]
 
 [package.metadata]
@@ -556,14 +552,12 @@ requires-dist = [
     { name = "django-leaflet", specifier = "==0.29.1" },
     { name = "future", specifier = "==1.0.0" },
     { name = "jsonfield", specifier = "==3.1.0" },
+    { name = "lxml", specifier = "==6.1.0" },
     { name = "psycopg2", specifier = "==2.9.10" },
     { name = "python-dateutil" },
     { name = "pyzmq" },
     { name = "setuptools", specifier = "<81" },
 ]
-
-[package.metadata.requires-dev]
-dev = [{ name = "lxml", specifier = "==6.1.0" }]
 
 [[package]]
 name = "psycopg2"

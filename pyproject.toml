@@ -19,11 +19,7 @@ dependencies = [
     "python-dateutil",
     "crispy-bootstrap3==2024.1",
     "django-allauth[socialaccount]",
-]
-
-[dependency-groups]
-dev = [
-    "lxml==6.1.0", # Tests
+    "lxml==6.1.0", # SIRI-SX push (utils/push.py, utils/siri_sx.py) and tests
 ]
 
 [tool.uv.sources]
