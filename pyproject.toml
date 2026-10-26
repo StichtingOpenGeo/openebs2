@@ -51,3 +51,6 @@ unsupported-operator = "warn"
 
 [tool.ty.terminal]
 error-on-warning = false # Only errors fail the build; warnings are the backlog above
+
+[tool.ty.analysis]
+allowed-unresolved-imports = ["openebs2.local_settings"] # Per-install and gitignored
