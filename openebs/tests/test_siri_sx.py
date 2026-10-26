@@ -102,14 +102,17 @@ class TestSiriSxKv15(TestCase):
 
 class TestSiriSxStopRefs(TestCase):
     """
-    Stops use the CHB quay when we have one, the userstopcode if we don't. Lines use the NeTEx ref from RID, or one
-    made from the lineplanningnumber
+    KV15 stops use the CHB quay when we have one, the userstopcode if we don't. KV17 calls use the NeTEx
+    ScheduledStopPoint from RID, or else the same as KV15. Lines use the NeTEx ref from RID, or one made from the
+    lineplanningnumber
     """
     def setUp(self):
         Kv1Stop(userstopcode='100', dataownercode='HTM', name="Om de hoek", location=Point(1, 1),
                 quaycoderef='NL:Q:32000100', original_ref='NL:HTM:ScheduledStopPoint:R100').save()
         Kv1Stop(userstopcode='101', dataownercode='HTM', name="De andere hoek", location=Point(1, 10),
                 original_ref='NL:HTM:ScheduledStopPoint:R101').save()
+        Kv1Stop(userstopcode='102', dataownercode='HTM', name="Om de andere hoek", location=Point(1, 20),
+                quaycoderef='NL:Q:32000102', original_ref='NL:HTM:TimingPoint:102').save()
         Kv1Stop(userstopcode='100', dataownercode='GVB', name="Elders", location=Point(2, 2),
                 quaycoderef='NL:Q:57000100').save()
         Kv1Line(dataownercode='HTM', lineplanningnumber='1001', publiclinenumber='1', headsign="Lijn 1", stop_map=[],
@@ -139,8 +142,25 @@ class TestSiriSxStopRefs(TestCase):
         situation = convert('KV17cvlinfo', get_fixture('kv17_mutationmessage.xml'))[0]
         journey = situation.xpath('s:Affects/s:VehicleJourneys/s:AffectedVehicleJourney', namespaces=NS)[0]
         self.assertEqual(['NL:HTM:Line:1'], values(journey, 's:LineRef'))
-        self.assertEqual(['NL:CHB:Quay:32000100'], values(journey, 's:Calls/s:Call/s:StopPointRef'))
+        self.assertEqual(['NL:HTM:ScheduledStopPoint:R100'], values(journey, 's:Calls/s:Call/s:StopPointRef'))
         self.assertEqual(['101'], values(journey, 's:FramedVehicleJourneyRef/s:DatedVehicleJourneyRef'))
+
+    def test_kv17_shorten(self):
+        """ A TimingPoint isn't a stop point, so that falls back to the quay, and the userstopcode after that """
+        xml = """<KV17JOURNEY><dataownercode>HTM</dataownercode><lineplanningnumber>1001</lineplanningnumber>
+        <operatingday>2016-04-01</operatingday><journeynumber>100</journeynumber><reinforcementnumber>0</reinforcementnumber>
+        </KV17JOURNEY><KV17MUTATEJOURNEYSTOP><timestamp>2016-04-01T10:00:00+02:00</timestamp>
+        <SHORTEN><userstopcode>101</userstopcode><passagesequencenumber>0</passagesequencenumber></SHORTEN>
+        <SHORTEN><userstopcode>102</userstopcode><passagesequencenumber>0</passagesequencenumber></SHORTEN>
+        <SHORTEN><userstopcode>103</userstopcode><passagesequencenumber>0</passagesequencenumber></SHORTEN>
+        </KV17MUTATEJOURNEYSTOP>"""
+        with self.assertNumQueries(2):
+            situation = convert('KV17cvlinfo', xml)[0]
+        expected = ['NL:HTM:ScheduledStopPoint:R101', 'NL:CHB:Quay:32000102', '103']
+        self.assertEqual(expected, values(situation, 's:Affects/s:VehicleJourneys/s:AffectedVehicleJourney/'
+                                                     's:Calls/s:Call/s:StopPointRef'))
+        self.assertEqual(expected, values(situation, 's:Consequences/s:Consequence/s:Affects/s:VehicleJourneys/'
+                                                     's:AffectedVehicleJourney/s:Calls/s:Call/s:StopPointRef'))
 
     def test_quay_ref(self):
         self.assertEqual('NL:CHB:Quay:32000100', RefLookup.quay_ref('NL:Q:32000100'))

@@ -20,9 +20,11 @@ KV15 STOPMESSAGE
     advicecontent                           -> Advice
     userstopcode (+ lineplanningnumber)     -> Affects/StopPlaces/AffectedStopPlace/StopPlaceRef (+ Lines/AffectedLine)
 
-Stop refs are the CHB quay (NL:CHB:Quay:32009006), made from the quay code imported from RID into
+KV15 stops are the CHB quay (NL:CHB:Quay:32009006), made from the quay code imported from RID into
 Kv1Stop.quaycoderef (NL:Q:32009006). Quay codes outside the CHB (DE:Q:, BE:Q:) are used as is, and we fall back to the
-bare userstopcode if we don't have one. Lines are the NeTEx line ref imported from RID into Kv1Line.original_ref
+bare userstopcode if we don't have one. KV17 calls are the NeTEx ScheduledStopPoint imported from RID into
+Kv1Stop.original_ref (NL:HTM:ScheduledStopPoint:R9006), falling back to the quay like KV15 (RID has only a TimingPoint
+for some stops, and that isn't a stop point). Lines are the NeTEx line ref imported from RID into Kv1Line.original_ref
 (NL:HTM:Line:1), falling back to NL:<dataowner>:Line:<lineplanningnumber>. Journeys are the bare journeynumber.
 The dataowner is the codespace, so ParticipantRef and OperatorRef are NL:BISON:Codespace:<dataowner> and the
 ProducerRef of a delivery is NL:<dataowner> (if it's all one dataowner).
@@ -64,6 +66,7 @@ COUNTRY = 'nl'
 PARTICIPANT_PREFIX = 'NL:BISON:Codespace:'
 CHB_QUAYCODE_PREFIX = 'NL:Q:'  # Kv1Stop.quaycoderef as imported from RID
 CHB_QUAY_PREFIX = 'NL:CHB:Quay:'  # What we send
+STOP_POINT_REF = ':ScheduledStopPoint:'  # Kv1Stop.original_ref can also be a TimingPoint, which isn't a stop point
 
 # KV15/KV17 subreasontype -> SIRI AlertCause, limited to the values the SIRI-NL profile allows. The KV codes are the old
 # TPEG Pti19-22 codes, one table per reasontype (1 miscellaneous, 2 personnel, 3 equipment, 4 environment), so a few
@@ -313,7 +316,7 @@ def _convert_kv17(group, refs):
             for mutation in stop_mutations:
                 call = _sub(calls, 'Call')
                 # passagesequencenumber counts earlier visits to the stop, it isn't the Order in the journey
-                _sub(call, 'StopPointRef', refs.stop(dataowner, _text(mutation, 'userstopcode')))
+                _sub(call, 'StopPointRef', refs.stop_point(dataowner, _text(mutation, 'userstopcode')))
 
     if cancel is not None:
         if journey.find('allLines') is not None:
@@ -331,7 +334,7 @@ def _convert_kv17(group, refs):
             # Only the skipped stops, a MUTATIONMESSAGE stop is still served
             consequence = _sub(_sub(situation, 'Consequences'), 'Consequence')
             _sub(consequence, 'Condition', 'stopCancelled')
-            skipped = set(refs.stop(dataowner, _text(m, 'userstopcode')) for m in shortened)
+            skipped = set(refs.stop_point(dataowner, _text(m, 'userstopcode')) for m in shortened)
             consequence_affects = deepcopy(affects)
             for call in list(consequence_affects.iter(_tag('Call'))):
                 if call.findtext(_tag('StopPointRef')) not in skipped:
@@ -404,7 +407,7 @@ def _alert_cause(reasontype, subreasontype):
 
 class RefLookup(object):
     """
-    Find the quay codes for all stops and the NeTEx refs for all lines in a push, with a query per dataowner
+    Find the quay codes and NeTEx refs for all stops and lines in a push, with a query per dataowner
     """
     def __init__(self, root):
         stops = set()
@@ -423,12 +426,15 @@ class RefLookup(object):
                 stops.update((dataowner, code.text.strip()) for code in element.iter('userstopcode') if code.text)
 
         self.stops = {}
+        self.stop_points = {}
         for dataowner in set(d for d, _ in stops):
-            rows = Kv1Stop.objects.filter(dataownercode=dataowner, quaycoderef__isnull=False,
-                                          userstopcode__in=[c for d, c in stops if d == dataowner]) \
-                .exclude(quaycoderef='')
-            self.stops.update({(dataowner, code): self.quay_ref(ref)
-                               for code, ref in rows.values_list('userstopcode', 'quaycoderef')})
+            rows = Kv1Stop.objects.filter(dataownercode=dataowner,
+                                          userstopcode__in=[c for d, c in stops if d == dataowner])
+            for code, quaycode, original_ref in rows.values_list('userstopcode', 'quaycoderef', 'original_ref'):
+                if quaycode:
+                    self.stops[(dataowner, code)] = self.quay_ref(quaycode)
+                if original_ref and STOP_POINT_REF in original_ref:
+                    self.stop_points[(dataowner, code)] = original_ref
 
         self.lines = {}
         for dataowner in set(d for d, _ in lines):
@@ -447,6 +453,9 @@ class RefLookup(object):
 
     def stop(self, dataowner, userstopcode):
         return self.stops.get((dataowner, userstopcode), userstopcode)
+
+    def stop_point(self, dataowner, userstopcode):
+        return self.stop_points.get((dataowner, userstopcode), self.stop(dataowner, userstopcode))
 
     def line(self, dataowner, lineplanningnumber):
         return self.lines.get((dataowner, lineplanningnumber),
