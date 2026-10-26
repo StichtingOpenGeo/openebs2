@@ -6,7 +6,7 @@ Tool for posting KV15 messages
 *Requirements*
 - PostgreSQL (several SQL scripts that use specific functionality
 - Postgis 2.0 (for map functions)
-- Python 3.13 (pinned in `.python-version`)
+- Python 3.9 (pinned in `.python-version`)
 - [uv](https://docs.astral.sh/uv/) - dependencies are in `pyproject.toml`, locked in `uv.lock`
 
 *How to install*
