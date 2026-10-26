@@ -6,10 +6,12 @@ Tool for posting KV15 messages
 *Requirements*
 - PostgreSQL (several SQL scripts that use specific functionality
 - Postgis 2.0 (for map functions)
-- Python 2.7 (not tested on 3.x)
-- Dependencies in requirements.txt
+- Python 3.13 (pinned in `.python-version`)
+- [uv](https://docs.astral.sh/uv/) - dependencies are in `pyproject.toml`, locked in `uv.lock`
 
 *How to install*
+
+1. Run ```uv sync``` to create `.venv` and install the dependencies. Prefix the commands below with `uv run`, or activate `.venv` first
 
 1. Add a PostgreSQL database and enter the connection details in ```openebs2/local_settings.py```. Also specify any overrides of settings.py you'd like
 
@@ -43,7 +45,7 @@ ARR:1011:1001,2018-01-04
 Each trip in the file will be searched for and if found, cancelled.
 
 To use:
-1. Login to the server and make sure you are using the correct python (openebs virtualenv must be activated)
+1. Login to the server and make sure you are using the correct python (activate `.venv`, or prefix commands with `uv run`)
 
 1. Setup the file with trips you need
 

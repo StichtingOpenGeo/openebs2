@@ -5,9 +5,6 @@ on:
   push:
     branches: [master]
 
-env:
-  PYTHON_VERSION: '3.13'
-
 jobs:
   test:
     name: Tests
@@ -31,24 +28,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v6
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
+          enable-cache: true
 
       - name: Install GeoDjango system libraries
         run: |
           sudo apt-get update
-          sudo apt-get install -y binutils libproj-dev gdal-bin libgdal-dev libgeos-dev
+          sudo apt-get install -y binutils libproj-dev gdal-bin libgdal-dev libgeos-dev libpq-dev
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: uv sync --locked
 
       - name: Write local_settings
         run: .github/scripts/write_local_settings.sh
 
       - name: Run tests
-        run: python manage.py test
+        run: uv run python manage.py test
 
   smoke:
     name: Smoke test
@@ -72,39 +68,38 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v6
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
+          enable-cache: true
 
       - name: Install GeoDjango system libraries
         run: |
           sudo apt-get update
-          sudo apt-get install -y binutils libproj-dev gdal-bin libgdal-dev libgeos-dev
+          sudo apt-get install -y binutils libproj-dev gdal-bin libgdal-dev libgeos-dev libpq-dev
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: uv sync --locked
 
       - name: Write local_settings
         run: .github/scripts/write_local_settings.sh
 
       - name: Migrate
-        run: python manage.py migrate --noinput
+        run: uv run python manage.py migrate --noinput
 
       - name: Import stop and line data
         run: |
           .github/scripts/make_rid_fixture.sh "${RUNNER_TEMP}/rid"
-          python manage.py import_rid "${RUNNER_TEMP}/rid"
+          uv run python manage.py import_rid "${RUNNER_TEMP}/rid"
 
       - name: Create the smoke test user
         run: |
-          python manage.py createsuperuser --noinput --username smoke --email smoke@example.com
+          uv run python manage.py createsuperuser --noinput --username smoke --email smoke@example.com
         env:
           DJANGO_SUPERUSER_PASSWORD: smoke-password
 
       - name: Start the server
         run: |
-          python manage.py runserver 8000 --noreload > "${RUNNER_TEMP}/server.log" 2>&1 &
+          uv run python manage.py runserver 8000 --noreload > "${RUNNER_TEMP}/server.log" 2>&1 &
           for i in $(seq 30); do
             curl -sf -o /dev/null http://127.0.0.1:8000/inloggen/ && exit 0
             sleep 1
@@ -112,7 +107,7 @@ jobs:
           echo "server did not come up"; cat "${RUNNER_TEMP}/server.log"; exit 1
 
       - name: Check the pages load
-        run: python .github/scripts/smoke.py http://127.0.0.1:8000
+        run: uv run python .github/scripts/smoke.py http://127.0.0.1:8000
 
       - name: Server log
         if: always()
