@@ -76,7 +76,7 @@ class TestSiriSxKv15(TestCase):
         self.assertEqual(['Bla!'], values(situation, 's:Summary'))
         self.assertEqual(['Neem de bus'], values(situation, 's:Advice'))
         self.assertEqual(['100', '101'],
-                         values(situation, 's:Affects/s:StopPoints/s:AffectedStopPoint/s:StopPointRef'))
+                         values(situation, 's:Affects/s:StopPlaces/s:AffectedStopPlace/s:StopPlaceRef'))
 
     def test_delete(self):
         situations = convert('KV15messages', self.create_message().to_xml_delete())
@@ -96,8 +96,8 @@ class TestSiriSxKv15(TestCase):
 
     def test_lines(self):
         situation = convert('KV15messages', get_fixture('message_complete.xml'))[0]
-        stop = situation.xpath('s:Affects/s:StopPoints/s:AffectedStopPoint', namespaces=NS)[0]
-        self.assertEqual(['100'], values(stop, 's:StopPointRef'))
+        stop = situation.xpath('s:Affects/s:StopPlaces/s:AffectedStopPlace', namespaces=NS)[0]
+        self.assertEqual(['100'], values(stop, 's:StopPlaceRef'))
 
 
 class TestSiriSxStopRefs(TestCase):
@@ -120,7 +120,7 @@ class TestSiriSxStopRefs(TestCase):
         with self.assertNumQueries(1):
             situation = convert('KV15messages', xml)[0]
         self.assertEqual(['NL:CHB:Quay:32000100', '101'],
-                         values(situation, 's:Affects/s:StopPoints/s:AffectedStopPoint/s:StopPointRef'))
+                         values(situation, 's:Affects/s:StopPlaces/s:AffectedStopPlace/s:StopPlaceRef'))
         # PTPROCESS, not a calamity
         self.assertEqual(['general'], values(situation, 's:ReportType'))
 
@@ -131,7 +131,7 @@ class TestSiriSxStopRefs(TestCase):
                                          '</lineplanningnumbers>')
         with self.assertNumQueries(2):
             situation = convert('KV15messages', xml)[0]
-        stop = situation.xpath('s:Affects/s:StopPoints/s:AffectedStopPoint', namespaces=NS)[0]
+        stop = situation.xpath('s:Affects/s:StopPlaces/s:AffectedStopPlace', namespaces=NS)[0]
         # 1002 isn't in RID
         self.assertEqual(['NL:HTM:Line:1', 'NL:HTM:Line:1002'], values(stop, 's:Lines/s:AffectedLine/s:LineRef'))
 
