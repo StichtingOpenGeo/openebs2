@@ -18,7 +18,7 @@ KV15 STOPMESSAGE
     messagecontent                          -> Summary, Description
     effectcontent, measurecontent           -> Detail
     advicecontent                           -> Advice
-    userstopcode (+ lineplanningnumber)     -> Affects/StopPoints/AffectedStopPoint/StopPointRef (+ Lines/AffectedLine)
+    userstopcode (+ lineplanningnumber)     -> Affects/StopPlaces/AffectedStopPlace/StopPlaceRef (+ Lines/AffectedLine)
 
 Stop refs are the CHB quay (NL:CHB:Quay:32009006), made from the quay code imported from RID into
 Kv1Stop.quaycoderef (NL:Q:32009006). Quay codes outside the CHB (DE:Q:, BE:Q:) are used as is, and we fall back to the
@@ -215,10 +215,11 @@ def _convert_kv15(message, refs):
                            detail=_join(_text(message, 'effectcontent'), _text(message, 'measurecontent')),
                            advice=_text(message, 'advicecontent'))
 
-    stop_points = _sub(_sub(situation, 'Affects'), 'StopPoints')
+    # A stop place, as the ref is a CHB quay and not a scheduled stop point
+    stop_places = _sub(_sub(situation, 'Affects'), 'StopPlaces')
     for userstopcode in message.iterfind('userstopcodes/userstopcode'):
-        stop = _sub(stop_points, 'AffectedStopPoint')
-        _sub(stop, 'StopPointRef', refs.stop(dataowner, userstopcode.text))
+        stop = _sub(stop_places, 'AffectedStopPlace')
+        _sub(stop, 'StopPlaceRef', refs.stop(dataowner, userstopcode.text))
         if len(lines) > 0:
             affected_lines = _sub(stop, 'Lines')
             for line in lines:
