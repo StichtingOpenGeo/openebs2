@@ -288,7 +288,7 @@ class PlanScenarioForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(PlanScenarioForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_tag = 'scenario_plan'
+        self.helper.form_tag = 'scenario_plan'  # ty: ignore[invalid-assignment]  # Truthy, so crispy renders a <form>; was form_id meant?
         self.helper.layout = Layout(
             # Put in two columns
             Div(Div(Field('messagestarttime'), css_class="col-sm-6 col-lg-6"),
@@ -430,7 +430,7 @@ class Kv15ImportForm(forms.Form):
 
                 kv15stopmessages.append({'kv15': kv15stopmessage, 'stops': valid_stops, 'user': self.user})
 
-            self.cleaned_data = kv15stopmessages
+            self.cleaned_data = kv15stopmessages  # ty: ignore[invalid-assignment]  # Callers expect the parsed messages
             return kv15stopmessages
 
         else:

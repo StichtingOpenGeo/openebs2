@@ -1,7 +1,7 @@
 from doctest import Example
 
 from django.test import TestCase
-from lxml.doctestcompare import LXMLOutputChecker
+from lxml.doctestcompare import LXMLOutputChecker  # ty: ignore[unresolved-import]  # Not in lxml-stubs
 
 __author__ = 'joel'
 

@@ -6,10 +6,7 @@ from django.template import RequestContext
 from django.template import loader
 from django.views.generic import TemplateView
 
-try:
-    from braces.views import AccessMixin as BracesAccessMixin
-except:
-    from braces.views._access import AccessMixin as BracesAccessMixin
+from braces.views._access import AccessMixin as BracesAccessMixin  # Not exported from braces.views
 
 from braces.views import JSONResponseMixin
 from django.conf import settings
