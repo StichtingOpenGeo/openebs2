@@ -3,7 +3,7 @@ name = "openebs2"
 version = "0.1.0"
 description = "Tool for posting KV15 messages"
 readme = "readme.md"
-requires-python = ">=3.12"
+requires-python = ">=3.9"
 dependencies = [
     "django>=4.2.0,<4.3",
     "psycopg2==2.9.10", # 2.9.9 does not build on Python 3.13
