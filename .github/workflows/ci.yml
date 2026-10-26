@@ -99,7 +99,8 @@ jobs:
 
       - name: Start the server
         run: |
-          uv run python manage.py runserver 8000 --noreload > "${RUNNER_TEMP}/server.log" 2>&1 &
+          # Not uv run: it would hold the uv cache lock until the job ends, and setup-uv's cache prune times out waiting for it
+          .venv/bin/python manage.py runserver 8000 --noreload > "${RUNNER_TEMP}/server.log" 2>&1 &
           for i in $(seq 30); do
             curl -sf -o /dev/null http://127.0.0.1:8000/inloggen/ && exit 0
             sleep 1
