@@ -21,7 +21,7 @@ class Command(BaseCommand):
         parser.add_argument('filename', nargs='+', type=str)
 
     def handle(self, *args, **options):
-        with open(options['filename'][0], 'rb') as csvfile:
+        with open(options['filename'][0], newline='') as csvfile:
             reader = csv.reader(csvfile, delimiter=',')
             first = True
 

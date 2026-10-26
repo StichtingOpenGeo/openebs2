@@ -15,7 +15,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         print("Creating users")
         g = Group.objects.get(name=options['groupname'][0])
-        with open(options['filename'][0], 'rb') as csvfile:
+        with open(options['filename'][0], newline='') as csvfile:
             reader = csv.reader(csvfile, delimiter=';', quotechar='|')
             first = True
             for row in reader:
