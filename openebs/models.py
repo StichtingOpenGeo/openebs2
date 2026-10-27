@@ -14,9 +14,9 @@ from django.db import models, IntegrityError
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.template.loader import render_to_string
-from datetime import timedelta
+from datetime import datetime, timedelta
 from django.utils.translation import gettext, gettext_lazy as _
-from django.utils.timezone import now, datetime, get_current_timezone
+from django.utils.timezone import now, get_current_timezone
 from kv1.models import Kv1Stop, Kv1Line, Kv1Journey
 
 from kv15.enum import *

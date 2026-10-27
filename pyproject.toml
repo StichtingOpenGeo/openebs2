@@ -24,3 +24,33 @@ dependencies = [
 
 [tool.uv.sources]
 django-floppyforms = { git = "https://github.com/jazzband/django-floppyforms.git" }
+
+[dependency-groups]
+dev = [
+    "django-stubs>=4.2,<4.3",
+    "lxml-stubs>=0.5.1",
+    "ty>=0.0.92",
+]
+
+[tool.ty.src]
+exclude = ["**/south_migrations/**"] # South is long gone; Django never loads these
+
+[tool.ty.rules]
+# ty has no Django plugin, so it can't see reverse relations, request.user's
+# concrete type or the signatures Django's class-based views override. Warn
+# on these instead of failing the build.
+unresolved-attribute = "warn"
+invalid-method-override = "warn"
+invalid-attribute-override = "warn"
+# Mostly Optional narrowing ty can't follow through Django forms and views
+# (cleaned_data, request.GET.get, date | None). Promote back to errors once
+# the existing warnings are cleaned up.
+invalid-argument-type = "warn"
+not-subscriptable = "warn"
+unsupported-operator = "warn"
+
+[tool.ty.terminal]
+error-on-warning = false # Only errors fail the build; warnings are the backlog above
+
+[tool.ty.analysis]
+allowed-unresolved-imports = ["openebs2.local_settings"] # Per-install and gitignored

@@ -749,7 +749,7 @@ class CancelLinesForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(CancelLinesForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_tag = 'journey_redbutton'
+        self.helper.form_tag = 'journey_redbutton'  # ty: ignore[invalid-assignment]  # Truthy, so crispy renders a <form>; was form_id meant?
         self.helper.layout = Layout(
             Hidden('verify_ok', 'true'),
             Submit('submit', _("Hef alle ritten op"), css_class="text-center btn-danger btn-tall col-sm-3 pull-right")
