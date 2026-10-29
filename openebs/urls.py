@@ -11,7 +11,7 @@ from openebs.views_scenario import ScenarioListView, ScenarioCreateView, Scenari
     PlanScenarioView, ScenarioStopsAjaxView, ScenarioMessageAjaxView, ScenarioCloneView, ScenarioStopsBoundAjaxView, \
     ScenarioMessagesForStopView, ScenarioActiveMessagesAjaxView
 from openebs.views_scenario_msg import ScenarioMessageCreateView, ScenarioMessageUpdateView, ScenarioMessageDeleteView, \
-    ScenarioMessageDetailsView, ScenarioMessageAjaxView
+    ScenarioMessageDetailsView, ScenarioMessageStopsAjaxView
 from openebs.views_shorten import ShortenCreateView, ShortenDetailsView, ShortenedJourneysAjaxView
 
 urlpatterns = [
@@ -53,7 +53,7 @@ urlpatterns = [
     re_path(r'^scenario/(?P<scenario>\d+)/kaart', TemplateRequestView.as_view(template_name='openebs/kv15scenario_map.html'), name='scenario_msg_map'),
     re_path(r'^scenario/(?P<scenario>\d+)/(?P<tpc>\w+)/messages.json$', ScenarioMessagesForStopView.as_view(), name="scenariomsg_stop_json"),
     re_path(r'^scenario/(?P<scenario>\d+)/messages.json$', ScenarioActiveMessagesAjaxView.as_view(), name="scenario_message_ids"),
-    re_path(r'^scenario/(?P<scenario>\d+)/bericht/(?P<pk>\d+)/haltes', ScenarioMessageAjaxView.as_view(), name="scenario_msg_stops"),
+    re_path(r'^scenario/(?P<scenario>\d+)/bericht/(?P<pk>\d+)/haltes', ScenarioMessageStopsAjaxView.as_view(), name="scenario_msg_stops"),
 
     # Kv17 views
     re_path(r'^ritaanpassing$', ChangeListView.as_view(), name="change_index"),

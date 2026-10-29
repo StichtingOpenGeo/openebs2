@@ -129,7 +129,7 @@ class ScenarioMessageDetailsView(AccessMixin, FilterDataownerMixin, DetailView):
     model = Kv15ScenarioMessage
 
 
-class ScenarioMessageAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
+class ScenarioMessageStopsAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailView):
     model = Kv15ScenarioMessage
     render_object = 'object'
 
@@ -140,8 +140,8 @@ class ScenarioMessageAjaxView(LoginRequiredMixin, JSONListResponseMixin, DetailV
     def get_queryset(self):
         lines = []
         stops = []
-        qry = super(ScenarioMessageAjaxView, self).get_queryset()
-        qry = qry.filter(id=self.kwargs.get('scenario', None))
+        qry = super(ScenarioMessageStopsAjaxView, self).get_queryset()
+        qry = qry.filter(id=self.kwargs.get('pk', None), scenario=self.kwargs.get('scenario', None))
 
         if len(qry) > 0:
             dataownercode = qry.values('dataownercode')[0]['dataownercode']

@@ -1,10 +1,10 @@
 import json
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Permission, User
 from django.contrib.gis.geos import Point
 from django.urls import reverse
 from django.test import Client, TestCase
 from kv1.models import Kv1Stop
-from openebs.models import UserProfile
+from openebs.models import Kv15Scenario, Kv15ScenarioMessage, Kv15ScenarioStop, UserProfile
 
 
 class TestAjaxViews(TestCase):
@@ -54,3 +54,41 @@ class TestAjaxViews(TestCase):
     #
     #     msg1.delete()
     #     self.assertListEqual(self.get_halte_list(0), ["112"])
+
+
+class TestScenarioAjaxViews(TestCase):
+    def setUp(self):
+        user = User.objects.create_user(username="test_scenario_ajax", password="test")
+        user.user_permissions.add(Permission.objects.get(content_type__app_label='openebs', codename='view_scenario'))
+        UserProfile(user=user, company='HTM').save()
+        self.client = Client()
+        self.client.login(username="test_scenario_ajax", password="test")
+
+        stop1 = Kv1Stop.objects.create(dataownercode='HTM', userstopcode='211', name="Eerste", location=Point(1, 1))
+        stop2 = Kv1Stop.objects.create(dataownercode='HTM', userstopcode='212', name="Tweede", location=Point(2, 2))
+
+        # A scenario first, so scenario and message ids don't line up
+        other = Kv15Scenario.objects.create(name="Ander scenario", dataownercode='HTM')
+        Kv15ScenarioMessage.objects.create(scenario=other, dataownercode='HTM', messagecontent='Ander')
+
+        self.scenario = Kv15Scenario.objects.create(name="Scenario", dataownercode='HTM')
+        self.msg1 = Kv15ScenarioMessage.objects.create(scenario=self.scenario, dataownercode='HTM',
+                                                       messagecontent='Een', messagedurationtype='ENDTIME')
+        self.msg2 = Kv15ScenarioMessage.objects.create(scenario=self.scenario, dataownercode='HTM',
+                                                       messagecontent='Twee', messagedurationtype='REMOVE')
+        Kv15ScenarioStop.objects.create(message=self.msg1, stop=stop1)
+        Kv15ScenarioStop.objects.create(message=self.msg2, stop=stop2)
+
+    def test_scenario_durationtypes(self):
+        """ The duration types of all messages in the scenario, used when planning it """
+        resp = self.client.get(reverse('scenario_durations_ajax', args=[self.scenario.pk]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertCountEqual(json.loads(resp.content)['object'],
+                              [{'id': self.msg1.pk, 'messagedurationtype': 'ENDTIME'},
+                               {'id': self.msg2.pk, 'messagedurationtype': 'REMOVE'}])
+
+    def test_scenario_message_stops(self):
+        """ The stops of one scenario message, used when editing it """
+        resp = self.client.get(reverse('scenario_msg_stops', args=[self.scenario.pk, self.msg2.pk]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(json.loads(resp.content)['object'], {'None/None': [['HTM_212', 'Tweede']]})
